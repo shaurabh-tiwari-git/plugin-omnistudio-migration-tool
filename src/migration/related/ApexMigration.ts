@@ -30,7 +30,7 @@ export class ApexMigration extends BaseRelatedObjectMigration implements Related
   private readonly callableInterface: InterfaceImplements;
   private readonly vlocityOpenInterface2: InterfaceImplements;
   private readonly vlocityOpenInterface: InterfaceImplements;
-  private updatedNamespace = this.namespace;
+  private updatedNamespace = 'omnistudio';
   public constructor(projectPath: string, namespace: string, org: Org) {
     super(projectPath, namespace, org);
     this.callableInterface = new InterfaceImplements(CALLABLE, this.namespace);
@@ -71,7 +71,7 @@ export class ApexMigration extends BaseRelatedObjectMigration implements Related
       if (file.ext !== '.cls') continue;
       try {
         const apexAssementInfo = this.processApexFile(file);
-        if (apexAssementInfo && apexAssementInfo.diff && apexAssementInfo.diff.length === 0) continue;
+        if (apexAssementInfo && apexAssementInfo.diff.length === 0) continue;
         fileAssessmentInfo.push(apexAssementInfo);
       } catch (err) {
         Logger.logger.error(`Error processing ${file.name}`);
