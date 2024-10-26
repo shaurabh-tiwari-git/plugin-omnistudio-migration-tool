@@ -21,6 +21,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
   // Source Custom Object Names
   static readonly OMNISCRIPT_NAME = 'OmniScript__c';
+  
   static readonly ELEMENT_NAME = 'Element__c';
   static readonly OMNISCRIPTDEFINITION_NAME = 'OmniScriptDefinition__c';
 
