@@ -17,7 +17,7 @@ export class AssessmentReporter {
   public static async generate(result: AssessmentInfo, instanceUrl: string): Promise<void> {
     let htmlBody = '';
 
-    // htmlBody += '<br />' + this.generateLwcAssesment(result.lwcAssessmentInfos);
+    htmlBody += '<br />' + this.generateLwcAssesment(result.lwcAssessmentInfos);
     htmlBody += '<br />' + this.generateApexAssesment(result.apexAssessmentInfos);
     htmlBody += '<br />' + this.generateOmniAssesment(result.omniAssessmentInfo);
     htmlBody += '<br />' + this.generateCardAssesment(result.flexCardAssessmentInfos);
