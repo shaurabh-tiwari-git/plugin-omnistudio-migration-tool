@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
+/*
 import { MigrationTool } from './interfaces';
 import { OmniScriptMigrationTool } from './omniscript';
 import { CardMigrationTool } from './flexcard';
@@ -13,6 +13,7 @@ interface DependencyReport {
   id: string;
   missingDependencies: DependencyReport[];
 }
+  */
 
 export class DependencyChecker {
   /*
