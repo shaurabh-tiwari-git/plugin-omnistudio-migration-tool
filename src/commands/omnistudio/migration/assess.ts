@@ -73,7 +73,7 @@ export default class Assess extends OmniStudioBaseCommand {
     const omniAssessmentInfo = await osMigrator.assess(dataRaptorAssessmentInfos, flexCardAssessmentInfos);
 
     const assesmentInfo: AssessmentInfo = {
-      // lwcAssessmentInfos: lwcparser.assessment(),
+      lwcAssessmentInfos: lwcparser.assessment(),
       apexAssessmentInfos: apexMigrator.assess(),
       dataRaptorAssessmentInfos,
       flexCardAssessmentInfos,

@@ -25,14 +25,14 @@ export interface LWCAssessmentInfo {
 export interface OSAssessmentInfo {
   name: string;
   id: string;
-  dependenciesIP: AnyJson[];
-  missingIP: AnyJson[];
-  dependenciesDR: AnyJson[];
-  missingDR: AnyJson[];
-  dependenciesOS: AnyJson[];
-  missingOS: AnyJson[];
-  dependenciesRemoteAction: AnyJson[];
-  //missingRemoteAction: AnyJson[];
+  dependenciesIP: string[];
+  missingIP: string[];
+  dependenciesDR: string[];
+  missingDR: string[];
+  dependenciesOS: string[];
+  missingOS: string[];
+  dependenciesRemoteAction: string[];
+  // missingRemoteAction: AnyJson[];
   infos: string[];
   warnings: string[];
   errors: string[];
@@ -42,10 +42,10 @@ export interface OSAssessmentInfo {
 export interface IPAssessmentInfo {
   name: string;
   id: string;
-  dependenciesIP: AnyJson[];
-  dependenciesDR: AnyJson[];
-  dependenciesOS: AnyJson[];
-  dependenciesRemoteAction: AnyJson[];
+  dependenciesIP: string[];
+  dependenciesDR: string[];
+  dependenciesOS: string[];
+  dependenciesRemoteAction: string[];
   infos: string[];
   warnings: string[];
   errors: string[];
@@ -72,6 +72,7 @@ export interface FileProcessor {
 
 export interface AssessmentInfo {
   apexAssessmentInfos: ApexAssessmentInfo[];
+  lwcAssessmentInfos: LWCAssessmentInfo[];
   omniAssessmentInfo: OmniAssessmentInfo; // Corrected to an array
   flexCardAssessmentInfos: FlexCardAssessmentInfo[];
   dataRaptorAssessmentInfos: DataRaptorAssessmentInfo[];
@@ -80,9 +81,9 @@ export interface AssessmentInfo {
 export interface FlexCardAssessmentInfo {
   name: string;
   id: string;
-  dependenciesIP: AnyJson[];
-  dependenciesDR: AnyJson[];
-  dependenciesOS: AnyJson[];
+  dependenciesIP: string[];
+  dependenciesDR: string[];
+  dependenciesOS: string[];
   infos: string[];
   warnings: string[];
 }
@@ -100,11 +101,6 @@ export interface OmniAssessmentInfo {
   ipAssessmentInfos: IPAssessmentInfo[];
 }
 
-export interface LWCAssessmentInfo {
-  name: string;
-  changeInfos: FileChangeInfo[];
-  errors: string[];
-}
 export interface FileChangeInfo {
   path: string;
   name: string;
