@@ -176,7 +176,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       );
       return omniAssessmentInfos;
     } catch (err) {
-      Logger.logger.error(err);
+      this.logger.error(err);
       this.ux.log(err);
       this.ux.log(err.getMessage());
     }
