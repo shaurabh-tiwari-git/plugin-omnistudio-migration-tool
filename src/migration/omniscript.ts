@@ -229,27 +229,27 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           const language = propertySet['Language'];
           const osName = type + '_' + subtype + '_' + language;
           dependencyOS.push(osName + ' ( ' + nameVal + ' ) <br>');
-          /*  if (!existingOmniscriptNames.has(nameVal)) {
-              missingOS.push(nameVal);
-            }*/
+          if (!existingOmniscriptNames.has(nameVal)) {
+            missingOS.push(nameVal);
+          }
         }
 
         // Check for Integration Procedure Action dependencies
         if (type === 'Integration Procedure Action') {
           const nameVal = `${elemName}_Integration Procedure Action`;
-          // if (!existingOmniscriptNames.has(nameVal) && !existingFlexCardNames.has(nameVal)) {
           dependencyIP.push(propertySet['integrationProcedureKey'] + ' (' + nameVal + ') <br>');
-          //   missingIP.push(nameVal);
-          // }
+          if (!existingOmniscriptNames.has(nameVal) && !existingFlexCardNames.has(nameVal)) {
+            missingIP.push(nameVal);
+          }
         }
 
         // Check for DataRaptor dependencies
         if (['DataRaptor Extract Action', 'DataRaptor Turbo Action', 'DataRaptor Post Action'].includes(type)) {
           const nameVal = `${elemName}_${type}`;
-          //  if (!existingOmniscriptNames.has(nameVal) && !existingDataRaptorNames.has(nameVal)) {
           dependencyDR.push(propertySet['bundle'] + ' ( ' + nameVal + ' )  <br>');
-          //    missingDR.push(nameVal);
-          //  }
+          if (!existingOmniscriptNames.has(nameVal) && !existingDataRaptorNames.has(nameVal)) {
+            missingDR.push(nameVal);
+          }
         }
 
         if (type === 'Remote Action') {
