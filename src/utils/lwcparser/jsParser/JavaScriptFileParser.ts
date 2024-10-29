@@ -7,4 +7,9 @@ export class JavaScriptFileParser implements FileParser {
     const jsParser = new JavaScriptParser();
     return jsParser.replaceImportSource(filePath, namespace);
   }
+
+  saveToFile(filePath: string, content: string | undefined): void {
+    const javaScriptParser = new JavaScriptFileParser();
+    javaScriptParser.saveToFile(filePath, content);
+  }
 }

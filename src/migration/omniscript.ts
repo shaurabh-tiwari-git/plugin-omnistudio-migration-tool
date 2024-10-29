@@ -4,13 +4,15 @@ import { AnyJson } from '@salesforce/ts-types';
 import OmniScriptMappings from '../mappings/OmniScript';
 import ElementMappings from '../mappings/Element';
 import OmniScriptDefinitionMappings from '../mappings/OmniScriptDefinition';
-import { DebugTimer, QueryTools, SortDirection } from '../utils';
+import { DataRaptorAssessmentInfo, DebugTimer, FlexCardAssessmentInfo, QueryTools, SortDirection } from '../utils';
 import { BaseMigrationTool } from './base';
 import { MigrationResult, MigrationTool, TransformData, UploadRecordResult } from './interfaces';
 import { ObjectMapping } from './interfaces';
 import { NetUtils, RequestMethod } from '../utils/net';
-import { Connection, Logger, Messages } from '@salesforce/core';
+import { Connection, Messages, Logger } from '@salesforce/core';
 import { UX } from '@salesforce/command';
+import { OSAssessmentInfo, OmniAssessmentInfo, IPAssessmentInfo } from '../../src/utils';
+import { getAllFunctionMetadata, getReplacedString } from '../utils/formula/FormulaUtil';
 
 export class OmniScriptMigrationTool extends BaseMigrationTool implements MigrationTool {
   private readonly exportType: OmniScriptExportType;
@@ -18,6 +20,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
   // Source Custom Object Names
   static readonly OMNISCRIPT_NAME = 'OmniScript__c';
+
   static readonly ELEMENT_NAME = 'Element__c';
   static readonly OMNISCRIPTDEFINITION_NAME = 'OmniScriptDefinition__c';
 
@@ -160,9 +163,158 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     };
   }
 
+  public async assess(
+    dataRaptorAssessmentInfos: DataRaptorAssessmentInfo[],
+    flexCardAssessmentInfos: FlexCardAssessmentInfo[]
+  ): Promise<OmniAssessmentInfo> {
+    try {
+      const omniscripts = await this.getAllOmniScripts();
+      const omniAssessmentInfos = await this.processOmniComponents(
+        omniscripts,
+        dataRaptorAssessmentInfos,
+        flexCardAssessmentInfos
+      );
+      return omniAssessmentInfos;
+    } catch (err) {
+      this.logger.error(err);
+      this.ux.log(err);
+      this.ux.log(err.getMessage());
+    }
+  }
+
+  public async processOmniComponents(
+    omniscripts: AnyJson[],
+    dataRaptorAssessmentInfos: DataRaptorAssessmentInfo[],
+    flexCardAssessmentInfos: FlexCardAssessmentInfo[]
+  ): Promise<OmniAssessmentInfo> {
+    const osAssessmentInfos: OSAssessmentInfo[] = [];
+    const ipAssessmentInfos: IPAssessmentInfo[] = [];
+
+    const limitedOmniscripts = omniscripts.slice(0, 200);
+
+    // Create a set to store existing OmniScript names and also extract DataRaptor and FlexCard names
+    const existingOmniscriptNames = new Set<string>();
+    const existingDataRaptorNames = new Set(dataRaptorAssessmentInfos.map((info) => info.name));
+    const existingFlexCardNames = new Set(flexCardAssessmentInfos.map((info) => info.name));
+
+    // First, collect all OmniScript names from the omniscripts array
+    for (const omniscript of limitedOmniscripts) {
+      const omniScriptName = `${omniscript[this.namespacePrefix + 'Name']}`;
+      existingOmniscriptNames.add(omniScriptName);
+    }
+
+    // Now process each OmniScript and its elements
+    for (const omniscript of limitedOmniscripts) {
+      const elements = await this.getAllElementsForOmniScript(omniscript['Id']);
+
+      const dependencyIP: string[] = [];
+      const missingIP: string[] = [];
+      const dependencyDR: string[] = [];
+      const missingDR: string[] = [];
+      const dependencyOS: string[] = [];
+      const missingOS: string[] = [];
+      const dependenciesRA: string[] = [];
+      //const missingRA: string[] = [];
+
+      for (const elem of elements) {
+        const type = elem[this.namespacePrefix + 'Type__c'];
+        const elemName = `${elem['Name']}`;
+        const propertySet = JSON.parse(elem[this.namespacePrefix + 'PropertySet__c'] || '{}');
+
+        // Check for OmniScript dependencies
+        if (type === 'OmniScript') {
+          const nameVal = `${elemName}_OmniScript`;
+          const type = propertySet['Type'];
+          const subtype = propertySet['Sub Type'];
+          const language = propertySet['Language'];
+          const osName = type + '_' + subtype + '_' + language;
+          dependencyOS.push(osName + ' ( ' + nameVal + ' ) <br>');
+          /*  if (!existingOmniscriptNames.has(nameVal)) {
+              missingOS.push(nameVal);
+            }*/
+        }
+
+        // Check for Integration Procedure Action dependencies
+        if (type === 'Integration Procedure Action') {
+          const nameVal = `${elemName}_Integration Procedure Action`;
+          // if (!existingOmniscriptNames.has(nameVal) && !existingFlexCardNames.has(nameVal)) {
+          dependencyIP.push(propertySet['integrationProcedureKey'] + ' (' + nameVal + ') <br>');
+          //   missingIP.push(nameVal);
+          // }
+        }
+
+        // Check for DataRaptor dependencies
+        if (['DataRaptor Extract Action', 'DataRaptor Turbo Action', 'DataRaptor Post Action'].includes(type)) {
+          const nameVal = `${elemName}_${type}`;
+          //  if (!existingOmniscriptNames.has(nameVal) && !existingDataRaptorNames.has(nameVal)) {
+          dependencyDR.push(propertySet['bundle'] + ' ( ' + nameVal + ' )  <br>');
+          //    missingDR.push(nameVal);
+          //  }
+        }
+
+        if (type === 'Remote Action') {
+          const nameVal = `${elemName}_${type}`;
+          const className = propertySet['remoteClass'];
+          const methodName = propertySet['remoteMethod'];
+          dependenciesRA.push(className + '.' + methodName + ' (' + nameVal + ') <br>');
+        }
+      }
+
+      /*const recordName = `${omniscript[this.namespacePrefix + 'Type__c']}_` +
+                        `${omniscript[this.namespacePrefix + 'SubType__c']}` +
+                        (omniscript[this.namespacePrefix + 'Language__c'] ? `_${omniscript[this.namespacePrefix + 'Language__c']}` : '') +
+                        `_${omniscript[this.namespacePrefix + 'Version__c']}`;*/
+
+      const omniProcessType = omniscript[this.namespacePrefix + 'IsProcedure__c']
+        ? 'Integration Procedure'
+        : 'OmniScript';
+
+      if (omniProcessType === 'OmniScript') {
+        const osAssessmentInfo: OSAssessmentInfo = {
+          name: omniscript['Name'],
+          id: omniscript['Id'],
+          dependenciesIP: dependencyIP,
+          missingIP: [],
+          dependenciesDR: dependencyDR,
+          missingDR: [],
+          dependenciesOS: dependencyOS,
+          missingOS: missingOS,
+          dependenciesRemoteAction: dependenciesRA,
+          infos: [],
+          warnings: [],
+          errors: [],
+          path: '',
+        };
+        osAssessmentInfos.push(osAssessmentInfo);
+      } else {
+        const ipAssessmentInfo: IPAssessmentInfo = {
+          name: omniscript['Name'],
+          id: omniscript['Id'],
+          dependenciesIP: dependencyIP,
+          dependenciesDR: dependencyDR,
+          dependenciesOS: dependencyOS,
+          dependenciesRemoteAction: dependenciesRA,
+          infos: [],
+          warnings: [],
+          errors: [],
+          path: '',
+        };
+        ipAssessmentInfos.push(ipAssessmentInfo);
+      }
+    }
+
+    const omniAssessmentInfo: OmniAssessmentInfo = {
+      osAssessmentInfos: osAssessmentInfos,
+      ipAssessmentInfos: ipAssessmentInfos,
+    };
+
+    return omniAssessmentInfo;
+  }
+
   async migrate(): Promise<MigrationResult[]> {
     // Get All Records from OmniScript__c (IP & OS Parent Records)
     const omniscripts = await this.getAllOmniScripts();
+    const functionDefinitionMetadata = await getAllFunctionMetadata(this.namespace, this.connection);
     const duplicatedNames = new Set<string>();
 
     // Variables to be returned After Migration
@@ -187,6 +339,30 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
       // Get All elements for each OmniScript__c record(i.e IP/OS)
       const elements = await this.getAllElementsForOmniScript(recordId);
+      if (omniscript[`${this.namespacePrefix}IsProcedure__c`] === true) {
+        // do the formula replacement from custom to standard notation
+        if (functionDefinitionMetadata.length > 0 && elements.length > 0) {
+          for (let ipElement of elements) {
+            if (ipElement[`${this.namespacePrefix}PropertySet__c`] != null) {
+              var originalString = ipElement[`${this.namespacePrefix}PropertySet__c`];
+              try {
+                originalString = getReplacedString(
+                  this.namespacePrefix,
+                  ipElement[`${this.namespacePrefix}PropertySet__c`],
+                  functionDefinitionMetadata
+                );
+                ipElement[`${this.namespacePrefix}PropertySet__c`] = originalString;
+              } catch (ex) {
+                this.logger.error(JSON.stringify(ex));
+                console.log(
+                  "There was some problem while updating the formula syntax, please check the all the formula's syntax once : " +
+                    ipElement[`${this.namespacePrefix}PropertySet__c`]
+                );
+              }
+            }
+          }
+        }
+      }
 
       // Perform the transformation for OS/IP Parent Record from OmniScript__c
       const mappedOmniScript = this.mapOmniScriptRecord(omniscript);
@@ -372,7 +548,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
   // Get All OmniScript__c records i.e All IP & OS
   private async getAllOmniScripts(): Promise<AnyJson[]> {
-    DebugTimer.getInstance().lap('Query OmniScripts');
+    //DebugTimer.getInstance().lap('Query OmniScripts');
     this.logger.info('allVersions : ' + this.allVersions);
     const filters = new Map<string, any>();
 
