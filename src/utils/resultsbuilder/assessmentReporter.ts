@@ -297,7 +297,7 @@ export class AssessmentReporter {
                     <div title="Dependencies">Integration Procedures Missing Dependencies</div>
                 </th> -->
                 <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
-                    <div title="Dependencies">Data Raptor dependencies</div>
+                    <div title="Dependencies">Data Raptor Dependencies</div>
                 </th>
                 <!--  <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
                     <div title="Dependencies">Data Raptor Missing dependencies</div>
@@ -334,7 +334,7 @@ export class AssessmentReporter {
                         <div title="Dependencies">Integration Procedures Dependencies</div>
                     </th>
                     <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
-                        <div title="Dependencies">Data Raptor pendencies</div>
+                        <div title="Dependencies">Data Raptor dependencies</div>
                     </th>
                     <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
                         <div title="Dependencies">Remote Action Dependencies</div>
@@ -368,7 +368,7 @@ export class AssessmentReporter {
                         <div title="Dependencies">Integration Procedures Dependencies</div>
                     </th>
                     <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
-                        <div title="Dependencies">Data Raptor pendencies</div>
+                        <div title="Dependencies">Data Raptor Dependencies</div>
                     </th>
                 </tr>
             </thead>
@@ -402,7 +402,7 @@ export class AssessmentReporter {
                         <div title="Dependencies">Integration Procedures Dependencies</div>
                     </th>
                     <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
-                        <div title="Dependencies">Data Raptor pendencies</div>
+                        <div title="Dependencies">Data Raptor Dependencies</div>
                     </th-->
                 </tr>
             </thead>
