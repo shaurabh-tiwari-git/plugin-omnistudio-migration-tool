@@ -12,7 +12,7 @@ import { DataRaptorMigrationTool } from '../../../migration/dataraptor';
 import { DebugTimer, DataRaptorAssessmentInfo, FlexCardAssessmentInfo } from '../../../utils';
 
 import { Logger } from '../../../utils/logger';
-import OmnistudioRelatedObjectMigrationFacade from './OmnistudioRelatedObjectMigrationFacade';
+import OmnistudioRelatedObjectMigrationFacade from '../../../migration/related/OmnistudioRelatedObjectMigrationFacade';
 
 Messages.importMessagesDirectory(__dirname);
 const messages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'assess');

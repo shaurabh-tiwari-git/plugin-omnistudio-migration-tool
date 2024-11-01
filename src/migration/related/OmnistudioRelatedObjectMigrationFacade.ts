@@ -3,13 +3,13 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Org } from '@salesforce/core';
-import '../../../utils/prototypes';
-import { DebugTimer, MigratedObject } from '../../../utils';
-import { RelatedObjectsMigrate } from '../../../migration/interfaces';
-import { sfProject } from '../../../utils/sfcli/project/sfProject';
-import { Logger } from '../../../utils/logger';
-import { ApexMigration } from '../../../migration/related/ApexMigration';
-import { LwcMigration } from '../../../migration/related/LwcMigration';
+import '../../utils/prototypes';
+import { DebugTimer, MigratedObject } from '../../utils';
+import { RelatedObjectsMigrate } from '../interfaces';
+import { sfProject } from '../../utils/sfcli/project/sfProject';
+import { Logger } from '../../utils/logger';
+import { ApexMigration } from './ApexMigration';
+import { LwcMigration } from './LwcMigration';
 
 // Initialize Messages with the current plugin directory
 // Messages.importMessagesDirectory(__dirname);
