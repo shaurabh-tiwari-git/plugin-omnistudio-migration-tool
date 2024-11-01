@@ -100,9 +100,16 @@ export interface RelatedObjectsMigrate {
    * @param namespace The namespace used to perform the migration.
    * @param migrationCandidates List of candidates to migrate.
    */
-  migrateRelatedObjects(migrationResults: MigrationResult[], migrationCandidates: JSON[]): void;
+  migrateRelatedObjects(migrationResults: MigrationResult[], migrationCandidates: JSON[]): string[];
+
+  processObjectType(): string;
 }
 
 export type LWCComponentMigrationTool = MigrationTool;
 
 export type CustomLabelMigrationTool = MigrationTool;
+
+export interface RelatedObjectMigrationResult {
+  apexClasses: string[];
+  lwcComponents: string[];
+}

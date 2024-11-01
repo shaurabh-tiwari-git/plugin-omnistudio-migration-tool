@@ -37,20 +37,24 @@ export class ApexMigration extends BaseRelatedObjectMigration implements Related
     this.vlocityOpenInterface2 = new InterfaceImplements(VLOCITY_OPEN_INTERFACE2, this.namespace);
     this.vlocityOpenInterface = new InterfaceImplements(VLOCITY_OPEN_INTERFACE, this.namespace);
   }
+  public processObjectType(): string {
+    return 'apex';
+  }
   public identifyObjects(migrationResults: MigrationResult[]): Promise<JSON[]> {
     throw new Error('Method not implemented.');
   }
-  public migrateRelatedObjects(migrationResults: MigrationResult[], migrationCandidates: JSON[]): void {
-    this.migrate();
+  public migrateRelatedObjects(migrationResults: MigrationResult[], migrationCandidates: JSON[]): string[] {
+    return this.migrate();
   }
-  public migrate(): void {
+  public migrate(): string[] {
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
     const targetOrg: Org = this.org;
     sfProject.retrieve(APEXCLASS, targetOrg.getUsername());
-    this.processApexFiles(this.projectPath);
+    const apexAssessmentInfos = this.processApexFiles(this.projectPath);
     sfProject.deploy(APEXCLASS, targetOrg.getUsername());
     shell.cd(pwd);
+    return this.mapTOName(apexAssessmentInfos);
   }
 
   public assess(): ApexAssessmentInfo[] {
@@ -179,5 +183,11 @@ export class ApexMigration extends BaseRelatedObjectMigration implements Related
                 return invokeMethod(action, inputMap, outMap, options);
             }
     `;
+  }
+
+  private mapTOName(apexAssessmentInfos: ApexAssessmentInfo[]): string[] {
+    return apexAssessmentInfos.map((apexAssessmentInfo) => {
+      return apexAssessmentInfo.name;
+    });
   }
 }

@@ -10,4 +10,5 @@ export abstract class BaseRelatedObjectMigration {
     this.namespace = namespace;
     this.org = org;
   }
+  public abstract processObjectType(): string;
 }

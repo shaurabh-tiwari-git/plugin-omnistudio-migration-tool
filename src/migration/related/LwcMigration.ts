@@ -2,7 +2,7 @@
 import * as shell from 'shelljs';
 import { Org } from '@salesforce/core';
 import { fileutil, File } from '../../utils/file/fileutil';
-import { MigrationResult } from '../interfaces';
+import { MigrationResult, RelatedObjectsMigrate } from '../interfaces';
 import { sfProject } from '../../utils/sfcli/project/sfProject';
 import { Logger } from '../../utils/logger';
 import { FileProcessorFactory } from '../../utils/lwcparser/fileutils/FileProcessorFactory';
@@ -12,14 +12,16 @@ import { BaseRelatedObjectMigration } from './BaseRealtedObjectMigration';
 const LWC_DIR_PATH = '/force-app/main/default/lwc';
 const LWCTYPE = 'LightningComponentBundle';
 
-export class LwcMigration extends BaseRelatedObjectMigration {
+export class LwcMigration extends BaseRelatedObjectMigration implements RelatedObjectsMigrate {
+  public processObjectType(): string {
+    return 'lwc';
+  }
   public identifyObjects(migrationResults: MigrationResult[]): Promise<JSON[]> {
     this.assessment();
     throw new Error('Method not implemented.');
   }
-  public migrateRelatedObjects(migrationResults: MigrationResult[], migrationCandidates: JSON[]): void {
-    this.migrate();
-    this.processLwcFiles(this.projectPath);
+  public migrateRelatedObjects(migrationResults: MigrationResult[], migrationCandidates: JSON[]): string[] {
+    return this.mapToName(this.migrate());
   }
   public assessment(): LWCAssessmentInfo[] {
     const type = 'assessment';
@@ -31,14 +33,16 @@ export class LwcMigration extends BaseRelatedObjectMigration {
     return this.processFiles(filesMap, type);
   }
 
-  public migrate(): void {
+  public migrate(): LWCAssessmentInfo[] {
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
     const targetOrg: Org = this.org;
     sfProject.retrieve(LWCTYPE, targetOrg.getUsername());
-    this.processLwcFiles(this.projectPath);
-    // sfProject.deploy(LWCTYPE, targetOrg.getUsername());
+    const filesMap = this.processLwcFiles(this.projectPath);
+    const LWCAssessmentInfos = this.processFiles(filesMap, 'migration');
+    sfProject.deploy(LWCTYPE, targetOrg.getUsername());
     shell.cd(pwd);
+    return LWCAssessmentInfos;
   }
 
   // This method is returning a Map of directory and list of file in directory
@@ -96,5 +100,11 @@ export class LwcMigration extends BaseRelatedObjectMigration {
 
   private isValideFile(filename: string): boolean {
     return !filename.includes('_def') && !filename.includes('styleDefinition') && !filename.includes('definition');
+  }
+
+  private mapToName(lwcAssessmentInfos: LWCAssessmentInfo[]): string[] {
+    return lwcAssessmentInfos.map((lwcAssessmentInfo) => {
+      return lwcAssessmentInfo.name;
+    });
   }
 }
