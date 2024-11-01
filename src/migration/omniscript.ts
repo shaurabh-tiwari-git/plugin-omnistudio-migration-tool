@@ -219,11 +219,16 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       for (const elem of elements) {
         const type = elem[this.namespacePrefix + 'Type__c'];
         const elemName = `${elem['Name']}`;
+        const propertySet = JSON.parse(elem[this.namespacePrefix + 'PropertySet__c'] || '{}');
 
         // Check for OmniScript dependencies
         if (type === 'OmniScript') {
           const nameVal = `${elemName}_OmniScript`;
-          dependencyOS.push(nameVal);
+          const type = propertySet['Type'];
+          const subtype = propertySet['Sub Type'];
+          const language = propertySet['Language'];
+          const osName = type + '_' + subtype + '_' + language;
+          dependencyOS.push(osName + ' ( ' + nameVal + ' ) <br>');
           if (!existingOmniscriptNames.has(nameVal)) {
             missingOS.push(nameVal);
           }
@@ -232,8 +237,8 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         // Check for Integration Procedure Action dependencies
         if (type === 'Integration Procedure Action') {
           const nameVal = `${elemName}_Integration Procedure Action`;
+          dependencyIP.push(propertySet['integrationProcedureKey'] + ' (' + nameVal + ') <br>');
           if (!existingOmniscriptNames.has(nameVal) && !existingFlexCardNames.has(nameVal)) {
-            dependencyIP.push(nameVal);
             missingIP.push(nameVal);
           }
         }
@@ -241,15 +246,17 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         // Check for DataRaptor dependencies
         if (['DataRaptor Extract Action', 'DataRaptor Turbo Action', 'DataRaptor Post Action'].includes(type)) {
           const nameVal = `${elemName}_${type}`;
+          dependencyDR.push(propertySet['bundle'] + ' ( ' + nameVal + ' )  <br>');
           if (!existingOmniscriptNames.has(nameVal) && !existingDataRaptorNames.has(nameVal)) {
-            dependencyDR.push(nameVal);
             missingDR.push(nameVal);
           }
         }
 
         if (type === 'Remote Action') {
           const nameVal = `${elemName}_${type}`;
-          dependenciesRA.push(nameVal);
+          const className = propertySet['remoteClass'];
+          const methodName = propertySet['remoteMethod'];
+          dependenciesRA.push(className + '.' + methodName + ' (' + nameVal + ') <br>');
         }
       }
 
@@ -266,10 +273,10 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         const osAssessmentInfo: OSAssessmentInfo = {
           name: omniscript['Name'],
           id: omniscript['Id'],
-          dependenciesIP: [],
-          missingIP: dependencyIP,
-          dependenciesDR: [],
-          missingDR: dependencyDR,
+          dependenciesIP: dependencyIP,
+          missingIP: [],
+          dependenciesDR: dependencyDR,
+          missingDR: [],
           dependenciesOS: dependencyOS,
           missingOS: missingOS,
           dependenciesRemoteAction: dependenciesRA,

@@ -25,7 +25,7 @@ export class LwcMigration extends BaseRelatedObjectMigration {
     const type = 'assessment';
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
-    // sfProject.retrieve(LWCTYPE, this.org.getUsername());
+    sfProject.retrieve(LWCTYPE, this.org.getUsername());
     const filesMap = this.processLwcFiles(this.projectPath);
     shell.cd(pwd);
     return this.processFiles(filesMap, type);
@@ -59,7 +59,7 @@ export class LwcMigration extends BaseRelatedObjectMigration {
       const jsonData: LWCAssessmentInfo[] = [];
       fileMap.forEach((fileList, dir) => {
         const changeInfos: FileChangeInfo[] = [];
-        if (dir !== 'lwc') {
+        if (dir !== 'lwc' && !dir.endsWith('English') && !dir.includes('_') && !dir.includes('cf')) {
           for (const file of fileList) {
             if (this.isValideFile(file.name)) {
               const processor = FileProcessorFactory.getFileProcessor(file.ext);

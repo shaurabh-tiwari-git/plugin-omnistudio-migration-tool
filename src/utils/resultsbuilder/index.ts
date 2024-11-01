@@ -13,7 +13,6 @@ export class ResultsBuilder {
     const doc = this.generateDocument(htmlBody);
     const fileUrl = process.cwd() + '/migrationresults.html';
     fs.writeFileSync(fileUrl, doc);
-
     await open('file://' + fileUrl);
   }
 

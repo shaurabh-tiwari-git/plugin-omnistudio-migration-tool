@@ -17,11 +17,11 @@ export class AssessmentReporter {
   public static async generate(result: AssessmentInfo, instanceUrl: string): Promise<void> {
     let htmlBody = '';
 
-    htmlBody += '<br />' + this.generateLwcAssesment(result.lwcAssessmentInfos);
+    htmlBody += '<br />' + this.generateOmniAssesment(result.omniAssessmentInfo, instanceUrl);
+    htmlBody += '<br />' + this.generateCardAssesment(result.flexCardAssessmentInfos, instanceUrl);
+    htmlBody += '<br />' + this.generateDRAssesment(result.dataRaptorAssessmentInfos, instanceUrl);
     htmlBody += '<br />' + this.generateApexAssesment(result.apexAssessmentInfos);
-    htmlBody += '<br />' + this.generateOmniAssesment(result.omniAssessmentInfo);
-    htmlBody += '<br />' + this.generateCardAssesment(result.flexCardAssessmentInfos);
-    htmlBody += '<br />' + this.generateDRAssesment(result.dataRaptorAssessmentInfos);
+    htmlBody += '<br />' + this.generateLwcAssesment(result.lwcAssessmentInfos);
 
     const doc = this.generateDocument(htmlBody);
     const fileUrl = process.cwd() + '/assessmentresults.html';
@@ -35,12 +35,12 @@ export class AssessmentReporter {
     tableBody += `
     <html>
             <head>
-                <title>OmniStudio Migration Results</title>
+                <title>OmniStudio Migration Assessment</title>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/design-system/2.17.5/styles/salesforce-lightning-design-system.min.css" />
             </head>
             <body>
             <div style="margin: 20px;">
-                <div class="slds-text-heading_large">OmniStudio Migration Results</div>`;
+                <div class="slds-text-heading_large">OmniStudio Migration Assessment</div>`;
     tableBody += '<div class="slds-text-heading_large">LWC Assessment</div>';
     for (const lwcAssessmentInfo of lwcAssessmentInfos) {
       let changeInfoRows = '';
@@ -87,16 +87,16 @@ export class AssessmentReporter {
     return this.getApexAssessmentReport(tableBody);
   }
 
-  private static generateOmniAssesment(omniAssessmentInfo: OmniAssessmentInfo): string {
+  private static generateOmniAssesment(omniAssessmentInfo: OmniAssessmentInfo, instanceUrl: string): string {
     let htmlBody = '';
 
     // htmlBody += '<br />' + this.generateLwcAssesment(result.lwcAssessmentInfos);
-    htmlBody += '<br />' + this.generateOSAssesment(omniAssessmentInfo.osAssessmentInfos);
-    htmlBody += '<br />' + this.generateIPAssesment(omniAssessmentInfo.ipAssessmentInfos);
+    htmlBody += '<br />' + this.generateOSAssesment(omniAssessmentInfo.osAssessmentInfos, instanceUrl);
+    htmlBody += '<br />' + this.generateIPAssesment(omniAssessmentInfo.ipAssessmentInfos, instanceUrl);
     return htmlBody;
   }
 
-  private static generateOSAssesment(osAssessmentInfos: OSAssessmentInfo[]): string {
+  private static generateOSAssesment(osAssessmentInfos: OSAssessmentInfo[], instanceUrl: string): string {
     let tableBody = '';
     tableBody += '<div class="slds-text-heading_large">Omniscript Components Assessment</div>';
 
@@ -107,26 +107,26 @@ export class AssessmentReporter {
                       <div class="slds-truncate" title="${osAssessmentInfo.name}">${osAssessmentInfo.name}</div>
                   </td>
                   <td style="word-wrap: break-word; white-space: normal; max-width: 100px;">
-                      <div class="slds-truncate" title="${osAssessmentInfo.id}">${osAssessmentInfo.id}</div>
+                      <div class="slds-truncate" title="${osAssessmentInfo.id}"><a href="${instanceUrl}/${osAssessmentInfo.id}">${osAssessmentInfo.id}</div>
                   </td>
                   <td style="word-wrap: break-word; white-space: normal; max-width: 60%; overflow: hidden;">
                       <div title="${osAssessmentInfo.dependenciesOS}">${osAssessmentInfo.dependenciesOS}</div>
                   </td>
-                  <td style="word-wrap: break-word; white-space: normal; max-width: 60%; overflow: hidden;">
+                <!--  <td style="word-wrap: break-word; white-space: normal; max-width: 60%; overflow: hidden;">
                       <div title="${osAssessmentInfo.missingOS}">${osAssessmentInfo.missingOS}</div>
-                  </td>
+                  </td> -->
                   <td style="word-wrap: break-word; white-space: normal; max-width: 60%; overflow: hidden;">
                       <div title="${osAssessmentInfo.dependenciesIP}">${osAssessmentInfo.dependenciesIP}</div>
                   </td>
-                  <td style="word-wrap: break-word; white-space: normal; max-width: 60%; overflow: hidden;">
+                 <!-- <td style="word-wrap: break-word; white-space: normal; max-width: 60%; overflow: hidden;">
                       <div title="${osAssessmentInfo.missingIP}">${osAssessmentInfo.missingIP}</div>
-                  </td>
+                  </td> -->
                   <td style="word-wrap: break-word; white-space: normal; max-width: 60%; overflow: hidden;">
                       <div title="${osAssessmentInfo.dependenciesDR}">${osAssessmentInfo.dependenciesDR}</div>
                   </td>
-                  <td style="word-wrap: break-word; white-space: normal; max-width: 60%; overflow: hidden;">
+                <!--  <td style="word-wrap: break-word; white-space: normal; max-width: 60%; overflow: hidden;">
                       <div title="${osAssessmentInfo.missingDR}">${osAssessmentInfo.missingDR}</div>
-                  </td>
+                  </td> -->
                   <td style="word-wrap: break-word; white-space: normal; max-width: 60%; overflow: hidden;">
                       <div title="${osAssessmentInfo.dependenciesRemoteAction}">${osAssessmentInfo.dependenciesRemoteAction}</div>
                   </td>
@@ -137,7 +137,7 @@ export class AssessmentReporter {
     return this.getOSAssessmentReport(tableBody);
   }
 
-  private static generateIPAssesment(ipAssessmentInfos: IPAssessmentInfo[]): string {
+  private static generateIPAssesment(ipAssessmentInfos: IPAssessmentInfo[], instanceUrl: string): string {
     let tableBody = '';
     tableBody += '<div class="slds-text-heading_large">Integration Procedure Components Assessment</div>';
 
@@ -148,11 +148,11 @@ export class AssessmentReporter {
                       <div class="slds-truncate" title="${ipAssessmentInfo.name}">${ipAssessmentInfo.name}</div>
                   </td>
                   <td style="word-wrap: break-word; white-space: normal; max-width: 100px;">
-                      <div class="slds-truncate" title="${ipAssessmentInfo.id}">${ipAssessmentInfo.id}</div>
+                      <div class="slds-truncate" title="${ipAssessmentInfo.id}"><a href="${instanceUrl}/${ipAssessmentInfo.id}">${ipAssessmentInfo.id}</div>
                   </td>
-                  <td style="word-wrap: break-word; white-space: normal; max-width: 60%; overflow: hidden;">
+                <!--  <td style="word-wrap: break-word; white-space: normal; max-width: 60%; overflow: hidden;">
                       <div title="${ipAssessmentInfo.dependenciesOS}">${ipAssessmentInfo.dependenciesOS}</div>
-                  </td>
+                  </td> -->
                   <td style="word-wrap: break-word; white-space: normal; max-width: 60%; overflow: hidden;">
                       <div title="${ipAssessmentInfo.dependenciesIP}">${ipAssessmentInfo.dependenciesIP}</div>
                   </td>
@@ -169,7 +169,7 @@ export class AssessmentReporter {
     return this.getIPAssessmentReport(tableBody);
   }
 
-  private static generateCardAssesment(flexCardAssessmentInfos: FlexCardAssessmentInfo[]): string {
+  private static generateCardAssesment(flexCardAssessmentInfos: FlexCardAssessmentInfo[], instanceUrl: string): string {
     let tableBody = '';
     tableBody += '<div class="slds-text-heading_large">Flexcard Components Assessment</div>';
     for (const card of flexCardAssessmentInfos) {
@@ -179,7 +179,7 @@ export class AssessmentReporter {
                       <div class="slds-truncate" title="${card.name}">${card.name}</div>
                   </td>
                   <td style="word-wrap: break-word; white-space: normal; max-width: 100px;">
-                      <div class="slds-truncate" title="${card.id}">${card.id}</div>
+                      <div class="slds-truncate" title="${card.id}"><a href="${instanceUrl}/${card.id}">${card.id}</div>
                   </td>
                   <td style="word-wrap: break-word; white-space: normal; max-width: 60%; overflow: hidden;">
                       <div title="${card.dependenciesOS}">${card.dependenciesOS}</div>
@@ -197,7 +197,7 @@ export class AssessmentReporter {
     return this.getCardAssessmentReport(tableBody);
   }
 
-  private static generateDRAssesment(dataRaptorAssessmentInfos: DataRaptorAssessmentInfo[]): string {
+  private static generateDRAssesment(dataRaptorAssessmentInfos: DataRaptorAssessmentInfo[], instanceUrl): string {
     let tableBody = '';
     tableBody += '<div class="slds-text-heading_large">Data Raptor Components Assessment</div>';
     for (const dr of dataRaptorAssessmentInfos) {
@@ -287,21 +287,21 @@ export class AssessmentReporter {
                 <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
                     <div title="Dependencies">Omniscript Dependencies</div>
                 </th>
-                 <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
+             <!--    <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
                     <div title="Dependencies">Omniscript Missing Dependencies</div>
-                </th>
+                </th> -->
                 <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
                     <div title="Dependencies">Integration Procedures Dependencies</div>
                 </th>
-                <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
+               <!--   <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
                     <div title="Dependencies">Integration Procedures Missing Dependencies</div>
-                </th>
+                </th> -->
                 <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
                     <div title="Dependencies">Data Raptor dependencies</div>
                 </th>
-                <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
+                <!--  <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
                     <div title="Dependencies">Data Raptor Missing dependencies</div>
-                </th>
+                </th>  -->
                 <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
                     <div title="Dependencies">Remote Action dependencies</div>
                 </th>
@@ -327,9 +327,9 @@ export class AssessmentReporter {
                     <th class="" scope="col" style="width: 10%; word-wrap: break-word; white-space: normal; text-align: left;">
                         <div class="slds-truncate" title="ID">ID</div>
                     </th>
-                    <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
+                   <!-- <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
                         <div title="Dependencies">Omniscript Dependencies</div>
-                    </th>
+                    </th> -->
                     <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
                         <div title="Dependencies">Integration Procedures Dependencies</div>
                     </th>

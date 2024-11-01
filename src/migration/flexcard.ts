@@ -95,7 +95,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       const flexCards = await this.getAllActiveCards();
       const flexCardsAssessmentInfos = this.processCardComponents(flexCards);
       this.ux.log('flexCardsAssessmentInfos');
-      this.ux.log((flexCardsAssessmentInfos).toString());
+      // this.ux.log(flexCardsAssessmentInfos.toString());
       return flexCardsAssessmentInfos;
     } catch (err) {
       this.ux.log(err);
@@ -110,22 +110,34 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
     // Now process each OmniScript and its elements
     for (const flexCard of limitedFlexCards) {
-        // Await here since processOSComponents is now async
-        //this.ux.log(flexCard['Name']);
-        const flexCardAssessmentInfo: FlexCardAssessmentInfo = {
-            name: flexCard['Name'],
-            id: '',
-            dependenciesIP: null,
-            dependenciesDR: [],
-            dependenciesOS: [],
-            infos: [],
-            warnings: [],
-        };
-        flexCardAssessmentInfos.push(flexCardAssessmentInfo);
+      // Await here since processOSComponents is now async
+      //this.ux.log(flexCard['Name']);
+      const flexCardAssessmentInfo: FlexCardAssessmentInfo = {
+        name: flexCard['Name'],
+        id: flexCard['Id'],
+        dependenciesIP: [],
+        dependenciesDR: [],
+        dependenciesOS: [],
+        infos: [],
+        warnings: [],
+      };
+      this.updateDependencies(flexCard, flexCardAssessmentInfo);
+      flexCardAssessmentInfos.push(flexCardAssessmentInfo);
     }
     return flexCardAssessmentInfos;
-}
+  }
 
+  private updateDependencies(flexCard, flexCardAssessmentInfo): void {
+    let dataSource = JSON.parse(flexCard[this.namespacePrefix + 'Datasource__c']);
+    if (dataSource?.datasource) {
+      dataSource = dataSource.dataSource;
+    }
+    if (dataSource['type'] === 'DataRaptor') {
+      flexCardAssessmentInfo.dependenciesDR.push(dataSource['value']['bundle']);
+    } else if (dataSource.type === 'IntegrationProcedures') {
+      flexCardAssessmentInfo.dependenciesIP.push(dataSource['value']['ipMethod']);
+    }
+  }
   // Query all cards that are active
   private async getAllActiveCards(): Promise<AnyJson[]> {
     //DebugTimer.getInstance().lap('Query Vlocity Cards');
