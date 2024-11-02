@@ -119,3 +119,8 @@ export interface FileParser {
 export interface FileProcessor {
   process(file: File, type: string, namespace: string): string;
 }
+
+export interface nameUrl {
+  name: string;
+  url: string;
+}

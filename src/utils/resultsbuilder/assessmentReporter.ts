@@ -11,25 +11,103 @@ import {
   OmniAssessmentInfo,
   FlexCardAssessmentInfo,
   DataRaptorAssessmentInfo,
+  nameUrl,
 } from '../interfaces';
 
 export class AssessmentReporter {
   public static async generate(result: AssessmentInfo, instanceUrl: string): Promise<void> {
-    let htmlBody = '';
+    const basePath = process.cwd() + '/assessment_reports';
+    fs.mkdirSync(basePath, { recursive: true });
+    const omniscriptAssessmentFilePath = basePath + '/omniscript_assessment.html';
+    const flexcardAssessmentFilePath = basePath + '/flexcard_assessment.html';
+    const integrationProcedureAssessmentFilePath = basePath + '/integration_procedure_assessment.html';
+    const dataMapperAssessmentFilePath = basePath + '/datamapper_assessment.html';
+    const apexAssessmentFilePath = basePath + '/apex_assessment.html';
+    const lwcAssessmentFilePath = basePath + '/lwc_assessment.html';
 
-    htmlBody += '<br />' + this.generateOmniAssesment(result.omniAssessmentInfo, instanceUrl);
-    htmlBody += '<br />' + this.generateCardAssesment(result.flexCardAssessmentInfos, instanceUrl);
-    htmlBody += '<br />' + this.generateDRAssesment(result.dataRaptorAssessmentInfos, instanceUrl);
-    htmlBody += '<br />' + this.generateApexAssesment(result.apexAssessmentInfos);
-    htmlBody += '<br />' + this.generateLwcAssesment(result.lwcAssessmentInfos);
+    this.createDocument(
+      omniscriptAssessmentFilePath,
+      this.generateOmniAssesment(result.omniAssessmentInfo, instanceUrl)
+    );
+    this.createDocument(
+      flexcardAssessmentFilePath,
+      this.generateCardAssesment(result.flexCardAssessmentInfos, instanceUrl)
+    );
+    this.createDocument(
+      integrationProcedureAssessmentFilePath,
+      this.generateIPAssesment(result?.omniAssessmentInfo.ipAssessmentInfos, instanceUrl)
+    );
+    this.createDocument(
+      dataMapperAssessmentFilePath,
+      this.generateDRAssesment(result.dataRaptorAssessmentInfos, instanceUrl)
+    );
+    this.createDocument(apexAssessmentFilePath, this.generateApexAssesment(result.apexAssessmentInfos));
+    this.createDocument(lwcAssessmentFilePath, this.generateLwcAssesment(result.lwcAssessmentInfos));
+    const nameUrls = [
+      {
+        name: 'omnscript assessment report',
+        url: omniscriptAssessmentFilePath,
+      },
+      {
+        name: 'flexcard assessment report',
+        url: flexcardAssessmentFilePath,
+      },
+      {
+        name: 'Integration Procedure assessment report',
+        url: integrationProcedureAssessmentFilePath,
+      },
+      {
+        name: 'DataMapper assessment report',
+        url: dataMapperAssessmentFilePath,
+      },
+      {
+        name: 'Apex assessment report',
+        url: apexAssessmentFilePath,
+      },
+      {
+        name: 'LWC assessment report',
+        url: lwcAssessmentFilePath,
+      },
+    ];
+    await this.createMasterDocument(nameUrls, basePath);
+  }
 
-    const doc = this.generateDocument(htmlBody);
-    const fileUrl = process.cwd() + '/assessmentresults.html';
-    fs.writeFileSync(fileUrl, doc);
+  private static async createMasterDocument(reports: nameUrl[], basePath: string): Promise<void> {
+    let listBody = '';
+    for (const report of reports) {
+      listBody += ` <li class="slds-list__item" >
+                <a href="${report.url}" class="slds-text-link" > ${report.name} </a>
+                    </li>`;
+    }
+    const body = `
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/design-system/2.17.5/styles/salesforce-lightning-design-system.min.css">
+                            <title>SLDS Bulleted List</title>
+                        </head>
+                        <body>
+                            <div class="slds-p-around_medium">
+                                <h1 class="slds-text-heading_medium">Assessment Reports</h1>
+                                <ul class="slds-list_vertical slds-has-dividers_left-space">
+                                    ${listBody}
+                                </ul>
+                            </div>
+                        </body>
+                        </html>
+                    `;
+    const fileUrl = basePath + '/assessmentresults.html';
 
+    fs.writeFileSync(fileUrl, body);
     await open('file://' + fileUrl);
   }
 
+  private static createDocument(filePath: string, htmlBody: string): void {
+    const doc = this.generateDocument(htmlBody);
+    fs.writeFileSync(filePath, doc);
+  }
   private static generateLwcAssesment(lwcAssessmentInfos: LWCAssessmentInfo[]): string {
     let tableBody = '';
     tableBody += `
@@ -92,7 +170,7 @@ export class AssessmentReporter {
 
     // htmlBody += '<br />' + this.generateLwcAssesment(result.lwcAssessmentInfos);
     htmlBody += '<br />' + this.generateOSAssesment(omniAssessmentInfo.osAssessmentInfos, instanceUrl);
-    htmlBody += '<br />' + this.generateIPAssesment(omniAssessmentInfo.ipAssessmentInfos, instanceUrl);
+    // htmlBody += '<br />' + this.generateIPAssesment(omniAssessmentInfo.ipAssessmentInfos, instanceUrl);
     return htmlBody;
   }
 
