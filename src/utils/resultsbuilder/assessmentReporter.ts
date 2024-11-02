@@ -46,27 +46,27 @@ export class AssessmentReporter {
     const nameUrls = [
       {
         name: 'omnscript assessment report',
-        url: omniscriptAssessmentFilePath,
+        url: 'omniscript_assessment.html',
       },
       {
         name: 'flexcard assessment report',
-        url: flexcardAssessmentFilePath,
+        url: 'flexcard_assessment.html',
       },
       {
         name: 'Integration Procedure assessment report',
-        url: integrationProcedureAssessmentFilePath,
+        url: 'integration_procedure_assessment.html',
       },
       {
         name: 'DataMapper assessment report',
-        url: dataMapperAssessmentFilePath,
+        url: 'datamapper_assessment.html',
       },
       {
         name: 'Apex assessment report',
-        url: apexAssessmentFilePath,
+        url: 'apex_assessment.html',
       },
       {
         name: 'LWC assessment report',
-        url: lwcAssessmentFilePath,
+        url: 'lwc_assessment.html',
       },
     ];
     await this.createMasterDocument(nameUrls, basePath);
