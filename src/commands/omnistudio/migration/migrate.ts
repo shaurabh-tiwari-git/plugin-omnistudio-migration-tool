@@ -20,6 +20,7 @@ import { CardMigrationTool } from '../../../migration/flexcard';
 import { OmniScriptExportType, OmniScriptMigrationTool } from '../../../migration/omniscript';
 import { Logger } from '../../../utils/logger';
 import OmnistudioRelatedObjectMigrationFacade from '../../../migration/related/OmnistudioRelatedObjectMigrationFacade';
+import { generatePackageXml } from '../../../utils/generatePackageXml';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -175,7 +176,11 @@ export default class Migrate extends OmniStudioBaseCommand {
       allVersions,
       this.org
     );
-    omnistudioRelatedObjectsMigration.migrateAll(objectMigrationResults, []);
+    const relatedObjectMigrationResult = omnistudioRelatedObjectsMigration.migrateAll(objectMigrationResults, []);
+    generatePackageXml.createChangeList(
+      relatedObjectMigrationResult.apexClasses,
+      relatedObjectMigrationResult.lwcComponents
+    );
     await ResultsBuilder.generate(objectMigrationResults, conn.instanceUrl);
 
     // save timer to debug logger

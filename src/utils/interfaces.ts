@@ -25,27 +25,27 @@ export interface LWCAssessmentInfo {
 export interface OSAssessmentInfo {
   name: string;
   id: string;
-  dependenciesIP: string[];
+  dependenciesIP: nameLocation[];
   missingIP: string[];
-  dependenciesDR: string[];
+  dependenciesDR: nameLocation[];
   missingDR: string[];
-  dependenciesOS: string[];
+  dependenciesOS: nameLocation[];
   missingOS: string[];
-  dependenciesRemoteAction: string[];
-  // missingRemoteAction: AnyJson[];
+  dependenciesRemoteAction: nameLocation[];
+  dependenciesLWC: nameLocation[];
+  type: string;
   infos: string[];
   warnings: string[];
   errors: string[];
-  path: string;
 }
 
 export interface IPAssessmentInfo {
   name: string;
   id: string;
-  dependenciesIP: string[];
-  dependenciesDR: string[];
-  dependenciesOS: string[];
-  dependenciesRemoteAction: string[];
+  dependenciesIP: nameLocation[];
+  dependenciesDR: nameLocation[];
+  dependenciesOS: nameLocation[];
+  dependenciesRemoteAction: nameLocation[];
   infos: string[];
   warnings: string[];
   errors: string[];
@@ -118,4 +118,9 @@ export interface FileParser {
 
 export interface FileProcessor {
   process(file: File, type: string, namespace: string): string;
+}
+
+export interface nameLocation {
+  name: string;
+  location: string;
 }

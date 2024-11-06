@@ -188,8 +188,8 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
       DebugTimer.getInstance().lap('Query data raptors');
       const dataRaptors = await this.getAllDataRaptors();
       const dataRaptorAssessmentInfos = this.processDRComponents(dataRaptors);
-      this.ux.log('dataRaptorAssessmentInfos');
-      this.ux.log(dataRaptorAssessmentInfos.toString());
+      /* this.ux.log('dataRaptorAssessmentInfos');
+       this.ux.log(dataRaptorAssessmentInfos.toString()); */
       return dataRaptorAssessmentInfos;
     } catch (err) {
       this.ux.log(err);

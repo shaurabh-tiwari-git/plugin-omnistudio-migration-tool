@@ -45,7 +45,7 @@ export default class Assess extends OmniStudioBaseCommand {
     DebugTimer.getInstance().start();
     const namespace = (this.flags.namespace || 'vlocity_ins') as string;
     const apiVersion = (this.flags.apiversion || '55.0') as string;
-    const allVersions = true;
+    const allVersions = (this.flags.allversions || false) as boolean;
     const conn = this.org.getConnection();
     Logger.initialiseLogger(this.ux, this.logger);
     const projectDirectory = OmnistudioRelatedObjectMigrationFacade.intializeProject();

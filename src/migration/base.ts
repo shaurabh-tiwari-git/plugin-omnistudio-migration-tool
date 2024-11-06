@@ -3,6 +3,7 @@ import { Connection, Logger, Messages } from '@salesforce/core';
 import { DebugTimer, QueryTools } from '../utils';
 
 import { NetUtils } from '../utils/net';
+import { Stringutil } from '../utils/StringValue/stringutil';
 import { TransformData, UploadRecordResult } from './interfaces';
 
 export class BaseMigrationTool {
@@ -57,8 +58,7 @@ export class BaseMigrationTool {
   }
 
   protected cleanName(name: string, allowUnderscores = false): string {
-    if (!name) return '';
-    return allowUnderscores ? name.replace(/[^a-z0-9_]+/gi, '') : name.replace(/[^a-z0-9]+/gi, '');
+    return Stringutil.cleanName(name, allowUnderscores);
   }
 
   protected async truncate(objectName: string): Promise<void> {

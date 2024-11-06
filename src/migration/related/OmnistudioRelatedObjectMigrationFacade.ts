@@ -5,7 +5,7 @@
 import { Org } from '@salesforce/core';
 import '../../utils/prototypes';
 import { DebugTimer, MigratedObject } from '../../utils';
-import { RelatedObjectsMigrate } from '../interfaces';
+import { RelatedObjectMigrationResult, RelatedObjectsMigrate } from '../interfaces';
 import { sfProject } from '../../utils/sfcli/project/sfProject';
 import { Logger } from '../../utils/logger';
 import { ApexMigration } from './ApexMigration';
@@ -44,7 +44,7 @@ export default class OmnistudioRelatedObjectMigrationFacade {
       return process.cwd() + '/' + defaultProjectName;
     }
   }
-  public migrateAll(migrationResult: MigratedObject[], relatedObjects: string[]): any {
+  public migrateAll(migrationResult: MigratedObject[], relatedObjects: string[]): RelatedObjectMigrationResult {
     // Start the debug timer
     DebugTimer.getInstance().start();
 
@@ -63,15 +63,14 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     if (relatedObjects.includes('apex')) {
       migrationTools.push(this.createApexClassMigrationTool(projectDirectory));
     }
-
+    const results = new Map<string, string[]>();
     // Proceed with migration logic
-    for (const migrationTool of migrationTools.reverse()) {
+    for (const migrationTool of migrationTools) {
       try {
-        migrationTool.migrateRelatedObjects(null, null);
+        results.set(migrationTool.processObjectType(), migrationTool.migrateRelatedObjects(null, null));
       } catch (Error) {
         // Log the error
         Logger.logger.error(Error.message);
-        return { migrationResult };
       }
     }
     // Truncate existing objects if necessary
@@ -82,7 +81,7 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     Logger.logger.debug(timer);
 
     // Return results needed for --json flag
-    return { migrationResult };
+    return { apexClasses: results.get('apex'), lwcComponents: results.get('lwc') };
   }
 
   // Factory methods to create instances of specific tools
