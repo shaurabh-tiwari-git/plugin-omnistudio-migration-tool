@@ -25,5 +25,7 @@
   "errorWhileActivatingCard": "Could not activate Card: ",
   "errorWhileUploadingCard": "An error ocurred while uploading Card: ",
   "errorWhileCreatingElements": "An error ocurred while saving OmniScript elements: ",
-  "allVersionsDescription": "Migrate all versions of a component"
+  "allVersionsDescription": "Migrate all versions of a component",
+  "changeMessage": " %s will be changed from %s to %s",
+  "angularOSWarning": " Angular OmniScript will not be migrated, please convert this to LWC based Omniscript"
 }
