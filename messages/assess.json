@@ -21,6 +21,7 @@
   "duplicatedCardName": "Duplicated Flex Card name",
   "duplicatedDrName": "Duplicated DataRaptor name",
   "duplicatedOSName": "Duplicated OmniScript name",
+  "duplicatedName": "Duplicated name",
   "errorWhileActivatingOs": "Could not activate OmniScript / Integration Procedure: ",
   "errorWhileActivatingCard": "Could not activate Card: ",
   "errorWhileUploadingCard": "An error ocurred while uploading Card: ",

@@ -13,6 +13,7 @@ import {
 } from '../interfaces';
 import { OSAssesmentReporter } from './OSAssessmentReporter';
 import { IPAssessmentReporter } from './IPAssessmentReporter';
+import { DRAssessmentReporter } from './DRAssessmentReporter';
 
 export class AssessmentReporter {
   public static async generate(result: AssessmentInfo, instanceUrl: string): Promise<void> {
@@ -39,7 +40,7 @@ export class AssessmentReporter {
     );
     this.createDocument(
       dataMapperAssessmentFilePath,
-      this.generateDRAssesment(result.dataRaptorAssessmentInfos, instanceUrl)
+      DRAssessmentReporter.generateDRAssesment(result.dataRaptorAssessmentInfos, instanceUrl)
     );
     this.createDocument(apexAssessmentFilePath, this.generateApexAssesment(result.apexAssessmentInfos));
     this.createDocument(lwcAssessmentFilePath, this.generateLwcAssesment(result.lwcAssessmentInfos));
@@ -229,23 +230,6 @@ export class AssessmentReporter {
     return this.getCardAssessmentReport(tableBody);
   }
 
-  private static generateDRAssesment(dataRaptorAssessmentInfos: DataRaptorAssessmentInfo[], instanceUrl): string {
-    let tableBody = '';
-    tableBody += '<div class="slds-text-heading_large">Data Raptor Components Assessment</div>';
-    for (const dr of dataRaptorAssessmentInfos) {
-      const row = `
-              <tr class="slds-hint_parent">
-                  <td style="word-wrap: break-word; white-space: normal; max-width: 200px;">
-                      <div class="slds-truncate" title="${dr.name}">${dr.name}</div>
-                      <div class="slds-truncate" title="${dr.customFunction}">${dr.customFunction}</div>
-                  </td>
-              </tr>`;
-      tableBody += row;
-    }
-
-    return this.getDRAssessmentReport(tableBody);
-  }
-
   private static generateMessages(messages: string[]): string {
     let messageBody = '';
     for (const message of messages) {
@@ -294,40 +278,6 @@ export class AssessmentReporter {
                     <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
                         <div title="Dependencies">Data Raptor Dependencies</div>
                     </th>
-                </tr>
-            </thead>
-            <tbody>
-            ${tableContent}
-            </tbody>
-            </table>
-        </div>`;
-    return tableBody;
-  }
-
-  private static getDRAssessmentReport(tableContent: string): string {
-    const tableBody = `
-        <div style="margin-block:15px">        
-            <table style="width: 100%; table-layout: auto;" class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped slds-table_col-bordered" aria-label="Results for Data Raptor updates">
-            <thead>
-                <tr class="slds-line-height_reset">
-                    <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
-                        <div class="slds-truncate" title="Name">Name</div>
-                    </th>
-                    <th class="" scope="col" style="width: 10%; word-wrap: break-word; white-space: normal; text-align: left;">
-                        <div class="slds-truncate" title="Custom Function Change">Custom Function Change</div>
-                    </th>
-                    <!--th class="" scope="col" style="width: 10%; word-wrap: break-word; white-space: normal; text-align: left;">
-                        <div class="slds-truncate" title="Custom Function Change">Custom Function Change</div>
-                    </th>
-                    <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
-                        <div title="Dependencies">Omniscript Dependencies</div>
-                    </th>
-                    <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
-                        <div title="Dependencies">Integration Procedures Dependencies</div>
-                    </th>
-                    <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
-                        <div title="Dependencies">Data Raptor Dependencies</div>
-                    </th-->
                 </tr>
             </thead>
             <tbody>

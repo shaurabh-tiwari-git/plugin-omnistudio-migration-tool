@@ -2,13 +2,18 @@
 import { AnyJson } from '@salesforce/ts-types';
 import DRBundleMappings from '../mappings/DRBundle';
 import DRMapItemMappings from '../mappings/DRMapItem';
-import { DebugTimer, QueryTools } from '../utils';
+import { DebugTimer, oldNew, QueryTools } from '../utils';
 import { NetUtils } from '../utils/net';
 import { BaseMigrationTool } from './base';
 import { MigrationResult, MigrationTool, ObjectMapping, TransformData, UploadRecordResult } from './interfaces';
 import { DataRaptorAssessmentInfo } from '../../src/utils';
 
-import { getAllFunctionMetadata, getReplacedString } from '../utils/formula/FormulaUtil';
+import {
+  getAllFunctionMetadata,
+  getReplacedString,
+  populateRegexForFunctionMetadata,
+} from '../utils/formula/FormulaUtil';
+import { StringVal } from '../utils/StringValue/stringval';
 
 export class DataRaptorMigrationTool extends BaseMigrationTool implements MigrationTool {
   static readonly DRBUNDLE_NAME = 'DRBundle__c';
@@ -183,10 +188,25 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     };
   }
 
+  private async getAllDRToItemsMap(): Promise<Map<string, AnyJson[]>> {
+    const drToItemsMap = new Map<string, AnyJson[]>();
+    const drItems = await this.getAllItems();
+    for (const drItem of drItems) {
+      const drName = drItem['Name'];
+      if (drToItemsMap.has(drName)) {
+        drToItemsMap.get(drName).push(drItem);
+      } else {
+        drToItemsMap.set(drName, [drItem]);
+      }
+    }
+    return drToItemsMap;
+  }
+
   public async assess(): Promise<DataRaptorAssessmentInfo[]> {
     try {
       DebugTimer.getInstance().lap('Query data raptors');
       const dataRaptors = await this.getAllDataRaptors();
+
       const dataRaptorAssessmentInfos = this.processDRComponents(dataRaptors);
       /* this.ux.log('dataRaptorAssessmentInfos');
        this.ux.log(dataRaptorAssessmentInfos.toString()); */
@@ -201,40 +221,73 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     const dataRaptorAssessmentInfos: DataRaptorAssessmentInfo[] = [];
     // Query all the functionMetadata with all required fields
     const functionDefinitionMetadata = await getAllFunctionMetadata(this.namespace, this.connection);
+    populateRegexForFunctionMetadata(functionDefinitionMetadata);
+    const existingDataRaptorNames = new Set<string>();
+    const dataRaptorItemsMap = await this.getAllDRToItemsMap();
 
     // Now process each OmniScript and its elements
     for (const dataRaptor of dataRaptors) {
+      if (dataRaptor[this.namespacePrefix + 'Type__c'] === 'Migration') continue;
+      const drName = dataRaptor['Name'];
       // Await here since processOSComponents is now async
-      this.ux.log(dataRaptor['Name']);
-      this.ux.log(dataRaptor[this.namespacePrefix + 'Formula__c']);
-      var customFunctionString = '';
-      if (dataRaptor[this.namespacePrefix + 'Formula__c'] != null) {
-        this.ux.log('formula');
-        customFunctionString =
-          'Original Formula :' + dataRaptor[this.namespacePrefix + 'Formula__c'] + '\n\n' + 'Replaced Formula :Formula';
-        try {
-          customFunctionString +=
-            'Replaced Formula :Formula \n\n' +
-            getReplacedString(
-              this.namespacePrefix,
-              dataRaptor[this.namespacePrefix + 'Formula__c'],
-              functionDefinitionMetadata
-            );
-        } catch (ex) {
-          this.logger.error(JSON.stringify(ex));
-          console.log(
-            "There was some problem while updating the formula syntax, please check the all the formula's syntax once : " +
-              dataRaptor[this.namespacePrefix + 'Formula__c']
-          );
-        }
+      this.ux.log(drName);
+      const warnings: string[] = [];
+      const existingDRNameVal = new StringVal(drName, 'name');
+
+      if (!existingDRNameVal.isNameCleaned()) {
+        warnings.push(
+          this.messages.getMessage('changeMessage', [
+            existingDRNameVal.type,
+            existingDRNameVal.val,
+            existingDRNameVal.cleanName(),
+          ])
+        );
+      }
+      if (existingDataRaptorNames.has(existingDRNameVal.cleanName())) {
+        warnings.push(this.messages.getMessage('duplicatedName') + '  ' + existingDRNameVal.cleanName());
+      } else {
+        existingDataRaptorNames.add(existingDRNameVal.cleanName());
+      }
+      const apexDependencies = [];
+      if (dataRaptor[this.namespacePrefix + 'CustomInputClass__c']) {
+        apexDependencies.push(dataRaptor[this.namespacePrefix + 'CustomInputClass__c']);
+      }
+      if (dataRaptor[this.namespacePrefix + 'CustomOutputClass__c']) {
+        apexDependencies.push(dataRaptor[this.namespacePrefix + 'CustomOutputClass__c']);
       }
 
+      const formulaChanges: oldNew[] = [];
+      const drItems = dataRaptorItemsMap.get(drName);
+      if (drItems) {
+        for (const drItem of drItems) {
+          // this.ux.log(dataRaptor[this.namespacePrefix + 'Formula__c']);
+          const formula = drItem[this.namespacePrefix + 'Formula__c'];
+          if (formula) {
+            try {
+              const newFormula = getReplacedString(this.namespacePrefix, formula, functionDefinitionMetadata);
+              if (newFormula !== formula) {
+                formulaChanges.push({
+                  old: formula,
+                  new: newFormula,
+                });
+              }
+            } catch (ex) {
+              this.logger.error(JSON.stringify(ex));
+              console.log(
+                "There was some problem while updating the formula syntax, please check the all the formula's syntax once : " +
+                  formula
+              );
+            }
+          }
+        }
+      }
       const dataRaptorAssessmentInfo: DataRaptorAssessmentInfo = {
-        name: dataRaptor['Name'],
-        customFunction: customFunctionString,
+        name: existingDRNameVal.val,
         id: dataRaptor['Id'],
+        formulaChanges: formulaChanges,
         infos: [],
-        warnings: [],
+        apexDependencies: apexDependencies,
+        warnings: warnings,
       };
       dataRaptorAssessmentInfos.push(dataRaptorAssessmentInfo);
     }
@@ -262,6 +315,20 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
       this.getDRMapItemFields()
     );
   }
+
+  /*
+  private async getAllItemsForDataRaptorByName(drName: string): Promise<AnyJson[]> {
+    const filters = new Map<string, any>();
+    //Query all Elements
+    return await QueryTools.queryWithFilter(
+      this.connection,
+      this.namespace,
+      DataRaptorMigrationTool.DRMAPITEM_NAME,
+      this.getDRMapItemFields(),
+      filters.set('Name', drName)
+    );
+  }
+    */
 
   // Get All Items for one DataRaptor
   private async getItemsForDataRaptor(
