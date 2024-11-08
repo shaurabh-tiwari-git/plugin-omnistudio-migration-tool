@@ -274,6 +274,12 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           const lwcName = propertySet['lwcName'];
           dependenciesLWC.push({ name: lwcName, location: nameVal });
         }
+        // To fetch custom overrides
+        if (propertySet['lwcComponentOverride']) {
+          const nameVal = `${elemName}`;
+          const lwcName = propertySet['lwcComponentOverride'];
+          dependenciesLWC.push({ name: lwcName, location: nameVal });
+        }
       }
 
       const omniProcessType = omniscript[this.namespacePrefix + 'IsProcedure__c']
@@ -325,7 +331,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         );
       }
       if (existingOmniscriptNames.has(recordName)) {
-        warnings.push(this.messages.getMessage('duplicatedName') + recordName);
+        warnings.push(this.messages.getMessage('duplicatedName') + '  ' + recordName);
       } else {
         existingOmniscriptNames.add(recordName);
       }

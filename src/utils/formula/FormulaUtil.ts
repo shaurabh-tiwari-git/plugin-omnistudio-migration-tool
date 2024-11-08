@@ -78,6 +78,11 @@ export async function getAllFunctionMetadata(namespace: string, connection: Conn
   return await QueryTools.queryAll(connection, namespace, 'FunctionDefinition__mdt', getFunctionDefinitionFields());
 }
 
+export function populateRegexForFunctionMetadata(functionDefinitionMetadata: AnyJson[]) {
+  functionDefinitionMetadata.forEach((functionDef) => {
+    functionDef['regex'] = new RegExp('\\b' + functionDef['DeveloperName'] + '\\b', 'g');
+  });
+}
 export function getReplacedString(
   namespacePrefix: string,
   inputString: string,
@@ -85,10 +90,9 @@ export function getReplacedString(
 ): string {
   let formulaSyntax = inputString;
   for (let functionDefMd of functionDefinitionMetadata) {
-    const FormulaName = functionDefMd['DeveloperName'];
-    const regExStr = new RegExp('\\b' + FormulaName + '\\b', 'g');
-    const numberOfOccurances: number =
-      formulaSyntax.match(regExStr) !== null ? formulaSyntax.match(regExStr).length : 0;
+    const regExStr = functionDefMd['regex'];
+    const match = formulaSyntax.match(regExStr);
+    const numberOfOccurances: number = match !== null ? match.length : 0;
     if (numberOfOccurances > 0) {
       for (var count: number = 1; count <= numberOfOccurances; count++) {
         formulaSyntax = getReplacedformulaString(

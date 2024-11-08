@@ -50,7 +50,7 @@ export class ApexMigration extends BaseRelatedObjectMigration implements Related
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
     const targetOrg: Org = this.org;
-    sfProject.retrieve(APEXCLASS, targetOrg.getUsername());
+    // sfProject.retrieve(APEXCLASS, targetOrg.getUsername());
     const apexAssessmentInfos = this.processApexFiles(this.projectPath);
     sfProject.deploy(APEXCLASS, targetOrg.getUsername());
     shell.cd(pwd);
@@ -60,8 +60,8 @@ export class ApexMigration extends BaseRelatedObjectMigration implements Related
   public assess(): ApexAssessmentInfo[] {
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
-    const targetOrg: Org = this.org;
-    sfProject.retrieve(APEXCLASS, targetOrg.getUsername());
+    // const targetOrg: Org = this.org;
+    // sfProject.retrieve(APEXCLASS, this.org.getUsername());
     const apexAssessmentInfos = this.processApexFiles(this.projectPath);
     shell.cd(pwd);
     return apexAssessmentInfos;

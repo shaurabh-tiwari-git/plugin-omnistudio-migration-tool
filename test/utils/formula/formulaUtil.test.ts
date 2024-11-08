@@ -1,12 +1,13 @@
 /* eslint-disable camelcase */
 import { expect } from '@salesforce/command/lib/test';
 import { AnyJson } from '@salesforce/ts-types';
-import { getReplacedString } from '../../../src/utils/formula/FormulaUtil';
+import { getReplacedString, populateRegexForFunctionMetadata } from '../../../src/utils/formula/FormulaUtil';
 
-describe('ApexASTParser', () => {
+describe('FormulaUtilTest', () => {
   it('should generate new string with standard function format', () => {
     const namespacePrefix = 'test_namespace__';
     const mockedFunctionDefinitionMetadata = getMockedAllFunctionMetadata();
+    populateRegexForFunctionMetadata(mockedFunctionDefinitionMetadata);
     const inputString = "TESTMETHODFIRST('hello','bye')";
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const result = getReplacedString(namespacePrefix, inputString, mockedFunctionDefinitionMetadata);
@@ -18,6 +19,7 @@ describe('ApexASTParser', () => {
   it('should generate new string with standard function format with nested custom formula', () => {
     const namespacePrefix = 'test_namespace__';
     const mockedFunctionDefinitionMetadata = getMockedAllFunctionMetadata();
+    populateRegexForFunctionMetadata(mockedFunctionDefinitionMetadata);
     const inputString = "TESTMETHODFIRST('hello',TESTMETHOD('bye'))";
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const result = getReplacedString(namespacePrefix, inputString, mockedFunctionDefinitionMetadata);
@@ -29,6 +31,7 @@ describe('ApexASTParser', () => {
   it('should generate new string with standard function format with nested custom formula and a formula used more than Once', () => {
     const namespacePrefix = 'test_namespace__';
     const mockedFunctionDefinitionMetadata = getMockedAllFunctionMetadata();
+    populateRegexForFunctionMetadata(mockedFunctionDefinitionMetadata);
     const inputString = "TESTMETHODFIRST('hello',TESTMETHOD(TESTMETHODFIRST('bye','check')))";
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const result = getReplacedString(namespacePrefix, inputString, mockedFunctionDefinitionMetadata);

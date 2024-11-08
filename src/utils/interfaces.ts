@@ -90,10 +90,11 @@ export interface FlexCardAssessmentInfo {
 
 export interface DataRaptorAssessmentInfo {
   name: string;
-  customFunction: string;
   id: string;
+  formulaChanges: oldNew[];
   infos: string[];
   warnings: string[];
+  apexDependencies: string[];
 }
 
 export interface OmniAssessmentInfo {
@@ -123,4 +124,9 @@ export interface FileProcessor {
 export interface nameLocation {
   name: string;
   location: string;
+}
+
+export interface oldNew {
+  old: string;
+  new: string;
 }
