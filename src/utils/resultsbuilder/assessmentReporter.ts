@@ -8,7 +8,6 @@ import {
   LWCAssessmentInfo,
   OmniAssessmentInfo,
   FlexCardAssessmentInfo,
-  DataRaptorAssessmentInfo,
   nameLocation,
 } from '../interfaces';
 import { OSAssesmentReporter } from './OSAssessmentReporter';
