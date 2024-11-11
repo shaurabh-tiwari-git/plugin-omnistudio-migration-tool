@@ -63,6 +63,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
 
     // Query all the functionMetadata with all required fields
     const functionDefinitionMetadata = await getAllFunctionMetadata(this.namespace, this.connection);
+    populateRegexForFunctionMetadata(functionDefinitionMetadata);
     // Start transforming each dataRaptor
     DebugTimer.getInstance().lap('Transform Data Raptor');
     let done = 0;

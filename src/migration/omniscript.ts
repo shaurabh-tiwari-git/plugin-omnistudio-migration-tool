@@ -19,7 +19,11 @@ import { NetUtils, RequestMethod } from '../utils/net';
 import { Connection, Messages, Logger } from '@salesforce/core';
 import { UX } from '@salesforce/command';
 import { OSAssessmentInfo, OmniAssessmentInfo, IPAssessmentInfo } from '../../src/utils';
-import { getAllFunctionMetadata, getReplacedString } from '../utils/formula/FormulaUtil';
+import {
+  getAllFunctionMetadata,
+  getReplacedString,
+  populateRegexForFunctionMetadata,
+} from '../utils/formula/FormulaUtil';
 import { StringVal } from '../utils/StringValue/stringval';
 
 export class OmniScriptMigrationTool extends BaseMigrationTool implements MigrationTool {
@@ -387,6 +391,8 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     // Get All Records from OmniScript__c (IP & OS Parent Records)
     const omniscripts = await this.getAllOmniScripts();
     const functionDefinitionMetadata = await getAllFunctionMetadata(this.namespace, this.connection);
+    populateRegexForFunctionMetadata(functionDefinitionMetadata);
+
     const duplicatedNames = new Set<string>();
 
     // Variables to be returned After Migration
