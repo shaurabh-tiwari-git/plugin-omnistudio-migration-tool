@@ -40,26 +40,48 @@ export class HTMLParser {
   public replaceTags(namespaceTag: string): Map<string, string> {
     const htmlContentMap = new Map<string, string>();
     // Load the HTML into cheerio
-    const $ = this.parser;
+    //const $ = this.parser;
     htmlContentMap.set(FileConstant.BASE_CONTENT, this.html);
     // Find all tags that contain the substring "omnistudio" in their tag name
-    $('*').each((i, element) => {
-      if (element.type === TAG && element.name && element.name.includes(namespaceTag + '-')) {
-        // Create a new tag with the same content and attributes as the old tag
-        const newTag = DEFAULT_NAMESPACE + element.name.substring(element.name.indexOf('-'));
-        const newElement = $(`<${newTag}>`).html($(element).html());
+    // $('*').each((i, element) => {
+    //   if (element.type === TAG && element.name && element.name.includes(namespaceTag + '-')) {
+    //     // Create a new tag with the same content and attributes as the old tag
+    //     const newTag = DEFAULT_NAMESPACE + element.name.substring(element.name.indexOf('-'));
+    //     const newElement = $(`<${newTag}>`).html($(element).html());
 
-        // Copy all attributes from the old element to the new one
-        Object.keys(element.attribs).forEach((attr) => {
-          newElement.attr(attr, $(element).attr(attr));
-        });
+    //     // Copy all attributes from the old element to the new one
+    //     Object.entries(element.attribs).forEach(([key, value]) => {
+    //       newElement.attr(key, value);
+    //     });
 
-        // Replace the old element with the new one
-        $(element).replaceWith(newElement);
-      }
-    });
-    $.html().replace(/\n\s*/g, '');
-    htmlContentMap.set(FileConstant.MODIFIED_CONTENT, $.html());
+    //     // Replace the old element with the new one
+    //     $(element).replaceWith(newElement);
+    //   }
+    // });
+    // // $.html().replace(/\n\s*/g, '');
+
+//     let html = `
+// <html lang="en">
+//   <head>
+//     <meta charset="UTF-8" />
+//     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+//     <title>Replace Tags Example</title>
+//   </head>
+//   <span dir={_dir}>test</span>
+//   <body>
+//     <template>
+//       <vlocity_ins-input vertical-align=stretch>Hello Shailesh</vlocity_ins-input>
+//       <vlocity_ins-input vertical-align=stretch>Another Input</vlocity_ins-input>
+//     </template>
+//   </body>
+// </html>`;
+
+// Use a regular expression to match <omnistudio-input ...>...</omnistudio-input>
+this.html = this.html.replace('/<'+namespaceTag+'-/g', '<c-').replace('/<'+namespaceTag+'-/g', '</c-');
+
+console.log(this.html);
+    // htmlContentMap.set(FileConstant.MODIFIED_CONTENT, $.html());
+    htmlContentMap.set(FileConstant.MODIFIED_CONTENT, this.html);
     return htmlContentMap;
   }
 

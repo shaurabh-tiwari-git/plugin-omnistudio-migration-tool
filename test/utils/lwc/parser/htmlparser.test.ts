@@ -12,6 +12,6 @@ describe('HTMLParser test class', () => {
     // eslint-disable-next-line no-console
     console.log(new FileDiffUtil().getFileDiff('file.txt', html.get('original'), html.get('modified')));
     htmlParser.saveToFile('test/utils/lwc/parser/output/test.html', html.get('modified'));
-    expect(htmlParser.getModifiedHTML()).contains('c-input');
+    expect(htmlParser.getModifiedHTML()).contains('c-omniscript-step-chart');
   });
 });

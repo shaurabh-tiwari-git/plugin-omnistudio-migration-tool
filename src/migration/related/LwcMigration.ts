@@ -63,7 +63,7 @@ export class LwcMigration extends BaseRelatedObjectMigration implements RelatedO
       const jsonData: LWCAssessmentInfo[] = [];
       fileMap.forEach((fileList, dir) => {
         const changeInfos: FileChangeInfo[] = [];
-        if (dir !== 'lwc' && !dir.endsWith('English') && !dir.includes('_') && !dir.includes('cf')) {
+        if (dir !== 'lwc' && !dir.endsWith('English') && !dir.includes('_') && !dir.startsWith('cf')) {
           for (const file of fileList) {
             if (this.isValideFile(file.name)) {
               const processor = FileProcessorFactory.getFileProcessor(file.ext);
