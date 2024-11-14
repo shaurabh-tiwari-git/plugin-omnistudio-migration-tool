@@ -1,11 +1,18 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { ApexAssessmentInfo, LWCAssessmentInfo } from './interfaces';
 
 export class generatePackageXml {
   // Method to generate package.xml with additional types
-  public static createChangeList(apexClasses: string[], lwcComponents: string[]): void {
-    const apexXml = generatePackageXml.getXmlElementforMembers(apexClasses, 'ApexClass');
-    const lwcXml = generatePackageXml.getXmlElementforMembers(lwcComponents, 'LightningComponentBundle');
+  public static createChangeList(
+    apexAssementInfos: ApexAssessmentInfo[],
+    lwcAssessmentInfos: LWCAssessmentInfo[]
+  ): void {
+    const apexXml = generatePackageXml.getXmlElementforMembers(this.getApexclasses(apexAssementInfos), 'ApexClass');
+    const lwcXml = generatePackageXml.getXmlElementforMembers(
+      this.getLwcs(lwcAssessmentInfos),
+      'LightningComponentBundle'
+    );
 
     const additionalTypes = `
     <types>
@@ -66,5 +73,19 @@ export class generatePackageXml {
         ${membersTag}
         <name>${type}</name>
     </types> `;
+  }
+
+  private static getApexclasses(apexAssessmentInfos: ApexAssessmentInfo[]): string[] {
+    if (!apexAssessmentInfos || apexAssessmentInfos.length === 0) return [];
+    return apexAssessmentInfos.map((apexAssessmentInfo) => {
+      return apexAssessmentInfo.name;
+    });
+  }
+
+  private static getLwcs(lwcAssessmentInfos: LWCAssessmentInfo[]): string[] {
+    if (!lwcAssessmentInfos || lwcAssessmentInfos.length === 0) return [];
+    return lwcAssessmentInfos.map((lwcAssessmentInfo) => {
+      return lwcAssessmentInfo.name;
+    });
   }
 }
