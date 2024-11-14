@@ -56,4 +56,9 @@ export class XmlParser {
       throw error;
     }
   }
+
+  // public isAutogenratedFile(filePath: string) {
+  //   this.fileContent = fs.readFileSync(filePath, 'utf-8');
+  //   return this.fileContent.includes('OmniScript Auto-generated');
+  // }
 }
