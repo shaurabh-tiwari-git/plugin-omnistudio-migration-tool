@@ -71,9 +71,7 @@ export class LwcMigration extends BaseRelatedObjectMigration implements RelatedO
                 const path = file.location;
                 const name = file.name + file.ext;
                 if (file.ext === 'xml') {
-                  // if (fileutil.isAutogenratedFile(path)) {
-
-                  // }
+                  // if (fileutil.isAutogenratedFile(path)) { }
                 }
                 const diff = processor.process(file, type, this.namespace);
                 if (diff != null) {

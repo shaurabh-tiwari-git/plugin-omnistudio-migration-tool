@@ -1,3 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/explicit-member-accessibility */
+/* eslint-disable @typescript-eslint/restrict-template-expressions */
+/* eslint-disable @typescript-eslint/member-ordering */
+/* eslint-disable no-console */
 import * as fs from 'fs';
 import { FileConstant } from '../fileutils/FileConstant';
 
@@ -23,12 +31,15 @@ export class HTMLParser {
 
   // Method to replace custom tags
   public replaceTags(namespaceTag: string): Map<string, string> {
-      const htmlContentMap = new Map<string, string>();
-      htmlContentMap.set(FileConstant.BASE_CONTENT, this.html);
-      // Use a regular expression to match <omnistudio-input ...>...</omnistudio-input>
-      this.html = this.html.replace('<'+namespaceTag, '<'+DEFAULT_NAMESPACE).replace('</'+namespaceTag, '</'+DEFAULT_NAMESPACE);
-      htmlContentMap.set(FileConstant.MODIFIED_CONTENT, this.html);
-      console.log(this.html);
+    const htmlContentMap = new Map<string, string>();
+    htmlContentMap.set(FileConstant.BASE_CONTENT, this.html);
+    // Use a regular expression to match <omnistudio-input> to </omnistudio-input>
+
+    this.html = this.html
+      .replace('<' + namespaceTag, '<' + DEFAULT_NAMESPACE)
+      .replace('</' + namespaceTag, '</' + DEFAULT_NAMESPACE);
+
+    htmlContentMap.set(FileConstant.MODIFIED_CONTENT, this.html);
     return htmlContentMap;
   }
 
