@@ -27,7 +27,7 @@ export class LwcMigration extends BaseRelatedObjectMigration implements RelatedO
     const type = 'assessment';
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
-    // sfProject.retrieve(LWCTYPE, this.org.getUsername());
+    sfProject.retrieve(LWCTYPE, this.org.getUsername());
     const filesMap = this.processLwcFiles(this.projectPath);
     shell.cd(pwd);
     return this.processFiles(filesMap, type);
@@ -70,6 +70,11 @@ export class LwcMigration extends BaseRelatedObjectMigration implements RelatedO
               if (processor != null) {
                 const path = file.location;
                 const name = file.name + file.ext;
+                if (file.ext === 'xml') {
+                  // if (fileutil.isAutogenratedFile(path)) {
+
+                  // }
+                }
                 const diff = processor.process(file, type, this.namespace);
                 if (diff != null) {
                   const fileInfo: FileChangeInfo = {
