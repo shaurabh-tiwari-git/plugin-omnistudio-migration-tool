@@ -11,7 +11,7 @@ describe('FormulaUtilTest', () => {
     const inputString = "TESTMETHODFIRST('hello','bye')";
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const result = getReplacedString(namespacePrefix, inputString, mockedFunctionDefinitionMetadata);
-    const expectedResult = "Function(testClassFirst,testMethodFirst,'hello','bye')";
+    const expectedResult = "FUNCTION('testClassFirst','testMethodFirst','hello','bye')";
 
     expect(result).to.be.equal(expectedResult);
   });
@@ -23,7 +23,8 @@ describe('FormulaUtilTest', () => {
     const inputString = "TESTMETHODFIRST('hello',TESTMETHOD('bye'))";
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const result = getReplacedString(namespacePrefix, inputString, mockedFunctionDefinitionMetadata);
-    const expectedResult = "Function(testClassFirst,testMethodFirst,'hello',Function(testClass,testMethod,'bye'))";
+    const expectedResult =
+      "FUNCTION('testClassFirst','testMethodFirst','hello',FUNCTION('testClass','testMethod','bye'))";
 
     expect(result).to.be.equal(expectedResult);
   });
@@ -36,7 +37,7 @@ describe('FormulaUtilTest', () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const result = getReplacedString(namespacePrefix, inputString, mockedFunctionDefinitionMetadata);
     const expectedResult =
-      "Function(testClassFirst,testMethodFirst,'hello',Function(testClass,testMethod,Function(testClassFirst,testMethodFirst,'bye','check')))";
+      "FUNCTION('testClassFirst','testMethodFirst','hello',FUNCTION('testClass','testMethod',FUNCTION('testClassFirst','testMethodFirst','bye','check')))";
     expect(result).to.be.equal(expectedResult);
   });
 });

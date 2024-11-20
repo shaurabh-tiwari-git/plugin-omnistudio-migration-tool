@@ -17,10 +17,10 @@ function getReplacedformulaString(
   const startParanthIndex = startIndex + formulaName.length;
   const endParanthIndex = getClosingIndexOfParantheses(formulaExpression, startParanthIndex);
   const newFormulaExpression =
-    'Function(' +
-    className +
+    'FUNCTION(' +
+    `'${className}'` +
     ',' +
-    methodName +
+    `'${methodName}'` +
     ',' +
     formulaExpression.substring(startParanthIndex + 1, endParanthIndex) +
     ')';

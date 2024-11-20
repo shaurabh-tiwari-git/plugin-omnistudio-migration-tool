@@ -63,7 +63,16 @@ export class LwcMigration extends BaseRelatedObjectMigration {
       const jsonData: LWCAssessmentInfo[] = [];
       fileMap.forEach((fileList, dir) => {
         const changeInfos: FileChangeInfo[] = [];
-        if (dir !== 'lwc' && !dir.endsWith('English') && !dir.includes('_') && !dir.startsWith('cf')) {
+        if (
+          dir !== 'lwc' &&
+          !dir.endsWith('MultiLanguage') &&
+          !dir.endsWith('English') &&
+          !dir.includes('_') &&
+          !dir.startsWith('cf') &&
+          !dir.startsWith('Omniscript') &&
+          !dir.includes('Util') &&
+          !dir.includes('lodash')
+        ) {
           for (const file of fileList) {
             if (this.isValideFile(file.name)) {
               const processor = FileProcessorFactory.getFileProcessor(file.ext);
@@ -74,7 +83,7 @@ export class LwcMigration extends BaseRelatedObjectMigration {
                   // if (fileutil.isAutogenratedFile(path)) { }
                 }
                 const diff = processor.process(file, type, this.namespace);
-                if (diff != null) {
+                if (diff !== null || diff !== '') {
                   const fileInfo: FileChangeInfo = {
                     path,
                     name,
