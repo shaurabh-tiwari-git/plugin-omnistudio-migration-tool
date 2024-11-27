@@ -4,8 +4,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Org } from '@salesforce/core';
 import '../../utils/prototypes';
-import { DebugTimer, MigratedObject } from '../../utils';
-import { RelatedObjectMigrationResult, RelatedObjectsMigrate } from '../interfaces';
+import {
+  ApexAssessmentInfo,
+  DebugTimer,
+  LWCAssessmentInfo,
+  MigratedObject,
+  RelatedObjectAssesmentInfo,
+} from '../../utils';
 import { sfProject } from '../../utils/sfcli/project/sfProject';
 import { Logger } from '../../utils/logger';
 import { ApexMigration } from './ApexMigration';
@@ -44,35 +49,33 @@ export default class OmnistudioRelatedObjectMigrationFacade {
       return process.cwd() + '/' + defaultProjectName;
     }
   }
-  public migrateAll(migrationResult: MigratedObject[], relatedObjects: string[]): RelatedObjectMigrationResult {
+  public migrateAll(migrationResult: MigratedObject[], relatedObjects: string[]): RelatedObjectAssesmentInfo {
     // Start the debug timer
     DebugTimer.getInstance().start();
 
     // Declare an array of MigrationTool
-    const migrationTools: RelatedObjectsMigrate[] = [];
     const projectDirectory: string = OmnistudioRelatedObjectMigrationFacade.intializeProject();
     const debugTimer = DebugTimer.getInstance();
     debugTimer.start();
     // Initialize migration tools based on the relatedObjects parameter
-    if (relatedObjects.includes('lwc')) {
-      migrationTools.push(this.createLWCComponentMigrationTool(this.namespace, projectDirectory));
-    }
-    if (relatedObjects.includes('labels')) {
-      migrationTools.push(this.createCustomLabelMigrationTool(this.namespace, this.org));
-    }
-    if (relatedObjects.includes('apex')) {
-      migrationTools.push(this.createApexClassMigrationTool(projectDirectory));
-    }
-    const results = new Map<string, string[]>();
+    const apexMigrator = this.createApexClassMigrationTool(projectDirectory);
+    const lwcMigrator = this.createLWCComponentMigrationTool(this.namespace, projectDirectory);
+    let apexAssessmentInfos: ApexAssessmentInfo[] = [];
+    let lwcAssessmentInfos: LWCAssessmentInfo[] = [];
     // Proceed with migration logic
-    for (const migrationTool of migrationTools) {
-      try {
-        results.set(migrationTool.processObjectType(), migrationTool.migrateRelatedObjects(null, null));
-      } catch (Error) {
-        // Log the error
-        Logger.logger.error(Error.message);
-      }
+    try {
+      apexAssessmentInfos = apexMigrator.migrate();
+    } catch (Error) {
+      // Log the error
+      Logger.logger.error(Error.message);
     }
+    try {
+      lwcAssessmentInfos = lwcMigrator.migrate();
+    } catch (Error) {
+      // Log the error
+      Logger.logger.error(Error.message);
+    }
+
     // Truncate existing objects if necessary
     // Stop the debug timer
     const timer = debugTimer.stop();
@@ -81,18 +84,13 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     Logger.logger.debug(timer);
 
     // Return results needed for --json flag
-    return { apexClasses: results.get('apex'), lwcComponents: results.get('lwc') };
+    return { apexAssessmentInfos, lwcAssessmentInfos };
   }
 
   // Factory methods to create instances of specific tools
   private createLWCComponentMigrationTool(namespace: string, projectPath: string): LwcMigration {
     // Return an instance of LWCComponentMigrationTool when implemented
     return new LwcMigration(projectPath, this.namespace, this.org);
-  }
-
-  private createCustomLabelMigrationTool(namespace: string, org: Org): RelatedObjectsMigrate {
-    // Return an instance of CustomLabelMigrationTool when implemented
-    throw new Error('CustomLabelMigrationTool implementation is not provided yet.');
   }
 
   private createApexClassMigrationTool(projectPath: string): ApexMigration {

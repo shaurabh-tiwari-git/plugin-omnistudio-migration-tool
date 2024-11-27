@@ -20,16 +20,15 @@ export class JavascriptFileProcessor implements FileProcessor {
     const filePath = file.location;
     const fileContent: Map<string, string> = jsParser.replaceImportSource(filePath, namespace);
     if (fileContent) {
+      const diff = fileDiffUtil.getFileDiff(
+        file.name + file.ext,
+        fileContent.get(FileConstant.BASE_CONTENT),
+        fileContent.get(FileConstant.MODIFIED_CONTENT)
+      );
       if (type != null && type === 'migration') {
         fileutil.saveToFile(filePath, fileContent.get(FileConstant.MODIFIED_CONTENT));
-      } else {
-        const diff = fileDiffUtil.getFileDiff(
-          file.name + file.ext,
-          fileContent.get(FileConstant.BASE_CONTENT),
-          fileContent.get(FileConstant.MODIFIED_CONTENT)
-        );
-        return diff;
       }
+      return diff;
     }
   }
 }

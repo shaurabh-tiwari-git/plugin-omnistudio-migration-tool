@@ -176,12 +176,15 @@ export default class Migrate extends OmniStudioBaseCommand {
       allVersions,
       this.org
     );
-    const relatedObjectMigrationResult = omnistudioRelatedObjectsMigration.migrateAll(objectMigrationResults, []);
+    const relatedObjectMigrationResult = omnistudioRelatedObjectsMigration.migrateAll(objectMigrationResults, [
+      'lwc',
+      'apex',
+    ]);
     generatePackageXml.createChangeList(
-      relatedObjectMigrationResult.apexClasses,
-      relatedObjectMigrationResult.lwcComponents
+      relatedObjectMigrationResult.apexAssessmentInfos,
+      relatedObjectMigrationResult.lwcAssessmentInfos
     );
-    await ResultsBuilder.generate(objectMigrationResults, conn.instanceUrl);
+    await ResultsBuilder.generate(objectMigrationResults, relatedObjectMigrationResult, conn.instanceUrl);
 
     // save timer to debug logger
     this.logger.debug(timer);

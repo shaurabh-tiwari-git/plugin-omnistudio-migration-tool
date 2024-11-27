@@ -2,7 +2,7 @@
 import * as shell from 'shelljs';
 import { Org } from '@salesforce/core';
 import { fileutil, File } from '../../utils/file/fileutil';
-import { MigrationResult, RelatedObjectsMigrate } from '../interfaces';
+import { MigrationResult } from '../interfaces';
 import { sfProject } from '../../utils/sfcli/project/sfProject';
 import { Logger } from '../../utils/logger';
 import { FileProcessorFactory } from '../../utils/lwcparser/fileutils/FileProcessorFactory';
@@ -12,7 +12,7 @@ import { BaseRelatedObjectMigration } from './BaseRealtedObjectMigration';
 const LWC_DIR_PATH = '/force-app/main/default/lwc';
 const LWCTYPE = 'LightningComponentBundle';
 
-export class LwcMigration extends BaseRelatedObjectMigration implements RelatedObjectsMigrate {
+export class LwcMigration extends BaseRelatedObjectMigration {
   public processObjectType(): string {
     return 'lwc';
   }
@@ -27,7 +27,7 @@ export class LwcMigration extends BaseRelatedObjectMigration implements RelatedO
     const type = 'assessment';
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
-    // sfProject.retrieve(LWCTYPE, this.org.getUsername());
+    sfProject.retrieve(LWCTYPE, this.org.getUsername());
     const filesMap = this.processLwcFiles(this.projectPath);
     shell.cd(pwd);
     return this.processFiles(filesMap, type);
@@ -40,7 +40,7 @@ export class LwcMigration extends BaseRelatedObjectMigration implements RelatedO
     sfProject.retrieve(LWCTYPE, targetOrg.getUsername());
     const filesMap = this.processLwcFiles(this.projectPath);
     const LWCAssessmentInfos = this.processFiles(filesMap, 'migration');
-    sfProject.deploy(LWCTYPE, targetOrg.getUsername());
+    // sfProject.deploy(LWCTYPE, targetOrg.getUsername());
     shell.cd(pwd);
     return LWCAssessmentInfos;
   }
@@ -63,13 +63,16 @@ export class LwcMigration extends BaseRelatedObjectMigration implements RelatedO
       const jsonData: LWCAssessmentInfo[] = [];
       fileMap.forEach((fileList, dir) => {
         const changeInfos: FileChangeInfo[] = [];
-        if (dir !== 'lwc' && !dir.endsWith('English') && !dir.includes('_') && !dir.includes('cf')) {
+        if (dir !== 'lwc' && !dir.endsWith('English') && !dir.includes('_') && !dir.startsWith('cf')) {
           for (const file of fileList) {
             if (this.isValideFile(file.name)) {
               const processor = FileProcessorFactory.getFileProcessor(file.ext);
               if (processor != null) {
                 const path = file.location;
                 const name = file.name + file.ext;
+                if (file.ext === 'xml') {
+                  // if (fileutil.isAutogenratedFile(path)) { }
+                }
                 const diff = processor.process(file, type, this.namespace);
                 if (diff != null) {
                   const fileInfo: FileChangeInfo = {

@@ -12,12 +12,13 @@ import {
   SingleTokenUpdate,
   TokenUpdater,
 } from '../../utils/apex/parser/apexparser';
-import { MigrationResult, RelatedObjectsMigrate } from '../interfaces';
+import { MigrationResult } from '../interfaces';
 import { sfProject } from '../../utils/sfcli/project/sfProject';
 import { fileutil, File } from '../../utils/file/fileutil';
 import { Logger } from '../../utils/logger';
 import { ApexAssessmentInfo } from '../../utils';
 import { FileDiffUtil } from '../../utils/lwcparser/fileutils/FileDiffUtil';
+import { Stringutil } from '../../utils/StringValue/stringutil';
 import { BaseRelatedObjectMigration } from './BaseRealtedObjectMigration';
 
 const APEXCLASS = 'Apexclass';
@@ -26,7 +27,7 @@ const CALLABLE = 'Callable';
 const VLOCITY_OPEN_INTERFACE2 = 'VlocityOpenInterface2';
 const VLOCITY_OPEN_INTERFACE = 'VlocityOpenInterface';
 
-export class ApexMigration extends BaseRelatedObjectMigration implements RelatedObjectsMigrate {
+export class ApexMigration extends BaseRelatedObjectMigration {
   private readonly callableInterface: InterfaceImplements;
   private readonly vlocityOpenInterface2: InterfaceImplements;
   private readonly vlocityOpenInterface: InterfaceImplements;
@@ -43,25 +44,24 @@ export class ApexMigration extends BaseRelatedObjectMigration implements Related
   public identifyObjects(migrationResults: MigrationResult[]): Promise<JSON[]> {
     throw new Error('Method not implemented.');
   }
-  public migrateRelatedObjects(migrationResults: MigrationResult[], migrationCandidates: JSON[]): string[] {
+  public migrateRelatedObjects(migrationResults: MigrationResult[], migrationCandidates: JSON[]): ApexAssessmentInfo[] {
     return this.migrate();
   }
-  public migrate(): string[] {
+  public migrate(): ApexAssessmentInfo[] {
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
     const targetOrg: Org = this.org;
-    // sfProject.retrieve(APEXCLASS, targetOrg.getUsername());
+    sfProject.retrieve(APEXCLASS, targetOrg.getUsername());
     const apexAssessmentInfos = this.processApexFiles(this.projectPath);
-    sfProject.deploy(APEXCLASS, targetOrg.getUsername());
+    // sfProject.deploy(APEXCLASS, targetOrg.getUsername());
     shell.cd(pwd);
-    return this.mapTOName(apexAssessmentInfos);
+    return apexAssessmentInfos;
   }
 
   public assess(): ApexAssessmentInfo[] {
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
-    // const targetOrg: Org = this.org;
-    // sfProject.retrieve(APEXCLASS, this.org.getUsername());
+    sfProject.retrieve(APEXCLASS, this.org.getUsername());
     const apexAssessmentInfos = this.processApexFiles(this.projectPath);
     shell.cd(pwd);
     return apexAssessmentInfos;
@@ -158,6 +158,19 @@ export class ApexMigration extends BaseRelatedObjectMigration implements Related
       for (const tokenChange of namespaceChanges.get(this.namespace))
         tokenUpdates.push(new SingleTokenUpdate(this.updatedNamespace, tokenChange));
     }
+
+    const methodParameters = parser.methodParameters;
+    if (methodParameters.size === 0) return tokenUpdates;
+    const drParameters = methodParameters.get(ParameterType.DR_NAME);
+    if (drParameters) {
+      for (const token of drParameters) {
+        const newName = `'${Stringutil.cleanName(token.text)}'`;
+        if (token.text === newName) continue;
+        Logger.logger.info(`In Apex ${file.name}  DR name ${token.text} will be updated to ${newName} `);
+        Logger.ux.log(`In Apex ${file.name}  DR name ${token.text} will be updated to ${newName}`);
+        tokenUpdates.push(new SingleTokenUpdate(newName, token));
+      }
+    }
     return tokenUpdates;
   }
 
@@ -184,10 +197,10 @@ export class ApexMigration extends BaseRelatedObjectMigration implements Related
             }
     `;
   }
-
-  private mapTOName(apexAssessmentInfos: ApexAssessmentInfo[]): string[] {
-    return apexAssessmentInfos.map((apexAssessmentInfo) => {
-      return apexAssessmentInfo.name;
-    });
-  }
+  /*
+    private mapTOName(apexAssessmentInfos: ApexAssessmentInfo[]): string[] {
+      return apexAssessmentInfos.map((apexAssessmentInfo) => {
+        return apexAssessmentInfo.name;
+      });
+    } */
 }

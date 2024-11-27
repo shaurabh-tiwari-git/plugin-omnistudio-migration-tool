@@ -7,23 +7,16 @@
 /* eslint-disable @typescript-eslint/member-ordering */
 /* eslint-disable no-console */
 import * as fs from 'fs';
-import * as cheerio from 'cheerio';
 import { FileConstant } from '../fileutils/FileConstant';
 
 const DEFAULT_NAMESPACE = 'c';
-const TAG = 'tag';
-
-// const { window } = new JSDOM();
-// const { document } = window;
 
 export class HTMLParser {
-  private parser: cheerio.CheerioAPI;
   html: string;
   // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
   constructor(htmlFilePath: string) {
     // Load the HTML file and initialize cheerio
     this.html = this.loadHTMLFromFile(htmlFilePath);
-    this.parser = cheerio.load(this.html, { xmlMode: true });
   }
 
   // Method to load HTML from a file
@@ -39,27 +32,14 @@ export class HTMLParser {
   // Method to replace custom tags
   public replaceTags(namespaceTag: string): Map<string, string> {
     const htmlContentMap = new Map<string, string>();
-    // Load the HTML into cheerio
-    const $ = this.parser;
     htmlContentMap.set(FileConstant.BASE_CONTENT, this.html);
-    // Find all tags that contain the substring "omnistudio" in their tag name
-    $('*').each((i, element) => {
-      if (element.type === TAG && element.name && element.name.includes(namespaceTag + '-')) {
-        // Create a new tag with the same content and attributes as the old tag
-        const newTag = DEFAULT_NAMESPACE + element.name.substring(element.name.indexOf('-'));
-        const newElement = $(`<${newTag}>`).html($(element).html());
+    // Use a regular expression to match <omnistudio-input> to </omnistudio-input>
 
-        // Copy all attributes from the old element to the new one
-        Object.keys(element.attribs).forEach((attr) => {
-          newElement.attr(attr, $(element).attr(attr));
-        });
+    this.html = this.html
+      .replace('<' + namespaceTag, '<' + DEFAULT_NAMESPACE)
+      .replace('</' + namespaceTag, '</' + DEFAULT_NAMESPACE);
 
-        // Replace the old element with the new one
-        $(element).replaceWith(newElement);
-      }
-    });
-    $.html().replace(/\n\s*/g, '');
-    htmlContentMap.set(FileConstant.MODIFIED_CONTENT, $.html());
+    htmlContentMap.set(FileConstant.MODIFIED_CONTENT, this.html);
     return htmlContentMap;
   }
 
@@ -76,6 +56,6 @@ export class HTMLParser {
 
   // Optional: Method to get the modified HTML as a string
   public getModifiedHTML(): string {
-    return this.parser.html();
+    return this.html;
   }
 }

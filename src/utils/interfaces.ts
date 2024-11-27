@@ -78,6 +78,10 @@ export interface AssessmentInfo {
   dataRaptorAssessmentInfos: DataRaptorAssessmentInfo[];
 }
 
+export interface RelatedObjectAssesmentInfo {
+  apexAssessmentInfos: ApexAssessmentInfo[];
+  lwcAssessmentInfos: LWCAssessmentInfo[];
+}
 export interface FlexCardAssessmentInfo {
   name: string;
   id: string;
