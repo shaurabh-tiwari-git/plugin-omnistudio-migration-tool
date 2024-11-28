@@ -49,12 +49,17 @@ export default class OmnistudioRelatedObjectMigrationFacade {
       return process.cwd() + '/' + defaultProjectName;
     }
   }
-  public migrateAll(migrationResult: MigratedObject[], relatedObjects: string[]): RelatedObjectAssesmentInfo {
+
+  public migrateAll(
+    migrationResult: MigratedObject[],
+    relatedObjects: string[],
+    projectPath?: string
+  ): RelatedObjectAssesmentInfo {
     // Start the debug timer
     DebugTimer.getInstance().start();
 
     // Declare an array of MigrationTool
-    const projectDirectory: string = OmnistudioRelatedObjectMigrationFacade.intializeProject();
+    const projectDirectory: string = OmnistudioRelatedObjectMigrationFacade.intializeProject(projectPath);
     const debugTimer = DebugTimer.getInstance();
     debugTimer.start();
     // Initialize migration tools based on the relatedObjects parameter

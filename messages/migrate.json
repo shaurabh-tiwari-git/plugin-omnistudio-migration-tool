@@ -25,5 +25,6 @@
   "errorWhileActivatingCard": "Could not activate Card: ",
   "errorWhileUploadingCard": "An error ocurred while uploading Card: ",
   "errorWhileCreatingElements": "An error ocurred while saving OmniScript elements: ",
-  "allVersionsDescription": "Migrate all versions of a component"
+  "allVersionsDescription": "Migrate all versions of a component",
+  "apexLwc": "Specify Apex/LWC migration"
 }
