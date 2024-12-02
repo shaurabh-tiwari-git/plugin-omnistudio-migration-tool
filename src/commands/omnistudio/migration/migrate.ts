@@ -50,7 +50,7 @@ export default class Migrate extends OmniStudioBaseCommand {
       description: messages.getMessage('allVersionsDescription'),
       required: false,
     }),
-    relatedObjects: flags.boolean({
+    relatedObjects: flags.string({
       char: 'r',
       description: messages.getMessage('apexLwc'),
     }),
@@ -86,7 +86,7 @@ export default class Migrate extends OmniStudioBaseCommand {
       // Validate input
       for (const obj of objectsToProcess) {
         if (!validOptions.includes(obj)) {
-          throw new Error(`Invalid option provided for -r: ${obj}. Valid options are apex, lwc.`);
+          Logger.logger.warn(`Invalid option provided for -r: ${obj}. Valid options are apex, lwc.`);
         }
       }
       // Ask for user consent
@@ -95,11 +95,11 @@ export default class Migrate extends OmniStudioBaseCommand {
       );
       if (!consent) {
         this.ux.log('User declined consent. Aborting the process.');
-        return;
+      } else {
+        const projectPath = await this.ux.prompt('Enter the project path for processing:');
+        this.ux.log(`Using project path: ${projectPath}`);
+        OmnistudioRelatedObjectMigrationFacade.intializeProject(projectPath);
       }
-      const projectPath = await this.ux.prompt('Enter the project path for processing:');
-      this.ux.log(`Using project path: ${projectPath}`);
-      OmnistudioRelatedObjectMigrationFacade.intializeProject(projectPath);
     }
 
     // const includeLwc = this.flags.lwc ? await this.ux.confirm('Do you want to include LWC migration? (yes/no)') : false;
