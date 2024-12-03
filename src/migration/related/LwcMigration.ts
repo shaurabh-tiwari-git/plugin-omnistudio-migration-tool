@@ -16,13 +16,13 @@ export class LwcMigration extends BaseRelatedObjectMigration {
   public processObjectType(): string {
     return 'lwc';
   }
-  public identifyObjects(migrationResults: MigrationResult[]): Promise<JSON[]> {
-    this.assessment();
-    throw new Error('Method not implemented.');
-  }
-  public migrateRelatedObjects(migrationResults: MigrationResult[], migrationCandidates: JSON[]): string[] {
-    return this.mapToName(this.migrate());
-  }
+  // public identifyObjects(migrationResults: MigrationResult[]): Promise<JSON[]> {
+  //   this.assessment();
+  //   throw new Error('Method not implemented.');
+  // }
+  // public migrateRelatedObjects(migrationResults: MigrationResult[], migrationCandidates: JSON[]): string[] {
+  //   return this.mapToName(this.migrate());
+  // }
   public assessment(): LWCAssessmentInfo[] {
     const type = 'assessment';
     const pwd = shell.pwd();

@@ -50,14 +50,10 @@ export default class Migrate extends OmniStudioBaseCommand {
       description: messages.getMessage('allVersionsDescription'),
       required: false,
     }),
-    relatedObjects: flags.string({
+    relatedobjects: flags.string({
       char: 'r',
       description: messages.getMessage('apexLwc'),
     }),
-    // lwc: flags.boolean({
-    //   char: 'l',
-    //   description: 'Include LWC migration in the process. User consent is required.',
-    // }),
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

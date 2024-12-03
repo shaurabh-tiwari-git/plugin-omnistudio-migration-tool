@@ -41,12 +41,12 @@ export class ApexMigration extends BaseRelatedObjectMigration {
   public processObjectType(): string {
     return 'apex';
   }
-  public identifyObjects(migrationResults: MigrationResult[]): Promise<JSON[]> {
-    throw new Error('Method not implemented.');
-  }
-  public migrateRelatedObjects(migrationResults: MigrationResult[], migrationCandidates: JSON[]): ApexAssessmentInfo[] {
-    return this.migrate();
-  }
+  // public identifyObjects(migrationResults: MigrationResult[]): Promise<JSON[]> {
+  //   throw new Error('Method not implemented.');
+  // }
+  // public migrateRelatedObjects(migrationResults: MigrationResult[], migrationCandidates: JSON[]): ApexAssessmentInfo[] {
+  //   return this.migrate();
+  // }
   public migrate(): ApexAssessmentInfo[] {
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
