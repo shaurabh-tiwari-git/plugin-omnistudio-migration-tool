@@ -12,7 +12,6 @@ import {
   SingleTokenUpdate,
   TokenUpdater,
 } from '../../utils/apex/parser/apexparser';
-import { MigrationResult } from '../interfaces';
 import { sfProject } from '../../utils/sfcli/project/sfProject';
 import { fileutil, File } from '../../utils/file/fileutil';
 import { Logger } from '../../utils/logger';

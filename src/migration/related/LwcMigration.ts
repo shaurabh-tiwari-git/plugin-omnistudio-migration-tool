@@ -104,10 +104,4 @@ export class LwcMigration extends BaseRelatedObjectMigration {
   private isValideFile(filename: string): boolean {
     return !filename.includes('_def') && !filename.includes('styleDefinition') && !filename.includes('definition');
   }
-
-  private mapToName(lwcAssessmentInfos: LWCAssessmentInfo[]): string[] {
-    return lwcAssessmentInfos.map((lwcAssessmentInfo) => {
-      return lwcAssessmentInfo.name;
-    });
-  }
 }
