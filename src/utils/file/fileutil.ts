@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/explicit-member-accessibility */
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
 /* eslint-disable no-console */
 import * as fs from 'fs';
@@ -71,6 +73,64 @@ export class fileutil {
       throw error;
     }
   }
+
+  public static readAndProcessFiles(
+    baseDir: string,
+    searchString: string,
+    fileMap: Map<string, File[]> = new Map<string, File[]>()
+  ): Map<string, File[]> {
+    const subDirectories = fs.readdirSync(baseDir).filter((dir) => {
+      const fullPath = path.join(baseDir, dir);
+      return fs.statSync(fullPath).isDirectory();
+    });
+
+    for (const subDirectory of subDirectories) {
+      console.log(`Processing subdirectory: ${subDirectory}`);
+      const subDirPath = path.join(baseDir, subDirectory);
+
+      // Check the XML file for the substring
+      const xmlFilePath = path.join(subDirPath, `${subDirectory}.js-meta.xml`);
+      if (fs.existsSync(xmlFilePath)) {
+        if (this.doesSubstringExist(xmlFilePath, searchString)) {
+          console.log(`Substring found in ${xmlFilePath}. Skipping all files in ${subDirectory}.`);
+          continue; // Move to the next subdirectory
+        }
+      }
+
+      // Process all files if substring is not found
+      const currentDirFiles: File[] = [];
+      const files = fs
+        .readdirSync(subDirPath)
+        .filter((file) => file.endsWith('.html') || file.endsWith('.js') || file.endsWith('.xml'));
+      files.forEach((file) => {
+        const filePath = path.join(subDirPath, file);
+        console.log(`Processing file: ${filePath}`);
+        const name = path.parse(file).name;
+        const ext = path.parse(file).ext;
+        const filepath = path.resolve(subDirPath, file);
+        currentDirFiles.push(new File(name, filepath, ext));
+        fileMap.set(path.basename(subDirPath), currentDirFiles);
+      });
+    }
+    return fileMap;
+  }
+
+  /**
+   * Check if a substring exists in an XML file
+   *
+   * @param filePath Path of the XML file
+   * @param searchString Substring to search for
+   * @returns true if substring exists, otherwise false
+   */
+  private static doesSubstringExist = (filePath: string, searchString: string): boolean => {
+    try {
+      const fileContent = fs.readFileSync(filePath, 'utf-8');
+      return fileContent.includes(searchString);
+    } catch (error) {
+      console.error(`Error reading file ${filePath}:`, error);
+      return false;
+    }
+  };
 }
 
 export class File {
