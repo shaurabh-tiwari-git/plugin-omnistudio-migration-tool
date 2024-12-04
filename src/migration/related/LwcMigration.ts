@@ -2,7 +2,6 @@
 import * as shell from 'shelljs';
 import { Org } from '@salesforce/core';
 import { fileutil, File } from '../../utils/file/fileutil';
-import { MigrationResult } from '../interfaces';
 import { sfProject } from '../../utils/sfcli/project/sfProject';
 import { Logger } from '../../utils/logger';
 import { FileProcessorFactory } from '../../utils/lwcparser/fileutils/FileProcessorFactory';
@@ -16,13 +15,13 @@ export class LwcMigration extends BaseRelatedObjectMigration {
   public processObjectType(): string {
     return 'lwc';
   }
-  public identifyObjects(migrationResults: MigrationResult[]): Promise<JSON[]> {
-    this.assessment();
-    throw new Error('Method not implemented.');
-  }
-  public migrateRelatedObjects(migrationResults: MigrationResult[], migrationCandidates: JSON[]): string[] {
-    return this.mapToName(this.migrate());
-  }
+  // public identifyObjects(migrationResults: MigrationResult[]): Promise<JSON[]> {
+  //   this.assessment();
+  //   throw new Error('Method not implemented.');
+  // }
+  // public migrateRelatedObjects(migrationResults: MigrationResult[], migrationCandidates: JSON[]): string[] {
+  //   return this.mapToName(this.migrate());
+  // }
   public assessment(): LWCAssessmentInfo[] {
     const type = 'assessment';
     const pwd = shell.pwd();
@@ -103,11 +102,5 @@ export class LwcMigration extends BaseRelatedObjectMigration {
 
   private isValideFile(filename: string): boolean {
     return !filename.includes('_def') && !filename.includes('styleDefinition') && !filename.includes('definition');
-  }
-
-  private mapToName(lwcAssessmentInfos: LWCAssessmentInfo[]): string[] {
-    return lwcAssessmentInfos.map((lwcAssessmentInfo) => {
-      return lwcAssessmentInfo.name;
-    });
   }
 }

@@ -28,5 +28,6 @@
   "errorWhileCreatingElements": "An error ocurred while saving OmniScript elements: ",
   "allVersionsDescription": "Migrate all versions of a component",
   "changeMessage": " %s will be changed from %s to %s",
-  "angularOSWarning": " Angular OmniScript will not be migrated, please convert this to LWC based Omniscript"
+  "angularOSWarning": " Angular OmniScript will not be migrated, please convert this to LWC based Omniscript",
+  "apexLwc": "Please select the type of components to migrate: 'apex' for Apex classes, 'lwc' for Lightning Web Components, or 'apex,lwc' if you want to include both types."
 }

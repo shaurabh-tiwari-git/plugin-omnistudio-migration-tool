@@ -7,5 +7,6 @@
     "sfdx omnistudio:migration:info --targetusername myOrg@example.com --targetdevhubusername devhub@org.com",
     "sfdx omnistudio:migration:info --name myname --targetusername myOrg@example.com"
   ],
-  "allVersionsDescription": "Migrate all versions of a component"
+  "allVersionsDescription": "Migrate all versions of a component",
+  "apexLwc": "Please select the type of components to migrate: 'apex' for Apex classes, 'lwc' for Lightning Web Components, or 'apex,lwc' if you want to include both types."
 }

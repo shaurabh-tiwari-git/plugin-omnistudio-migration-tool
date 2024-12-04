@@ -12,7 +12,6 @@ import {
   SingleTokenUpdate,
   TokenUpdater,
 } from '../../utils/apex/parser/apexparser';
-import { MigrationResult } from '../interfaces';
 import { sfProject } from '../../utils/sfcli/project/sfProject';
 import { fileutil, File } from '../../utils/file/fileutil';
 import { Logger } from '../../utils/logger';
@@ -41,12 +40,12 @@ export class ApexMigration extends BaseRelatedObjectMigration {
   public processObjectType(): string {
     return 'apex';
   }
-  public identifyObjects(migrationResults: MigrationResult[]): Promise<JSON[]> {
-    throw new Error('Method not implemented.');
-  }
-  public migrateRelatedObjects(migrationResults: MigrationResult[], migrationCandidates: JSON[]): ApexAssessmentInfo[] {
-    return this.migrate();
-  }
+  // public identifyObjects(migrationResults: MigrationResult[]): Promise<JSON[]> {
+  //   throw new Error('Method not implemented.');
+  // }
+  // public migrateRelatedObjects(migrationResults: MigrationResult[], migrationCandidates: JSON[]): ApexAssessmentInfo[] {
+  //   return this.migrate();
+  // }
   public migrate(): ApexAssessmentInfo[] {
     const pwd = shell.pwd();
     shell.cd(this.projectPath);

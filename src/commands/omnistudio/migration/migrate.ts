@@ -50,6 +50,10 @@ export default class Migrate extends OmniStudioBaseCommand {
       description: messages.getMessage('allVersionsDescription'),
       required: false,
     }),
+    relatedobjects: flags.string({
+      char: 'r',
+      description: messages.getMessage('apexLwc'),
+    }),
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -58,6 +62,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     const apiVersion = (this.flags.apiversion || '55.0') as string;
     const migrateOnly = (this.flags.only || '') as string;
     const allVersions = this.flags.allversions || false;
+    const relatedObjects = (this.flags.relatedobjects || '') as string;
 
     Logger.initialiseLogger(this.ux, this.logger);
     this.logger = Logger.logger;
@@ -67,7 +72,33 @@ export default class Migrate extends OmniStudioBaseCommand {
 
     // Let's time every step
     DebugTimer.getInstance().start();
+    // const includeApex = this.flags.apex
+    //   ? await this.ux.confirm('Do you want to include Apex migration? (yes/no)')
+    //   : false;
 
+    if (relatedObjects) {
+      const validOptions = ['apex', 'lwc'];
+      const objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
+      // Validate input
+      for (const obj of objectsToProcess) {
+        if (!validOptions.includes(obj)) {
+          Logger.logger.warn(`Invalid option provided for -r: ${obj}. Valid options are apex, lwc.`);
+        }
+      }
+      // Ask for user consent
+      const consent = await this.ux.confirm(
+        'By proceeding further, you hereby consent to the use, accept changes to your custom code, and the accompanying terms and conditions associated with the use of the OmniStudio Migration Tool. Do you want to proceed?'
+      );
+      if (!consent) {
+        this.ux.log('User declined consent. Aborting the process.');
+      } else {
+        const projectPath = await this.ux.prompt('Enter the project path for processing:');
+        this.ux.log(`Using project path: ${projectPath}`);
+        OmnistudioRelatedObjectMigrationFacade.intializeProject(projectPath);
+      }
+    }
+
+    // const includeLwc = this.flags.lwc ? await this.ux.confirm('Do you want to include LWC migration? (yes/no)') : false;
     // Register the migration objects
     let migrationObjects: MigrationTool[] = [];
     if (!migrateOnly) {
@@ -122,7 +153,6 @@ export default class Migrate extends OmniStudioBaseCommand {
           throw new Error(messages.getMessage('invalidOnlyFlag'));
       }
     }
-
     // Migrate individual objects
     const debugTimer = DebugTimer.getInstance();
     let objectMigrationResults: MigratedObject[] = [];

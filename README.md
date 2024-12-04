@@ -59,4 +59,11 @@ OPTIONS
   -a, --allversions                                                                 migrate all versions and not
                                                                                     and not just the active ones.
 
+  --relatedobjects=relatedobjects                                                   Please select the type of components to
+                                                                                    migrate: 'apex' for Apex classes, 'lwc' for Lightning Web Components, or 'apex,lwc' if you want to include both types.
+
 ```
+
+Terms:
+Notwithstanding anything stated in the terms and conditions agreed between Salesforce (‘SFDC’) and you (‘Customer’), the use of the OmniStudio Migration Tool (‘Tool’) is designed to facilitate the migration and it’s going to modify your custom code and by deploying and using the Tool you hereby provide your consent to automate the migration process and enable a smooth transition. Customer shall access and use the Tool only as permitted to the Customer and shall not compromise, break or circumvent any technical processes or security measures associated with the services provided by SFDC.
+The Customer agrees to hold harmless, indemnify, and defend SFDC, and its officers, directors, agents, employees, licensees, successors and assigns (collectively, the “Indemnified Parties”) against any and all damages, penalties, losses, liabilities, judgments, settlements, awards, costs, and expenses (including reasonable attorneys’ fees and expenses) to the extent arising out of or in connection with any claims related to the Customers use of the Tool or any willful misconduct, fraud or grossly negligent acts or omissions by the Customer.
