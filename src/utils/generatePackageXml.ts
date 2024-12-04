@@ -38,6 +38,7 @@ export class generatePackageXml {
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
       ${apexXml}
       ${lwcXml}
+      ${additionalTypes}
     <version>57.0</version>
 </Package>
 `;
