@@ -27,7 +27,7 @@ export class LwcMigration extends BaseRelatedObjectMigration {
     const type = 'assessment';
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
-    // sfProject.retrieve(LWCTYPE, this.org.getUsername());
+    sfProject.retrieve(LWCTYPE, this.org.getUsername());
     const filesMap = this.processLwcFiles(this.projectPath);
     shell.cd(pwd);
     return this.processFiles(filesMap, type);

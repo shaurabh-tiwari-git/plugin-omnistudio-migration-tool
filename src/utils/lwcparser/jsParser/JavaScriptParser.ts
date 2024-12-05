@@ -18,7 +18,7 @@ export class JavaScriptParser {
     const jsContentMap = new Map<string, string>();
     // Read the JavaScript file
     const code = fs.readFileSync(filePath, 'utf-8');
-    if (code.includes('Generated class DO NOT MODIFY')) {
+    if (code.includes('Generated class DO NOT MODIFY') || code.includes(oldSource + '/')) {
       return null;
     }
     jsContentMap.set(FileConstant.BASE_CONTENT, code);
