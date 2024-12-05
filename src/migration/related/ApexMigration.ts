@@ -30,7 +30,7 @@ export class ApexMigration extends BaseRelatedObjectMigration {
   private readonly callableInterface: InterfaceImplements;
   private readonly vlocityOpenInterface2: InterfaceImplements;
   private readonly vlocityOpenInterface: InterfaceImplements;
-  private updatedNamespace = 'omnistudio';
+  private updatedNamespace = 'vlocity_ins';
   public constructor(projectPath: string, namespace: string, org: Org) {
     super(projectPath, namespace, org);
     this.callableInterface = new InterfaceImplements(CALLABLE, this.namespace);
@@ -52,7 +52,7 @@ export class ApexMigration extends BaseRelatedObjectMigration {
     const targetOrg: Org = this.org;
     sfProject.retrieve(APEXCLASS, targetOrg.getUsername());
     const apexAssessmentInfos = this.processApexFiles(this.projectPath);
-    // sfProject.deploy(APEXCLASS, targetOrg.getUsername());
+    sfProject.deploy(APEXCLASS, targetOrg.getUsername());
     shell.cd(pwd);
     return apexAssessmentInfos;
   }

@@ -67,8 +67,10 @@ export default class Assess extends OmniStudioBaseCommand {
     this.ux.log(`Using Namespace: ${namespace}`);
 
     const dataRaptorAssessmentInfos: DataRaptorAssessmentInfo[] = await drMigrator.assess();
-    this.ux.log('dataRaptorAssessmentInfos');
-    this.ux.log(dataRaptorAssessmentInfos.toString());
+    if (dataRaptorAssessmentInfos) {
+      this.ux.log('dataRaptorAssessmentInfos');
+      this.ux.log(dataRaptorAssessmentInfos.toString());
+    }
     const flexCardAssessmentInfos: FlexCardAssessmentInfo[] = await flexMigrator.assess();
     const omniAssessmentInfo = await osMigrator.assess(dataRaptorAssessmentInfos, flexCardAssessmentInfos);
 

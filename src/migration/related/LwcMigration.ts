@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-shadow */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import * as shell from 'shelljs';
 import { Org } from '@salesforce/core';
@@ -26,7 +27,7 @@ export class LwcMigration extends BaseRelatedObjectMigration {
     const type = 'assessment';
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
-    sfProject.retrieve(LWCTYPE, this.org.getUsername());
+    // sfProject.retrieve(LWCTYPE, this.org.getUsername());
     const filesMap = this.processLwcFiles(this.projectPath);
     shell.cd(pwd);
     return this.processFiles(filesMap, type);
@@ -49,7 +50,7 @@ export class LwcMigration extends BaseRelatedObjectMigration {
     dir += LWC_DIR_PATH;
     let filesMap: Map<string, File[]>;
     try {
-      filesMap = fileutil.readAllFiles(dir);
+      filesMap = fileutil.readAndProcessFiles(dir, 'OmniScript Auto-generated');
     } catch (error) {
       Logger.logger.error('Error in reading files', error);
     }
@@ -62,18 +63,24 @@ export class LwcMigration extends BaseRelatedObjectMigration {
       const jsonData: LWCAssessmentInfo[] = [];
       fileMap.forEach((fileList, dir) => {
         const changeInfos: FileChangeInfo[] = [];
-        if (dir !== 'lwc' && !dir.endsWith('English') && !dir.includes('_') && !dir.startsWith('cf')) {
+        if (
+          dir !== 'lwc' &&
+          !dir.endsWith('MultiLanguage') &&
+          !dir.endsWith('English') &&
+          !dir.includes('_') &&
+          !dir.startsWith('cf') &&
+          !dir.startsWith('Omniscript') &&
+          !dir.includes('Util') &&
+          !dir.includes('lodash')
+        ) {
           for (const file of fileList) {
             if (this.isValideFile(file.name)) {
               const processor = FileProcessorFactory.getFileProcessor(file.ext);
               if (processor != null) {
                 const path = file.location;
                 const name = file.name + file.ext;
-                if (file.ext === 'xml') {
-                  // if (fileutil.isAutogenratedFile(path)) { }
-                }
                 const diff = processor.process(file, type, this.namespace);
-                if (diff != null) {
+                if (diff !== undefined && diff !== '') {
                   const fileInfo: FileChangeInfo = {
                     path,
                     name,
