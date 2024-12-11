@@ -18,7 +18,7 @@ export class XmlFileProcessor implements FileProcessor {
     const filePath: string = file.location;
     const parser = new XmlParser(filePath);
     const fileDiffUtil = new FileDiffUtil();
-    const fileContent: Map<string, string> = parser.removeNode(XML_TAG_TO_REPLACE);
+    const fileContent: Map<string, string> = parser.removeNode(XML_TAG_TO_REPLACE, namespace);
     if (fileContent) {
       const diff = fileDiffUtil.getFileDiff(
         file.name + file.ext,

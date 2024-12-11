@@ -1,8 +1,13 @@
 import { LightningElement, track, api } from 'lwc';
-import * as LABELS from './labels';
+import * as LABELS from 'vlocity_ins/labels';
 import { cloneDeep } from 'runtime_omnistudio_common/lodash';
 export default class TestInputJsFile extends LightningElement {
   labels = LABELS;
+
+  print() {
+    const test = 'vlocity_ins/testing';
+    console.log(test);
+  }
 
   @api
   set actionData(val) {

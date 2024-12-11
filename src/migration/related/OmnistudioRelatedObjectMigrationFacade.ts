@@ -4,6 +4,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Org } from '@salesforce/core';
 import '../../utils/prototypes';
+import * as shell from 'shelljs';
 import {
   ApexAssessmentInfo,
   DebugTimer,
@@ -22,6 +23,8 @@ import { LwcMigration } from './LwcMigration';
 // Load the specific messages for this file. Messages from @salesforce/command, @salesforce/core,
 // or any library that is using the messages framework can also be loaded this way.
 // const messages = Messages.loadMessages('@salesforce/plugin-omnistudio-related-object-migration-tool', 'migrate');
+const LWCTYPE = 'LightningComponentBundle';
+const APEXCLASS = 'Apexclass';
 
 const defaultProjectName = 'omnistudio_migration';
 export default class OmnistudioRelatedObjectMigrationFacade {
@@ -42,40 +45,64 @@ export default class OmnistudioRelatedObjectMigrationFacade {
   }
   public static intializeProject(projectPath?: string): string {
     if (projectPath) {
-      sfProject.create(defaultProjectName, projectPath);
-      return projectPath + '/' + defaultProjectName;
+      // sfProject.create(defaultProjectName, projectPath);
+      return projectPath;
     } else {
       sfProject.create(defaultProjectName);
       return process.cwd() + '/' + defaultProjectName;
     }
   }
+  public intializeProjectWithRetrieve(relatedObjects: string[], projectPath?: string): string {
+    if (projectPath) {
+      // sfProject.create(defaultProjectName, projectPath);
+      return projectPath;
+    } else {
+      sfProject.create(defaultProjectName);
+      projectPath = process.cwd() + '/' + defaultProjectName;
+      const pwd = shell.pwd();
+      shell.cd(projectPath);
+      if (relatedObjects.includes('lwc')) {
+        sfProject.retrieve(LWCTYPE, this.org.getUsername());
+      }
+      if (relatedObjects.includes('apex')) {
+        sfProject.retrieve(APEXCLASS, this.org.getUsername());
+      }
+      shell.cd(pwd);
+    }
+    return projectPath;
+  }
 
   public migrateAll(
     migrationResult: MigratedObject[],
     relatedObjects: string[],
-    projectPath?: string
+    projectPath?: string,
+    targetApexNamespace?: string
   ): RelatedObjectAssesmentInfo {
     // Start the debug timer
     DebugTimer.getInstance().start();
 
     // Declare an array of MigrationTool
-    const projectDirectory: string = OmnistudioRelatedObjectMigrationFacade.intializeProject(projectPath);
+    const projectDirectory: string = this.intializeProjectWithRetrieve(relatedObjects, projectPath);
     const debugTimer = DebugTimer.getInstance();
     debugTimer.start();
     // Initialize migration tools based on the relatedObjects parameter
-    const apexMigrator = this.createApexClassMigrationTool(projectDirectory);
+    const apexMigrator = this.createApexClassMigrationTool(projectDirectory, targetApexNamespace);
     const lwcMigrator = this.createLWCComponentMigrationTool(this.namespace, projectDirectory);
     let apexAssessmentInfos: ApexAssessmentInfo[] = [];
     let lwcAssessmentInfos: LWCAssessmentInfo[] = [];
     // Proceed with migration logic
     try {
-      apexAssessmentInfos = apexMigrator.migrate();
+      if (relatedObjects.includes('apex')) {
+        apexAssessmentInfos = apexMigrator.migrate();
+      }
     } catch (Error) {
       // Log the error
       Logger.logger.error(Error.message);
     }
     try {
-      lwcAssessmentInfos = lwcMigrator.migrate();
+      if (relatedObjects.includes('lwc')) {
+        lwcAssessmentInfos = lwcMigrator.migrate();
+      }
     } catch (Error) {
       // Log the error
       Logger.logger.error(Error.message);
@@ -98,8 +125,8 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     return new LwcMigration(projectPath, this.namespace, this.org);
   }
 
-  private createApexClassMigrationTool(projectPath: string): ApexMigration {
+  private createApexClassMigrationTool(projectPath: string, targetApexNamespace?: string): ApexMigration {
     // Return an instance of ApexClassMigrationTool when implemented
-    return new ApexMigration(projectPath, this.namespace, this.org);
+    return new ApexMigration(projectPath, this.namespace, this.org, targetApexNamespace);
   }
 }

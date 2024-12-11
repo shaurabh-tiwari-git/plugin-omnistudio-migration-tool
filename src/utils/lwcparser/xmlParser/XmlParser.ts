@@ -27,7 +27,7 @@ export class XmlParser {
     }
   }
 
-  public removeNode(tagName: string, index = 0): Map<string, string> {
+  public removeNode(tagName: string, namespace: string, index = 0): Map<string, string> {
     const xmlContentMap = new Map<string, string>();
     xmlContentMap.set(FileConstant.BASE_CONTENT, this.fileContent.replace('(/(<[^>]+?)/>/g', '$1 />'));
     if (!this.xmlDoc) {
@@ -37,8 +37,13 @@ export class XmlParser {
 
     if (nodes.length > index) {
       const nodeToRemove = nodes[index];
-      nodeToRemove.parentNode?.removeChild(nodeToRemove);
-
+      if (
+        nodeToRemove.firstChild != null &&
+        nodeToRemove.firstChild.nodeValue != null &&
+        nodeToRemove.firstChild.nodeValue.includes(namespace)
+      ) {
+        nodeToRemove.parentNode?.removeChild(nodeToRemove);
+      }
       const serializer = new XMLSerializer();
       const xmlString: string = serializer.serializeToString(this.xmlDoc);
       xmlString.replace(/(<[^>]+?)\/>/g, '$1 />');

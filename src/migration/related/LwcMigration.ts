@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import * as shell from 'shelljs';
-import { Org } from '@salesforce/core';
 import { fileutil, File } from '../../utils/file/fileutil';
 import { sfProject } from '../../utils/sfcli/project/sfProject';
 import { Logger } from '../../utils/logger';
@@ -36,8 +35,8 @@ export class LwcMigration extends BaseRelatedObjectMigration {
   public migrate(): LWCAssessmentInfo[] {
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
-    const targetOrg: Org = this.org;
-    sfProject.retrieve(LWCTYPE, targetOrg.getUsername());
+    // const targetOrg: Org = this.org;
+    // sfProject.retrieve(LWCTYPE, targetOrg.getUsername());
     const filesMap = this.processLwcFiles(this.projectPath);
     const LWCAssessmentInfos = this.processFiles(filesMap, 'migration');
     // sfProject.deploy(LWCTYPE, targetOrg.getUsername());
@@ -98,7 +97,9 @@ export class LwcMigration extends BaseRelatedObjectMigration {
             changeInfos,
             errors,
           };
-          jsonData.push(assesmentInfo);
+          if (changeInfos && changeInfos.length > 0) {
+            jsonData.push(assesmentInfo);
+          }
         }
       });
       return jsonData;

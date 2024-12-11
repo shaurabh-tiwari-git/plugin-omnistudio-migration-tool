@@ -133,7 +133,7 @@ export class ResultsBuilder {
   }
   private static generateApexAssesment(apexAssessmentInfos: ApexAssessmentInfo[]): string {
     let tableBody = '';
-    tableBody += '<div class="slds-text-heading_large">Apex Assessment</div>';
+    tableBody += '<div class="slds-text-heading_large">Apex Updates for Migration</div>';
     for (const apexAssessmentInfo of apexAssessmentInfos) {
       const message = this.generateMessages(apexAssessmentInfo.infos);
       const errors = this.generateMessages(apexAssessmentInfo.warnings);
@@ -189,9 +189,8 @@ export class ResultsBuilder {
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/design-system/2.17.5/styles/salesforce-lightning-design-system.min.css" />
             </head>
             <body>
-            <div style="margin: 20px;">
-                <div class="slds-text-heading_large">OmniStudio Migration Assessment</div>`;
-    tableBody += '<div class="slds-text-heading_large">LWC Assessment</div>';
+            <div style="margin: 20px;">`;
+    tableBody += '<div class="slds-text-heading_large">LWC Updates for Migration</div>';
     for (const lwcAssessmentInfo of lwcAssessmentInfos) {
       let changeInfoRows = '';
 
