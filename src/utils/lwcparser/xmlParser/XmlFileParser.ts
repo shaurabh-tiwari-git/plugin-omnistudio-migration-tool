@@ -5,7 +5,7 @@ import { XmlParser } from '../xmlParser/XmlParser';
 export class XmlFileParser implements FileParser {
   parse(filePath: string, namespace: string): Map<string, string> {
     const xmlParser = new XmlParser(filePath);
-    return xmlParser.removeNode(namespace);
+    return xmlParser.removeNode(namespace, namespace);
   }
 
   saveToFile(filePath: string, content: string | undefined): void {
