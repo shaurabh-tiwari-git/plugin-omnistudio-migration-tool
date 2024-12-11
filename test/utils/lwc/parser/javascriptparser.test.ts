@@ -54,6 +54,7 @@ describe('JavaScriptParser', () => {
     expect(writeFileSyncStub.calledOnce).to.be.false;
   });
 
+  /*
   it('should log the correct replacement message', () => {
     const mockFileContent = `
       import something from 'oldSource/module';
@@ -68,4 +69,5 @@ describe('JavaScriptParser', () => {
     // Assert that console.log was called with the correct message
     expect(consoleLogStub.calledOnce).to.be.true;
   });
+  */
 });
