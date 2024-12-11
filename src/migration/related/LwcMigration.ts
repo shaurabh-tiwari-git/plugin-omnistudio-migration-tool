@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import * as shell from 'shelljs';
-import { Org } from '@salesforce/core';
 import { fileutil, File } from '../../utils/file/fileutil';
 import { sfProject } from '../../utils/sfcli/project/sfProject';
 import { Logger } from '../../utils/logger';
