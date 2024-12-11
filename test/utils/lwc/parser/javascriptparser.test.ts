@@ -11,14 +11,14 @@ describe('JavaScriptParser', () => {
   let parser: JavaScriptParser;
   let readFileSyncStub: sinon.SinonStub;
   let writeFileSyncStub: sinon.SinonStub;
-  let consoleLogStub: sinon.SinonStub;
+  // let consoleLogStub: sinon.SinonStub;
 
   beforeEach(() => {
     parser = new JavaScriptParser();
     // Stub fs methods
     readFileSyncStub = sinon.stub(fs, 'readFileSync');
     writeFileSyncStub = sinon.stub(fs, 'writeFileSync');
-    consoleLogStub = sinon.stub(console, 'log');
+    // consoleLogStub = sinon.stub(console, 'log');
   });
 
   afterEach(() => {
