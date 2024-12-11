@@ -34,7 +34,7 @@ describe('JavaScriptParser', () => {
     // Mock file reading
     readFileSyncStub.returns(mockFileContent);
 
-    parser.replaceImportSource(mockFilePath, 'oldSource');
+    parser.replaceImportSource(mockFilePath, 'vlocity_ins');
 
     // Assert that readFileSync was called with correct arguments
     expect(readFileSyncStub.calledWith(mockFilePath, 'utf-8')).to.be.false;
@@ -42,7 +42,7 @@ describe('JavaScriptParser', () => {
 
   it('should replace import source correctly', () => {
     const mockFileContent = `
-      import something from 'oldSource/module';
+      import something from 'vlocity_ins/module';
     `;
 
     // Mock file reading and writing

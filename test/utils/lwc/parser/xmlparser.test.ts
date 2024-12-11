@@ -12,13 +12,13 @@ describe('XmlParser', () => {
   });
 
   it('should parse XML string into a Document object', () => {
-    const serializedXml = xmlParser.removeNode('runtimeNamespace').get('modified');
+    const serializedXml = xmlParser.removeNode('runtimeNamespace', 'xyz').get('modified');
     expect(serializedXml).contains('<LightningComponentBundle');
     expect(serializedXml).contains('<isExposed>');
   });
 
   it('should remove the runtimeNamespace element correctly', () => {
-    const updatedXml = xmlParser.removeNode('runtimeNamespace');
+    const updatedXml = xmlParser.removeNode('runtimeNamespace', 'xyz');
     expect(updatedXml).not.contains('<runtimeNamespace>');
   });
 });
