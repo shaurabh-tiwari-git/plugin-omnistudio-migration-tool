@@ -15,7 +15,8 @@ export class FileDiffUtil {
       // Initialize variables to track line numbers
       let oldLineNumber = 1;
       let newLineNumber = 1;
-
+      let firstPlusAlreadySkipped = false;
+      let firstMinusAlreadySkipped = false;
       // Initialize result as HTML string
       let result = '';
 
@@ -29,7 +30,9 @@ export class FileDiffUtil {
           newLineNumber = parseInt(match[2], 10);
         } else if (line.startsWith('-')) {
           // Skip the first line difference
-          if (oldLineNumber === 1) {
+          if (oldLineNumber === 1 && !firstMinusAlreadySkipped) {
+            firstMinusAlreadySkipped = true;
+            // Skip the first line difference
             oldLineNumber++;
             return;
           }
@@ -37,7 +40,8 @@ export class FileDiffUtil {
           oldLineNumber++;
         } else if (line.startsWith('+')) {
           // Skip the first line difference
-          if (newLineNumber === 1) {
+          if (newLineNumber === 1 && !firstPlusAlreadySkipped) {
+            firstPlusAlreadySkipped = true;
             newLineNumber++;
             return;
           }

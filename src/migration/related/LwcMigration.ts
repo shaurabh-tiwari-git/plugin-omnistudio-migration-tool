@@ -36,8 +36,8 @@ export class LwcMigration extends BaseRelatedObjectMigration {
   public migrate(): LWCAssessmentInfo[] {
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
-    const targetOrg: Org = this.org;
-    sfProject.retrieve(LWCTYPE, targetOrg.getUsername());
+    // const targetOrg: Org = this.org;
+    // sfProject.retrieve(LWCTYPE, targetOrg.getUsername());
     const filesMap = this.processLwcFiles(this.projectPath);
     const LWCAssessmentInfos = this.processFiles(filesMap, 'migration');
     // sfProject.deploy(LWCTYPE, targetOrg.getUsername());
@@ -98,7 +98,9 @@ export class LwcMigration extends BaseRelatedObjectMigration {
             changeInfos,
             errors,
           };
-          jsonData.push(assesmentInfo);
+          if (changeInfos && changeInfos.length > 0) {
+            jsonData.push(assesmentInfo);
+          }
         }
       });
       return jsonData;

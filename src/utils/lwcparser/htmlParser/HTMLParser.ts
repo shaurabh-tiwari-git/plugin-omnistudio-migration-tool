@@ -34,7 +34,6 @@ export class HTMLParser {
     const htmlContentMap = new Map<string, string>();
     htmlContentMap.set(FileConstant.BASE_CONTENT, this.html);
     // Use a regular expression to match <omnistudio-input> to </omnistudio-input>
-
     this.html = this.html
       .replace('<' + namespaceTag, '<' + DEFAULT_NAMESPACE)
       .replace('</' + namespaceTag, '</' + DEFAULT_NAMESPACE);

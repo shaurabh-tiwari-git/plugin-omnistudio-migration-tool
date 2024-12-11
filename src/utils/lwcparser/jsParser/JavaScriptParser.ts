@@ -6,7 +6,6 @@
 import * as fs from 'fs';
 import * as parser from '@babel/parser';
 import traverse from '@babel/traverse';
-import generate from '@babel/generator';
 import * as t from '@babel/types';
 import { FileConstant } from '../fileutils/FileConstant';
 
@@ -18,7 +17,7 @@ export class JavaScriptParser {
     const jsContentMap = new Map<string, string>();
     // Read the JavaScript file
     const code = fs.readFileSync(filePath, 'utf-8');
-    if (code.includes('Generated class DO NOT MODIFY') || code.includes(oldSource + '/')) {
+    if (code.includes('Generated class DO NOT MODIFY') || !code.includes(oldSource + '/')) {
       return null;
     }
     jsContentMap.set(FileConstant.BASE_CONTENT, code);
@@ -42,7 +41,8 @@ export class JavaScriptParser {
         }
       },
     });
-    jsContentMap.set(FileConstant.MODIFIED_CONTENT, generate(ast, {}, code).code);
+    // jsContentMap.set(FileConstant.MODIFIED_CONTENT, generate(ast, {}, code).code);
+    jsContentMap.set(FileConstant.MODIFIED_CONTENT, code.replace(oldSource, DEFAULT_NAMESPACE));
     // return generate(ast, {}, code).code;
     return jsContentMap;
   }

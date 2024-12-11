@@ -30,9 +30,10 @@ export class ApexMigration extends BaseRelatedObjectMigration {
   private readonly callableInterface: InterfaceImplements;
   private readonly vlocityOpenInterface2: InterfaceImplements;
   private readonly vlocityOpenInterface: InterfaceImplements;
-  private updatedNamespace = 'vlocity_ins';
-  public constructor(projectPath: string, namespace: string, org: Org) {
+  private updatedNamespace;
+  public constructor(projectPath: string, namespace: string, org: Org, targetApexNameSpace?: string) {
     super(projectPath, namespace, org);
+    this.updatedNamespace = targetApexNameSpace ? targetApexNameSpace : namespace;
     this.callableInterface = new InterfaceImplements(CALLABLE, this.namespace);
     this.vlocityOpenInterface2 = new InterfaceImplements(VLOCITY_OPEN_INTERFACE2, this.namespace);
     this.vlocityOpenInterface = new InterfaceImplements(VLOCITY_OPEN_INTERFACE, this.namespace);
@@ -49,10 +50,10 @@ export class ApexMigration extends BaseRelatedObjectMigration {
   public migrate(): ApexAssessmentInfo[] {
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
-    const targetOrg: Org = this.org;
-    sfProject.retrieve(APEXCLASS, targetOrg.getUsername());
+    // const targetOrg: Org = this.org;
+    // sfProject.retrieve(APEXCLASS, targetOrg.getUsername());
     const apexAssessmentInfos = this.processApexFiles(this.projectPath);
-    sfProject.deploy(APEXCLASS, targetOrg.getUsername());
+    // sfProject.deploy(APEXCLASS, targetOrg.getUsername());
     shell.cd(pwd);
     return apexAssessmentInfos;
   }

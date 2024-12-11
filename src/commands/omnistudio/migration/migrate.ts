@@ -8,6 +8,7 @@
  * For full license text, see LICENSE.txt file in the repo root or https://opensource.org/licenses/BSD-3-Clause
  */
 import * as os from 'os';
+import * as fs from 'fs';
 import { flags } from '@salesforce/command';
 import { Messages } from '@salesforce/core';
 import '../../../utils/prototypes';
@@ -72,13 +73,12 @@ export default class Migrate extends OmniStudioBaseCommand {
 
     // Let's time every step
     DebugTimer.getInstance().start();
-    // const includeApex = this.flags.apex
-    //   ? await this.ux.confirm('Do you want to include Apex migration? (yes/no)')
-    //   : false;
-
+    let projectPath: string;
+    let objectsToProcess: string[];
+    let targetApexNamespace: string;
     if (relatedObjects) {
       const validOptions = ['apex', 'lwc'];
-      const objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
+      objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
       // Validate input
       for (const obj of objectsToProcess) {
         if (!validOptions.includes(obj)) {
@@ -87,72 +87,20 @@ export default class Migrate extends OmniStudioBaseCommand {
       }
       // Ask for user consent
       const consent = await this.ux.confirm(
-        'By proceeding further, you hereby consent to the use, accept changes to your custom code, and the accompanying terms and conditions associated with the use of the OmniStudio Migration Tool. Do you want to proceed?'
+        'By proceeding further, you hereby consent to the use, accept changes to your custom code, and the accompanying terms and conditions associated with the use of the OmniStudio Migration Tool. Do you want to proceed? [y/n]'
       );
       if (!consent) {
-        this.ux.log('User declined consent. Aborting the process.');
+        this.ux.error(`User declined consent, will not process ${relatedObjects} .`);
       } else {
-        const projectPath = await this.ux.prompt('Enter the project path for processing:');
-        this.ux.log(`Using project path: ${projectPath}`);
-        OmnistudioRelatedObjectMigrationFacade.intializeProject(projectPath);
+        projectPath = await this.getProjectPath(relatedObjects, projectPath);
+        targetApexNamespace = await this.getTargetApexNamespace(objectsToProcess, targetApexNamespace);
       }
     }
 
     // const includeLwc = this.flags.lwc ? await this.ux.confirm('Do you want to include LWC migration? (yes/no)') : false;
     // Register the migration objects
     let migrationObjects: MigrationTool[] = [];
-    if (!migrateOnly) {
-      migrationObjects = [
-        new DataRaptorMigrationTool(namespace, conn, this.logger, messages, this.ux),
-        new OmniScriptMigrationTool(
-          OmniScriptExportType.All,
-          namespace,
-          conn,
-          this.logger,
-          messages,
-          this.ux,
-          allVersions
-        ),
-        new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions),
-      ];
-    } else {
-      switch (migrateOnly) {
-        case 'os':
-          migrationObjects.push(
-            new OmniScriptMigrationTool(
-              OmniScriptExportType.OS,
-              namespace,
-              conn,
-              this.logger,
-              messages,
-              this.ux,
-              allVersions
-            )
-          );
-          break;
-        case 'ip':
-          migrationObjects.push(
-            new OmniScriptMigrationTool(
-              OmniScriptExportType.IP,
-              namespace,
-              conn,
-              this.logger,
-              messages,
-              this.ux,
-              allVersions
-            )
-          );
-          break;
-        case 'fc':
-          migrationObjects.push(new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions));
-          break;
-        case 'dr':
-          migrationObjects.push(new DataRaptorMigrationTool(namespace, conn, this.logger, messages, this.ux));
-          break;
-        default:
-          throw new Error(messages.getMessage('invalidOnlyFlag'));
-      }
-    }
+    migrationObjects = this.getMigrationObjects(migrateOnly, migrationObjects, namespace, conn, allVersions);
     // Migrate individual objects
     const debugTimer = DebugTimer.getInstance();
     let objectMigrationResults: MigratedObject[] = [];
@@ -206,10 +154,12 @@ export default class Migrate extends OmniStudioBaseCommand {
       allVersions,
       this.org
     );
-    const relatedObjectMigrationResult = omnistudioRelatedObjectsMigration.migrateAll(objectMigrationResults, [
-      'lwc',
-      'apex',
-    ]);
+    const relatedObjectMigrationResult = omnistudioRelatedObjectsMigration.migrateAll(
+      objectMigrationResults,
+      objectsToProcess,
+      projectPath,
+      targetApexNamespace
+    );
     generatePackageXml.createChangeList(
       relatedObjectMigrationResult.apexAssessmentInfos,
       relatedObjectMigrationResult.lwcAssessmentInfos
@@ -221,6 +171,93 @@ export default class Migrate extends OmniStudioBaseCommand {
 
     // Return results needed for --json flag
     return { objectMigrationResults };
+  }
+
+  private getMigrationObjects(
+    migrateOnly: string,
+    migrationObjects: MigrationTool[],
+    namespace: string,
+    conn,
+    allVersions: any
+  ): MigrationTool[] {
+    if (!migrateOnly) {
+      migrationObjects = [
+        new DataRaptorMigrationTool(namespace, conn, this.logger, messages, this.ux),
+        new OmniScriptMigrationTool(
+          OmniScriptExportType.All,
+          namespace,
+          conn,
+          this.logger,
+          messages,
+          this.ux,
+          allVersions
+        ),
+        new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions),
+      ];
+    } else {
+      switch (migrateOnly) {
+        case 'os':
+          migrationObjects.push(
+            new OmniScriptMigrationTool(
+              OmniScriptExportType.OS,
+              namespace,
+              conn,
+              this.logger,
+              messages,
+              this.ux,
+              allVersions
+            )
+          );
+          break;
+        case 'ip':
+          migrationObjects.push(
+            new OmniScriptMigrationTool(
+              OmniScriptExportType.IP,
+              namespace,
+              conn,
+              this.logger,
+              messages,
+              this.ux,
+              allVersions
+            )
+          );
+          break;
+        case 'fc':
+          migrationObjects.push(new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions));
+          break;
+        case 'dr':
+          migrationObjects.push(new DataRaptorMigrationTool(namespace, conn, this.logger, messages, this.ux));
+          break;
+        default:
+          throw new Error(messages.getMessage('invalidOnlyFlag'));
+      }
+    }
+    return migrationObjects;
+  }
+
+  private async getProjectPath(relatedObjects: string, projectPath: string): Promise<string> {
+    const projectPathConfirmation = await this.ux
+      .confirm(`Do you have a sfdc project where ${relatedObjects} files are already retrieved from org - y
+          or you want tool to create a project omnistudio_migration in current directory for processing - n ? [y/n]`);
+    if (projectPathConfirmation) {
+      projectPath = await this.ux.prompt(`Enter the project path for processing ${relatedObjects} :`);
+      const projectJsonFile = 'sfdx-project.json';
+      if (!fs.existsSync(projectPath + '/' + projectJsonFile)) {
+        throw new Error(`Could not find any ${projectJsonFile} in  ${projectPath}.`);
+      }
+      this.ux.log(`Using project path: ${projectPath}`);
+    }
+    return projectPath;
+  }
+
+  private async getTargetApexNamespace(objectsToProcess: string[], targetApexNamespace: string): Promise<string> {
+    if (objectsToProcess.includes('apex')) {
+      targetApexNamespace = await this.ux.prompt(
+        'Enter the target namespace to be used for calling package Apex classes'
+      );
+      this.ux.log(`Using target namespace: ${targetApexNamespace} for calling package Apex classes`);
+    }
+    return targetApexNamespace;
   }
 
   private mergeRecordAndUploadResults(
