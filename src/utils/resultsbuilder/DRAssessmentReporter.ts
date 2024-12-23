@@ -7,7 +7,7 @@ export class DRAssessmentReporter {
     instanceUrl: string
   ): string {
     let tableBody = '';
-    tableBody += '<div class="slds-text-heading_large">Data Raptor Components Assessment</div>';
+    tableBody += '<div class="slds-text-heading_large">Data Mapper Components Assessment</div>';
     for (const dr of dataRaptorAssessmentInfos) {
       const row = `
               <tr class="slds-hint_parent">
@@ -38,7 +38,7 @@ export class DRAssessmentReporter {
   private static getDRAssessmentReport(tableContent: string): string {
     const tableBody = `
         <div style="margin-block:15px">        
-            <table style="width: 100%; table-layout: auto;" class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped slds-table_col-bordered" aria-label="Results for Data Raptor updates">
+            <table style="width: 100%; table-layout: auto;" class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped slds-table_col-bordered" aria-label="Results for Data Mapper updates">
             <thead>
                 <tr class="slds-line-height_reset">
                     <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">

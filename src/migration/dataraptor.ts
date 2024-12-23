@@ -23,7 +23,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
   static readonly OMNIDATATRANSFORMITEM_NAME = 'OmniDataTransformItem';
 
   getName(): string {
-    return 'DataRaptor';
+    return 'DataMappers';
   }
 
   getRecordName(record: string) {
@@ -183,7 +183,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     }
 
     return {
-      name: 'Data Raptor',
+      name: 'Data Mapper',
       results: drUploadInfo,
       records: originalDrRecords,
     };

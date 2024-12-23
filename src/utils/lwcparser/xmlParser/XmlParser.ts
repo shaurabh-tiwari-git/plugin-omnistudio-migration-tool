@@ -8,6 +8,7 @@
 import * as fs from 'fs';
 import { DOMParser, XMLSerializer } from 'xmldom';
 import { FileConstant } from '../fileutils/FileConstant';
+import { Logger } from '../../logger';
 
 export class XmlParser {
   private xmlDoc: Document | null = null;
@@ -55,9 +56,9 @@ export class XmlParser {
   public saveToFile(outputFilePath: string, xmlString: string): void {
     try {
       fs.writeFileSync(outputFilePath, xmlString);
-      console.log(`Modified HTML saved to ${outputFilePath}`);
+      Logger.logger.info(`Modified HTML saved to ${outputFilePath}`);
     } catch (error) {
-      console.error(`Error writing file to disk: ${error}`);
+      Logger.logger.error(`Error writing file to disk: ${error}`);
       throw error;
     }
   }

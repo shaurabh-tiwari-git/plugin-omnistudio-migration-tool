@@ -20,7 +20,7 @@ sfdx plugins:install @salesforce/plugin-omnistudio-migration-tool
 // To migrate everything
 sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM --namespace=VLOCITY_PACKAGE_NAMESPACE
 
-//to migrate specific components: FlexCards, DataRaptors, Integration Procedures, or OmniScripts, add the following parameters:
+//to migrate specific components: FlexCards, DataMappers, Integration Procedures, or OmniScripts, add the following parameters:
 --only=dr
 --only=ip
 --only=os
