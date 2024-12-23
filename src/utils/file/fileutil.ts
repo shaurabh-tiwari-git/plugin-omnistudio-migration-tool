@@ -4,6 +4,7 @@
 /* eslint-disable no-console */
 import * as fs from 'fs';
 import * as path from 'path';
+import { Logger } from '../logger';
 
 export class fileutil {
   public static readFilesSync(dir: string): File[] {
@@ -67,7 +68,7 @@ export class fileutil {
   public static saveToFile(outputFilePath: string, modifiedHtml: string): void {
     try {
       fs.writeFileSync(outputFilePath, modifiedHtml);
-      console.log(`Modified HTML saved to ${outputFilePath}`);
+      Logger.logger.info(`Modified HTML saved to ${outputFilePath}`);
     } catch (error) {
       console.error(`Error writing file to disk: ${error}`);
       throw error;
@@ -85,14 +86,14 @@ export class fileutil {
     });
 
     for (const subDirectory of subDirectories) {
-      console.log(`Processing subdirectory: ${subDirectory}`);
+      Logger.logger.info(`Processing subdirectory: ${subDirectory}`);
       const subDirPath = path.join(baseDir, subDirectory);
 
       // Check the XML file for the substring
       const xmlFilePath = path.join(subDirPath, `${subDirectory}.js-meta.xml`);
       if (fs.existsSync(xmlFilePath)) {
         if (this.doesSubstringExist(xmlFilePath, searchString)) {
-          console.log(`Substring found in ${xmlFilePath}. Skipping all files in ${subDirectory}.`);
+          Logger.logger.info(`Substring found in ${xmlFilePath}. Skipping all files in ${subDirectory}.`);
           continue; // Move to the next subdirectory
         }
       }
@@ -104,7 +105,7 @@ export class fileutil {
         .filter((file) => file.endsWith('.html') || file.endsWith('.js') || file.endsWith('.xml'));
       files.forEach((file) => {
         const filePath = path.join(subDirPath, file);
-        console.log(`Processing file: ${filePath}`);
+        Logger.logger.info(`Processing file: ${filePath}`);
         const name = path.parse(file).name;
         const ext = path.parse(file).ext;
         const filepath = path.resolve(subDirPath, file);

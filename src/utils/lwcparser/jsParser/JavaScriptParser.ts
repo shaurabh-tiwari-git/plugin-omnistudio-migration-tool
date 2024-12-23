@@ -7,6 +7,7 @@ import * as fs from 'fs';
 import { parse } from '@babel/parser';
 import traverse from '@babel/traverse';
 import { FileConstant } from '../fileutils/FileConstant';
+import { Logger } from '../../logger';
 
 const DEFAULT_NAMESPACE = 'c';
 
@@ -65,9 +66,9 @@ export class JavaScriptParser {
   public saveToFile(filePath: string, output: string): void {
     try {
       fs.writeFileSync(filePath, output, 'utf-8');
-      console.log(`Replaced import in file: ${filePath}`);
+      Logger.logger.info(`Replaced import in file: ${filePath}`);
     } catch (error) {
-      console.error(`Error writing file to disk: ${error}`);
+      Logger.logger.error(`Error writing file to disk: ${error}`);
       throw error;
     }
   }

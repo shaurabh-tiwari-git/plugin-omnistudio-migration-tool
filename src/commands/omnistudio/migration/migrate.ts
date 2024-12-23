@@ -111,6 +111,7 @@ export default class Migrate extends OmniStudioBaseCommand {
         Logger.ux.log('Cleaning: ' + cls.getName());
         debugTimer.lap('Cleaning: ' + cls.getName());
         await cls.truncate();
+        Logger.ux.log('Cleaning Done: ' + cls.getName());
       } catch (ex: any) {
         allTruncateComplete = false;
         objectMigrationResults.push({
@@ -126,7 +127,7 @@ export default class Migrate extends OmniStudioBaseCommand {
           this.ux.log('Migrating: ' + cls.getName());
           debugTimer.lap('Migrating: ' + cls.getName());
           const results = await cls.migrate();
-
+          this.ux.log('Migration completed: ' + cls.getName());
           objectMigrationResults = objectMigrationResults.concat(
             results.map((r) => {
               return {

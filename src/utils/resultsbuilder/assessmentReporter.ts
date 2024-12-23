@@ -275,7 +275,7 @@ export class AssessmentReporter {
                         <div title="Dependencies">Integration Procedures Dependencies</div>
                     </th>
                     <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
-                        <div title="Dependencies">Data Raptor Dependencies</div>
+                        <div title="Dependencies">Data Mapper Dependencies</div>
                     </th>
                 </tr>
             </thead>

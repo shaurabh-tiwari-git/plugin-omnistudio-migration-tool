@@ -52,7 +52,9 @@ export class ApexMigration extends BaseRelatedObjectMigration {
     shell.cd(this.projectPath);
     // const targetOrg: Org = this.org;
     // sfProject.retrieve(APEXCLASS, targetOrg.getUsername());
+    Logger.logger.info('Processing Apex ');
     const apexAssessmentInfos = this.processApexFiles(this.projectPath);
+    Logger.logger.info('Apex processed for migration ');
     // sfProject.deploy(APEXCLASS, targetOrg.getUsername());
     shell.cd(pwd);
     return apexAssessmentInfos;

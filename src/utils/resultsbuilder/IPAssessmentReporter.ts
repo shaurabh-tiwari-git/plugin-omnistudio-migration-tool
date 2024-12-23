@@ -54,7 +54,7 @@ export class IPAssessmentReporter {
                     <div title="Dependencies">Integration Procedures Dependencies</div>
                 </th>
                 <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
-                    <div title="Dependencies">Data Raptor dependencies</div>
+                    <div title="Dependencies">Data Mapper dependencies</div>
                 </th>
                 <th class="" scope="col" style="width: 20%; word-wrap: break-word; white-space: normal; text-align: left;">
                     <div title="Dependencies">Remote Action Dependencies</div>

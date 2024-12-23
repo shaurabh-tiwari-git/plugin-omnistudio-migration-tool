@@ -8,6 +8,7 @@
 /* eslint-disable no-console */
 import * as fs from 'fs';
 import { FileConstant } from '../fileutils/FileConstant';
+import { Logger } from '../../logger';
 
 const DEFAULT_NAMESPACE = 'c';
 
@@ -46,9 +47,9 @@ export class HTMLParser {
   public saveToFile(outputFilePath: string, modifiedHtml: string): void {
     try {
       fs.writeFileSync(outputFilePath, modifiedHtml);
-      console.log(`Modified HTML saved to ${outputFilePath}`);
+      Logger.logger.info(`Modified HTML saved to ${outputFilePath}`);
     } catch (error) {
-      console.error(`Error writing file to disk: ${error}`);
+      Logger.logger.error(`Error writing file to disk: ${error}`);
       throw error;
     }
   }
