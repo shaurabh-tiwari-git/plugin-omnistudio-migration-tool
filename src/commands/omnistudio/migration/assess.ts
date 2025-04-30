@@ -4,8 +4,8 @@ import { Messages } from '@salesforce/core';
 import OmniStudioBaseCommand from '../../basecommand';
 import { AssessmentInfo } from '../../../utils/interfaces';
 import { AssessmentReporter } from '../../../utils/resultsbuilder/assessmentReporter';
-import { LwcMigration } from '../../../migration/related/LwcMigration';
-import { ApexMigration } from '../../../migration/related/ApexMigration';
+ import { LwcMigration } from '../../../migration/related/LwcMigration';
+ import { ApexMigration } from '../../../migration/related/ApexMigration';
 import { OmniScriptExportType, OmniScriptMigrationTool } from '../../../migration/omniscript';
 import { CardMigrationTool } from '../../../migration/flexcard';
 import { DataRaptorMigrationTool } from '../../../migration/dataraptor';
@@ -13,6 +13,7 @@ import { DebugTimer, DataRaptorAssessmentInfo, FlexCardAssessmentInfo } from '..
 
 import { Logger } from '../../../utils/logger';
 import OmnistudioRelatedObjectMigrationFacade from '../../../migration/related/OmnistudioRelatedObjectMigrationFacade';
+import { OmnistudioOrgDetails, OrgUtils } from '../../../utils/orgUtils';
 
 Messages.importMessagesDirectory(__dirname);
 const messages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'assess');
@@ -47,6 +48,18 @@ export default class Assess extends OmniStudioBaseCommand {
     const apiVersion = (this.flags.apiversion || '55.0') as string;
     const allVersions = (this.flags.allversions || false) as boolean;
     const conn = this.org.getConnection();
+    const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn, namespace);
+
+    if (orgs.packageDetails.length === 0) {
+      this.ux.log('No package installed on given org.');
+      return;
+    }
+
+    if (orgs.omniStudioOrgPermissionEnabled) {
+      this.ux.log('The org is already on standard data model.');
+      return;
+    }
+
     Logger.initialiseLogger(this.ux, this.logger);
     const projectDirectory = OmnistudioRelatedObjectMigrationFacade.intializeProject();
     conn.setApiVersion(apiVersion);
