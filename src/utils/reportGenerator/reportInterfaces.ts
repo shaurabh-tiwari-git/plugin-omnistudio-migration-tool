@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface TableHeaderCell {
   label: string;
@@ -25,29 +24,21 @@ export interface ReportHeader {
   key: string;
   value: string;
 }
-=======
-export interface TableHeaderCell { 
-    label: string; 
-    colspan?: number; 
-    rowspan?: number; 
-    key: string;
-};
 
 export interface TableColumn<T> {
-    key: string;
-    cell: any;
-    filterValue: any;
-    title?: any;
-};
+  key: string;
+  cell: any;
+  filterValue: any;
+  title?: any;
+}
 
-export interface Filter { 
-    label: string; 
-    key: string; 
-    filterOptions: string[]; 
-};
+export interface Filter {
+  label: string;
+  key: string;
+  filterOptions: string[];
+}
 
 export interface ReportHeader {
-    key: string;
-    value: string;
-};
->>>>>>> 33b91a3 (Fixed build failure)
+  key: string;
+  value: string;
+}
