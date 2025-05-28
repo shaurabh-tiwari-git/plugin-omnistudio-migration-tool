@@ -39,7 +39,7 @@ export class AssessmentReporter {
     );
     this.createDocument(
       dataMapperAssessmentFilePath,
-      DRAssessmentReporter.generateDRAssesment(result.dataRaptorAssessmentInfos, instanceUrl)
+      DRAssessmentReporter.generateDRAssesment(result.dataRaptorAssessmentInfos, instanceUrl, [])
     );
     this.createDocument(apexAssessmentFilePath, this.generateApexAssesment(result.apexAssessmentInfos));
     this.createDocument(lwcAssessmentFilePath, this.generateLwcAssesment(result.lwcAssessmentInfos));
