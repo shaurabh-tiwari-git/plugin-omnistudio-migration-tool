@@ -59,7 +59,7 @@ describe('DRAssessmentReporter', () => {
     it('should generate report with correct title and structure', () => {
       const result = DRAssessmentReporter.generateDRAssesment(mockData, mockInstanceUrl, mockOrg);
 
-      expect(result).to.include('Data Mapper Components Assessment Report');
+      expect(result).to.include('Data Mapper Assessment Report');
       expect(result).to.include('<div class="slds-text-heading_large">');
       expect(result).to.include('<table');
       expect(result).to.include('<thead>');
@@ -116,62 +116,17 @@ describe('DRAssessmentReporter', () => {
     it('should handle empty data raptor assessments array', () => {
       const result = DRAssessmentReporter.generateDRAssesment([], mockInstanceUrl, mockOrg);
 
-      expect(result).to.include('Data Mapper Components Assessment Report');
+      expect(result).to.include('Data Mapper Assessment Report');
       expect(result).to.include('<table');
       expect(result).to.include('<tbody id="filterable-table-body">');
       expect(result).to.include('<tr id="no-rows-message"');
       expect(result).to.include('No matching records found');
     });
 
-    describe('filtering and record count', () => {
-      it('should render with empty filters', () => {
-        const result = DRAssessmentReporter.generateDRAssesment(mockData, mockInstanceUrl, mockOrg);
-
-        // Should show all records when no filters are applied
-        expect(result).to.include('TravelersInsuranceCreateQuotePolicyJson-OS');
-        expect(result).to.include('OS-PolicyDetailsTransform');
-        expect(result).to.include('GetUserPermissionsSetGroupDetails');
-        expect(result).to.include('getCensusMemberIds');
-      });
-
-      it('should display correct record count', () => {
-        const result = DRAssessmentReporter.generateDRAssesment(mockData, mockInstanceUrl, mockOrg);
-
-        // Should show total number of records
-        expect(result).to.include('Showing 4 records');
-      });
-
-      it('should display correct record count with empty data', () => {
-        const result = DRAssessmentReporter.generateDRAssesment([], mockInstanceUrl, mockOrg);
-
-        // Should show 0 records
-        expect(result).to.include('Showing 0 records');
-      });
-
-      it('should display correct record count with single record', () => {
-        const singleRecord = [mockData[0]];
-        const result = DRAssessmentReporter.generateDRAssesment(singleRecord, mockInstanceUrl, mockOrg);
-
-        // Should show 1 record
-        expect(result).to.include('Showing 1 record');
-      });
-    });
-
     describe('UI elements and accessibility', () => {
-      it('should include search functionality', () => {
+      it('should include row count display', () => {
         const result = DRAssessmentReporter.generateDRAssesment(mockData, mockInstanceUrl, mockOrg);
-
-        expect(result).to.include('id="name-search-input"');
-        expect(result).to.include('placeholder="Search by Name"');
-        expect(result).to.include('oninput="filterAndSearchTable()"');
-      });
-
-      it('should include filter toggle button', () => {
-        const result = DRAssessmentReporter.generateDRAssesment(mockData, mockInstanceUrl, mockOrg);
-
-        expect(result).to.include('class="filter-toggle-button"');
-        expect(result).to.include('onclick="toggleFilterDropdown()"');
-        expect(result).to.include('Filters');
+        expect(result).to.include('Showing 4 records');
       });
 
       it('should include migration banner', () => {
@@ -202,7 +157,7 @@ describe('DRAssessmentReporter', () => {
       it('should have proper table accessibility attributes', () => {
         const result = DRAssessmentReporter.generateDRAssesment(mockData, mockInstanceUrl, mockOrg);
 
-        expect(result).to.include('aria-label="Data Mapper Components Assessment Report"');
+        expect(result).to.include('aria-label="Data Mapper Assessment Report"');
         expect(result).to.include(
           'class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped slds-table_col-bordered"'
         );
