@@ -1,44 +1,33 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export interface TableHeaderCell {
+export interface TableColumn<T> {
+  key: string;
+  cell: any;
+  filterValue: any;
+  title?: any;
+  styles?: any;
+}
+
+export interface Filter {
   label: string;
+  key: string;
+  filterOptions: string[];
+}
+
+export interface ReportHeader {
+  key: string;
+  value: string;
+}
+
+export interface ReportHeaderFormat {
+  key: string,
+  value: string
+}
+
+export interface HeaderColumn {
+  label: string;
+  key?: string;
   colspan?: number;
   rowspan?: number;
-  key: string;
-  width?: string;
-}
-
-export interface TableColumn<T> {
-  key: string;
-  cell: any;
-  filterValue: any;
-  title?: any;
-}
-
-export interface Filter {
-  label: string;
-  key: string;
-  filterOptions: string[];
-}
-
-export interface ReportHeader {
-  key: string;
-  value: string;
-}
-
-export interface TableColumn<T> {
-  key: string;
-  cell: any;
-  filterValue: any;
-  title?: any;
-}
-
-export interface Filter {
-  label: string;
-  key: string;
-  filterOptions: string[];
-}
-
-export interface ReportHeader {
-  key: string;
-  value: string;
+  styles?: string;
+  subColumn?: HeaderColumn[]; // Recursive definition
 }

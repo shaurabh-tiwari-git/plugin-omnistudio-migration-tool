@@ -1,21 +1,24 @@
 /* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
 import fs from 'fs';
+import path from 'path';
 import open from 'open';
 import {
   ApexAssessmentInfo,
   AssessmentInfo,
   LWCAssessmentInfo,
-  OmniAssessmentInfo,
   FlexCardAssessmentInfo,
   nameLocation,
+  ReportHeaderFormat,
 } from '../interfaces';
-import { OSAssesmentReporter } from './OSAssessmentReporter';
+import { OSAssessmentReporter } from './OSAssessmentReporter';
 import { IPAssessmentReporter } from './IPAssessmentReporter';
 import { DRAssessmentReporter } from './DRAssessmentReporter';
+import { OmnistudioOrgDetails } from '../orgUtils';
+import { Logger } from '../../utils/logger';
 
 export class AssessmentReporter {
-  public static async generate(result: AssessmentInfo, instanceUrl: string): Promise<void> {
+  public static async generate(result: AssessmentInfo, instanceUrl: string, omnistudioOrgDetails: OmnistudioOrgDetails): Promise<void> {
     const basePath = process.cwd() + '/assessment_reports';
     fs.mkdirSync(basePath, { recursive: true });
     const omniscriptAssessmentFilePath = basePath + '/omniscript_assessment.html';
@@ -24,10 +27,11 @@ export class AssessmentReporter {
     const dataMapperAssessmentFilePath = basePath + '/datamapper_assessment.html';
     const apexAssessmentFilePath = basePath + '/apex_assessment.html';
     const lwcAssessmentFilePath = basePath + '/lwc_assessment.html';
+    const orgDetails: ReportHeaderFormat[] = this.formattedOrgDetails(omnistudioOrgDetails);
 
     this.createDocument(
       omniscriptAssessmentFilePath,
-      this.generateOmniAssesment(result.omniAssessmentInfo, instanceUrl)
+      OSAssessmentReporter.generateOSAssesment(result.omniAssessmentInfo.osAssessmentInfos, instanceUrl, orgDetails)
     );
     this.createDocument(
       flexcardAssessmentFilePath,
@@ -35,7 +39,7 @@ export class AssessmentReporter {
     );
     this.createDocument(
       integrationProcedureAssessmentFilePath,
-      IPAssessmentReporter.generateIPAssesment(result.omniAssessmentInfo.ipAssessmentInfos, instanceUrl)
+      IPAssessmentReporter.generateIPAssesment(result.omniAssessmentInfo.ipAssessmentInfos, instanceUrl, orgDetails)
     );
     this.createDocument(
       dataMapperAssessmentFilePath,
@@ -69,7 +73,71 @@ export class AssessmentReporter {
         location: 'lwc_assessment.html',
       },
     ];
+
     await this.createMasterDocument(nameUrls, basePath);
+    await this.pushAssestUtilites('javascripts', basePath);
+    await this.pushAssestUtilites('styles', basePath);
+  }
+
+  private static formattedOrgDetails(orgDetails: OmnistudioOrgDetails): ReportHeaderFormat[] {
+    return [{
+      key: "Org Name",
+      value: orgDetails.orgDetails.Name
+    }, {
+      key: "Org Id",
+      value: orgDetails.orgDetails.Id,
+    }, {
+      key: "Package Name",
+      value: orgDetails.packageDetails[0].namespace,
+    }, {
+      key: "Data Model",
+      value: orgDetails.dataModel,
+    }, {
+      key: 'Assessment Date and Time',
+      value: new Date() as unknown as string
+    }]
+  }
+
+  /**
+ * Copies `.js` and `.css` files from a source directory (based on `folderName`)
+ * to a specified destination directory.
+ *
+ * @param folderName - The subdirectory under `/src/` where source asset files are located (e.g., `'javascripts'`, `'styles'`).
+ * @param destDir - The absolute or relative path to the destination directory where the assets should be copied.
+ *
+ * @remarks
+ * - If the destination directory does not exist, the method logs a warning and exits.
+ * - Only `.js` and `.css` files are copied.
+ * - The source files remain in place after copying.
+ */
+  private static async pushAssestUtilites(folderName: string, destDir: string) {
+    const sourceDir = path.join(process.cwd(), 'src', folderName);
+
+    if (!fs.existsSync(destDir)) {
+      this.ux.log(`Destination directory "${destDir}" does not exist. Skipping file copy.`);
+      return;
+    }
+
+    fs.readdir(sourceDir, (err, files) => {
+      if (err) {
+        this.ux.log('Error reading source directory:', err.message);
+        return;
+      }
+
+      files.forEach(file => {
+        const ext = path.extname(file);
+        if (ext === '.js' || ext === '.css') {
+          const srcPath = path.join(sourceDir, file);
+          const destPath = path.join(destDir, file);
+
+          fs.copyFile(srcPath, destPath, err => {
+            if (err) {
+              this.ux.log(`Failed to copy "${file}":`, err.message);
+            }
+          });
+        }
+      });
+    });
   }
 
   private static async createMasterDocument(reports: nameLocation[], basePath: string): Promise<void> {
@@ -195,11 +263,6 @@ export class AssessmentReporter {
       </div>`;
     return tableBody;
   }
-  private static generateOmniAssesment(omniAssessmentInfo: OmniAssessmentInfo, instanceUrl: string): string {
-    let htmlBody = '';
-    htmlBody += '<br />' + OSAssesmentReporter.generateOSAssesment(omniAssessmentInfo.osAssessmentInfos, instanceUrl);
-    return htmlBody;
-  }
 
   private static generateCardAssesment(flexCardAssessmentInfos: FlexCardAssessmentInfo[], instanceUrl: string): string {
     let tableBody = '';
@@ -246,7 +309,6 @@ export class AssessmentReporter {
             </head>
             <body>
             <div style="margin: 20px;">
-                <div class="slds-text-heading_large">OmniStudio Migration Assessment </div>
                     ${resultsAsHtml}
                 </div>
             </div>
