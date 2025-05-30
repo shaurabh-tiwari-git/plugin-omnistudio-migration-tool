@@ -82,8 +82,8 @@ export class DRAssessmentReporter {
       org,
       filters,
       undefined,
-      'Data Mapper Components Assessment Report'
+      'Data Mapper Assessment Report'
     );
-    return `<div class="slds-text-heading_large">Data Mapper Components Assessment Report</div>${tableHtml}`;
+    return `<div class="slds-text-heading_large">Data Mapper Assessment Report</div>${tableHtml}`;
   }
 }

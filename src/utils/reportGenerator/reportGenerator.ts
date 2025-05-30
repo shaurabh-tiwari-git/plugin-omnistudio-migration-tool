@@ -37,7 +37,9 @@ export function generateHtmlTable<T>(
     </thead>
   `;
 
-  const filterAndSearchPanel = `
+  const filterAndSearchPanel =
+    filters.length > 0
+      ? `
   <div class="filter-dropdown-container">
   <div class="filter-header-bar">
     <!-- Row count display -->
@@ -100,7 +102,14 @@ export function generateHtmlTable<T>(
       )
       .join('')}
   </div>
-</div>`;
+</div>`
+      : `
+  <div class="filter-header-bar">
+    <!-- Row count display -->
+    <div class="row-count-display" id="row-count">
+      Showing ${rows.length} records
+    </div>
+  </div>`;
 
   const tbody = `
     <tbody id="filterable-table-body">
