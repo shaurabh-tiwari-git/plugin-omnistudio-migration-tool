@@ -9,16 +9,19 @@ import {
   LWCAssessmentInfo,
   FlexCardAssessmentInfo,
   nameLocation,
-  ReportHeaderFormat,
 } from '../interfaces';
+import { ReportHeaderFormat } from '../reportGenerator/reportInterfaces';
+import { OmnistudioOrgDetails } from '../orgUtils';
 import { OSAssessmentReporter } from './OSAssessmentReporter';
 import { IPAssessmentReporter } from './IPAssessmentReporter';
 import { DRAssessmentReporter } from './DRAssessmentReporter';
-import { OmnistudioOrgDetails } from '../orgUtils';
-import { Logger } from '../../utils/logger';
 
 export class AssessmentReporter {
-  public static async generate(result: AssessmentInfo, instanceUrl: string, omnistudioOrgDetails: OmnistudioOrgDetails): Promise<void> {
+  public static async generate(
+    result: AssessmentInfo,
+    instanceUrl: string,
+    omnistudioOrgDetails: OmnistudioOrgDetails
+  ): Promise<void> {
     const basePath = process.cwd() + '/assessment_reports';
     fs.mkdirSync(basePath, { recursive: true });
     const omniscriptAssessmentFilePath = basePath + '/omniscript_assessment.html';
@@ -75,64 +78,70 @@ export class AssessmentReporter {
     ];
 
     await this.createMasterDocument(nameUrls, basePath);
-    await this.pushAssestUtilites('javascripts', basePath);
-    await this.pushAssestUtilites('styles', basePath);
+    this.pushAssestUtilites('javascripts', basePath);
+    this.pushAssestUtilites('styles', basePath);
   }
 
   private static formattedOrgDetails(orgDetails: OmnistudioOrgDetails): ReportHeaderFormat[] {
-    return [{
-      key: "Org Name",
-      value: orgDetails.orgDetails.Name
-    }, {
-      key: "Org Id",
-      value: orgDetails.orgDetails.Id,
-    }, {
-      key: "Package Name",
-      value: orgDetails.packageDetails[0].namespace,
-    }, {
-      key: "Data Model",
-      value: orgDetails.dataModel,
-    }, {
-      key: 'Assessment Date and Time',
-      value: new Date() as unknown as string
-    }]
+    return [
+      {
+        key: 'Org Name',
+        value: orgDetails.orgDetails.Name,
+      },
+      {
+        key: 'Org Id',
+        value: orgDetails.orgDetails.Id,
+      },
+      {
+        key: 'Package Name',
+        value: orgDetails.packageDetails[0].namespace,
+      },
+      {
+        key: 'Data Model',
+        value: orgDetails.dataModel,
+      },
+      {
+        key: 'Assessment Date and Time',
+        value: new Date() as unknown as string,
+      },
+    ];
   }
 
   /**
- * Copies `.js` and `.css` files from a source directory (based on `folderName`)
- * to a specified destination directory.
- *
- * @param folderName - The subdirectory under `/src/` where source asset files are located (e.g., `'javascripts'`, `'styles'`).
- * @param destDir - The absolute or relative path to the destination directory where the assets should be copied.
- *
- * @remarks
- * - If the destination directory does not exist, the method logs a warning and exits.
- * - Only `.js` and `.css` files are copied.
- * - The source files remain in place after copying.
- */
-  private static async pushAssestUtilites(folderName: string, destDir: string) {
+   * Copies `.js` and `.css` files from a source directory (based on `folderName`)
+   * to a specified destination directory.
+   *
+   * @param folderName - The subdirectory under `/src/` where source asset files are located (e.g., `'javascripts'`, `'styles'`).
+   * @param destDir - The absolute or relative path to the destination directory where the assets should be copied.
+   *
+   * @remarks
+   * - If the destination directory does not exist, the method logs a warning and exits.
+   * - Only `.js` and `.css` files are copied.
+   * - The source files remain in place after copying.
+   */
+  private static pushAssestUtilites(folderName: string, destDir: string): void {
     const sourceDir = path.join(process.cwd(), 'src', folderName);
 
     if (!fs.existsSync(destDir)) {
-      this.ux.log(`Destination directory "${destDir}" does not exist. Skipping file copy.`);
+      // Destination directory does not exist. Skipping file copy.
       return;
     }
 
-    fs.readdir(sourceDir, (err, files) => {
-      if (err) {
-        this.ux.log('Error reading source directory:', err.message);
+    fs.readdir(sourceDir, (readDirErr, files) => {
+      if (readDirErr) {
+        // Error reading source directory: readDirErr.message
         return;
       }
 
-      files.forEach(file => {
+      files.forEach((file) => {
         const ext = path.extname(file);
         if (ext === '.js' || ext === '.css') {
           const srcPath = path.join(sourceDir, file);
           const destPath = path.join(destDir, file);
 
-          fs.copyFile(srcPath, destPath, err => {
-            if (err) {
-              this.ux.log(`Failed to copy "${file}":`, err.message);
+          fs.copyFile(srcPath, destPath, (copyErr) => {
+            if (copyErr) {
+              // Failed to copy file: copyErr.message
             }
           });
         }

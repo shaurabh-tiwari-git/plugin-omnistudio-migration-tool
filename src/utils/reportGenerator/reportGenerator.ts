@@ -1,4 +1,4 @@
-import { Filter, HeaderColumn, ReportHeader, TableColumn } from './reportInterfaces';
+import { Filter, HeaderColumn, ReportHeader, TableColumn, TableHeaderCell } from './reportInterfaces';
 
 export function generateHtmlTable<T>(
   headerRows: HeaderColumn[],
@@ -9,7 +9,7 @@ export function generateHtmlTable<T>(
   tableClass = 'slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped slds-table_col-bordered',
   ariaLabel = ''
 ): string {
-  const transformedHeader = transform(headerRows);
+  const transformedHeader: TableHeaderCell[][] = transform(headerRows);
 
   const thead = `
     <thead>
@@ -18,19 +18,18 @@ export function generateHtmlTable<T>(
           (row) => `
         <tr>
           ${row
-            .map(
-              (cell) => `
-              <th
-                ${cell.colspan ? `colspan="${cell.colspan}"` : ''}
-                ${cell.rowspan ? `rowspan="${cell.rowspan}"` : ''}
-                ${cell.styles ?  `style="${cell.styles}"` : 'style= width:auto;'}
-              >
-                <div class="filter-header">
-                  <span class="filter-label">${cell.label}</span>
-                </div>
-              </th>
-            `
-            )
+            .map((cell: TableHeaderCell) => {
+              const colspanAttr = cell.colspan ? `colspan="${cell.colspan}"` : '';
+              const rowspanAttr = cell.rowspan ? `rowspan="${cell.rowspan}"` : '';
+              const styleAttr = `style="${cell.styles ?? 'width:auto;'}"`;
+              return `
+                <th ${colspanAttr} ${rowspanAttr} ${styleAttr}>
+                  <div class="filter-header">
+                    <span class="filter-label">${cell.label}</span>
+                  </div>
+                </th>
+              `;
+            })
             .join('')}
         </tr>
       `
@@ -185,26 +184,26 @@ export function generateHtmlTable<T>(
   `;
 }
 
-function transform(columnInput) {
+function transform(columnInput): TableHeaderCell[][] {
   const row1 = [];
   const row2 = [];
 
-  columnInput.forEach(item => {
+  columnInput.forEach((item) => {
     if (item.subColumn && item.subColumn.length > 0) {
       row1.push({
         label: item.label,
-        colspan: item.subColumn.length
+        colspan: item.subColumn.length,
       });
 
-      item.subColumn.forEach(sub => {
+      item.subColumn.forEach((sub) => {
         row2.push({
           label: sub.label,
-          key: sub.key
+          key: sub.key,
         });
       });
     } else {
-      const row1Entry = {
-        label: item.label
+      const row1Entry: TableHeaderCell = {
+        label: item.label,
       };
 
       if (item.rowspan) row1Entry.rowspan = Number(item.rowspan);
@@ -214,5 +213,5 @@ function transform(columnInput) {
     }
   });
 
-  return [row1, row2];
+  return [row1, row2] as unknown as TableHeaderCell[][];
 }

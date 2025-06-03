@@ -19,8 +19,8 @@ export interface ReportHeader {
 }
 
 export interface ReportHeaderFormat {
-  key: string,
-  value: string
+  key: string;
+  value: string;
 }
 
 export interface HeaderColumn {
@@ -30,4 +30,13 @@ export interface HeaderColumn {
   rowspan?: number;
   styles?: string;
   subColumn?: HeaderColumn[]; // Recursive definition
+}
+
+export interface TableHeaderCell {
+  label: string;
+  colspan?: number;
+  rowspan?: number;
+  key?: string;
+  width?: string;
+  styles?: string;
 }
