@@ -1,5 +1,5 @@
 import { DataRaptorAssessmentInfo } from '../interfaces';
-import { Filter, ReportHeader, TableColumn, TableHeaderCell } from '../reportGenerator/reportInterfaces';
+import { Filter, HeaderColumn, ReportHeaderFormat, TableColumn } from '../reportGenerator/reportInterfaces';
 import { generateHtmlTable } from '../reportGenerator/reportGenerator';
 import { reportingHelper } from './reportingHelper';
 
@@ -7,23 +7,59 @@ export class DRAssessmentReporter {
   public static generateDRAssesment(
     dataRaptorAssessmentInfos: DataRaptorAssessmentInfo[],
     instanceUrl: string,
-    org: ReportHeader[]
+    org: ReportHeaderFormat[]
   ): string {
-    // Define multi-row headers
-    const headerRows: TableHeaderCell[][] = [
-      [
-        { label: 'In Package', colspan: 2, key: 'inPackage' },
-        { label: 'In Core', colspan: 1, key: 'inCore' },
-        { label: 'Type of DM Action', rowspan: 2, key: 'type' },
-        { label: 'Summary', rowspan: 2, key: 'summary' },
-        { label: 'Custom Function Changes', rowspan: 2, key: 'customFunctionChanges' },
-        { label: 'Apex Dependencies', rowspan: 2, key: 'apexDependencies' },
-      ],
-      [
-        { label: 'Name', key: 'oldName' },
-        { label: 'Record ID', key: 'id' },
-        { label: 'Name', key: 'name' },
-      ],
+    // Header Column
+    const headerColumn: HeaderColumn[] = [
+      {
+        label: 'In Package',
+        colspan: 2,
+        styles: 'color: purple;',
+        subColumn: [
+          {
+            label: 'Name',
+            key: 'oldName',
+          },
+          {
+            label: 'Record ID',
+            key: 'id',
+          },
+        ],
+      },
+      {
+        label: 'In Core',
+        colspan: 1,
+        subColumn: [
+          {
+            label: 'Name',
+            key: 'name',
+          },
+        ],
+      },
+      {
+        label: 'Type',
+        key: 'type',
+        rowspan: 2,
+        subColumn: [],
+      },
+      {
+        label: 'Summary',
+        key: 'summary',
+        rowspan: 2,
+        subColumn: [],
+      },
+      {
+        label: 'Custom Function Changes',
+        key: 'customFunctionChanges',
+        rowspan: 2,
+        subColumn: [],
+      },
+      {
+        label: 'Apex Dependencies',
+        key: 'apexDependencies',
+        rowspan: 2,
+        subColumn: [],
+      },
     ];
 
     // Define columns
@@ -43,7 +79,7 @@ export class DRAssessmentReporter {
       },
       {
         key: 'name',
-        cell: (row: DataRaptorAssessmentInfo): string => row.name,
+        cell: (row: DataRaptorAssessmentInfo): string => row.name || '',
         filterValue: (row: DataRaptorAssessmentInfo): string => row.name,
         title: (row: DataRaptorAssessmentInfo): string => row.name,
       },
@@ -54,10 +90,10 @@ export class DRAssessmentReporter {
         title: (row: DataRaptorAssessmentInfo): string => row.type,
       },
       {
-        key: 'Summary',
+        key: 'summary',
         cell: (row: DataRaptorAssessmentInfo): string => reportingHelper.convertToBuletedList(row.warnings || []),
-        filterValue: (row: DataRaptorAssessmentInfo): string[] => row.warnings,
-        title: (row: DataRaptorAssessmentInfo): string[] => row.warnings,
+        filterValue: (row: DataRaptorAssessmentInfo): string => (row.warnings ? row.warnings.join(', ') : ''),
+        title: (row: DataRaptorAssessmentInfo): string => (row.warnings ? row.warnings.join(', ') : ''),
       },
       {
         key: 'customFunctionChanges',
@@ -76,13 +112,13 @@ export class DRAssessmentReporter {
     const filters: Filter[] = [];
     // Render table
     const tableHtml = generateHtmlTable(
-      headerRows,
+      headerColumn,
       columns,
       dataRaptorAssessmentInfos,
       org,
       filters,
       undefined,
-      'Data Mapper Assessment Report'
+      'Data Mapper Assessment'
     );
     return `<div class="slds-text-heading_large">Data Mapper Assessment Report</div>${tableHtml}`;
   }

@@ -157,7 +157,7 @@ describe('DRAssessmentReporter', () => {
       it('should have proper table accessibility attributes', () => {
         const result = DRAssessmentReporter.generateDRAssesment(mockData, mockInstanceUrl, mockOrg);
 
-        expect(result).to.include('aria-label="Data Mapper Assessment Report"');
+        expect(result).to.include('aria-label="Data Mapper Assessment"');
         expect(result).to.include(
           'class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped slds-table_col-bordered"'
         );
