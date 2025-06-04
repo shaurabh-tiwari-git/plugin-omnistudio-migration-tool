@@ -108,7 +108,48 @@ export default class OmnistudioRelatedObjectMigrationFacade {
       Logger.logger.error(Error.message);
     }
 
-    // Truncate existing objects if necessary
+    // Stop the debug timer
+    const timer = debugTimer.stop();
+
+    // Save timer to debug logger
+    Logger.logger.debug(timer);
+
+    // Return results needed for --json flag
+    return { apexAssessmentInfos, lwcAssessmentInfos };
+  }
+
+  public assessAll(relatedObjects: string[]): RelatedObjectAssesmentInfo {
+    // Start the debug timer
+    DebugTimer.getInstance().start();
+
+    // Declare an array of MigrationTool
+    const projectDirectory: string = OmnistudioRelatedObjectMigrationFacade.intializeProject();
+    const debugTimer = DebugTimer.getInstance();
+    debugTimer.start();
+
+    let apexAssessmentInfos: ApexAssessmentInfo[] = [];
+    let lwcAssessmentInfos: LWCAssessmentInfo[] = [];
+
+    // Proceed with assessment logic
+    try {
+      if (relatedObjects.includes('apex')) {
+        const apexMigrator = new ApexMigration(projectDirectory, this.namespace, this.org);
+        apexAssessmentInfos = apexMigrator.assess();
+      }
+    } catch (Error) {
+      // Log the error
+      Logger.logger.error(Error.message);
+    }
+    try {
+      if (relatedObjects.includes('lwc')) {
+        const lwcparser = new LwcMigration(projectDirectory, this.namespace, this.org);
+        lwcAssessmentInfos = lwcparser.assessment();
+      }
+    } catch (Error) {
+      // Log the error
+      Logger.logger.error(Error.message);
+    }
+
     // Stop the debug timer
     const timer = debugTimer.stop();
 
