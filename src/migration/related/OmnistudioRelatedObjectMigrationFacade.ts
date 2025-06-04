@@ -3,7 +3,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Org } from '@salesforce/core';
-import '../../utils/prototypes';
 import * as shell from 'shelljs';
 import {
   ApexAssessmentInfo,

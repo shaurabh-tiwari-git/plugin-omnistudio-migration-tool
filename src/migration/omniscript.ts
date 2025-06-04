@@ -25,6 +25,7 @@ import {
   populateRegexForFunctionMetadata,
 } from '../utils/formula/FormulaUtil';
 import { StringVal } from '../utils/StringValue/stringval';
+import { formatUnicorn } from '../utils/stringUtils';
 
 export class OmniScriptMigrationTool extends BaseMigrationTool implements MigrationTool {
   private readonly exportType: OmniScriptExportType;
@@ -103,7 +104,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
     let success: boolean = await NetUtils.delete(this.connection, ids);
     if (!success) {
-      throw new Error(this.messages.getMessage('couldNotTruncateOmnniProcess').formatUnicorn(objectName));
+      throw new Error(formatUnicorn(this.messages.getMessage('couldNotTruncateOmnniProcess'), objectName));
     }
   }
 
