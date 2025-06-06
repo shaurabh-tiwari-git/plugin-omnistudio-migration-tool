@@ -104,7 +104,7 @@ export default class Assess extends OmniStudioBaseCommand {
       assesmentInfo.apexAssessmentInfos = relatedObjectAssessmentResult.apexAssessmentInfos;
     }
 
-    await AssessmentReporter.generate(assesmentInfo, conn.instanceUrl);
+    await AssessmentReporter.generate(assesmentInfo, conn.instanceUrl, orgs);
     return assesmentInfo;
   }
 
