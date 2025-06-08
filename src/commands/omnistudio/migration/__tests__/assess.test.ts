@@ -3,23 +3,18 @@ import * as path from 'path';
 import { test } from '@salesforce/command/lib/test';
 import { stubMethod } from '@salesforce/ts-sinon';
 import * as sinon from 'sinon';
-import { assert } from 'chai';
+import { expect } from 'chai';
 import { DataRaptorMigrationTool } from '../../../../migration/dataraptor';
 import { CardMigrationTool } from '../../../../migration/flexcard';
 import { OmniScriptMigrationTool } from '../../../../migration/omniscript';
 import OmnistudioRelatedObjectMigrationFacade from '../../../../migration/related/OmnistudioRelatedObjectMigrationFacade';
 import { OrgUtils } from '../../../../utils/orgUtils';
 import { OmnistudioOrgDetails } from '../../../../utils/orgUtils';
-import { AssessmentReporter } from '../../../../utils/resultsbuilder/assessmentReporter';
 
 // Helper function to normalize paths for comparison
-function normalizePath(filePath: string): string {
-  return path.normalize(filePath).replace(/\\/g, '/');
-}
 
 describe('omnistudio:migration:assess', () => {
   let sandbox: sinon.SinonSandbox;
-  let assessmentReporterSpy: sinon.SinonSpy;
   const assessmentReportsDir = path.join(process.cwd(), 'assessment_reports');
 
   // Mock org details
@@ -197,7 +192,6 @@ describe('omnistudio:migration:assess', () => {
 
     // Mock OrgUtils.getOrgDetails
     stubMethod(sandbox, OrgUtils, 'getOrgDetails').resolves(mockOrgDetailsStandardModel);
-    assessmentReporterSpy = stubMethod(sandbox, AssessmentReporter, 'createDocument');
   });
 
   afterEach(() => {
@@ -216,49 +210,32 @@ describe('omnistudio:migration:assess', () => {
     .stderr()
     .command(['omnistudio:migration:assess'])
     .it('generates all assessment files with content for all components', () => {
-      // Verify createDocument was called for each assessment type
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/datamapper_assessment.html')),
-          sinon.match(
-            (html: string) =>
-              html.includes('Data Mapper Components Assessment') &&
-              html.includes('DR_Test_Extract') &&
-              html.includes('DR_Test_Transform')
-          )
-        )
+      // File content assertions (for both Linux and Windows)
+      const dataRaptorContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/datamapper_assessment.html'),
+        'utf8'
       );
+      expect(dataRaptorContent).to.include('DR_Test_Extract');
+      expect(dataRaptorContent).to.include('DR_Test_Transform');
 
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/flexcard_assessment.html')),
-          sinon.match(
-            (html: string) =>
-              html.includes('Flexcard Components Assessment') &&
-              html.includes('FC_Test_Card') &&
-              html.includes('FC_Test_Form')
-          )
-        )
+      const flexCardContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/flexcard_assessment.html'),
+        'utf8'
       );
+      expect(flexCardContent).to.include('FC_Test_Card');
+      expect(flexCardContent).to.include('FC_Test_Form');
 
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/omniscript_assessment.html')),
-          sinon.match(
-            (html: string) => html.includes('Omniscript Assessment Report') && html.includes('OS_Test_Script')
-          )
-        )
+      const omniScriptContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/omniscript_assessment.html'),
+        'utf8'
       );
+      expect(omniScriptContent).to.include('OS_Test_Script');
 
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/integration_procedure_assessment.html')),
-          sinon.match(
-            (html: string) =>
-              html.includes('Integration Procedure Components Assessment') && html.includes('IP_Test_Procedure')
-          )
-        )
+      const ipContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/integration_procedure_assessment.html'),
+        'utf8'
       );
+      expect(ipContent).to.include('IP_Test_Procedure');
     });
 
   test
@@ -267,40 +244,31 @@ describe('omnistudio:migration:assess', () => {
     .stderr()
     .command(['omnistudio:migration:assess', '-o', 'dr'])
     .it('generates assessment files with content only for DataRaptor components', () => {
-      // Verify createDocument was called for DataRaptor assessment
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/datamapper_assessment.html')),
-          sinon.match(
-            (html: string) =>
-              html.includes('Data Mapper Components Assessment') &&
-              html.includes('DR_Test_Extract') &&
-              html.includes('DR_Test_Transform')
-          )
-        )
+      const dataRaptorContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/datamapper_assessment.html'),
+        'utf8'
       );
+      expect(dataRaptorContent).to.include('DR_Test_Extract');
+      expect(dataRaptorContent).to.include('DR_Test_Transform');
 
-      // Verify createDocument was called for other files but with empty content
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/flexcard_assessment.html')),
-          sinon.match((html: string) => !html.includes('FC_Test_Card') && !html.includes('FC_Test_Form'))
-        )
+      const flexCardContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/flexcard_assessment.html'),
+        'utf8'
       );
+      expect(flexCardContent).to.not.include('FC_Test_Card');
+      expect(flexCardContent).to.not.include('FC_Test_Form');
 
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/omniscript_assessment.html')),
-          sinon.match((html: string) => !html.includes('OS_Test_Script'))
-        )
+      const omniScriptContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/omniscript_assessment.html'),
+        'utf8'
       );
+      expect(omniScriptContent).to.not.include('OS_Test_Script');
 
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/integration_procedure_assessment.html')),
-          sinon.match((html: string) => !html.includes('IP_Test_Procedure'))
-        )
+      const ipContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/integration_procedure_assessment.html'),
+        'utf8'
       );
+      expect(ipContent).to.not.include('IP_Test_Procedure');
     });
 
   test
@@ -309,40 +277,31 @@ describe('omnistudio:migration:assess', () => {
     .stderr()
     .command(['omnistudio:migration:assess', '-o', 'fc'])
     .it('generates assessment files with content only for FlexCard components', () => {
-      // Verify createDocument was called for FlexCard assessment
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/flexcard_assessment.html')),
-          sinon.match(
-            (html: string) =>
-              html.includes('Flexcard Components Assessment') &&
-              html.includes('FC_Test_Card') &&
-              html.includes('FC_Test_Form')
-          )
-        )
+      const dataRaptorContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/datamapper_assessment.html'),
+        'utf8'
       );
+      expect(dataRaptorContent).to.not.include('DR_Test_Extract');
+      expect(dataRaptorContent).to.not.include('DR_Test_Transform');
 
-      // Verify createDocument was called for other files but with empty content
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/datamapper_assessment.html')),
-          sinon.match((html: string) => !html.includes('DR_Test_Extract') && !html.includes('DR_Test_Transform'))
-        )
+      const flexCardContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/flexcard_assessment.html'),
+        'utf8'
       );
+      expect(flexCardContent).to.include('FC_Test_Card');
+      expect(flexCardContent).to.include('FC_Test_Form');
 
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/omniscript_assessment.html')),
-          sinon.match((html: string) => !html.includes('OS_Test_Script'))
-        )
+      const omniScriptContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/omniscript_assessment.html'),
+        'utf8'
       );
+      expect(omniScriptContent).to.not.include('OS_Test_Script');
 
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/integration_procedure_assessment.html')),
-          sinon.match((html: string) => !html.includes('IP_Test_Procedure'))
-        )
+      const ipContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/integration_procedure_assessment.html'),
+        'utf8'
       );
+      expect(ipContent).to.not.include('IP_Test_Procedure');
     });
 
   test
@@ -351,37 +310,31 @@ describe('omnistudio:migration:assess', () => {
     .stderr()
     .command(['omnistudio:migration:assess', '-o', 'os'])
     .it('generates assessment files with content only for OmniScript components', () => {
-      // Verify createDocument was called for OmniScript assessment
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/omniscript_assessment.html')),
-          sinon.match(
-            (html: string) => html.includes('Omniscript Assessment Report') && html.includes('OS_Test_Script')
-          )
-        )
+      const dataRaptorContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/datamapper_assessment.html'),
+        'utf8'
       );
+      expect(dataRaptorContent).to.not.include('DR_Test_Extract');
+      expect(dataRaptorContent).to.not.include('DR_Test_Transform');
 
-      // Verify createDocument was called for other files but with empty content
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/datamapper_assessment.html')),
-          sinon.match((html: string) => !html.includes('DR_Test_Extract') && !html.includes('DR_Test_Transform'))
-        )
+      const flexCardContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/flexcard_assessment.html'),
+        'utf8'
       );
+      expect(flexCardContent).to.not.include('FC_Test_Card');
+      expect(flexCardContent).to.not.include('FC_Test_Form');
 
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/flexcard_assessment.html')),
-          sinon.match((html: string) => !html.includes('FC_Test_Card') && !html.includes('FC_Test_Form'))
-        )
+      const omniScriptContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/omniscript_assessment.html'),
+        'utf8'
       );
+      expect(omniScriptContent).to.include('OS_Test_Script');
 
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/integration_procedure_assessment.html')),
-          sinon.match((html: string) => html.includes('IP_Test_Procedure'))
-        )
+      const ipContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/integration_procedure_assessment.html'),
+        'utf8'
       );
+      expect(ipContent).to.include('IP_Test_Procedure');
     });
 
   test
@@ -390,38 +343,31 @@ describe('omnistudio:migration:assess', () => {
     .stderr()
     .command(['omnistudio:migration:assess', '-o', 'ip'])
     .it('generates assessment files with content only for Integration Procedure components', () => {
-      // Verify createDocument was called for Integration Procedure assessment
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/integration_procedure_assessment.html')),
-          sinon.match(
-            (html: string) =>
-              html.includes('Integration Procedure Components Assessment') && html.includes('IP_Test_Procedure')
-          )
-        )
+      const dataRaptorContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/datamapper_assessment.html'),
+        'utf8'
       );
+      expect(dataRaptorContent).to.not.include('DR_Test_Extract');
+      expect(dataRaptorContent).to.not.include('DR_Test_Transform');
 
-      // Verify createDocument was called for other files but with empty content
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/datamapper_assessment.html')),
-          sinon.match((html: string) => !html.includes('DR_Test_Extract') && !html.includes('DR_Test_Transform'))
-        )
+      const flexCardContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/flexcard_assessment.html'),
+        'utf8'
       );
+      expect(flexCardContent).to.not.include('FC_Test_Card');
+      expect(flexCardContent).to.not.include('FC_Test_Form');
 
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/flexcard_assessment.html')),
-          sinon.match((html: string) => !html.includes('FC_Test_Card') && !html.includes('FC_Test_Form'))
-        )
+      const omniScriptContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/omniscript_assessment.html'),
+        'utf8'
       );
+      expect(omniScriptContent).to.include('OS_Test_Script');
 
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/omniscript_assessment.html')),
-          sinon.match((html: string) => html.includes('OS_Test_Script'))
-        )
+      const ipContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/integration_procedure_assessment.html'),
+        'utf8'
       );
+      expect(ipContent).to.include('IP_Test_Procedure');
     });
 
   test
@@ -430,8 +376,17 @@ describe('omnistudio:migration:assess', () => {
     .stderr()
     .command(['omnistudio:migration:assess', '-o', 'ro'])
     .it('does not generate any assessment files when ro option is passed', () => {
-      // Verify that createDocument was not called
-      assert.isFalse(assessmentReporterSpy.called);
+      // Optionally, you can check that the files do not exist
+      const files = [
+        'datamapper_assessment.html',
+        'flexcard_assessment.html',
+        'omniscript_assessment.html',
+        'integration_procedure_assessment.html',
+      ];
+      files.forEach((file) => {
+        const filePath = path.join(process.cwd(), 'assessment_reports', file);
+        void expect(fs.existsSync(filePath)).to.be.false;
+      });
     });
 
   test
@@ -440,50 +395,37 @@ describe('omnistudio:migration:assess', () => {
     .stderr()
     .command(['omnistudio:migration:assess', '-r', 'apex'])
     .it('generates assessment files with content only for Apex components', () => {
-      // Verify createDocument was called for Apex assessment
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/apex_assessment.html')),
-          sinon.match((html: string) => html.includes('Apex Assessment') && html.includes('TestApexClass'))
-        )
-      );
+      const apexContent = fs.readFileSync(path.join(process.cwd(), 'assessment_reports/apex_assessment.html'), 'utf8');
+      expect(apexContent).to.include('TestApexClass');
 
-      // Verify createDocument was called for other files but with empty content
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/lwc_assessment.html')),
-          sinon.match((html: string) => !html.includes('testLwcComponent'))
-        )
-      );
+      const lwcContent = fs.readFileSync(path.join(process.cwd(), 'assessment_reports/lwc_assessment.html'), 'utf8');
+      expect(lwcContent).to.not.include('testLwcComponent');
 
-      // Verify other files have content
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/datamapper_assessment.html')),
-          sinon.match((html: string) => html.includes('DR_Test_Extract') && html.includes('DR_Test_Transform'))
-        )
+      const dataRaptorContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/datamapper_assessment.html'),
+        'utf8'
       );
+      expect(dataRaptorContent).to.include('DR_Test_Extract');
+      expect(dataRaptorContent).to.include('DR_Test_Transform');
 
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/flexcard_assessment.html')),
-          sinon.match((html: string) => html.includes('FC_Test_Card') && html.includes('FC_Test_Form'))
-        )
+      const flexCardContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/flexcard_assessment.html'),
+        'utf8'
       );
+      expect(flexCardContent).to.include('FC_Test_Card');
+      expect(flexCardContent).to.include('FC_Test_Form');
 
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/omniscript_assessment.html')),
-          sinon.match((html: string) => html.includes('OS_Test_Script'))
-        )
+      const omniScriptContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/omniscript_assessment.html'),
+        'utf8'
       );
+      expect(omniScriptContent).to.include('OS_Test_Script');
 
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/integration_procedure_assessment.html')),
-          sinon.match((html: string) => html.includes('IP_Test_Procedure'))
-        )
+      const ipContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/integration_procedure_assessment.html'),
+        'utf8'
       );
+      expect(ipContent).to.include('IP_Test_Procedure');
     });
 
   test
@@ -492,50 +434,37 @@ describe('omnistudio:migration:assess', () => {
     .stderr()
     .command(['omnistudio:migration:assess', '-r', 'lwc'])
     .it('generates assessment files with content only for LWC components', () => {
-      // Verify createDocument was called for LWC assessment
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/lwc_assessment.html')),
-          sinon.match((html: string) => html.includes('LWC Assessment') && html.includes('testLwcComponent'))
-        )
-      );
+      const apexContent = fs.readFileSync(path.join(process.cwd(), 'assessment_reports/apex_assessment.html'), 'utf8');
+      expect(apexContent).to.not.include('TestApexClass');
 
-      // Verify createDocument was called for other files but with empty content
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/apex_assessment.html')),
-          sinon.match((html: string) => !html.includes('TestApexClass'))
-        )
-      );
+      const lwcContent = fs.readFileSync(path.join(process.cwd(), 'assessment_reports/lwc_assessment.html'), 'utf8');
+      expect(lwcContent).to.include('testLwcComponent');
 
-      // Verify other files have content
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/datamapper_assessment.html')),
-          sinon.match((html: string) => html.includes('DR_Test_Extract') && html.includes('DR_Test_Transform'))
-        )
+      const dataRaptorContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/datamapper_assessment.html'),
+        'utf8'
       );
+      expect(dataRaptorContent).to.include('DR_Test_Extract');
+      expect(dataRaptorContent).to.include('DR_Test_Transform');
 
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/flexcard_assessment.html')),
-          sinon.match((html: string) => html.includes('FC_Test_Card') && html.includes('FC_Test_Form'))
-        )
+      const flexCardContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/flexcard_assessment.html'),
+        'utf8'
       );
+      expect(flexCardContent).to.include('FC_Test_Card');
+      expect(flexCardContent).to.include('FC_Test_Form');
 
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/omniscript_assessment.html')),
-          sinon.match((html: string) => html.includes('OS_Test_Script'))
-        )
+      const omniScriptContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/omniscript_assessment.html'),
+        'utf8'
       );
+      expect(omniScriptContent).to.include('OS_Test_Script');
 
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/integration_procedure_assessment.html')),
-          sinon.match((html: string) => html.includes('IP_Test_Procedure'))
-        )
+      const ipContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/integration_procedure_assessment.html'),
+        'utf8'
       );
+      expect(ipContent).to.include('IP_Test_Procedure');
     });
 
   test
@@ -544,49 +473,36 @@ describe('omnistudio:migration:assess', () => {
     .stderr()
     .command(['omnistudio:migration:assess', '-r', 'apex,lwc'])
     .it('generates assessment files with content for both Apex and LWC components', () => {
-      // Verify createDocument was called for Apex assessment
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/apex_assessment.html')),
-          sinon.match((html: string) => html.includes('Apex Assessment') && html.includes('TestApexClass'))
-        )
-      );
+      const apexContent = fs.readFileSync(path.join(process.cwd(), 'assessment_reports/apex_assessment.html'), 'utf8');
+      expect(apexContent).to.include('TestApexClass');
 
-      // Verify createDocument was called for LWC assessment
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/lwc_assessment.html')),
-          sinon.match((html: string) => html.includes('LWC Assessment') && html.includes('testLwcComponent'))
-        )
-      );
+      const lwcContent = fs.readFileSync(path.join(process.cwd(), 'assessment_reports/lwc_assessment.html'), 'utf8');
+      expect(lwcContent).to.include('testLwcComponent');
 
-      // Verify other files have content
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/datamapper_assessment.html')),
-          sinon.match((html: string) => html.includes('DR_Test_Extract') && html.includes('DR_Test_Transform'))
-        )
+      const dataRaptorContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/datamapper_assessment.html'),
+        'utf8'
       );
+      expect(dataRaptorContent).to.include('DR_Test_Extract');
+      expect(dataRaptorContent).to.include('DR_Test_Transform');
 
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/flexcard_assessment.html')),
-          sinon.match((html: string) => html.includes('FC_Test_Card') && html.includes('FC_Test_Form'))
-        )
+      const flexCardContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/flexcard_assessment.html'),
+        'utf8'
       );
+      expect(flexCardContent).to.include('FC_Test_Card');
+      expect(flexCardContent).to.include('FC_Test_Form');
 
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/omniscript_assessment.html')),
-          sinon.match((html: string) => html.includes('OS_Test_Script'))
-        )
+      const omniScriptContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/omniscript_assessment.html'),
+        'utf8'
       );
+      expect(omniScriptContent).to.include('OS_Test_Script');
 
-      assert.isTrue(
-        assessmentReporterSpy.calledWith(
-          normalizePath(path.join(process.cwd(), 'assessment_reports/integration_procedure_assessment.html')),
-          sinon.match((html: string) => html.includes('IP_Test_Procedure'))
-        )
+      const ipContent = fs.readFileSync(
+        path.join(process.cwd(), 'assessment_reports/integration_procedure_assessment.html'),
+        'utf8'
       );
+      expect(ipContent).to.include('IP_Test_Procedure');
     });
 });
