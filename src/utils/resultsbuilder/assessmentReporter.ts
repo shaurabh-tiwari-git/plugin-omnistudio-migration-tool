@@ -73,10 +73,11 @@ export class AssessmentReporter {
         name: 'Apex assessment report',
         location: 'apex_assessment.html',
       },
-      {
-        name: 'LWC assessment report',
-        location: 'lwc_assessment.html',
-      },
+      // TODO: Uncomment code once MVP for migration is completed
+      // {
+      //   name: 'LWC assessment report',
+      //   location: 'lwc_assessment.html',
+      // },
     ];
 
     await this.createMasterDocument(nameUrls, basePath);
