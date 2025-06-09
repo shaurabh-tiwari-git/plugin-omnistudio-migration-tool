@@ -7,6 +7,7 @@ import { ReportHeaderFormat } from '../reportGenerator/reportInterfaces';
 import { OmnistudioOrgDetails } from '../orgUtils';
 import { Constants } from '../constants/stringContants';
 import { pushAssestUtilites } from '../file/fileUtil';
+import { OrgPreferences } from '../orgpreferences';
 import { OSAssessmentReporter } from './OSAssessmentReporter';
 import { ApexAssessmentReporter } from './ApexAssessmentReporter';
 import { IPAssessmentReporter } from './IPAssessmentReporter';
@@ -116,6 +117,7 @@ export class AssessmentReporter {
     //     LWCAssessmentReporter.generateLwcAssesment(result.lwcAssessmentInfos, instanceUrl, orgDetails)
     //   );
     // }
+    
     const nameUrls = [
       {
         name: 'omnscript assessment report',
@@ -143,6 +145,17 @@ export class AssessmentReporter {
       //   location: 'lwc_assessment.html',
       // },
     ];
+    
+    // Check rollback flags
+    const enabledFlags = omnistudioOrgDetails.rollbackFlags || [];
+    if (enabledFlags.length > 0) {
+      const rollbackFlagsReportPath = basePath + '/rollback_flags_report.html';
+      this.createDocument(rollbackFlagsReportPath, this.generateRollbackFlagsReport(enabledFlags));
+      nameUrls.push({
+        name: 'Rollback Flags Report',
+        location: 'rollback_flags_report.html',
+      });
+    }
 
     await this.createMasterDocument(nameUrls, basePath);
     pushAssestUtilites('javascripts', basePath);
@@ -286,5 +299,19 @@ export class AssessmentReporter {
             </table>
         </div>`;
     return tableBody;
+  }
+  private static generateRollbackFlagsReport(enabledFlags: string[]): string {
+    return `
+      <div class="slds-box slds-theme_warning" style="margin-bottom: 20px;">
+        <div class="slds-text-heading_medium slds-m-bottom_small">⚠️ Warning: Rollback Flags Enabled</div>
+        <p>The following rollback flags are currently enabled and will be disabled during migration:</p>
+        <ul class="slds-m-top_small">
+          ${enabledFlags.map((flag) => `<li>${flag}</li>`).join('')}
+        </ul>
+        <p class="slds-m-top_small">
+          <strong>Note:</strong> These flags will not be supported after migration. For assistance, please contact support.
+        </p>
+      </div>
+    `;
   }
 }
