@@ -49,7 +49,8 @@ export class AssessmentReporter {
       DRAssessmentReporter.generateDRAssesment(result.dataRaptorAssessmentInfos, instanceUrl)
     );
     this.createDocument(apexAssessmentFilePath, this.generateApexAssesment(result.apexAssessmentInfos));
-    this.createDocument(lwcAssessmentFilePath, this.generateLwcAssesment(result.lwcAssessmentInfos));
+    // TODO: Uncomment code once MVP for migration is completed
+    // this.createDocument(lwcAssessmentFilePath, this.generateLwcAssesment(result.lwcAssessmentInfos));
     const nameUrls = [
       {
         name: 'omnscript assessment report',

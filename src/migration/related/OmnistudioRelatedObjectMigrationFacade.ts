@@ -61,9 +61,10 @@ export default class OmnistudioRelatedObjectMigrationFacade {
       projectPath = process.cwd() + '/' + defaultProjectName;
       const pwd = shell.pwd();
       shell.cd(projectPath);
-      if (relatedObjects.includes('lwc')) {
-        sfProject.retrieve(LWCTYPE, this.org.getUsername());
-      }
+      // TODO: Uncomment code once MVP for migration is completed
+      // if (relatedObjects.includes('lwc')) {
+      //   sfProject.retrieve(LWCTYPE, this.org.getUsername());
+      // }
       if (relatedObjects.includes('apex')) {
         sfProject.retrieve(APEXCLASS, this.org.getUsername());
       }
@@ -89,7 +90,7 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     const apexMigrator = this.createApexClassMigrationTool(projectDirectory, targetApexNamespace);
     const lwcMigrator = this.createLWCComponentMigrationTool(this.namespace, projectDirectory);
     let apexAssessmentInfos: ApexAssessmentInfo[] = [];
-    let lwcAssessmentInfos: LWCAssessmentInfo[] = [];
+    const lwcAssessmentInfos: LWCAssessmentInfo[] = [];
     // Proceed with migration logic
     try {
       if (relatedObjects.includes('apex')) {
@@ -99,14 +100,15 @@ export default class OmnistudioRelatedObjectMigrationFacade {
       // Log the error
       Logger.logger.error(Error.message);
     }
-    try {
-      if (relatedObjects.includes('lwc')) {
-        lwcAssessmentInfos = lwcMigrator.migrate();
-      }
-    } catch (Error) {
-      // Log the error
-      Logger.logger.error(Error.message);
-    }
+    // TODO: Uncomment code once MVP for migration is completed
+    /* try {
+       if (relatedObjects.includes('lwc')) {
+         lwcAssessmentInfos = lwcMigrator.migrate();
+       }
+     } catch (Error) {
+       // Log the error
+       Logger.logger.error(Error.message);
+     } */
 
     // Truncate existing objects if necessary
     // Stop the debug timer
