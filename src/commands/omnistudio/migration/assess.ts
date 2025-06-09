@@ -63,6 +63,7 @@ export default class Assess extends OmniStudioBaseCommand {
     Logger.initialiseLogger(this.ux, this.logger);
     const projectDirectory = OmnistudioRelatedObjectMigrationFacade.intializeProject();
     conn.setApiVersion(apiVersion);
+    // @ts-expect-error - LWC functionality temporarily disabled
     const lwcparser = new LwcMigration(projectDirectory, namespace, this.org);
     const apexMigrator = new ApexMigration(projectDirectory, namespace, this.org);
     const osMigrator = new OmniScriptMigrationTool(

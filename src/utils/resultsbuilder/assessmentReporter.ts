@@ -29,6 +29,7 @@ export class AssessmentReporter {
     const integrationProcedureAssessmentFilePath = basePath + '/integration_procedure_assessment.html';
     const dataMapperAssessmentFilePath = basePath + '/datamapper_assessment.html';
     const apexAssessmentFilePath = basePath + '/apex_assessment.html';
+    // @ts-expect-error - LWC functionality temporarily disabled
     const lwcAssessmentFilePath = basePath + '/lwc_assessment.html';
     const orgDetails: ReportHeaderFormat[] = this.formattedOrgDetails(omnistudioOrgDetails);
 
@@ -186,6 +187,7 @@ export class AssessmentReporter {
     const doc = this.generateDocument(htmlBody);
     fs.writeFileSync(filePath, doc);
   }
+  // @ts-expect-error - LWC functionality temporarily disabled
   private static generateLwcAssesment(lwcAssessmentInfos: LWCAssessmentInfo[]): string {
     let tableBody = '';
     tableBody += `

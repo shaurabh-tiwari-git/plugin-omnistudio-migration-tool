@@ -23,6 +23,7 @@ import { LwcMigration } from './LwcMigration';
 // Load the specific messages for this file. Messages from @salesforce/command, @salesforce/core,
 // or any library that is using the messages framework can also be loaded this way.
 // const messages = Messages.loadMessages('@salesforce/plugin-omnistudio-related-object-migration-tool', 'migrate');
+// @ts-expect-error - LWC functionality temporarily disabled
 const LWCTYPE = 'LightningComponentBundle';
 const APEXCLASS = 'Apexclass';
 
@@ -88,8 +89,10 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     debugTimer.start();
     // Initialize migration tools based on the relatedObjects parameter
     const apexMigrator = this.createApexClassMigrationTool(projectDirectory, targetApexNamespace);
+    // @ts-expect-error - LWC functionality temporarily disabled
     const lwcMigrator = this.createLWCComponentMigrationTool(this.namespace, projectDirectory);
     let apexAssessmentInfos: ApexAssessmentInfo[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const lwcAssessmentInfos: LWCAssessmentInfo[] = [];
     // Proceed with migration logic
     try {
