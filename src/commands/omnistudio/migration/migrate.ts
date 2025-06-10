@@ -86,7 +86,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     // Let's time every step
     DebugTimer.getInstance().start();
     let projectPath: string;
-    let objectsToProcess: string[];
+    let objectsToProcess: string[] = [];
     let targetApexNamespace: string;
     if (relatedObjects) {
       const validOptions = ['apex', 'lwc'];
