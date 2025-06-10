@@ -66,13 +66,12 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     const debugTimer = DebugTimer.getInstance();
     debugTimer.start();
     // Initialize migration tools based on the relatedObjects parameter
-    const apexMigrator = new ApexMigration(this.projectPath, this.namespace, this.org, targetApexNamespace);
-    const lwcMigrator = new LwcMigration(this.projectPath, this.namespace, this.org);
     let apexAssessmentInfos: ApexAssessmentInfo[] = [];
     let lwcAssessmentInfos: LWCAssessmentInfo[] = [];
     // Proceed with migration logic
     try {
       if (relatedObjects.includes('apex')) {
+        const apexMigrator = new ApexMigration(this.projectPath, this.namespace, this.org, targetApexNamespace);
         apexAssessmentInfos = apexMigrator.migrate();
       }
     } catch (Error) {
@@ -81,6 +80,7 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     }
     try {
       if (relatedObjects.includes('lwc')) {
+        const lwcMigrator = new LwcMigration(this.projectPath, this.namespace, this.org);
         lwcAssessmentInfos = lwcMigrator.migrate();
       }
     } catch (Error) {
