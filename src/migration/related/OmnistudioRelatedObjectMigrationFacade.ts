@@ -4,13 +4,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Org } from '@salesforce/core';
 import * as shell from 'shelljs';
-import {
-  ApexAssessmentInfo,
-  DebugTimer,
-  LWCAssessmentInfo,
-  MigratedObject,
-  RelatedObjectAssesmentInfo,
-} from '../../utils';
+import { ApexAssessmentInfo, DebugTimer, LWCAssessmentInfo, RelatedObjectAssesmentInfo } from '../../utils';
 import { sfProject } from '../../utils/sfcli/project/sfProject';
 import { Logger } from '../../utils/logger';
 import { ApexMigration } from './ApexMigration';
@@ -35,58 +29,45 @@ export default class OmnistudioRelatedObjectMigrationFacade {
   protected readonly only: string;
   protected readonly allversions: boolean;
   protected readonly org: Org;
+  protected readonly projectPath: string;
 
-  public constructor(namespace: string, only: string, allversions: boolean, org: Org) {
+  public constructor(namespace: string, only: string, allversions: boolean, org: Org, projectPath?: string) {
     this.namespace = namespace;
     this.only = only;
     this.allversions = allversions;
     this.org = org;
-  }
-  public static intializeProject(projectPath?: string): string {
-    if (projectPath) {
-      // sfProject.create(defaultProjectName, projectPath);
-      return projectPath;
-    } else {
-      sfProject.create(defaultProjectName);
-      return process.cwd() + '/' + defaultProjectName;
-    }
-  }
-  public intializeProjectWithRetrieve(relatedObjects: string[], projectPath?: string): string {
-    if (projectPath) {
-      // sfProject.create(defaultProjectName, projectPath);
-      return projectPath;
-    } else {
-      sfProject.create(defaultProjectName);
-      projectPath = process.cwd() + '/' + defaultProjectName;
-      const pwd = shell.pwd();
-      shell.cd(projectPath);
-      if (relatedObjects.includes('lwc')) {
-        sfProject.retrieve(LWCTYPE, this.org.getUsername());
-      }
-      if (relatedObjects.includes('apex')) {
-        sfProject.retrieve(APEXCLASS, this.org.getUsername());
-      }
-      shell.cd(pwd);
-    }
-    return projectPath;
+    this.projectPath = projectPath || this.createProject();
   }
 
-  public migrateAll(
-    migrationResult: MigratedObject[],
-    relatedObjects: string[],
-    projectPath?: string,
-    targetApexNamespace?: string
-  ): RelatedObjectAssesmentInfo {
+  private createProject(): string {
+    sfProject.create(defaultProjectName);
+    return process.cwd() + '/' + defaultProjectName;
+  }
+
+  private retrieveMetadata(relatedObjects: string[]): void {
+    const pwd = shell.pwd();
+    shell.cd(this.projectPath);
+    if (relatedObjects.includes('lwc')) {
+      sfProject.retrieve(LWCTYPE, this.org.getUsername());
+    }
+    if (relatedObjects.includes('apex')) {
+      sfProject.retrieve(APEXCLASS, this.org.getUsername());
+    }
+    shell.cd(pwd);
+  }
+
+  public migrateAll(relatedObjects: string[], targetApexNamespace?: string): RelatedObjectAssesmentInfo {
     // Start the debug timer
     DebugTimer.getInstance().start();
 
-    // Declare an array of MigrationTool
-    const projectDirectory: string = this.intializeProjectWithRetrieve(relatedObjects, projectPath);
+    // Retrieve metadata if needed
+    this.retrieveMetadata(relatedObjects);
+
     const debugTimer = DebugTimer.getInstance();
     debugTimer.start();
     // Initialize migration tools based on the relatedObjects parameter
-    const apexMigrator = this.createApexClassMigrationTool(projectDirectory, targetApexNamespace);
-    const lwcMigrator = this.createLWCComponentMigrationTool(this.namespace, projectDirectory);
+    const apexMigrator = new ApexMigration(this.projectPath, this.namespace, this.org, targetApexNamespace);
+    const lwcMigrator = new LwcMigration(this.projectPath, this.namespace, this.org);
     let apexAssessmentInfos: ApexAssessmentInfo[] = [];
     let lwcAssessmentInfos: LWCAssessmentInfo[] = [];
     // Proceed with migration logic
@@ -121,8 +102,6 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     // Start the debug timer
     DebugTimer.getInstance().start();
 
-    // Declare an array of MigrationTool
-    const projectDirectory: string = OmnistudioRelatedObjectMigrationFacade.intializeProject();
     const debugTimer = DebugTimer.getInstance();
     debugTimer.start();
 
@@ -132,7 +111,7 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     // Proceed with assessment logic
     try {
       if (relatedObjects.includes('apex')) {
-        const apexMigrator = new ApexMigration(projectDirectory, this.namespace, this.org);
+        const apexMigrator = new ApexMigration(this.projectPath, this.namespace, this.org);
         apexAssessmentInfos = apexMigrator.assess();
       }
     } catch (Error) {
@@ -141,7 +120,7 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     }
     try {
       if (relatedObjects.includes('lwc')) {
-        const lwcparser = new LwcMigration(projectDirectory, this.namespace, this.org);
+        const lwcparser = new LwcMigration(this.projectPath, this.namespace, this.org);
         lwcAssessmentInfos = lwcparser.assessment();
       }
     } catch (Error) {
@@ -157,16 +136,5 @@ export default class OmnistudioRelatedObjectMigrationFacade {
 
     // Return results needed for --json flag
     return { apexAssessmentInfos, lwcAssessmentInfos };
-  }
-
-  // Factory methods to create instances of specific tools
-  private createLWCComponentMigrationTool(namespace: string, projectPath: string): LwcMigration {
-    // Return an instance of LWCComponentMigrationTool when implemented
-    return new LwcMigration(projectPath, this.namespace, this.org);
-  }
-
-  private createApexClassMigrationTool(projectPath: string, targetApexNamespace?: string): ApexMigration {
-    // Return an instance of ApexClassMigrationTool when implemented
-    return new ApexMigration(projectPath, this.namespace, this.org, targetApexNamespace);
   }
 }
