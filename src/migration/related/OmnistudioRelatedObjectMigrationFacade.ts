@@ -92,8 +92,8 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     // TODO: Uncomment code once MVP for migration is completed
     // const lwcMigrator = this.createLWCComponentMigrationTool(this.namespace, projectDirectory);
     let apexAssessmentInfos: ApexAssessmentInfo[] = [];
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const lwcAssessmentInfos: LWCAssessmentInfo[] = [];
+    // TODO: Uncomment code once MVP for migration is completed
+    // let lwcAssessmentInfos: LWCAssessmentInfo[] = [];
     // Proceed with migration logic
     try {
       if (relatedObjects.includes('apex')) {
@@ -121,7 +121,8 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     Logger.logger.debug(timer);
 
     // Return results needed for --json flag
-    return { apexAssessmentInfos, lwcAssessmentInfos };
+    // TODO: Uncomment code once MVP for migration is completed, passing empty array
+    return { apexAssessmentInfos, lwcAssessmentInfos: [] };
   }
 
   // Factory methods to create instances of specific tools
