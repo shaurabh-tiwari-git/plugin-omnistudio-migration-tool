@@ -267,14 +267,15 @@ export class OrgUtils {
   // Define the object name for querying installed packages
   private static readonly objectName = 'Publisher';
 
+
   // Define the fields to retrieve from the Organization object
   private static readonly orgFields = ['Name'];
 
   // Define the object name for querying installed packages
   private static readonly orgObjectName = 'Organization';
 
-  private static readonly standardDataModel = 'Standard';
-  private static readonly customDataModel = 'Custom';
+  private static readonly standardDataModel = "Standard";
+  private static readonly customDataModel = "Custom";
   /**
    * Fetches package details (version and namespace) for specific installed packages.
    *
@@ -312,7 +313,7 @@ export class OrgUtils {
       packageDetails: packageDetails,
       omniStudioOrgPermissionEnabled: omniStudioOrgPermissionEnabled,
       orgDetails: orgDetails[0],
-      dataModel: omniStudioOrgPermissionEnabled ? this.standardDataModel : this.customDataModel,
+      dataModel: omniStudioOrgPermissionEnabled ? this.standardDataModel : this.customDataModel
     };
   }
 
