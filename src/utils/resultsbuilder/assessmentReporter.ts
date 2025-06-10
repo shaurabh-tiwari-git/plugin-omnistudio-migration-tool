@@ -29,8 +29,8 @@ export class AssessmentReporter {
     const integrationProcedureAssessmentFilePath = basePath + '/integration_procedure_assessment.html';
     const dataMapperAssessmentFilePath = basePath + '/datamapper_assessment.html';
     const apexAssessmentFilePath = basePath + '/apex_assessment.html';
-    // @ts-expect-error - LWC functionality temporarily disabled
-    const lwcAssessmentFilePath = basePath + '/lwc_assessment.html';
+    // TODO: Uncomment code once MVP for migration is completed
+    // const lwcAssessmentFilePath = basePath + '/lwc_assessment.html';
     const orgDetails: ReportHeaderFormat[] = this.formattedOrgDetails(omnistudioOrgDetails);
 
     this.createDocument(

@@ -1,9 +1,3 @@
-# [1.5.1](https://github.com/salesforcecli/plugin-omnistudio-migration-tool/compare/1.5.0...1.5.1) (2024-03-19)
-
-### Changes
-
-- Temporarily disabled LWC (Lightning Web Components) migration functionality, including LWC migration, assessment, and report generation features. These features will be re-enabled in a future release. Apex migration functionality remains fully available. The `--relatedobjects` flag accepts all values ('apex', 'lwc', 'apex,lwc'), but LWC-related operations will not be executed.
-
 # [1.5.0](https://github.com/salesforcecli/plugin-omnistudio-migration-tool/compare/1.4.0...1.5.0) (2024-08-26)
 
 ### Features
