@@ -30,13 +30,26 @@ export default class OmnistudioRelatedObjectMigrationFacade {
   protected readonly allversions: boolean;
   protected readonly org: Org;
   protected readonly projectPath: string;
+  protected readonly apexMigration: ApexMigration;
+  protected readonly lwcMigration: LwcMigration;
 
-  public constructor(namespace: string, only: string, allversions: boolean, org: Org, projectPath?: string) {
+  public constructor(
+    namespace: string,
+    only: string,
+    allversions: boolean,
+    org: Org,
+    projectPath?: string,
+    targetApexNamespace?: string
+  ) {
     this.namespace = namespace;
     this.only = only;
     this.allversions = allversions;
     this.org = org;
     this.projectPath = projectPath || this.createProject();
+
+    // Initialize migration instances
+    this.apexMigration = new ApexMigration(this.projectPath, this.namespace, this.org, targetApexNamespace);
+    this.lwcMigration = new LwcMigration(this.projectPath, this.namespace, this.org);
   }
 
   private createProject(): string {
@@ -56,23 +69,25 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     shell.cd(pwd);
   }
 
-  public migrateAll(relatedObjects: string[], targetApexNamespace?: string): RelatedObjectAssesmentInfo {
+  private processRelatedObjects(relatedObjects: string[], isMigration: boolean): RelatedObjectAssesmentInfo {
     // Start the debug timer
     DebugTimer.getInstance().start();
 
     // Retrieve metadata if needed
-    this.retrieveMetadata(relatedObjects);
+    if (isMigration) {
+      this.retrieveMetadata(relatedObjects);
+    }
 
     const debugTimer = DebugTimer.getInstance();
     debugTimer.start();
-    // Initialize migration tools based on the relatedObjects parameter
+
     let apexAssessmentInfos: ApexAssessmentInfo[] = [];
     let lwcAssessmentInfos: LWCAssessmentInfo[] = [];
-    // Proceed with migration logic
+
+    // Proceed with processing logic
     try {
       if (relatedObjects.includes('apex')) {
-        const apexMigrator = new ApexMigration(this.projectPath, this.namespace, this.org, targetApexNamespace);
-        apexAssessmentInfos = apexMigrator.migrate();
+        apexAssessmentInfos = isMigration ? this.apexMigration.migrate() : this.apexMigration.assess();
       }
     } catch (Error) {
       // Log the error
@@ -80,8 +95,7 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     }
     try {
       if (relatedObjects.includes('lwc')) {
-        const lwcMigrator = new LwcMigration(this.projectPath, this.namespace, this.org);
-        lwcAssessmentInfos = lwcMigrator.migrate();
+        lwcAssessmentInfos = isMigration ? this.lwcMigration.migrate() : this.lwcMigration.assessment();
       }
     } catch (Error) {
       // Log the error
@@ -98,43 +112,11 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     return { apexAssessmentInfos, lwcAssessmentInfos };
   }
 
+  public migrateAll(relatedObjects: string[]): RelatedObjectAssesmentInfo {
+    return this.processRelatedObjects(relatedObjects, true);
+  }
+
   public assessAll(relatedObjects: string[]): RelatedObjectAssesmentInfo {
-    // Start the debug timer
-    DebugTimer.getInstance().start();
-
-    const debugTimer = DebugTimer.getInstance();
-    debugTimer.start();
-
-    let apexAssessmentInfos: ApexAssessmentInfo[] = [];
-    let lwcAssessmentInfos: LWCAssessmentInfo[] = [];
-
-    // Proceed with assessment logic
-    try {
-      if (relatedObjects.includes('apex')) {
-        const apexMigrator = new ApexMigration(this.projectPath, this.namespace, this.org);
-        apexAssessmentInfos = apexMigrator.assess();
-      }
-    } catch (Error) {
-      // Log the error
-      Logger.logger.error(Error.message);
-    }
-    try {
-      if (relatedObjects.includes('lwc')) {
-        const lwcparser = new LwcMigration(this.projectPath, this.namespace, this.org);
-        lwcAssessmentInfos = lwcparser.assessment();
-      }
-    } catch (Error) {
-      // Log the error
-      Logger.logger.error(Error.message);
-    }
-
-    // Stop the debug timer
-    const timer = debugTimer.stop();
-
-    // Save timer to debug logger
-    Logger.logger.debug(timer);
-
-    // Return results needed for --json flag
-    return { apexAssessmentInfos, lwcAssessmentInfos };
+    return this.processRelatedObjects(relatedObjects, false);
   }
 }

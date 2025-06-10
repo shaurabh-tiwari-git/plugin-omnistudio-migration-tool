@@ -166,12 +166,10 @@ export default class Migrate extends OmniStudioBaseCommand {
       migrateOnly,
       allVersions,
       this.org,
-      projectPath
-    );
-    const relatedObjectMigrationResult = omnistudioRelatedObjectsMigration.migrateAll(
-      objectsToProcess,
+      projectPath,
       targetApexNamespace
     );
+    const relatedObjectMigrationResult = omnistudioRelatedObjectsMigration.migrateAll(objectsToProcess);
     generatePackageXml.createChangeList(
       relatedObjectMigrationResult.apexAssessmentInfos,
       relatedObjectMigrationResult.lwcAssessmentInfos
