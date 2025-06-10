@@ -4,7 +4,8 @@ import { Messages } from '@salesforce/core';
 import OmniStudioBaseCommand from '../../basecommand';
 import { AssessmentInfo } from '../../../utils/interfaces';
 import { AssessmentReporter } from '../../../utils/resultsbuilder/assessmentReporter';
-import { LwcMigration } from '../../../migration/related/LwcMigration';
+// TODO: Uncomment code once MVP for migration is completed
+// import { LwcMigration } from '../../../migration/related/LwcMigration';
 import { ApexMigration } from '../../../migration/related/ApexMigration';
 import { OmniScriptExportType, OmniScriptMigrationTool } from '../../../migration/omniscript';
 import { CardMigrationTool } from '../../../migration/flexcard';
@@ -63,8 +64,8 @@ export default class Assess extends OmniStudioBaseCommand {
     Logger.initialiseLogger(this.ux, this.logger);
     const projectDirectory = OmnistudioRelatedObjectMigrationFacade.intializeProject();
     conn.setApiVersion(apiVersion);
-    // @ts-expect-error - LWC functionality temporarily disabled
-    const lwcparser = new LwcMigration(projectDirectory, namespace, this.org);
+    // TODO: Uncomment code once MVP for migration is completed
+    // const lwcparser = new LwcMigration(projectDirectory, namespace, this.org);
     const apexMigrator = new ApexMigration(projectDirectory, namespace, this.org);
     const osMigrator = new OmniScriptMigrationTool(
       OmniScriptExportType.All,
