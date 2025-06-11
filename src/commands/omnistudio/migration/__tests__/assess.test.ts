@@ -36,8 +36,10 @@ describe('omnistudio:migration:assess', () => {
   // Sample data for DataRaptor assessment
   const sampleDataRaptorAssessment = [
     {
+      oldName: 'DR_Test_Extract',
       name: 'DR_Test_Extract',
       id: 'a0B1x0000000001',
+      type: 'Extract',
       formulaChanges: [
         {
           old: 'vlocity_ins:DRGlobal.process',
@@ -49,8 +51,10 @@ describe('omnistudio:migration:assess', () => {
       apexDependencies: ['TestApexClass'],
     },
     {
+      oldName: 'DR_Test_Transform',
       name: 'DR_Test_Transform',
       id: 'a0B1x0000000002',
+      type: 'Transform',
       formulaChanges: [
         {
           old: 'vlocity_ins:DRGlobal.processObjectsJSON',
@@ -396,36 +400,37 @@ describe('omnistudio:migration:assess', () => {
     .command(['omnistudio:migration:assess', '-r', 'apex'])
     .it('generates assessment files with content only for Apex components', () => {
       const apexContent = fs.readFileSync(path.join(process.cwd(), 'assessment_reports/apex_assessment.html'), 'utf8');
-      expect(apexContent).to.include('TestApexClass');
+      void expect(apexContent).to.include('TestApexClass');
 
-      const lwcContent = fs.readFileSync(path.join(process.cwd(), 'assessment_reports/lwc_assessment.html'), 'utf8');
-      expect(lwcContent).to.not.include('testLwcComponent');
+      // LWC assessment file should not exist since LWC functionality is disabled
+      const lwcFilePath = path.join(process.cwd(), 'assessment_reports/lwc_assessment.html');
+      void expect(fs.existsSync(lwcFilePath)).to.be.false;
 
       const dataRaptorContent = fs.readFileSync(
         path.join(process.cwd(), 'assessment_reports/datamapper_assessment.html'),
         'utf8'
       );
-      expect(dataRaptorContent).to.include('DR_Test_Extract');
-      expect(dataRaptorContent).to.include('DR_Test_Transform');
+      void expect(dataRaptorContent).to.include('DR_Test_Extract');
+      void expect(dataRaptorContent).to.include('DR_Test_Transform');
 
       const flexCardContent = fs.readFileSync(
         path.join(process.cwd(), 'assessment_reports/flexcard_assessment.html'),
         'utf8'
       );
-      expect(flexCardContent).to.include('FC_Test_Card');
-      expect(flexCardContent).to.include('FC_Test_Form');
+      void expect(flexCardContent).to.include('FC_Test_Card');
+      void expect(flexCardContent).to.include('FC_Test_Form');
 
       const omniScriptContent = fs.readFileSync(
         path.join(process.cwd(), 'assessment_reports/omniscript_assessment.html'),
         'utf8'
       );
-      expect(omniScriptContent).to.include('OS_Test_Script');
+      void expect(omniScriptContent).to.include('OS_Test_Script');
 
       const ipContent = fs.readFileSync(
         path.join(process.cwd(), 'assessment_reports/integration_procedure_assessment.html'),
         'utf8'
       );
-      expect(ipContent).to.include('IP_Test_Procedure');
+      void expect(ipContent).to.include('IP_Test_Procedure');
     });
 
   test
@@ -433,38 +438,39 @@ describe('omnistudio:migration:assess', () => {
     .stdout()
     .stderr()
     .command(['omnistudio:migration:assess', '-r', 'lwc'])
-    .it('generates assessment files with content only for LWC components', () => {
-      const apexContent = fs.readFileSync(path.join(process.cwd(), 'assessment_reports/apex_assessment.html'), 'utf8');
-      expect(apexContent).to.not.include('TestApexClass');
+    .it('does not generate LWC assessment file when lwc option is passed since functionality is disabled', () => {
+      // LWC assessment file should not exist since LWC functionality is disabled
+      const lwcFilePath = path.join(process.cwd(), 'assessment_reports/lwc_assessment.html');
+      void expect(fs.existsSync(lwcFilePath)).to.be.false;
 
-      const lwcContent = fs.readFileSync(path.join(process.cwd(), 'assessment_reports/lwc_assessment.html'), 'utf8');
-      expect(lwcContent).to.include('testLwcComponent');
+      const apexContent = fs.readFileSync(path.join(process.cwd(), 'assessment_reports/apex_assessment.html'), 'utf8');
+      void expect(apexContent).to.not.include('TestApexClass');
 
       const dataRaptorContent = fs.readFileSync(
         path.join(process.cwd(), 'assessment_reports/datamapper_assessment.html'),
         'utf8'
       );
-      expect(dataRaptorContent).to.include('DR_Test_Extract');
-      expect(dataRaptorContent).to.include('DR_Test_Transform');
+      void expect(dataRaptorContent).to.include('DR_Test_Extract');
+      void expect(dataRaptorContent).to.include('DR_Test_Transform');
 
       const flexCardContent = fs.readFileSync(
         path.join(process.cwd(), 'assessment_reports/flexcard_assessment.html'),
         'utf8'
       );
-      expect(flexCardContent).to.include('FC_Test_Card');
-      expect(flexCardContent).to.include('FC_Test_Form');
+      void expect(flexCardContent).to.include('FC_Test_Card');
+      void expect(flexCardContent).to.include('FC_Test_Form');
 
       const omniScriptContent = fs.readFileSync(
         path.join(process.cwd(), 'assessment_reports/omniscript_assessment.html'),
         'utf8'
       );
-      expect(omniScriptContent).to.include('OS_Test_Script');
+      void expect(omniScriptContent).to.include('OS_Test_Script');
 
       const ipContent = fs.readFileSync(
         path.join(process.cwd(), 'assessment_reports/integration_procedure_assessment.html'),
         'utf8'
       );
-      expect(ipContent).to.include('IP_Test_Procedure');
+      void expect(ipContent).to.include('IP_Test_Procedure');
     });
 
   test
@@ -472,37 +478,38 @@ describe('omnistudio:migration:assess', () => {
     .stdout()
     .stderr()
     .command(['omnistudio:migration:assess', '-r', 'apex,lwc'])
-    .it('generates assessment files with content for both Apex and LWC components', () => {
+    .it('generates assessment files with content only for Apex components when both apex and lwc are specified', () => {
       const apexContent = fs.readFileSync(path.join(process.cwd(), 'assessment_reports/apex_assessment.html'), 'utf8');
-      expect(apexContent).to.include('TestApexClass');
+      void expect(apexContent).to.include('TestApexClass');
 
-      const lwcContent = fs.readFileSync(path.join(process.cwd(), 'assessment_reports/lwc_assessment.html'), 'utf8');
-      expect(lwcContent).to.include('testLwcComponent');
+      // LWC assessment file should not exist since LWC functionality is disabled
+      const lwcFilePath = path.join(process.cwd(), 'assessment_reports/lwc_assessment.html');
+      void expect(fs.existsSync(lwcFilePath)).to.be.false;
 
       const dataRaptorContent = fs.readFileSync(
         path.join(process.cwd(), 'assessment_reports/datamapper_assessment.html'),
         'utf8'
       );
-      expect(dataRaptorContent).to.include('DR_Test_Extract');
-      expect(dataRaptorContent).to.include('DR_Test_Transform');
+      void expect(dataRaptorContent).to.include('DR_Test_Extract');
+      void expect(dataRaptorContent).to.include('DR_Test_Transform');
 
       const flexCardContent = fs.readFileSync(
         path.join(process.cwd(), 'assessment_reports/flexcard_assessment.html'),
         'utf8'
       );
-      expect(flexCardContent).to.include('FC_Test_Card');
-      expect(flexCardContent).to.include('FC_Test_Form');
+      void expect(flexCardContent).to.include('FC_Test_Card');
+      void expect(flexCardContent).to.include('FC_Test_Form');
 
       const omniScriptContent = fs.readFileSync(
         path.join(process.cwd(), 'assessment_reports/omniscript_assessment.html'),
         'utf8'
       );
-      expect(omniScriptContent).to.include('OS_Test_Script');
+      void expect(omniScriptContent).to.include('OS_Test_Script');
 
       const ipContent = fs.readFileSync(
         path.join(process.cwd(), 'assessment_reports/integration_procedure_assessment.html'),
         'utf8'
       );
-      expect(ipContent).to.include('IP_Test_Procedure');
+      void expect(ipContent).to.include('IP_Test_Procedure');
     });
 });
