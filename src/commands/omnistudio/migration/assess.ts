@@ -8,7 +8,6 @@ import { OmniScriptExportType, OmniScriptMigrationTool } from '../../../migratio
 import { CardMigrationTool } from '../../../migration/flexcard';
 import { DataRaptorMigrationTool } from '../../../migration/dataraptor';
 import { DebugTimer } from '../../../utils';
-
 import { Logger } from '../../../utils/logger';
 import OmnistudioRelatedObjectMigrationFacade from '../../../migration/related/OmnistudioRelatedObjectMigrationFacade';
 import { OmnistudioOrgDetails, OrgUtils } from '../../../utils/orgUtils';
