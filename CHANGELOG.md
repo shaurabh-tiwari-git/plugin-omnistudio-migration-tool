@@ -1,4 +1,3 @@
-
 # [1.5.0](https://github.com/salesforcecli/plugin-omnistudio-migration-tool/compare/1.4.0...1.5.0) (2024-08-26)
 
 
@@ -428,6 +427,3 @@
 
 
 ## 1.2.2 (2022-06-13)
-
-
-
