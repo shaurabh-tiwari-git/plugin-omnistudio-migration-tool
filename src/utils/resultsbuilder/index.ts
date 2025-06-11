@@ -180,7 +180,7 @@ export class ResultsBuilder {
       </div>`;
     return tableBody;
   }
-
+  // @ts-expect-error - LWC functionality temporarily disabled
   private static generateLwcAssesment(lwcAssessmentInfos: LWCAssessmentInfo[]): string {
     let tableBody = '';
     tableBody += `
