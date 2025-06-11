@@ -14,7 +14,8 @@ export class ResultsBuilder {
       htmlBody += '<br />' + this.generateResult(result, instanceUrl);
     }
     htmlBody += '<br />' + this.generateApexAssesment(relatedObjectMigrationResult.apexAssessmentInfos);
-    htmlBody += '<br />' + this.generateLwcAssesment(relatedObjectMigrationResult.lwcAssessmentInfos);
+    // TODO: Uncomment code once MVP for migration is completed
+    // htmlBody += '<br />' + this.generateLwcAssesment(relatedObjectMigrationResult.lwcAssessmentInfos);
     const doc = this.generateDocument(htmlBody);
     const fileUrl = process.cwd() + '/migrationresults.html';
     fs.writeFileSync(fileUrl, doc);
