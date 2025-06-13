@@ -11,6 +11,16 @@ function toggleFilterDropdown(tableId) {
   }
 }
 
+function toggleDiffModal(name) {
+  const modal = document.getElementById(`myModal_${name}`);
+  modal.style.display = modal.style.display === 'none' ? 'flex' : 'none';
+}
+
+function toggleDiffModal(name) {
+  const modal = document.getElementById(`myModal_${name}`);
+  modal.style.display = modal.style.display === 'none' ? 'flex' : 'none';
+}
+
 function filterAndSearchTable(tableId) {
   const reportTable = document.getElementById(tableId);
   const table = reportTable.querySelector('#filterable-table-body');
@@ -33,6 +43,7 @@ function filterAndSearchTable(tableId) {
 
   // NEW: If any filter group has zero selected values → show no rows
   const activeFilterKeys = [...new Set([...checkboxes].map((cb) => cb.getAttribute('data-filter-key')))];
+  const activeFilterKeys = [...new Set([...checkboxes].map((cb) => cb.getAttribute('data-filter-key')))];
   const hasEmptyGroup = activeFilterKeys.some((key) => !filters[key] || filters[key].length === 0);
   if (hasEmptyGroup) {
     // Hide all rows and show no match message
@@ -40,6 +51,7 @@ function filterAndSearchTable(tableId) {
       if (row.id !== 'no-rows-message') row.style.display = 'none';
     });
     if (noRowsMessage) noRowsMessage.style.display = '';
+
 
     // Update visible row count
     const visibleRows = Array.from(table.rows).filter(
@@ -61,6 +73,7 @@ function filterAndSearchTable(tableId) {
     // Apply checkbox filters
     for (const key of Object.keys(filters)) {
       const selectedValues = filters[key];
+      const cell = Array.from(row.cells).find((c) => c.getAttribute('key') === key);
       const cell = Array.from(row.cells).find((c) => c.getAttribute('key') === key);
       const cellValue = cell?.getAttribute('value') || '';
       if (!selectedValues.includes(cellValue)) {
