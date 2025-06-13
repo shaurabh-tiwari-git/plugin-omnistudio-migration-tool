@@ -1,4 +1,4 @@
-import { File } from '../utils/file/fileUtil';
+import { File } from '../utils/file/fileutil';
 
 export interface MigratedObject {
   name: string;

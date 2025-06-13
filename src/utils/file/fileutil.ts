@@ -6,7 +6,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Logger } from '../logger';
 
-export class fileUtil {
+export class fileutil {
   public static readFilesSync(dir: string): File[] {
     const files: File[] = [];
     fs.readdirSync(dir).forEach((filename) => {
@@ -142,46 +142,5 @@ export class File {
     this.name = name;
     this.location = location;
     this.ext = ext;
-  }
-}
-
-/**
- * Copies `.js` and `.css` files from a source directory (based on `folderName`)
- * to a specified destination directory.
- *
- * @param folderName - The subdirectory under `/src/` where source asset files are located (e.g., `'javascripts'`, `'styles'`).
- * @param destDir - The absolute or relative path to the destination directory where the assets should be copied.
- *
- * @remarks
- * - If the destination directory does not exist, the method logs a warning and exits.
- * - Only `.js` and `.css` files are copied.
- * - The source files remain in place after copying.
- */
-export function pushAssestUtilites(folderName: string, destDir: string): void {
-  const sourceDir = path.join(process.cwd(), 'src', folderName);
-
-  if (!fs.existsSync(destDir)) {
-    Logger.logger.warn(`Destination directory does not exist: ${destDir}`);
-    return;
-  }
-
-  try {
-    const files = fs.readdirSync(sourceDir);
-
-    files.forEach((file) => {
-      const ext = path.extname(file);
-      if (ext === '.js' || ext === '.css') {
-        const srcPath = path.join(sourceDir, file);
-        const destPath = path.join(destDir, file);
-
-        try {
-          fs.copyFileSync(srcPath, destPath);
-        } catch (copyErr) {
-          Logger.logger.error(`Error copying file ${srcPath} to ${destPath}: ${copyErr}`);
-        }
-      }
-    });
-  } catch (readDirErr) {
-    Logger.logger.error(`Error reading directory ${sourceDir}: ${readDirErr}`);
   }
 }
