@@ -11,7 +11,7 @@ import { DebugTimer } from '../../../utils';
 import { Logger } from '../../../utils/logger';
 import OmnistudioRelatedObjectMigrationFacade from '../../../migration/related/OmnistudioRelatedObjectMigrationFacade';
 import { OmnistudioOrgDetails, OrgUtils } from '../../../utils/orgUtils';
-import { Constants } from '../../../utils/constants/stringContants';
+import { OrgPreferences } from '../../../utils/orgpreferences';
 
 Messages.importMessagesDirectory(__dirname);
 const messages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'assess');
@@ -108,8 +108,8 @@ export default class Assess extends OmniStudioBaseCommand {
       assesmentInfo.lwcAssessmentInfos = relatedObjectAssessmentResult.lwcAssessmentInfos;
       assesmentInfo.apexAssessmentInfos = relatedObjectAssessmentResult.apexAssessmentInfos;
     }
-
-    await AssessmentReporter.generate(assesmentInfo, conn.instanceUrl, orgs, assessOnly, objectsToProcess);
+    orgs.rollbackFlags = await OrgPreferences.checkRollbackFlags(conn);
+    await AssessmentReporter.generate(assesmentInfo, conn.instanceUrl, orgs);
     return assesmentInfo;
   }
 

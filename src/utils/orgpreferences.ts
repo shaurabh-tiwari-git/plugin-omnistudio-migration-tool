@@ -1,41 +1,5 @@
 import { Connection } from '@salesforce/core';
-
-/**
- * Interface representing the metadata structure for OmniStudio settings
- *
- * @interface OmniStudioSettingsMetadata
- * @property {string} fullName - The full name of the OmniStudio settings
- * @property {boolean} disableRollbackFlagsPref - Flag to disable rollback preferences
- */
-interface OmniStudioSettingsMetadata {
-  fullName: string;
-  disableRollbackFlagsPref: boolean;
-}
-
-/**
- * Interface representing the structure of query results from OmniInteractionConfig
- *
- * @interface QueryResult
- * @property {string} DeveloperName - Name of the configuration
- * @property {string} Value - Value of the configuration
- * @property {number} totalSize - Total number of records returned
- * @property {boolean} done - Whether the query is complete
- * @property {Array<{attributes: {type: string, url: string}, DeveloperName: string, Value: string}>} records - Array of query result records
- */
-interface QueryResult {
-  DeveloperName: string;
-  Value: string;
-  totalSize: number;
-  done: boolean;
-  records: Array<{
-    attributes: {
-      type: string;
-      url: string;
-    };
-    DeveloperName: string;
-    Value: string;
-  }>;
-}
+import { OmniStudioSettingsMetadata, QueryResult } from './interfaces';
 
 /**
  * Class to manage OmniStudio organization preferences
