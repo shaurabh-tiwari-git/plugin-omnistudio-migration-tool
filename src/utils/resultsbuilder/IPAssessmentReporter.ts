@@ -12,7 +12,8 @@ export class IPAssessmentReporter {
   public static generateIPAssesment(
     ipAssessmentInfos: IPAssessmentInfo[],
     instanceUrl: string,
-    org: ReportHeaderFormat[]
+    org: ReportHeaderFormat[],
+    rollbackFlags?: string[]
   ): string {
     // Define multi-row headers
     const headerColumn: HeaderColumn[] = [

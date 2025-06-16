@@ -1,7 +1,7 @@
 import { expect } from '@salesforce/command/lib/test';
 import { Connection } from '@salesforce/core';
 import sinon = require('sinon');
-import { OrgPreferences } from '../../src/utils/orgpreferences';
+import { OrgPreferences } from '../../src/utils/orgPreferences';
 
 describe('OrgPreferences', () => {
   let connection: Connection;

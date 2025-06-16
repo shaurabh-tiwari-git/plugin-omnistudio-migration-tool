@@ -29,16 +29,39 @@ export class AssessmentReporter {
     const integrationProcedureAssessmentFilePath = basePath + '/integration_procedure_assessment.html';
     const dataMapperAssessmentFilePath = basePath + '/datamapper_assessment.html';
     const apexAssessmentFilePath = basePath + '/apex_assessment.html';
-    const rollbackFlagsReportPath = basePath + '/rollback_flags_report.html';
     // TODO: Uncomment code once MVP for migration is completed
     // const lwcAssessmentFilePath = basePath + '/lwc_assessment.html';
     const orgDetails: ReportHeaderFormat[] = this.formattedOrgDetails(omnistudioOrgDetails);
 
+<<<<<<< HEAD
     if (!assessOnly) {
       this.createDocument(
         omniscriptAssessmentFilePath,
         OSAssessmentReporter.generateOSAssesment(result.omniAssessmentInfo.osAssessmentInfos, instanceUrl, orgDetails)
       );
+=======
+    this.createDocument(
+      omniscriptAssessmentFilePath,
+      OSAssessmentReporter.generateOSAssesment(
+        result.omniAssessmentInfo.osAssessmentInfos,
+        instanceUrl,
+        orgDetails,
+        omnistudioOrgDetails.rollbackFlags
+      )
+    );
+    this.createDocument(
+      flexcardAssessmentFilePath,
+      this.generateCardAssesment(result.flexCardAssessmentInfos, instanceUrl)
+    );
+    this.createDocument(
+      integrationProcedureAssessmentFilePath,
+      IPAssessmentReporter.generateIPAssesment(result.omniAssessmentInfo.ipAssessmentInfos, instanceUrl, orgDetails, omnistudioOrgDetails.rollbackFlags)
+    );
+    this.createDocument(
+      dataMapperAssessmentFilePath,
+      DRAssessmentReporter.generateDRAssesment(result.dataRaptorAssessmentInfos, instanceUrl, orgDetails, omnistudioOrgDetails.rollbackFlags)
+    );
+>>>>>>> 451bd60 (Comments addressed)
 
       this.createDocument(
         flexcardAssessmentFilePath,
@@ -146,6 +169,7 @@ export class AssessmentReporter {
       //   location: 'lwc_assessment.html',
       // },
     ];
+<<<<<<< HEAD
         // Check rollback flags
     const enabledFlags = omnistudioOrgDetails.rollbackFlags || [];
     if (enabledFlags.length > 0) {
@@ -156,6 +180,8 @@ export class AssessmentReporter {
         location: 'rollback_flags_report.html',
       });
     }
+=======
+>>>>>>> 451bd60 (Comments addressed)
 
     await this.createMasterDocument(nameUrls, basePath);
     pushAssestUtilites('javascripts', basePath);
@@ -299,24 +325,5 @@ export class AssessmentReporter {
             </table>
         </div>`;
     return tableBody;
-  }
-  private static generateRollbackFlagsReport(enabledFlags: string[]): string {
-    return `
-      <div class="slds-box rollback-flags-warning">
-        <div class="slds-text-heading_medium">
-          <svg class="slds-icon slds-icon_small slds-m-right_x-small" aria-hidden="true">
-            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#warning"></use>
-          </svg>
-          Warning: Rollback Flags Enabled
-        </div>
-        <p>The following rollback flags are currently enabled and will be disabled during migration:</p>
-        <ul>
-          ${enabledFlags.map((flag) => `<li>${flag}</li>`).join('')}
-        </ul>
-        <p>
-          <strong>Note:</strong> These flags will not be supported after migration. For assistance, please contact support.
-        </p>
-      </div>
-    `;
   }
 }
