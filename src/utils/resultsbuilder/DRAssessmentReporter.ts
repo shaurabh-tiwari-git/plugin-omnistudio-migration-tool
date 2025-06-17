@@ -13,8 +13,8 @@ export class DRAssessmentReporter {
   public static generateDRAssesment(
     dataRaptorAssessmentInfos: DataRaptorAssessmentInfo[],
     instanceUrl: string,
-    org: ReportHeaderFormat[],
-    rollbackFlags?: string[]
+    orgDetails: ReportHeaderFormat[],
+    rollbackFlags: string[]
   ): string {
     // Header Column
     const headerColumn: HeaderColumn[] = [

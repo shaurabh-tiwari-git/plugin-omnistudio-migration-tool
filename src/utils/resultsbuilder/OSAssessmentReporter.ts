@@ -14,8 +14,8 @@ export class OSAssessmentReporter {
   public static generateOSAssesment(
     osAssessmentInfos: OSAssessmentInfo[],
     instanceUrl: string,
-    org: ReportHeaderFormat[],
-    rollbackFlags?: string[]
+    orgDetails: ReportHeaderFormat[],
+    rollbackFlags: string[]
   ): string {
     // Header Column
     const headerColumn: HeaderColumn[] = [

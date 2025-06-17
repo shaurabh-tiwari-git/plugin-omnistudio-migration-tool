@@ -301,3 +301,21 @@ function createIndexedRow<T>(row: T, indexedKey: string, columns: Array<TableCol
   }
   return rows;
 }
+export function generateRollbackFlagsHtml(rollbackFlags: string[], flagName: string): string {
+  if (!rollbackFlags.includes(flagName)) {
+    return '';
+  }
+  return `
+    <div class="slds-box" style="background-color: white; margin-top: 20px;">
+      <div class="slds-text-heading_medium">Rollback Flags Disabled</div>
+      <div style="margin-block: 15px">
+        <p>The following rollback flag will be disabled during migration:</p>
+        <ul class="slds-list_dotted">
+          <li class="slds-item slds-text-color_destructive">${flagName}</li>
+        </ul>
+        <p>
+          <strong>Note:</strong> This flag will no longer be supported after migration. For assistance, please contact support.
+        </p>
+      </div>
+    </div>`;
+}
