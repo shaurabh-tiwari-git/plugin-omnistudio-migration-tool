@@ -76,4 +76,6 @@ export interface ReportFrameworkParameters<T> {
   reportHeaderLabel: string;
   indexedKey?: string;
   showMigrationBanner: boolean;
+  rollbackFlags?: string[];
+  rollbackFlagName?: string;
 }
