@@ -46,6 +46,7 @@ export class ResultsBuilder {
 
     this.logger.info('Generating migration report dashboard');
     this.generateMigrationReportDashboard(orgDetails, this.getFormattedDetails(results, relatedObjectMigrationResult));
+    
     this.logger.info('Pushing assets');
     pushAssestUtilites('javascripts', resultsDir);
     pushAssestUtilites('styles', resultsDir);
@@ -319,6 +320,16 @@ export class ResultsBuilder {
     ];
 
     this.logger.info(`Generating table body for result: ${result.name}`);
+    
+    // Determine which rollback flag to use based on component type
+    let rollbackFlagNames: string[] = [];
+    const componentName = result.name.toLowerCase();
+    if (componentName.includes('datamapper') || componentName.includes('data mapper')) {
+      rollbackFlagNames = ['RollbackDRChanges'];
+    } else if (componentName.includes('omniscript') || componentName.includes('integration procedure')) {
+      rollbackFlagNames = ['RollbackOSChanges', 'RollbackIPChanges'];
+    }
+    
     const reportFrameworkParameters: ReportFrameworkParameters<MigratedRecordInfo> = {
       headerColumns,
       columns,
@@ -328,6 +339,9 @@ export class ResultsBuilder {
       ctaSummary: [],
       reportHeaderLabel: `${resultConstants.title}`,
       showMigrationBanner: true,
+      rollbackFlags: orgDetails.rollbackFlags,
+      rollbackFlagName: rollbackFlagNames.join(','),
+      commandType: 'migrate',
     };
 
     tablebody = generateHtmlTable(reportFrameworkParameters);
@@ -428,6 +442,9 @@ export class ResultsBuilder {
       ctaSummary: [],
       reportHeaderLabel: `${apexConstants.title}`,
       showMigrationBanner: false,
+      rollbackFlags: orgDetails.rollbackFlags,
+      rollbackFlagName: 'RollbackApexChanges',
+      commandType: 'migrate',
     };
 
     const html = `<html>${this.createHeadWithScript(
@@ -526,19 +543,4 @@ export class ResultsBuilder {
   //       </html>`;
   //     fs.writeFileSync(resultsDir + '/' + lwcConstants.componentName + '.html', html);
   //   }
-  private static generateRollbackFlagsReport(enabledFlags: string[]): string {
-    return `
-      <div class="slds-box" style="background-color: white">
-        <div class="slds-text-heading_medium">Rollback Flags Disabled</div>
-        <div style="margin-block: 15px">
-          <p>The following rollback flags were disabled during migration:</p>
-          <ul class="slds-list_dotted">
-            ${enabledFlags.map((flag) => `<li class="slds-item slds-text-color_destructive">${flag}</li>`).join('')}
-          </ul>
-          <p>
-            <strong>Note:</strong> These flags are no longer supported after migration. For assistance, please contact support.
-          </p>
-        </div>
-      </div>`;
-  }
 }

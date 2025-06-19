@@ -115,6 +115,7 @@ export class IPAssessmentReporter {
       showMigrationBanner: true,
       rollbackFlags,
       rollbackFlagName: 'RollbackIPChanges',
+      commandType: 'assess',
     };
     // Render table
     const tableHtml = generateHtmlTable(reportFrameworkParameters);

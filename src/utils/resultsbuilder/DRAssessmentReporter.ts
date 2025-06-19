@@ -124,7 +124,7 @@ export class DRAssessmentReporter {
       },
     ];
 
-    const reportFrameworkParameters: ReportFrameworkParameters<DRAssessmentReporter> = {
+    const reportFrameworkParameters: ReportFrameworkParameters<DataRaptorAssessmentInfo> = {
       headerColumns: headerColumn,
       columns,
       rows: dataRaptorAssessmentInfos,
@@ -135,6 +135,7 @@ export class DRAssessmentReporter {
       showMigrationBanner: true,
       rollbackFlags,
       rollbackFlagName: 'RollbackDRChanges',
+      commandType: 'assess',
     };
     // Render table
     const tableHtml = generateHtmlTable(reportFrameworkParameters);

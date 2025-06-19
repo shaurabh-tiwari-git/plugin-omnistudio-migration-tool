@@ -192,6 +192,7 @@ export class OSAssessmentReporter {
       showMigrationBanner: true,
       rollbackFlags,
       rollbackFlagName: 'RollbackOSChanges',
+      commandType: 'assess',
     };
 
     // Render table

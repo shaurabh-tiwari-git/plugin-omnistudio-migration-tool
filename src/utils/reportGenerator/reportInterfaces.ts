@@ -78,4 +78,5 @@ export interface ReportFrameworkParameters<T> {
   showMigrationBanner: boolean;
   rollbackFlags?: string[];
   rollbackFlagName?: string;
+  commandType?: 'assess' | 'migrate';
 }
