@@ -1,15 +1,11 @@
 import { IPAssessmentInfo } from '../interfaces';
 import { generateHtmlTable } from '../reportGenerator/reportGenerator';
-<<<<<<< HEAD
 import {
   HeaderColumn,
   ReportFrameworkParameters,
   ReportHeaderFormat,
   TableColumn,
 } from '../reportGenerator/reportInterfaces';
-=======
-import { HeaderColumn, ReportHeaderFormat, TableColumn } from '../reportGenerator/reportInterfaces';
->>>>>>> c749de5 (generateRollback flags logic moved to reportGenerator.ts itself)
 import { reportingHelper } from './reportingHelper';
 
 export class IPAssessmentReporter {
@@ -111,27 +107,17 @@ export class IPAssessmentReporter {
     const reportFrameworkParameters: ReportFrameworkParameters<IPAssessmentInfo> = {
       headerColumns: headerColumn,
       columns,
-<<<<<<< HEAD
       rows: ipAssessmentInfos,
-      orgDetails: org,
+      orgDetails: orgDetails,
       filters: [],
       ctaSummary: [],
       reportHeaderLabel: 'Integration Procedure Assessment',
       showMigrationBanner: true,
+      rollbackFlags,
+      rollbackFlagName: 'RollbackIPChanges',
     };
     // Render table
     const tableHtml = generateHtmlTable(reportFrameworkParameters);
     return `${tableHtml}`;
-=======
-      ipAssessmentInfos,
-      orgDetails,
-      undefined,
-      'Integration Procedure Assessment',
-      undefined,
-      rollbackFlags,
-      'RollbackIPChanges'
-    );
-    return `<div class="slds-text-heading_large">Integration Procedure Assessment Report</div>${tableHtml}`;
->>>>>>> c749de5 (generateRollback flags logic moved to reportGenerator.ts itself)
   }
 }

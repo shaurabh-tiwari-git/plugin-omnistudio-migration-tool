@@ -7,7 +7,6 @@ import { ReportHeaderFormat } from '../reportGenerator/reportInterfaces';
 import { OmnistudioOrgDetails } from '../orgUtils';
 import { Constants } from '../constants/stringContants';
 import { pushAssestUtilites } from '../file/fileUtil';
-import { OrgPreferences } from '../orgpreferences';
 import { OSAssessmentReporter } from './OSAssessmentReporter';
 import { ApexAssessmentReporter } from './ApexAssessmentReporter';
 import { IPAssessmentReporter } from './IPAssessmentReporter';
@@ -33,35 +32,11 @@ export class AssessmentReporter {
     const lwcAssessmentFilePath = basePath + '/lwc_assessment.html';
     const orgDetails: ReportHeaderFormat[] = this.formattedOrgDetails(omnistudioOrgDetails);
 
-<<<<<<< HEAD
     if (!assessOnly) {
       this.createDocument(
         omniscriptAssessmentFilePath,
-        OSAssessmentReporter.generateOSAssesment(result.omniAssessmentInfo.osAssessmentInfos, instanceUrl, orgDetails)
+        OSAssessmentReporter.generateOSAssesment(result.omniAssessmentInfo.osAssessmentInfos, instanceUrl, orgDetails, omnistudioOrgDetails.rollbackFlags)
       );
-=======
-    this.createDocument(
-      omniscriptAssessmentFilePath,
-      OSAssessmentReporter.generateOSAssesment(
-        result.omniAssessmentInfo.osAssessmentInfos,
-        instanceUrl,
-        orgDetails,
-        omnistudioOrgDetails.rollbackFlags
-      )
-    );
-    this.createDocument(
-      flexcardAssessmentFilePath,
-      this.generateCardAssesment(result.flexCardAssessmentInfos, instanceUrl)
-    );
-    this.createDocument(
-      integrationProcedureAssessmentFilePath,
-      IPAssessmentReporter.generateIPAssesment(result.omniAssessmentInfo.ipAssessmentInfos, instanceUrl, orgDetails, omnistudioOrgDetails.rollbackFlags)
-    );
-    this.createDocument(
-      dataMapperAssessmentFilePath,
-      DRAssessmentReporter.generateDRAssesment(result.dataRaptorAssessmentInfos, instanceUrl, orgDetails, omnistudioOrgDetails.rollbackFlags)
-    );
->>>>>>> 451bd60 (Comments addressed)
 
       this.createDocument(
         flexcardAssessmentFilePath,
@@ -79,12 +54,12 @@ export class AssessmentReporter {
 
       this.createDocument(
         integrationProcedureAssessmentFilePath,
-        IPAssessmentReporter.generateIPAssesment(result.omniAssessmentInfo.ipAssessmentInfos, instanceUrl, orgDetails)
+        IPAssessmentReporter.generateIPAssesment(result.omniAssessmentInfo.ipAssessmentInfos, instanceUrl, orgDetails, omnistudioOrgDetails.rollbackFlags)
       );
 
       this.createDocument(
         dataMapperAssessmentFilePath,
-        DRAssessmentReporter.generateDRAssesment(result.dataRaptorAssessmentInfos, instanceUrl, orgDetails)
+        DRAssessmentReporter.generateDRAssesment(result.dataRaptorAssessmentInfos, instanceUrl, orgDetails, omnistudioOrgDetails.rollbackFlags)
       );
     } else {
       switch (assessOnly) {
@@ -94,7 +69,8 @@ export class AssessmentReporter {
             OSAssessmentReporter.generateOSAssesment(
               result.omniAssessmentInfo.osAssessmentInfos,
               instanceUrl,
-              orgDetails
+              orgDetails,
+              omnistudioOrgDetails.rollbackFlags
             )
           );
           break;
@@ -112,7 +88,8 @@ export class AssessmentReporter {
             IPAssessmentReporter.generateIPAssesment(
               result.omniAssessmentInfo.ipAssessmentInfos,
               instanceUrl,
-              orgDetails
+              orgDetails,
+              omnistudioOrgDetails.rollbackFlags
             )
           );
           break;
@@ -120,7 +97,7 @@ export class AssessmentReporter {
         case Constants.DataMapper:
           this.createDocument(
             dataMapperAssessmentFilePath,
-            DRAssessmentReporter.generateDRAssesment(result.dataRaptorAssessmentInfos, instanceUrl, orgDetails)
+            DRAssessmentReporter.generateDRAssesment(result.dataRaptorAssessmentInfos, instanceUrl, orgDetails, omnistudioOrgDetails.rollbackFlags)
           );
           break;
 
@@ -169,19 +146,6 @@ export class AssessmentReporter {
       //   location: 'lwc_assessment.html',
       // },
     ];
-<<<<<<< HEAD
-        // Check rollback flags
-    const enabledFlags = omnistudioOrgDetails.rollbackFlags || [];
-    if (enabledFlags.length > 0) {
-      const rollbackFlagsReportPath = basePath + '/rollback_flags_report.html';
-      this.createDocument(rollbackFlagsReportPath, this.generateRollbackFlagsReport(enabledFlags));
-      nameUrls.push({
-        name: 'Rollback Flags Report',
-        location: 'rollback_flags_report.html',
-      });
-    }
-=======
->>>>>>> 451bd60 (Comments addressed)
 
     await this.createMasterDocument(nameUrls, basePath);
     pushAssestUtilites('javascripts', basePath);

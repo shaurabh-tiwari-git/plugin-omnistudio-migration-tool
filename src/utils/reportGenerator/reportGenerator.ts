@@ -22,23 +22,8 @@ export function generateHtmlTable<T>(reportFrameworkParameters: ReportFrameworkP
   const indexedKey: string = reportFrameworkParameters.indexedKey;
   const showMigrationBanner: boolean = reportFrameworkParameters.showMigrationBanner;
 
-<<<<<<< HEAD
   const transformedHeader: TableHeaderCell[][] = transform(headerColumns);
   const tableId = `report-table-${reportTableInstance++}`;
-=======
-export function generateHtmlTable<T>(
-  headerRows: HeaderColumn[],
-  columns: Array<TableColumn<T>>,
-  rows: T[],
-  reportHeader: ReportHeader[],
-  filters: Filter[] = [],
-  tableClass = 'slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped slds-table_col-bordered',
-  ariaLabel = '',
-  rollbackFlags?: string[],
-  rollbackFlagName?: string
-): string {
-  const transformedHeader: TableHeaderCell[][] = transform(headerRows);
->>>>>>> c749de5 (generateRollback flags logic moved to reportGenerator.ts itself)
 
   const thead = `
     <thead>
@@ -199,7 +184,6 @@ export function generateHtmlTable<T>(
   </div>
   `;
 
-<<<<<<< HEAD
   const ctaSumm = `
   ${ctaSummary
     .map(
@@ -217,12 +201,11 @@ export function generateHtmlTable<T>(
       <div class="slds-text-heading_large"> ${reportHeaderLabel} Report </div>
       ${ctaSummary && ctaSummary.length > 0 ? ctaButton : ''}
   </div>`;
-=======
+
   let rollbackFlagsHtml = '';
-  if (rollbackFlags && rollbackFlagName) {
-    rollbackFlagsHtml = generateRollbackFlagsHtml(rollbackFlags, rollbackFlagName);
+  if (reportFrameworkParameters.rollbackFlags && reportFrameworkParameters.rollbackFlagName) {
+    rollbackFlagsHtml = generateRollbackFlagsHtml(reportFrameworkParameters.rollbackFlags, reportFrameworkParameters.rollbackFlagName);
   }
->>>>>>> c749de5 (generateRollback flags logic moved to reportGenerator.ts itself)
 
   return `
    <div class="report-wrapper">
@@ -250,13 +233,10 @@ export function generateHtmlTable<T>(
         ${ctaSumm}
       </div>
     </div>
-<<<<<<< HEAD
     <script src="./reportGeneratorUtility.js" defer></script>
     <link rel="stylesheet" href="./reportGenerator.css">
   </div>
-=======
     ${rollbackFlagsHtml}
->>>>>>> c749de5 (generateRollback flags logic moved to reportGenerator.ts itself)
   `;
 }
 

@@ -128,11 +128,13 @@ export class DRAssessmentReporter {
       headerColumns: headerColumn,
       columns,
       rows: dataRaptorAssessmentInfos,
-      orgDetails: org,
+      orgDetails: orgDetails,
       filters,
       ctaSummary: [],
       reportHeaderLabel: 'Data Mapper Assessment',
       showMigrationBanner: true,
+      rollbackFlags,
+      rollbackFlagName: 'RollbackDRChanges',
     };
     // Render table
     const tableHtml = generateHtmlTable(reportFrameworkParameters);

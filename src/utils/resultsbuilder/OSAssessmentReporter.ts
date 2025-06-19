@@ -185,11 +185,13 @@ export class OSAssessmentReporter {
       headerColumns: headerColumn,
       columns,
       rows: osAssessmentInfos,
-      orgDetails: org,
+      orgDetails: orgDetails,
       filters,
       ctaSummary,
       reportHeaderLabel: 'Omniscript Assessment',
       showMigrationBanner: true,
+      rollbackFlags,
+      rollbackFlagName: 'RollbackOSChanges',
     };
 
     // Render table

@@ -1,6 +1,5 @@
 import fs from 'fs';
 import open from 'open';
-<<<<<<< HEAD
 import { Logger } from '@salesforce/core';
 import { pushAssestUtilites } from '../file/fileUtil';
 import { ApexAssessmentInfo, MigratedObject, MigratedRecordInfo, RelatedObjectAssesmentInfo } from '../interfaces';
@@ -26,10 +25,6 @@ const apexConstants = { componentName: 'apex', title: 'Apex Classes Migration Re
 // const lwcConstants = { componentName: 'lwc', title: 'LWC Components Migration Result' };
 const migrationResultCSSfileName = 'reportGenerator.css';
 const migrationReportHTMLfileName = 'migration_report.html';
-=======
-import { ApexAssessmentInfo, LWCAssessmentInfo, MigratedObject, RelatedObjectAssesmentInfo } from '../interfaces';
-import { OmnistudioOrgDetails } from '../orgUtils';
->>>>>>> 451bd60 (Comments addressed)
 
 export class ResultsBuilder {
   private static logger: Logger = new Logger('ResultsBuilder');
@@ -38,11 +33,7 @@ export class ResultsBuilder {
     results: MigratedObject[],
     relatedObjectMigrationResult: RelatedObjectAssesmentInfo,
     instanceUrl: string,
-<<<<<<< HEAD
     orgDetails: OmnistudioOrgDetails
-=======
-    omnistudioOrgDetails: OmnistudioOrgDetails
->>>>>>> 451bd60 (Comments addressed)
   ): Promise<void> {
     this.logger.info('Generating directories');
     fs.mkdirSync(resultsDir, { recursive: true });
@@ -75,7 +66,6 @@ export class ResultsBuilder {
     const details: ComponentDetail[] = [];
 
     for (const result of results) {
-<<<<<<< HEAD
       const resultConstants = this.getResultConstant(result.name);
       details.push({
         name: resultConstants.componentName,
@@ -85,57 +75,6 @@ export class ResultsBuilder {
         error: result.data?.filter((record) => record.status === 'Error').length || 0,
         skip: result.data?.filter((record) => record.status === 'Skipped').length || 0,
       });
-=======
-      htmlBody += '<br />' + this.generateResult(result, instanceUrl);
-    }
-    htmlBody += '<br />' + this.generateApexAssesment(relatedObjectMigrationResult.apexAssessmentInfos);
-    // TODO: Uncomment code once MVP for migration is completed
-    // htmlBody += '<br />' + this.generateLwcAssesment(relatedObjectMigrationResult.lwcAssessmentInfos);
-
-    // Add rollback flags report if there are any enabled flags
-    const enabledFlags = omnistudioOrgDetails.rollbackFlags || [];
-    if (enabledFlags.length > 0) {
-      htmlBody += '<br />' + this.generateRollbackFlagsReport(enabledFlags);
-    }
-
-    const doc = this.generateDocument(htmlBody);
-    const fileUrl = process.cwd() + '/migrationresults.html';
-    fs.writeFileSync(fileUrl, doc);
-    await open('file://' + fileUrl);
-  }
-
-  private static generateDocument(resultsAsHtml: string): string {
-    const document = `
-        <html>
-            <head>
-                <title>OmniStudio Migration Results</title>
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/design-system/2.17.5/styles/salesforce-lightning-design-system.min.css" />
-            </head>
-            <body>
-            <div style="margin: 20px;">
-                <div class="slds-text-heading_large">OmniStudio Migration Results</div>
-                    ${resultsAsHtml}
-                </div>
-            </div>
-            </body>
-        </html>
-        `;
-    return document;
-  }
-
-  private static generateResult(migrationResult: MigratedObject, instanceUrl: string): string {
-    let errorsBody = '';
-    let tableBody = '';
-
-    if (migrationResult.errors) {
-      errorsBody = migrationResult.errors
-        .map((e) => `<li class="slds-item slds-text-color_destructive">${e}</li>`)
-        .join('');
-      errorsBody = `
-              <div style="margin-block: 15px">
-                <ul class="slds-list_dotted">${errorsBody}</ul>
-              </div>`;
->>>>>>> 451bd60 (Comments addressed)
     }
 
     details.push({
@@ -409,7 +348,6 @@ export class ResultsBuilder {
     // this.generateReportForLwcResult(result.lwcAssessmentInfos, instanceUrl, orgDetails);
   }
 
-<<<<<<< HEAD
   private static generateReportForApexResult(
     result: ApexAssessmentInfo[],
     instanceUrl: string,
@@ -588,7 +526,6 @@ export class ResultsBuilder {
   //       </html>`;
   //     fs.writeFileSync(resultsDir + '/' + lwcConstants.componentName + '.html', html);
   //   }
-=======
   private static generateRollbackFlagsReport(enabledFlags: string[]): string {
     return `
       <div class="slds-box" style="background-color: white">
@@ -604,5 +541,4 @@ export class ResultsBuilder {
         </div>
       </div>`;
   }
->>>>>>> 451bd60 (Comments addressed)
 }
