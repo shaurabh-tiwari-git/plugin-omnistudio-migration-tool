@@ -5,9 +5,11 @@ import { DebugTimer, QueryTools, SortDirection } from '../utils';
 import { NetUtils } from '../utils/net';
 import { BaseMigrationTool } from './base';
 import { MigrationResult, MigrationTool, ObjectMapping, UploadRecordResult } from './interfaces';
-import { Connection, Logger, Messages } from '@salesforce/core';
+import { Connection, Messages } from '@salesforce/core';
 import { UX } from '@salesforce/command';
 import { FlexCardAssessmentInfo } from '../../src/utils';
+import { Logger } from '../utils/logger';
+import { createProgressBar } from './base';
 
 export class CardMigrationTool extends BaseMigrationTool implements MigrationTool {
   static readonly VLOCITYCARD_NAME = 'VlocityCard__c';
@@ -64,7 +66,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
     const success: boolean = await NetUtils.delete(this.connection, ids);
     if (!success) {
-      throw new Error('Could not truncate ' + objectName);
+      throw new Error(this.messages.getMessage('couldNotTruncate', [objectName]));
     }
   }
 
@@ -72,9 +74,11 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   async migrate(): Promise<MigrationResult[]> {
     // Get All the Active VlocityCard__c records
     const cards = await this.getAllActiveCards();
+    Logger.log(this.messages.getMessage('foundFlexCardsToMigrate', [cards.length]));
 
+    const progressBar = createProgressBar('Migrating', 'Flexcard');
     // Save the Vlocity Cards in OmniUiCard
-    const cardUploadResponse = await this.uploadAllCards(cards);
+    const cardUploadResponse = await this.uploadAllCards(cards, progressBar);
 
     const records = new Map<string, any>();
     for (let i = 0; i < cards.length; i++) {
@@ -92,26 +96,29 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
   public async assess(): Promise<FlexCardAssessmentInfo[]> {
     try {
+      Logger.log(this.messages.getMessage('startingFlexCardAssessment'));
       const flexCards = await this.getAllActiveCards();
+      Logger.log(this.messages.getMessage('foundFlexCardsToAssess', [flexCards.length]));
+
       const flexCardsAssessmentInfos = this.processCardComponents(flexCards);
-      this.ux.log('flexCardsAssessmentInfos');
-      // this.ux.log(flexCardsAssessmentInfos.toString());
       return flexCardsAssessmentInfos;
     } catch (err) {
-      this.ux.log(err);
-      this.ux.log(err.getMessage());
+      Logger.error(this.messages.getMessage('errorDuringFlexCardAssessment'));
+      Logger.error(JSON.stringify(err));
+      Logger.error(err.stack);
     }
   }
 
   public async processCardComponents(flexCards: AnyJson[]): Promise<FlexCardAssessmentInfo[]> {
     const flexCardAssessmentInfos: FlexCardAssessmentInfo[] = [];
-
+    let progressCounter = 0;
+    const progressBar = createProgressBar('Assessing', 'Flexcard');
+    progressBar.start(flexCards.length, progressCounter);
     const limitedFlexCards = flexCards.slice(0, 200);
 
     // Now process each OmniScript and its elements
     for (const flexCard of limitedFlexCards) {
-      // Await here since processOSComponents is now async
-      //this.ux.log(flexCard['Name']);
+      Logger.info(this.messages.getMessage('processingFlexCard', [flexCard['Name']]));
       const flexCardAssessmentInfo: FlexCardAssessmentInfo = {
         name: flexCard['Name'],
         id: flexCard['Id'],
@@ -123,6 +130,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       };
       this.updateDependencies(flexCard, flexCardAssessmentInfo);
       flexCardAssessmentInfos.push(flexCardAssessmentInfo);
+      progressBar.update(++progressCounter);
     }
     return flexCardAssessmentInfos;
   }
@@ -170,14 +178,18 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   }
 
   // Upload All the VlocityCard__c records to OmniUiCard
-  private async uploadAllCards(cards: any[]): Promise<Map<string, UploadRecordResult>> {
+  private async uploadAllCards(cards: any[], progressBar: ReturnType<typeof createProgressBar>): Promise<Map<string, UploadRecordResult>> {
     const cardsUploadInfo = new Map<string, UploadRecordResult>();
     const originalRecords = new Map<string, any>();
     const uniqueNames = new Set<string>();
 
+    let progressCounter = 0;
+    progressBar.start(cards.length, progressCounter);
     for (let card of cards) {
       await this.uploadCard(cards, card, cardsUploadInfo, originalRecords, uniqueNames);
+      progressBar.update(++progressCounter);
     }
+    progressBar.stop();
 
     return cardsUploadInfo;
   }
@@ -210,8 +222,6 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
         this.updateChildCards(card);
       }
-
-      this.reportProgress(allCards.length, originalRecords.size);
 
       // Perform the transformation
       const invalidIpNames = new Map<string, string>();

@@ -8,6 +8,7 @@ import * as os from 'os';
 import { flags, SfdxCommand } from '@salesforce/command';
 import { Messages, SfdxError } from '@salesforce/core';
 import { AnyJson } from '@salesforce/ts-types';
+import { Logger } from '../../../utils/logger';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -33,6 +34,10 @@ export default class Org extends SfdxCommand {
       char: 'a',
       description: messages.getMessage('allVersionsDescription'),
       required: false,
+    }),
+    verbose: flags.builtin({
+      type: 'builtin',
+      description: 'Enable verbose output',
     }),
   };
 
@@ -73,21 +78,23 @@ export default class Org extends SfdxCommand {
     const orgName = result.records[0].Name;
     const trialExpirationDate = result.records[0].TrialExpirationDate;
 
-    let outputString = `Hello ${name}! This is org: ${orgName}`;
+    let outputString = '';
     if (trialExpirationDate) {
       const date = new Date(trialExpirationDate).toDateString();
-      outputString = `${outputString} and I will be around until ${date}!`;
+      outputString = messages.getMessage('greetingOrgInfoWithDate', [name, orgName, date]);
+    } else {
+      outputString = messages.getMessage('greetingOrgInfo', [name, orgName]);
     }
-    this.ux.log(outputString);
+    Logger.log(outputString);
 
     // this.hubOrg is NOT guaranteed because supportsHubOrgUsername=true, as opposed to requiresHubOrgUsername.
     if (this.hubOrg) {
       const hubOrgId = this.hubOrg.getOrgId();
-      this.ux.log(`My hub org id is: ${hubOrgId}`);
+      Logger.log(messages.getMessage('hubOrgId', [hubOrgId]));
     }
 
     if (allVersions) {
-      outputString = `${outputString} and all versions will be migrated`;
+      outputString = outputString + messages.getMessage('allVersionsAppended');
     }
 
     // Return an object to be displayed with --json

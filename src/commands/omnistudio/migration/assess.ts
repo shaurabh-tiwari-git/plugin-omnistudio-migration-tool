@@ -42,35 +42,43 @@ export default class Assess extends OmniStudioBaseCommand {
       char: 'r',
       description: messages.getMessage('apexLwc'),
     }),
+    verbose: flags.builtin({
+      type: 'builtin',
+      description: 'Enable verbose output',
+    }),
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async run(): Promise<any> {
     DebugTimer.getInstance().start();
-    const apiVersion = (this.flags.apiversion || '55.0') as string;
+    let apiVersion = this.flags.apiversion as string;
     const allVersions = (this.flags.allversions || false) as boolean;
     const assessOnly = (this.flags.only || '') as string;
     const relatedObjects = (this.flags.relatedobjects || '') as string;
     const conn = this.org.getConnection();
+    Logger.initialiseLogger(this.ux, this.logger, 'assess', this.flags.verbose);
+
+    if (apiVersion) {
+      conn.setApiVersion(apiVersion);
+    } else {
+      apiVersion = conn.getApiVersion();
+    }
     const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn, this.flags.namespace);
 
     if (!orgs.hasValidNamespace) {
-      this.ux.warn(messages.getMessage('invalidNamespace') + orgs.packageDetails.namespace);
+      Logger.warn(messages.getMessage('invalidNamespace') + orgs.packageDetails.namespace);
     }
 
     if (!orgs.packageDetails) {
-      this.ux.error(messages.getMessage('noPackageInstalled'));
+      Logger.error(messages.getMessage('noPackageInstalled'));
       return;
     }
-
     if (orgs.omniStudioOrgPermissionEnabled) {
-      this.ux.error(messages.getMessage('alreadyStandardModel'));
+      Logger.error(messages.getMessage('alreadyStandardModel'));
       return;
     }
 
     const namespace = orgs.packageDetails.namespace;
-    Logger.initialiseLogger(this.ux, this.logger);
-    conn.setApiVersion(apiVersion);
 
     const assesmentInfo: AssessmentInfo = {
       lwcAssessmentInfos: [],
@@ -83,6 +91,11 @@ export default class Assess extends OmniStudioBaseCommand {
       },
     };
 
+    Logger.log(messages.getMessage('assessmentInitialization', [String(namespace)]));
+    Logger.logVerbose(messages.getMessage('apiVersionInfo', [String(apiVersion)]));
+    Logger.logVerbose(messages.getMessage('assessmentTargets', [String(this.flags.only || 'all')]));
+    Logger.logVerbose(messages.getMessage('relatedObjectsInfo', [relatedObjects || 'none']));
+    Logger.logVerbose(messages.getMessage('allVersionsFlagInfo', [String(allVersions)]));
     // Assess OmniStudio components
     await this.assessOmniStudioComponents(assesmentInfo, assessOnly, namespace, conn, allVersions);
 
@@ -95,7 +108,7 @@ export default class Assess extends OmniStudioBaseCommand {
       // Validate input
       for (const obj of objectsToProcess) {
         if (!validOptions.includes(obj)) {
-          Logger.logger.warn(`Invalid option provided for -r: ${obj}. Valid options are apex, lwc.`);
+          Logger.warn(messages.getMessage('invalidRelatedObjectsOption', [String(obj)]));
         }
       }
 
@@ -125,8 +138,6 @@ export default class Assess extends OmniStudioBaseCommand {
     conn: Connection,
     allVersions: boolean
   ): Promise<void> {
-    this.logger.info(namespace);
-    this.ux.log(`Using Namespace: ${namespace}`);
     if (!assessOnly) {
       // If no specific component is specified, assess all components
       await this.assessDataRaptors(assesmentInfo, namespace, conn);
@@ -154,12 +165,12 @@ export default class Assess extends OmniStudioBaseCommand {
   }
 
   private async assessDataRaptors(assesmentInfo: AssessmentInfo, namespace: string, conn: Connection): Promise<void> {
-    const drMigrator = new DataRaptorMigrationTool(namespace, conn, this.logger, messages, this.ux);
+    const drMigrator = new DataRaptorMigrationTool(namespace, conn, Logger, messages, this.ux);
     assesmentInfo.dataRaptorAssessmentInfos = await drMigrator.assess();
-    if (assesmentInfo.dataRaptorAssessmentInfos) {
-      this.ux.log('dataRaptorAssessmentInfos');
-      this.ux.log(assesmentInfo.dataRaptorAssessmentInfos.toString());
-    }
+    Logger.logVerbose(
+      messages.getMessage('assessedDataRaptorsCount', [assesmentInfo.dataRaptorAssessmentInfos.length])
+    );
+    Logger.log(messages.getMessage('dataRaptorAssessmentCompleted'));
   }
 
   private async assessFlexCards(
@@ -168,8 +179,11 @@ export default class Assess extends OmniStudioBaseCommand {
     conn: Connection,
     allVersions: boolean
   ): Promise<void> {
-    const flexMigrator = new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions);
+    const flexMigrator = new CardMigrationTool(namespace, conn, Logger, messages, this.ux, allVersions);
+    Logger.logVerbose(messages.getMessage('flexCardAssessment'));
     assesmentInfo.flexCardAssessmentInfos = await flexMigrator.assess();
+    Logger.logVerbose(messages.getMessage('assessedFlexCardsCount', [assesmentInfo.flexCardAssessmentInfos.length]));
+    Logger.log(messages.getMessage('flexCardAssessmentCompleted'));
   }
 
   private async assessOmniScripts(
@@ -179,18 +193,20 @@ export default class Assess extends OmniStudioBaseCommand {
     allVersions: boolean,
     exportType: OmniScriptExportType
   ): Promise<void> {
-    const osMigrator = new OmniScriptMigrationTool(
-      exportType,
-      namespace,
-      conn,
-      this.logger,
-      messages,
-      this.ux,
-      allVersions
-    );
+    Logger.logVerbose(messages.getMessage('omniScriptAssessment'));
+    const osMigrator = new OmniScriptMigrationTool(exportType, namespace, conn, Logger, messages, this.ux, allVersions);
     assesmentInfo.omniAssessmentInfo = await osMigrator.assess(
       assesmentInfo.dataRaptorAssessmentInfos,
       assesmentInfo.flexCardAssessmentInfos
     );
+    Logger.logVerbose(
+      messages.getMessage('assessedOmniScriptsCount', [assesmentInfo.omniAssessmentInfo.osAssessmentInfos.length])
+    );
+    Logger.logVerbose(
+      messages.getMessage('assessedIntegrationProceduresCount', [
+        assesmentInfo.omniAssessmentInfo.ipAssessmentInfos.length,
+      ])
+    );
+    Logger.log(messages.getMessage('omniScriptAssessmentCompleted'));
   }
 }
