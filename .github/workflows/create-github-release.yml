@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - prerelease/**
+      - patch-1-omt
     tags-ignore:
       - "*"
   workflow_dispatch:
