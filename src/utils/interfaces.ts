@@ -162,5 +162,5 @@ export interface QueryResult {
     };
     DeveloperName: string;
     Value: string;
-  }>
+  }>;
 }
