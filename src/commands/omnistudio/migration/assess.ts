@@ -125,7 +125,8 @@ export default class Assess extends OmniStudioBaseCommand {
     try {
       orgs.rollbackFlags = await OrgPreferences.checkRollbackFlags(conn);
     } catch (error) {
-      this.ux.log(error.message);
+      Logger.log((error as Error).message);
+      Logger.log((error as Error).stack);
     }
     await AssessmentReporter.generate(assesmentInfo, conn.instanceUrl, orgs, assessOnly, objectsToProcess);
     return assesmentInfo;

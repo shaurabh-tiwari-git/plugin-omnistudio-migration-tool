@@ -1,7 +1,11 @@
 /* eslint-disable */
 
-import { Connection } from '@salesforce/core';
+import { Connection, Messages } from '@salesforce/core';
 import { QueryTools } from '../query';
+import { Logger } from '../logger';
+
+// Load messages
+const messages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'migrate');
 
 interface InstalledPackage {
   MajorVersion: number;
@@ -312,16 +316,50 @@ export class OrgUtils {
         break;
       }
     }
-
+    const installedOmniPackages = [];
     if (packageDetails.namespace === '') {
       hasValidNamespace = false;
       for (const pkg of allInstalledPackages) {
         if ((namespace && namespace === pkg.NamespacePrefix) || this.namespaces.has(pkg.NamespacePrefix)) {
-          packageDetails.version = `${pkg.MajorVersion}.${pkg.MinorVersion}`;
-          packageDetails.namespace = pkg.NamespacePrefix;
-          break; // Exit loop after first match
+          installedOmniPackages.push(pkg);
         }
       }
+    }
+
+    // Handle multiple packages by prompting user to select one
+    if (installedOmniPackages.length > 1) {
+      Logger.log(messages.getMessage('multiplePackagesFound'));
+
+      // Display available packages
+      for (let i = 0; i < installedOmniPackages.length; i++) {
+        const pkg = installedOmniPackages[i];
+        Logger.log(`${i + 1}. ${pkg.NamespacePrefix} - Version ${pkg.MajorVersion}.${pkg.MinorVersion}`);
+      }
+
+      // Prompt user to select a package
+      let selectedIndex: number;
+      do {
+        const selection = await Logger.prompt(messages.getMessage('packageSelectionPrompt', [installedOmniPackages.length.toString()]));
+        selectedIndex = parseInt(selection, 10) - 1;
+
+        if (isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex >= installedOmniPackages.length) {
+          Logger.warn(messages.getMessage('invalidPackageSelection', [installedOmniPackages.length.toString()]));
+        }
+      } while (isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex >= installedOmniPackages.length);
+
+      // Set the selected package details
+      const selectedPackage = installedOmniPackages[selectedIndex];
+      packageDetails.version = `${selectedPackage.MajorVersion}.${selectedPackage.MinorVersion}`;
+      packageDetails.namespace = selectedPackage.NamespacePrefix;
+      hasValidNamespace = true;
+
+      Logger.log(messages.getMessage('selectedPackage', [selectedPackage.NamespacePrefix, packageDetails.version]));
+    } else if (installedOmniPackages.length === 1) {
+      // Only one package found, use it automatically
+      const pkg = installedOmniPackages[0];
+      packageDetails.version = `${pkg.MajorVersion}.${pkg.MinorVersion}`;
+      packageDetails.namespace = pkg.NamespacePrefix;
+      hasValidNamespace = true;
     }
 
     //Execute apex rest resource to get omnistudio org permission

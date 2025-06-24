@@ -72,5 +72,9 @@
   "metadataRetrieved": "Metadata %s retrieved from %s",
   "deployingMetadata": "Deploying metadata %s to %s",
   "metadataDeployed": "Metadata %s deployed to %s",
-  "sfProjectCommandError": "Error executing command: %s"
+  "sfProjectCommandError": "Error executing command: %s",
+  "multiplePackagesFound": "Multiple OmniStudio packages found. Please select one:",
+  "packageSelectionPrompt": "Enter the number of the package to use (1-%s):",
+  "invalidPackageSelection": "Invalid selection. Please enter a number between 1 and %s.",
+  "selectedPackage": "Selected package: %s (Version: %s)"
 }

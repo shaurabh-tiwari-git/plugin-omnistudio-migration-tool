@@ -29,7 +29,7 @@ export class AssessmentReporter {
     const dataMapperAssessmentFilePath = basePath + '/datamapper_assessment.html';
     const apexAssessmentFilePath = basePath + '/apex_assessment.html';
     // TODO: Uncomment code once MVP for migration is completed
-    const lwcAssessmentFilePath = basePath + '/lwc_assessment.html';
+    // const lwcAssessmentFilePath = basePath + '/lwc_assessment.html';
     const orgDetails: ReportHeaderFormat[] = this.formattedOrgDetails(omnistudioOrgDetails);
 
     if (!assessOnly) {

@@ -179,13 +179,13 @@ export function pushAssestUtilites(folderName: string, destDir: string): void {
         } catch (copyErr) {
           Logger.error(`Error copying file ${srcPath} to ${destPath}: ${copyErr}`);
           Logger.error(JSON.stringify(copyErr));
-          Logger.error(copyErr.stack);
+          Logger.error((copyErr as Error).stack);
         }
       }
     });
   } catch (readDirErr) {
     Logger.error(`Error reading directory ${sourceDir}: ${readDirErr}`);
     Logger.error(JSON.stringify(readDirErr));
-    Logger.error(readDirErr.stack);
+    Logger.error((readDirErr as Error).stack);
   }
 }
