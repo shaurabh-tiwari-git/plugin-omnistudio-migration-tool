@@ -339,7 +339,7 @@ export function generateRollbackFlagsHtml(
           ${matchingFlags.map((flag) => `<li class="slds-item slds-text-color_destructive">${flag}</li>`).join('')}
         </ul>
         <p>
-          <strong>Note:</strong> ${matchingFlags.length > 1 ? 'These ' : 'This '} flag${
+          <strong>Note:</strong> ${matchingFlags.length > 1 ? 'These ' : 'This '} flag ${
     matchingFlags.length > 1 ? 's will' : ' will'
   } no longer be supported after migration. For assistance, please contact support.
         </p>
