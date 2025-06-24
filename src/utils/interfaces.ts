@@ -96,6 +96,7 @@ export interface FlexCardAssessmentInfo {
   dependenciesIP: string[];
   dependenciesDR: string[];
   dependenciesOS: string[];
+  dependenciesLWC: string[];
   infos: string[];
   warnings: string[];
 }
@@ -162,5 +163,5 @@ export interface QueryResult {
     };
     DeveloperName: string;
     Value: string;
-  }>
+  }>;
 }

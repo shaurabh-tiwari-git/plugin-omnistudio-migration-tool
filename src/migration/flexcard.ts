@@ -10,6 +10,7 @@ import { UX } from '@salesforce/command';
 import { FlexCardAssessmentInfo } from '../../src/utils';
 import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
+import { Constants } from '../utils/constants/stringContants';
 
 export class CardMigrationTool extends BaseMigrationTool implements MigrationTool {
   static readonly VLOCITYCARD_NAME = 'VlocityCard__c';
@@ -113,21 +114,53 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     const flexCardAssessmentInfos: FlexCardAssessmentInfo[] = [];
     let progressCounter = 0;
     const progressBar = createProgressBar('Assessing', 'Flexcard');
-    progressBar.start(flexCards.length, progressCounter);
+    progressBar.start(flexCards.length, progressCounter);    const uniqueNames = new Set<string>();
+
     const limitedFlexCards = flexCards.slice(0, 200);
 
     // Now process each OmniScript and its elements
     for (const flexCard of limitedFlexCards) {
-      Logger.info(this.messages.getMessage('processingFlexCard', [flexCard['Name']]));
+      const flexCardName = flexCard['Name'];
+      Logger.info(this.messages.getMessage('processingFlexCard', [flexCardName]));
       const flexCardAssessmentInfo: FlexCardAssessmentInfo = {
-        name: flexCard['Name'],
+        name: flexCardName,
         id: flexCard['Id'],
         dependenciesIP: [],
         dependenciesDR: [],
         dependenciesOS: [],
+        dependenciesLWC: [],
         infos: [],
         warnings: [],
       };
+
+      // Check for name changes due to API naming requirements
+      const originalName:string = flexCardName;
+      const cleanedName:string = this.cleanName(originalName);
+      if (cleanedName !== originalName) {
+        flexCardAssessmentInfo.warnings.push(
+          this.messages.getMessage('cardNameChangeMessage', [originalName, cleanedName])
+        );
+      }
+
+      // Check for duplicate names
+      if (uniqueNames.has(cleanedName)) {
+        flexCardAssessmentInfo.warnings.push(
+          this.messages.getMessage('duplicateCardNameMessage', [cleanedName])
+        );
+      }
+      uniqueNames.add(cleanedName);
+
+      // Check for author name changes
+      const originalAuthor = flexCard[this.namespacePrefix + 'Author__c'];
+      if (originalAuthor) {
+        const cleanedAuthor = this.cleanName(originalAuthor);
+        if (cleanedAuthor !== originalAuthor) {
+          flexCardAssessmentInfo.warnings.push(
+            this.messages.getMessage('authordNameChangeMessage', [originalAuthor, cleanedAuthor])
+          );
+        }
+      }
+
       this.updateDependencies(flexCard, flexCardAssessmentInfo);
       flexCardAssessmentInfos.push(flexCardAssessmentInfo);
       progressBar.update(++progressCounter);
@@ -136,16 +169,197 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   }
 
   private updateDependencies(flexCard, flexCardAssessmentInfo): void {
-    let dataSource = JSON.parse(flexCard[this.namespacePrefix + 'Datasource__c']);
-    if (dataSource?.datasource) {
+    let dataSource = JSON.parse(flexCard[this.namespacePrefix + 'Datasource__c'] || '{}');
+    // Handle both camelCase and lowercase variants
+    if (dataSource?.dataSource) {
       dataSource = dataSource.dataSource;
+    } else if (dataSource?.datasource) {
+      dataSource = dataSource.datasource;
     }
-    if (dataSource['type'] === 'DataRaptor') {
-      flexCardAssessmentInfo.dependenciesDR.push(dataSource['value']['bundle']);
-    } else if (dataSource.type === 'IntegrationProcedures') {
-      flexCardAssessmentInfo.dependenciesIP.push(dataSource['value']['ipMethod']);
+
+    // Check if it's a DataRaptor source
+    if (dataSource.type === Constants.DataRaptorComponentName) {
+      const originalBundle = dataSource.value?.bundle;
+      if (originalBundle) {
+        const cleanedBundle:string = this.cleanName(originalBundle);
+        flexCardAssessmentInfo.dependenciesDR.push(cleanedBundle);
+
+        // Add warning if DataRaptor name will change
+        if (originalBundle !== cleanedBundle) {
+          flexCardAssessmentInfo.warnings.push(
+            this.messages.getMessage('dataRaptorNameChangeMessage', [originalBundle, cleanedBundle])
+          );
+        }
+      }
+    } else if (dataSource.type === Constants.IntegrationProcedurePluralName) {
+      const originalIpMethod = dataSource.value?.ipMethod;
+      if (originalIpMethod) {
+        const parts = originalIpMethod.split('_');
+        const cleanedParts = parts.map((p) => this.cleanName(p, true));
+        const cleanedIpMethod = cleanedParts.join('_');
+
+        flexCardAssessmentInfo.dependenciesIP.push(cleanedIpMethod);
+
+        // Add warning if IP name will change
+        if (originalIpMethod !== cleanedIpMethod) {
+          flexCardAssessmentInfo.warnings.push(
+            this.messages.getMessage('integrationProcedureNameChangeMessage', [originalIpMethod, cleanedIpMethod])
+          );
+        }
+
+        // Add warning for IP references with more than 2 parts (which potentially need manual updates)
+        if (parts.length > 2) {
+          flexCardAssessmentInfo.warnings.push(
+            this.messages.getMessage('integrationProcedureManualUpdateMessage', [originalIpMethod])
+          );
+        }
+      }
+    }
+
+    // Check for OmniScript dependencies in the card's definition
+    try {
+      const definition = JSON.parse(flexCard[this.namespacePrefix + 'Definition__c'] || '{}');
+      if (definition && definition.states) {
+        for (const state of definition.states) {
+          if (state.omniscripts && Array.isArray(state.omniscripts)) {
+            for (const os of state.omniscripts) {
+              if (os.type && os.subtype) {
+                const osRef = `${os.type}_${os.subtype}_${os.language || 'English'}`;
+                flexCardAssessmentInfo.dependenciesOS.push(osRef);
+              }
+            }
+          }
+
+          // Also check for omniscripts referenced in component actions
+          if (state.components) {
+            for (const componentKey in state.components) {
+              if (state.components.hasOwnProperty(componentKey)) {
+                const component = state.components[componentKey];
+                this.checkComponentForDependencies(component, flexCardAssessmentInfo);
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+      // Log the error but continue processing
+      Logger.error(`Error parsing definition for card ${flexCard.Name}: ${err.message}`);
     }
   }
+
+  private checkComponentForDependencies(component: any, flexCardAssessmentInfo: FlexCardAssessmentInfo): void {
+    // Check if this component is an action element
+    if (component.element === 'action' && component.property && component.property.actionList) {
+      // Process each action in the actionList
+      for (const action of component.property.actionList) {
+        if (action.stateAction) {
+          // Case 1: Direct OmniScript reference
+          if (action.stateAction.type === Constants.OmniScriptComponentName && action.stateAction.omniType) {
+            const omniType = action.stateAction.omniType;
+            if (omniType.Name && typeof omniType.Name === 'string') {
+              const originalName = omniType.Name;
+              const parts = originalName.split('/');
+
+              if (parts.length >= 2) {
+                // Check for name changes in each part
+                const cleanedParts = parts.map((p) => this.cleanName(p));
+                const cleanedName = cleanedParts.join('_');
+                flexCardAssessmentInfo.dependenciesOS.push(cleanedName);
+
+                // Add warning if any part of the name will change
+                for (let i = 0; i < parts.length; i++) {
+                  if (parts[i] !== cleanedParts[i]) {
+                    flexCardAssessmentInfo.warnings.push(
+                      this.messages.getMessage('omniScriptNameChangeMessage', [parts[i], cleanedParts[i]])
+                    );
+                  }
+                }
+              }
+            }
+          }
+
+          // Case 2: Flyout OmniScript reference
+          else if (
+            action.stateAction.type === 'Flyout' &&
+            action.stateAction.flyoutType === Constants.OmniScriptPluralName &&
+            action.stateAction.osName
+          ) {
+            const osName = action.stateAction.osName;
+            if (typeof osName === 'string') {
+              // osName is typically in format "Omniscript/Testing/English"
+              const originalName = osName;
+              const parts = originalName.split('/');
+
+              if (parts.length >= 2) {
+                // Check for name changes in each part
+                const cleanedParts = parts.map((p) => this.cleanName(p));
+                const cleanedName = cleanedParts.join('_');
+                flexCardAssessmentInfo.dependenciesOS.push(cleanedName);
+
+                // Add warning if any part of the name will change
+                for (let i = 0; i < parts.length; i++) {
+                  if (parts[i] !== cleanedParts[i]) {
+                    flexCardAssessmentInfo.warnings.push(
+                      this.messages.getMessage('omniScriptNameChangeMessage', [parts[i], cleanedParts[i]])
+                    );
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Check for Custom LWC component
+    if (component.element === 'customLwc' && component.property) {
+      // Check customlwcname property
+      /*if (component.property.customlwcname) {
+        flexCardAssessmentInfo.dependenciesLWC.push(component.property.customlwcname);
+      } */
+
+      // Also check customLwcData if available (has more details)
+      if (component.property.customLwcData) {
+        const lwcData = component.property.customLwcData;
+
+        // Use DeveloperName as a more reliable identifier
+        if (lwcData.DeveloperName) {
+          const lwcName = lwcData.NamespacePrefix
+            ? `${lwcData.NamespacePrefix}.${lwcData.DeveloperName}`
+            : lwcData.DeveloperName;
+
+          // Avoid duplicates
+          if (!flexCardAssessmentInfo.dependenciesLWC.includes(lwcName)) {
+            flexCardAssessmentInfo.dependenciesLWC.push(lwcName);
+          }
+        }
+      }
+    }
+
+    // Check standard component actions if they exist
+    if (component.actions && Array.isArray(component.actions)) {
+      for (const action of component.actions) {
+        if (action.stateAction && action.stateAction.omniType) {
+          const omniType = action.stateAction.omniType;
+          if (omniType.Name && typeof omniType.Name === 'string') {
+            const parts = omniType.Name.split('/');
+            if (parts.length >= 2) {
+              const osRef = parts.join('_');
+              flexCardAssessmentInfo.dependenciesOS.push(osRef);
+            }
+          }
+        }
+      }
+    }
+
+    // Check child components recursively
+    if (component.children && Array.isArray(component.children)) {
+      for (const child of component.children) {
+        this.checkComponentForDependencies(child, flexCardAssessmentInfo);
+      }
+    }
+  }
+
   // Query all cards that are active
   private async getAllActiveCards(): Promise<AnyJson[]> {
     //DebugTimer.getInstance().lap('Query Vlocity Cards');
@@ -267,13 +481,13 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         uploadResult.warnings = uploadResult.warnings || [];
         if (transformedCardAuthorName !== card[this.namespacePrefix + 'Author__c']) {
           uploadResult.warnings.unshift(
-            'WARNING: Card author name has been modified to fit naming rules: ' + transformedCardAuthorName
+            this.messages.getMessage('cardAuthorNameChangeMessage', [transformedCardAuthorName])
           );
         }
         if (transformedCardName !== card['Name']) {
           uploadResult.newName = transformedCardName;
           uploadResult.warnings.unshift(
-            'WARNING: Card name has been modified to fit naming rules: ' + transformedCardName
+            this.messages.getMessage('cardNameChangeMessage', [transformedCardName])
           );
         }
 
@@ -281,7 +495,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           const val = Array.from(invalidIpNames.entries())
             .map((e) => e[0])
             .join(', ');
-          uploadResult.errors.push('Integration Procedure Actions will need manual updates, please verify: ' + val);
+          uploadResult.errors.push(this.messages.getMessage('integrationProcedureManualUpdateMessage', [val]));
         }
 
         cardsUploadInfo.set(recordId, uploadResult);
@@ -396,9 +610,9 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     const datasource = JSON.parse(mappedObject[CardMappings.Datasource__c] || '{}');
     if (datasource.dataSource) {
       const type = datasource.dataSource.type;
-      if (type === 'DataRaptor') {
+      if (type === Constants.DataRaptorComponentName) {
         datasource.dataSource.value.bundle = this.cleanName(datasource.dataSource.value.bundle);
-      } else if (type === 'IntegrationProcedures') {
+      } else if (type === Constants.IntegrationProcedurePluralName) {
         const ipMethod: string = datasource.dataSource.value.ipMethod || '';
 
         const parts = ipMethod.split('_');
