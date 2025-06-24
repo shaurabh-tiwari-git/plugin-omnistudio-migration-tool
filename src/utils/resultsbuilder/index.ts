@@ -11,8 +11,8 @@ import { createFilterGroupParam, createRowDataParam } from '../reportGenerator/r
 const resultsDir = process.cwd() + '/migration_report';
 // const lwcConstants = { componentName: 'lwc', title: 'LWC Components Migration Result' };
 const migrationReportHTMLfileName = 'dashboard.html';
-const reportTemplateFilePath = process.cwd() + '/src/templates/reportTemplate.html';
-const dashboardTemplateFilePath = process.cwd() + '/src/templates/dashboardTemplate.html';
+const reportTemplateFilePath = process.cwd() + '/src/templates/report.template';
+const dashboardTemplateFilePath = process.cwd() + '/src/templates/dashboard.template';
 const apexFileName = 'apex.html';
 
 export class ResultsBuilder {
@@ -254,7 +254,7 @@ export class ResultsBuilder {
         : undefined,
     };
 
-    const reportTemplate = fs.readFileSync(process.cwd() + '/src/templates/reportTemplate.html', 'utf8');
+    const reportTemplate = fs.readFileSync(reportTemplateFilePath, 'utf8');
     const html = TemplateParser.generate(reportTemplate, data);
     fs.writeFileSync(resultsDir + '/' + apexFileName, html);
 

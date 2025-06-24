@@ -23,6 +23,7 @@ export class AssessmentReporter {
   private static dataMapperAssessmentFilePath = this.basePath + '/datamapper_assessment.html';
   private static apexAssessmentFilePath = this.basePath + '/apex_assessment.html';
   private static dashboardFilePath = this.basePath + '/dashboard.html';
+  private static dashboardTemplate = process.cwd() + '/src/templates/dashboard.template';
   // TODO: Uncomment code once MVP for migration is completed
   // private static lwcAssessmentFilePath = this.basePath + '/lwc_assessment.html';
   public static async generate(
@@ -35,7 +36,7 @@ export class AssessmentReporter {
     fs.mkdirSync(this.basePath, { recursive: true });
 
     const assessmentReportTemplate = fs.readFileSync(
-      process.cwd() + '/src/templates/assessmentReportTemplate.html',
+      process.cwd() + '/src/templates/assessmentReport.template',
       'utf8'
     );
     if (!assessOnly) {
@@ -188,7 +189,7 @@ export class AssessmentReporter {
     result: AssessmentInfo,
     omnistudioOrgDetails: OmnistudioOrgDetails
   ): void {
-    const dashboardTemplate = fs.readFileSync(process.cwd() + '/src/templates/dashboardTemplate.html', 'utf8');
+    const dashboardTemplate = fs.readFileSync(this.dashboardTemplate, 'utf8');
     this.createDocument(
       basePath + '/dashboard.html',
       TemplateParser.generate(dashboardTemplate, this.createDashboardParam(result, omnistudioOrgDetails))

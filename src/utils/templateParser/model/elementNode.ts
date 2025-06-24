@@ -83,7 +83,6 @@ export class ElementNode {
       // Render children if condition is true
       return this.children.map((child) => child.toHtml(props)).join('');
     }
-
     // Return empty string if condition is false
     return '';
   }
