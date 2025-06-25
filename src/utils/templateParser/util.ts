@@ -5,7 +5,19 @@
 import { ElementNode } from './model/elementNode';
 import { NodeType } from './model/nodeTypes';
 
+/**
+ * Utility class for parsing HTML templates and converting them to ElementNode structures.
+ * Handles template syntax including conditionals, loops, placeholders, and native HTML elements.
+ */
 export class TemplateParserUtil {
+  /**
+   * Flattens a nested object structure into a key-value map with dot notation.
+   * Handles arrays by adding length properties and recursively processes nested objects.
+   *
+   * @param data - The object to flatten
+   * @param prefix - Optional prefix to prepend to all keys
+   * @returns Map containing flattened key-value pairs
+   */
   public static parseKeyPair(data: any, prefix?: string): Map<string, any> {
     prefix = prefix ? prefix + '.' : '';
     const keypair = new Map<string, any>();
@@ -24,6 +36,13 @@ export class TemplateParserUtil {
     return keypair;
   }
 
+  /**
+   * Parses HTML template string and converts it to an ElementNode structure.
+   * Recognizes and handles different template syntaxes: conditionals, loops, placeholders, and native HTML.
+   *
+   * @param html - The HTML template string to parse
+   * @returns ElementNode representing the parsed template structure
+   */
   public static parseHtmlToNode(html: string): ElementNode {
     // Remove leading/trailing whitespace
     html = html.trim();
@@ -79,6 +98,13 @@ export class TemplateParserUtil {
     return this.parseNativeElement(html);
   }
 
+  /**
+   * Parses a native HTML element string into an ElementNode.
+   * Handles opening tags, attributes, self-closing tags, and nested content.
+   *
+   * @param html - The HTML element string to parse
+   * @returns ElementNode representing the native HTML element
+   */
   private static parseNativeElement(html: string): ElementNode {
     // Find the first opening tag - updated to handle custom tags with colons
     const tagMatch = /^<([\w:]+)([^>]*)>/.exec(html);
@@ -114,6 +140,13 @@ export class TemplateParserUtil {
     return new ElementNode(NodeType.NATIVE, tagName, properties, children);
   }
 
+  /**
+   * Parses HTML attributes string into a key-value map.
+   * Handles quoted values, unquoted values, and boolean attributes.
+   *
+   * @param attributesStr - The attributes string to parse
+   * @returns Map containing attribute name-value pairs
+   */
   private static parseAttributes(attributesStr: string): Map<string, string> {
     const properties = new Map<string, string>();
 
@@ -156,6 +189,13 @@ export class TemplateParserUtil {
     return properties;
   }
 
+  /**
+   * Parses the content between HTML tags into an array of child ElementNodes.
+   * Splits content by template tags and HTML elements, then parses each part.
+   *
+   * @param content - The content string to parse
+   * @returns Array of ElementNode children
+   */
   private static parseChildren(content: string): ElementNode[] {
     const children: ElementNode[] = [];
 
@@ -175,6 +215,13 @@ export class TemplateParserUtil {
     return children;
   }
 
+  /**
+   * Splits content into parts based on template syntax and HTML elements.
+   * Handles placeholders, template tags, and HTML elements while preserving text content.
+   *
+   * @param content - The content string to split
+   * @returns Array of content parts that can be individually parsed
+   */
   private static splitContent(content: string): string[] {
     const parts: string[] = [];
     let current = '';
@@ -235,10 +282,24 @@ export class TemplateParserUtil {
     return parts;
   }
 
+  /**
+   * Checks if the content at the given index starts a placeholder tag.
+   *
+   * @param content - The content string to check
+   * @param index - The index to check from
+   * @returns True if a placeholder starts at the given index
+   */
   private static isPlaceholderStart(content: string, index: number): boolean {
     return content.substring(index, index + 2) === '{{';
   }
 
+  /**
+   * Extracts a complete placeholder tag from the content.
+   *
+   * @param content - The content string to extract from
+   * @param startIndex - The starting index of the placeholder
+   * @returns Object containing the placeholder content and end index, or null if malformed
+   */
   private static extractPlaceholder(content: string, startIndex: number): { content: string; endIndex: number } | null {
     const endIndex = content.indexOf('}}', startIndex);
     if (endIndex === -1) {
@@ -251,10 +312,24 @@ export class TemplateParserUtil {
     };
   }
 
+  /**
+   * Checks if the content at the given index starts a template tag (c:for or c:if).
+   *
+   * @param content - The content string to check
+   * @param index - The index to check from
+   * @returns True if a template tag starts at the given index
+   */
   private static isTemplateTagStart(content: string, index: number): boolean {
     return content.substring(index, index + 4) === '<c:for' || content.substring(index, index + 4) === '<c:if';
   }
 
+  /**
+   * Extracts a complete template tag (c:for or c:if) from the content.
+   *
+   * @param content - The content string to extract from
+   * @param startIndex - The starting index of the template tag
+   * @returns Object containing the template tag content and end index, or null if malformed
+   */
   private static extractTemplateTag(content: string, startIndex: number): { content: string; endIndex: number } | null {
     const tagType = content.substring(startIndex, startIndex + 4);
     const closingTag = tagType === '<c:for' ? '</c:for>' : '</c:if>';
@@ -270,6 +345,14 @@ export class TemplateParserUtil {
     };
   }
 
+  /**
+   * Extracts a complete HTML element from the content.
+   * Handles self-closing tags, closing tags, and opening tags with nested content.
+   *
+   * @param content - The content string to extract from
+   * @param startIndex - The starting index of the HTML element
+   * @returns Object containing the HTML element content and end index, or null if malformed
+   */
   private static extractHtmlElement(content: string, startIndex: number): { content: string; endIndex: number } | null {
     // Check for self-closing tags
     const selfClosingMatch = /^<([\w:]+)([^>]*)\/>/.exec(content.substring(startIndex));
@@ -289,6 +372,13 @@ export class TemplateParserUtil {
     return this.extractOpeningTag(content, startIndex);
   }
 
+  /**
+   * Extracts a closing HTML tag from the content.
+   *
+   * @param content - The content string to extract from
+   * @param startIndex - The starting index of the closing tag
+   * @returns Object containing the closing tag content and end index, or null if malformed
+   */
   private static extractClosingTag(content: string, startIndex: number): { content: string; endIndex: number } | null {
     const endIndex = content.indexOf('>', startIndex);
     if (endIndex === -1) {
@@ -301,6 +391,14 @@ export class TemplateParserUtil {
     };
   }
 
+  /**
+   * Extracts an opening HTML tag and its complete element (including nested content).
+   * Handles nested elements of the same type by tracking opening and closing tags.
+   *
+   * @param content - The content string to extract from
+   * @param startIndex - The starting index of the opening tag
+   * @returns Object containing the complete HTML element content and end index, or null if malformed
+   */
   private static extractOpeningTag(content: string, startIndex: number): { content: string; endIndex: number } | null {
     const tagMatch = /^<([\w:]+)([^>]*)>/.exec(content.substring(startIndex));
     if (!tagMatch) {
@@ -331,6 +429,16 @@ export class TemplateParserUtil {
     };
   }
 
+  /**
+   * Finds the end index of an HTML element that may contain nested elements of the same type.
+   * Tracks opening and closing tags to handle proper nesting.
+   *
+   * @param content - The content string to search in
+   * @param startIndex - The starting index of the element
+   * @param tagName - The name of the HTML tag
+   * @param closingTag - The closing tag string to look for
+   * @returns The end index of the complete element including nested content
+   */
   private static findNestedElementEnd(
     content: string,
     startIndex: number,
@@ -368,6 +476,13 @@ export class TemplateParserUtil {
     return endIndex;
   }
 
+  /**
+   * Parses attributes from a c:for loop tag to extract variable and index names.
+   * Sets default values for item and index if not specified in attributes.
+   *
+   * @param attributesStr - The attributes string from the c:for tag
+   * @returns Map containing the item and index variable names
+   */
   private static parseForLoopAttributes(attributesStr: string): Map<string, string> {
     const properties = new Map<string, string>();
 

@@ -5,6 +5,10 @@ import { Logger } from '../../logger';
 import { TemplateParserUtil } from '../util';
 import { NodeType } from './nodeTypes';
 
+/**
+ * Represents a node in the template parsing tree that can be converted to HTML.
+ * Supports different node types including native HTML elements, loops, conditionals, and placeholders.
+ */
 export class ElementNode {
   public type: NodeType;
   public name: string;
@@ -18,6 +22,13 @@ export class ElementNode {
     this.children = children;
   }
 
+  /**
+   * Converts the element node to HTML based on its type.
+   * Routes to appropriate conversion method based on the node type.
+   *
+   * @param props - Map of properties/values to use during conversion
+   * @returns Generated HTML string
+   */
   public toHtml(props: Map<string, any>): string {
     switch (this.type) {
       case NodeType.NATIVE:
@@ -31,6 +42,13 @@ export class ElementNode {
     }
   }
 
+  /**
+   * Converts a native HTML element node to HTML string.
+   * Handles text nodes and regular HTML elements with attributes and children.
+   *
+   * @param props - Map of properties/values for attribute interpolation
+   * @returns Generated HTML string for the native element
+   */
   public nativeToHtml(props: Map<string, any>): string {
     if (this.name === 'text') {
       return this.properties.get('content') || '';
@@ -55,6 +73,13 @@ export class ElementNode {
     return html;
   }
 
+  /**
+   * Converts a for-loop node to HTML by iterating over an array.
+   * Renders children for each item in the array with item and index context.
+   *
+   * @param props - Map containing the array to iterate over and other properties
+   * @returns Generated HTML string from the loop iteration
+   */
   public forLoopToHtml(props: Map<string, any>): string {
     let html = '';
     const array = props.get(this.name) as any[];
@@ -74,6 +99,13 @@ export class ElementNode {
     return html;
   }
 
+  /**
+   * Converts a conditional (if) node to HTML based on expression evaluation.
+   * Only renders children if the condition evaluates to true.
+   *
+   * @param props - Map of properties used in the conditional expression
+   * @returns Generated HTML string if condition is true, empty string otherwise
+   */
   public ifToHtml(props: Map<string, any>): string {
     // Evaluate the JavaScript expression
     const expression = this.name;
@@ -87,10 +119,26 @@ export class ElementNode {
     return '';
   }
 
+  /**
+   * Converts a placeholder node to HTML by substituting with a property value.
+   *
+   * @param props - Map containing the value to substitute for the placeholder
+   * @returns The substituted value as a string
+   */
   public placeholderToHtml(props: Map<string, any>): string {
     return props.get(this.name) as string;
   }
 
+  /**
+   * Adds loop context variables (item and index) to the properties map.
+   * Handles different data types (strings, arrays, objects) appropriately.
+   *
+   * @param props - Properties map to add variables to
+   * @param ind - Index value as string
+   * @param value - Current item value
+   * @param itemVarName - Name of the item variable
+   * @param indexVarName - Name of the index variable
+   */
   private addProps(props: Map<string, any>, ind: string, value: any, itemVarName: string, indexVarName: string): void {
     props.set(indexVarName, ind);
     if (typeof value === 'string' || Array.isArray(value)) {
@@ -102,6 +150,15 @@ export class ElementNode {
     });
   }
 
+  /**
+   * Removes loop context variables from the properties map after iteration.
+   * Cleans up temporary variables to prevent pollution of the properties map.
+   *
+   * @param props - Properties map to remove variables from
+   * @param value - Current item value
+   * @param itemVarName - Name of the item variable
+   * @param indexVarName - Name of the index variable
+   */
   private removeProps(props: Map<string, any>, value: any, itemVarName: string, indexVarName: string): void {
     props.delete(indexVarName);
     if (typeof value === 'string' || Array.isArray(value)) {
@@ -113,6 +170,14 @@ export class ElementNode {
     });
   }
 
+  /**
+   * Evaluates a JavaScript expression by substituting property values.
+   * Replaces property references (e.g., $variable) with their actual values.
+   *
+   * @param expression - JavaScript expression string to evaluate
+   * @param props - Map of properties to substitute in the expression
+   * @returns Boolean result of the expression evaluation
+   */
   private evaluateExpression(expression: string, props: Map<string, any>): boolean {
     props.forEach((value, key) => {
       expression = expression.replace(`$${key}`, JSON.stringify(value));

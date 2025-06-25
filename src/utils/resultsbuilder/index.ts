@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 import open from 'open';
 import { Logger } from '@salesforce/core';
 import { pushAssestUtilites } from '../file/fileUtil';
@@ -8,11 +9,11 @@ import { OmnistudioOrgDetails } from '../orgUtils';
 import { TemplateParser } from '../templateParser/generate';
 import { createFilterGroupParam, createRowDataParam } from '../reportGenerator/reportUtil';
 
-const resultsDir = process.cwd() + '/migration_report';
+const resultsDir = path.join(process.cwd(), 'migration_report');
 // const lwcConstants = { componentName: 'lwc', title: 'LWC Components Migration Result' };
 const migrationReportHTMLfileName = 'dashboard.html';
-const reportTemplateFilePath = process.cwd() + '/src/templates/report.template';
-const dashboardTemplateFilePath = process.cwd() + '/src/templates/dashboard.template';
+const reportTemplateFilePath = path.join(process.cwd(), 'src', 'templates', 'migrationReport.template');
+const dashboardTemplateFilePath = path.join(process.cwd(), 'src', 'templates', 'dashboard.template');
 const apexFileName = 'apex.html';
 
 export class ResultsBuilder {
@@ -162,7 +163,7 @@ export class ResultsBuilder {
 
     const reportTemplate = fs.readFileSync(reportTemplateFilePath, 'utf8');
     const html = TemplateParser.generate(reportTemplate, data);
-    fs.writeFileSync(resultsDir + '/' + result.name.replace(/ /g, '_').replace(/\//g, '_') + '.html', html);
+    fs.writeFileSync(path.join(resultsDir, result.name.replace(/ /g, '_').replace(/\//g, '_') + '.html'), html);
   }
 
   private static generateReportForRelatedObject(
@@ -256,7 +257,7 @@ export class ResultsBuilder {
 
     const reportTemplate = fs.readFileSync(reportTemplateFilePath, 'utf8');
     const html = TemplateParser.generate(reportTemplate, data);
-    fs.writeFileSync(resultsDir + '/' + apexFileName, html);
+    fs.writeFileSync(path.join(resultsDir, apexFileName), html);
 
     // call generate html from template
   }
@@ -294,7 +295,7 @@ export class ResultsBuilder {
 
     const dashboardTemplate = fs.readFileSync(dashboardTemplateFilePath, 'utf8');
     const html = TemplateParser.generate(dashboardTemplate, data);
-    fs.writeFileSync(resultsDir + '/' + 'dashboard.html', html);
+    fs.writeFileSync(path.join(resultsDir, 'dashboard.html'), html);
   }
 
   private static getDifferentStatusDataForResult(

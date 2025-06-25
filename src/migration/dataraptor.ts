@@ -83,7 +83,9 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
           } catch (ex) {
             Logger.error(JSON.stringify(ex));
             Logger.error(ex.stack);
-            console.log(this.messages.getMessage('formulaSyntaxError', [drItem[this.namespacePrefix + 'Formula__c']]));
+            Logger.logVerbose(
+              this.messages.getMessage('formulaSyntaxError', [drItem[this.namespacePrefix + 'Formula__c']])
+            );
           }
         }
       }
@@ -283,7 +285,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
             } catch (ex) {
               Logger.error(JSON.stringify(ex));
               Logger.error(ex.stack);
-              console.log(this.messages.getMessage('formulaSyntaxError', [formula]));
+              Logger.logVerbose(this.messages.getMessage('formulaSyntaxError', [formula]));
             }
           }
         }

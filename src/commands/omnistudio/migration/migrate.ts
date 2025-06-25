@@ -23,7 +23,7 @@ import OmnistudioRelatedObjectMigrationFacade from '../../../migration/related/O
 import { generatePackageXml } from '../../../utils/generatePackageXml';
 import { OmnistudioOrgDetails, OrgUtils } from '../../../utils/orgUtils';
 import { Constants } from '../../../utils/constants/stringContants';
-import { OrgPreferences } from '../../../utils/orgpreferences';
+import { OrgPreferences } from '../../../utils/orgPreferences';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);

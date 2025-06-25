@@ -26,7 +26,7 @@ export class FileUtil {
     fileMap: Map<string, File[]> = new Map<string, File[]>()
   ): Map<string, File[]> {
     if (!fs.existsSync(dirPath)) {
-      console.error(`Directory does not exist: ${dirPath}`);
+      Logger.error(`Directory does not exist: ${dirPath}`);
       return fileMap; // Return the map as is
     }
     // Read the directory contents
@@ -70,7 +70,7 @@ export class FileUtil {
       fs.writeFileSync(outputFilePath, modifiedHtml);
       Logger.info(`Modified HTML saved to ${outputFilePath}`);
     } catch (error) {
-      console.error(`Error writing file to disk: ${error}`);
+      Logger.error(`Error writing file to disk: ${error}`);
       throw error;
     }
   }
@@ -128,7 +128,7 @@ export class FileUtil {
       const fileContent = fs.readFileSync(filePath, 'utf-8');
       return fileContent.includes(searchString);
     } catch (error) {
-      console.error(`Error reading file ${filePath}:`, error);
+      Logger.error(`Error reading file ${filePath}: ${error}`);
       return false;
     }
   };
