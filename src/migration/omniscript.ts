@@ -439,6 +439,30 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       // Create a map of the original OmniScript__c records
       originalOsRecords.set(recordId, omniscript);
 
+      // Check if this is an Angular OmniScript that should be skipped
+      const omniProcessType = omniscript[`${this.namespacePrefix}IsProcedure__c`] ? 'Integration Procedure' : 'OmniScript';
+      if (omniProcessType === 'OmniScript') {
+        const type = omniscript[this.namespacePrefix + 'IsLwcEnabled__c'] ? 'LWC' : 'Angular';
+        if (type === 'Angular') {
+          // Skip Angular OmniScripts and add a warning record
+          const warningMessage = this.messages.getMessage('angularOmniscriptWarningMessage');
+          const skippedResponse: UploadRecordResult = {
+            referenceId: recordId,
+            id: '',
+            success: false,
+            hasErrors: true,
+            errors: [warningMessage],
+            warnings: [],
+            newName: '',
+          };
+          osUploadInfo.set(recordId, skippedResponse);
+          progressBar.stop();
+          Logger.warn(warningMessage);
+          progressBar.start(omniscripts.length, progressCounter);
+          continue;
+        }
+      } 
+
       // Record is Active, Elements can't be Added, Modified or Deleted for that OS/IP
       omniscript[`${this.namespacePrefix}IsActive__c`] = false;
 
