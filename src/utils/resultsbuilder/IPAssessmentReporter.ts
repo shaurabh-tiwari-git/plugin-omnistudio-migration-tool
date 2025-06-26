@@ -138,7 +138,7 @@ export class IPAssessmentReporter {
             rowspan: 2,
           },
           {
-            name: 'Data Mapper Dependencies',
+            name: 'Remote Action Dependencies',
             colspan: 1,
             rowspan: 2,
           },
