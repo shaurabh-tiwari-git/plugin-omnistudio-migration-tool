@@ -50,13 +50,25 @@ export default class Assess extends OmniStudioBaseCommand {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async run(): Promise<any> {
+    Logger.initialiseLogger(this.ux, this.logger, 'assess', this.flags.verbose);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return await this.runAssess();
+    } catch (error) {
+      Logger.error('Error running assess');
+      Logger.error(error);
+      process.exit(1);
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public async runAssess(): Promise<any> {
     DebugTimer.getInstance().start();
     let apiVersion = this.flags.apiversion as string;
     const allVersions = (this.flags.allversions || false) as boolean;
     const assessOnly = (this.flags.only || '') as string;
     const relatedObjects = (this.flags.relatedobjects || '') as string;
     const conn = this.org.getConnection();
-    Logger.initialiseLogger(this.ux, this.logger, 'assess', this.flags.verbose);
 
     if (apiVersion) {
       conn.setApiVersion(apiVersion);
@@ -127,7 +139,7 @@ export default class Assess extends OmniStudioBaseCommand {
     } catch (error) {
       this.ux.log(error);
     }
-    await AssessmentReporter.generate(assesmentInfo, conn.instanceUrl, orgs, assessOnly, objectsToProcess);
+    await AssessmentReporter.generate(assesmentInfo, conn.instanceUrl, orgs, assessOnly, objectsToProcess, messages);
     return assesmentInfo;
   }
 

@@ -65,12 +65,24 @@ export default class Migrate extends OmniStudioBaseCommand {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async run(): Promise<any> {
+    Logger.initialiseLogger(this.ux, this.logger, 'migrate', this.flags.verbose);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return await this.runMigration();
+    } catch (e) {
+      const error = e as Error;
+      Logger.error(`Error running migrate ${error.message}`);
+      Logger.error(error);
+      process.exit(1);
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public async runMigration(): Promise<any> {
     let apiVersion = this.flags.apiversion as string;
     const migrateOnly = (this.flags.only || '') as string;
     const allVersions = this.flags.allversions || (false as boolean);
     const relatedObjects = (this.flags.relatedobjects || '') as string;
-
-    Logger.initialiseLogger(this.ux, this.logger, 'migrate', this.flags.verbose);
 
     // this.org is guaranteed because requiresUsername=true, as opposed to supportsUsername
     const conn = this.org.getConnection();
@@ -167,7 +179,13 @@ export default class Migrate extends OmniStudioBaseCommand {
       relatedObjectMigrationResult.lwcAssessmentInfos
     );
 
-    await ResultsBuilder.generateReport(objectMigrationResults, relatedObjectMigrationResult, conn.instanceUrl, orgs);
+    await ResultsBuilder.generateReport(
+      objectMigrationResults,
+      relatedObjectMigrationResult,
+      conn.instanceUrl,
+      orgs,
+      messages
+    );
 
     // save timer to debug logger
     Logger.logVerbose(timer.toString());

@@ -26,8 +26,8 @@ export class Logger {
   public static logVerbose(message: string): void {
     if (Logger.verbose && Logger.sfUX) {
       Logger.sfUX.log(message);
-      FileLogger.writeLog('VERBOSE', message);
     }
+    FileLogger.writeLog('VERBOSE', message);
   }
 
   public static get logger(): SfLogger {
@@ -41,41 +41,40 @@ export class Logger {
   public static log(message: string): void {
     if (Logger.sfUX) {
       Logger.sfUX.log(message);
-      FileLogger.writeLog('INFO', message);
     }
+    FileLogger.writeLog('INFO', message);
   }
 
   public static warn(message: string): void {
     if (Logger.sfUX) {
       Logger.sfUX.warn(message);
-      FileLogger.writeLog('WARN', message);
     }
+    FileLogger.writeLog('WARN', message);
   }
 
   public static error(message: string | Error): void {
     if (Logger.sfUX) {
       if (message instanceof Error) {
         Logger.sfUX.error(`\x1b[31m${message.message}\n${message.stack}\x1b[0m`);
-        FileLogger.writeLog('ERROR', `${message.message}\n${message.stack}`);
       } else {
         Logger.sfUX.error(`\x1b[31m${message}\x1b[0m`);
-        FileLogger.writeLog('ERROR', message);
       }
     }
+    FileLogger.writeLog('ERROR', message instanceof Error ? `${message.message}\n${message.stack}` : message);
   }
 
   public static debug(message: string): void {
     if (Logger.sfLogger) {
       Logger.sfLogger.debug(message);
-      FileLogger.writeLog('DEBUG', message);
     }
+    FileLogger.writeLog('DEBUG', message);
   }
 
   public static info(message: string): void {
     if (Logger.sfLogger) {
       Logger.sfLogger.info(message);
-      FileLogger.writeLog('INFO', message);
     }
+    FileLogger.writeLog('INFO', message);
   }
 
   public static confirm(message: string): Promise<boolean> {

@@ -220,181 +220,94 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     // Now process each OmniScript and its elements
     for (const omniscript of omniscripts) {
       Logger.info(this.messages.getMessage('processingOmniScript', [omniscript['Name']]));
-      const elements = await this.getAllElementsForOmniScript(omniscript['Id']);
-
-      const dependencyIP: nameLocation[] = [];
-      const missingIP: string[] = [];
-      const dependencyDR: nameLocation[] = [];
-      const missingDR: string[] = [];
-      const dependencyOS: nameLocation[] = [];
-      const missingOS: string[] = [];
-      const dependenciesRA: nameLocation[] = [];
-      const dependenciesLWC: nameLocation[] = [];
-      //const missingRA: string[] = [];
-
-      for (const elem of elements) {
-        const type = elem[this.namespacePrefix + 'Type__c'];
-        const elemName = `${elem['Name']}`;
-        const propertySet = JSON.parse(elem[this.namespacePrefix + 'PropertySet__c'] || '{}');
-
-        // Check for OmniScript dependencies
-        if (type === 'OmniScript') {
-          const nameVal = `${elemName}`;
-          const type = propertySet['Type'];
-          const subtype = propertySet['Sub Type'];
-          const language = propertySet['Language'];
-          const osName = type + '_' + subtype + '_' + language;
-          dependencyOS.push({
-            name: osName,
-            location: nameVal,
+      let omniAssessmentInfo: OSAssessmentInfo;
+      try {
+        omniAssessmentInfo = await this.processOmniScript(
+          omniscript,
+          existingOmniscriptNames,
+          existingDataRaptorNames,
+          existingFlexCardNames
+        );
+      } catch (e) {
+        const omniProcessType = omniscript[this.namespacePrefix + 'IsProcedure__c']
+          ? 'Integration Procedure'
+          : 'OmniScript';
+        if (omniProcessType === 'OmniScript') {
+          osAssessmentInfos.push({
+            name: omniscript['Name'],
+            id: omniscript['Id'],
+            oldName: omniscript['Name'],
+            dependenciesIP: [],
+            dependenciesDR: [],
+            dependenciesOS: [],
+            dependenciesRemoteAction: [],
+            dependenciesLWC: [],
+            infos: [],
+            warnings: [],
+            errors: [this.messages.getMessage('unexpectedError')],
+            migrationStatus: 'Can be Automated',
+            type: 'OmniScript',
+            missingIP: [],
+            missingDR: [],
+            missingOS: [],
           });
-          if (!existingOmniscriptNames.has(nameVal)) {
-            missingOS.push(nameVal);
-          }
+        } else {
+          ipAssessmentInfos.push({
+            name: omniscript['Name'],
+            id: omniscript['Id'],
+            oldName: omniscript['Name'],
+            dependenciesIP: [],
+            dependenciesDR: [],
+            dependenciesOS: [],
+            dependenciesRemoteAction: [],
+            infos: [],
+            warnings: [],
+            errors: [this.messages.getMessage('unexpectedError')],
+            path: '',
+          });
         }
-
-        // Check for Integration Procedure Action dependencies
-        if (type === 'Integration Procedure Action') {
-          const nameVal = `${elemName}`;
-          dependencyIP.push({ name: propertySet['integrationProcedureKey'], location: nameVal });
-          if (!existingOmniscriptNames.has(nameVal) && !existingFlexCardNames.has(nameVal)) {
-            missingIP.push(nameVal);
-          }
-        }
-
-        // Check for DataRaptor dependencies
-        if (['DataRaptor Extract Action', 'DataRaptor Turbo Action', 'DataRaptor Post Action'].includes(type)) {
-          const nameVal = `${elemName}`;
-          dependencyDR.push({ name: propertySet['bundle'], location: nameVal });
-          if (!existingOmniscriptNames.has(nameVal) && !existingDataRaptorNames.has(nameVal)) {
-            missingDR.push(nameVal);
-          }
-        }
-
-        if (type === 'Remote Action') {
-          const nameVal = `${elemName}`;
-          const className = propertySet['remoteClass'];
-          const methodName = propertySet['remoteMethod'];
-          dependenciesRA.push({ name: className + '.' + methodName, location: nameVal });
-        }
-        // To handle radio , multiselect
-        if (propertySet['optionSource'] && propertySet['optionSource']['type'] === 'Custom') {
-          const nameVal = `${elemName}`;
-          dependenciesRA.push({ name: propertySet['optionSource']['source'], location: nameVal });
-        }
-
-        if (type === 'Custom Lightning Web Component') {
-          const nameVal = `${elemName}`;
-          const lwcName = propertySet['lwcName'];
-          dependenciesLWC.push({ name: lwcName, location: nameVal });
-        }
-        // To fetch custom overrides
-        if (propertySet['lwcComponentOverride']) {
-          const nameVal = `${elemName}`;
-          const lwcName = propertySet['lwcComponentOverride'];
-          dependenciesLWC.push({ name: lwcName, location: nameVal });
-        }
+        const error = e as Error;
+        Logger.error(JSON.stringify(error));
+        Logger.error(error.stack);
+        continue;
       }
-
-      const omniProcessType = omniscript[this.namespacePrefix + 'IsProcedure__c']
-        ? 'Integration Procedure'
-        : 'OmniScript';
-
-      const existingType = omniscript[this.namespacePrefix + 'Type__c'];
-      const existingTypeVal = new StringVal(existingType, 'type');
-      const existingSubType = omniscript[this.namespacePrefix + 'SubType__c'];
-      const existingSubTypeVal = new StringVal(existingSubType, 'sub type');
-      const omniScriptName = omniscript[this.namespacePrefix + 'Name'];
-      const existingOmniScriptNameVal = new StringVal(omniScriptName, 'name');
-
-      const warnings: string[] = [];
-
-      const recordName =
-        `${existingTypeVal.cleanName()}_` +
-        `${existingSubTypeVal.cleanName()}` +
-        (omniscript[this.namespacePrefix + 'Language__c']
-          ? `_${omniscript[this.namespacePrefix + 'Language__c']}`
-          : '') +
-        `_${omniscript[this.namespacePrefix + 'Version__c']}`;
-
-      const oldName =
-        `${existingTypeVal.val}_` +
-        `${existingSubTypeVal.val}` +
-        (omniscript[this.namespacePrefix + 'Language__c']
-          ? `_${omniscript[this.namespacePrefix + 'Language__c']}`
-          : '') +
-        `_${omniscript[this.namespacePrefix + 'Version__c']}`;
-
-      if (!existingTypeVal.isNameCleaned()) {
-        warnings.push(
-          this.messages.getMessage('changeMessage', [
-            existingTypeVal.type,
-            existingTypeVal.val,
-            existingTypeVal.cleanName(),
-          ])
-        );
-      }
-      if (!existingSubTypeVal.isNameCleaned()) {
-        warnings.push(
-          this.messages.getMessage('changeMessage', [
-            existingSubTypeVal.type,
-            existingSubTypeVal.val,
-            existingSubTypeVal.cleanName(),
-          ])
-        );
-      }
-      if (!existingOmniScriptNameVal.isNameCleaned()) {
-        warnings.push(
-          this.messages.getMessage('changeMessage', [
-            existingOmniScriptNameVal.type,
-            existingOmniScriptNameVal.val,
-            existingOmniScriptNameVal.cleanName(),
-          ])
-        );
-      }
-      if (existingOmniscriptNames.has(recordName)) {
-        warnings.push(this.messages.getMessage('duplicatedName') + '  ' + recordName);
-      } else {
-        existingOmniscriptNames.add(recordName);
-      }
-
-      if (omniProcessType === 'OmniScript') {
+      if (omniAssessmentInfo.type === 'OmniScript') {
         const type = omniscript[this.namespacePrefix + 'IsLwcEnabled__c'] ? 'LWC' : 'Angular';
         let migrationStatus = 'Can be Automated';
         if (type === 'Angular') {
-          warnings.unshift(this.messages.getMessage('angularOSWarning'));
+          omniAssessmentInfo.warnings.unshift(this.messages.getMessage('angularOSWarning'));
           migrationStatus = 'Need Manual Intervention';
         }
         const osAssessmentInfo: OSAssessmentInfo = {
-          name: recordName,
+          name: omniAssessmentInfo.name,
           type: type,
-          oldName: oldName,
+          oldName: omniAssessmentInfo.oldName,
           id: omniscript['Id'],
-          dependenciesIP: dependencyIP,
+          dependenciesIP: omniAssessmentInfo.dependenciesIP,
           missingIP: [],
-          dependenciesDR: dependencyDR,
+          dependenciesDR: omniAssessmentInfo.dependenciesDR,
           missingDR: [],
-          dependenciesOS: dependencyOS,
-          missingOS: missingOS,
-          dependenciesRemoteAction: dependenciesRA,
-          dependenciesLWC: dependenciesLWC,
+          dependenciesOS: omniAssessmentInfo.dependenciesOS,
+          missingOS: omniAssessmentInfo.missingOS,
+          dependenciesRemoteAction: omniAssessmentInfo.dependenciesRemoteAction,
+          dependenciesLWC: omniAssessmentInfo.dependenciesLWC,
           infos: [],
-          warnings: warnings,
+          warnings: omniAssessmentInfo.warnings,
           errors: [],
           migrationStatus: migrationStatus,
         };
         osAssessmentInfos.push(osAssessmentInfo);
       } else {
         const ipAssessmentInfo: IPAssessmentInfo = {
-          name: recordName,
+          name: omniAssessmentInfo.name,
           id: omniscript['Id'],
-          oldName: oldName,
-          dependenciesIP: dependencyIP,
-          dependenciesDR: dependencyDR,
-          dependenciesOS: dependencyOS,
-          dependenciesRemoteAction: dependenciesRA,
+          oldName: omniAssessmentInfo.oldName,
+          dependenciesIP: omniAssessmentInfo.dependenciesIP,
+          dependenciesDR: omniAssessmentInfo.dependenciesDR,
+          dependenciesOS: omniAssessmentInfo.dependenciesOS,
+          dependenciesRemoteAction: omniAssessmentInfo.dependenciesRemoteAction,
           infos: [],
-          warnings: warnings,
+          warnings: omniAssessmentInfo.warnings,
           errors: [],
           path: '',
         };
@@ -410,6 +323,166 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     };
 
     return omniAssessmentInfo;
+  }
+
+  private async processOmniScript(
+    omniscript: AnyJson,
+    existingOmniscriptNames: Set<string>,
+    existingDataRaptorNames: Set<string>,
+    existingFlexCardNames: Set<string>
+  ): Promise<OSAssessmentInfo> {
+    const elements = await this.getAllElementsForOmniScript(omniscript['Id']);
+
+    const dependencyIP: nameLocation[] = [];
+    const missingIP: string[] = [];
+    const dependencyDR: nameLocation[] = [];
+    const missingDR: string[] = [];
+    const dependencyOS: nameLocation[] = [];
+    const missingOS: string[] = [];
+    const dependenciesRA: nameLocation[] = [];
+    const dependenciesLWC: nameLocation[] = [];
+    //const missingRA: string[] = [];
+
+    for (const elem of elements) {
+      const type = elem[this.namespacePrefix + 'Type__c'];
+      const elemName = `${elem['Name']}`;
+      const propertySet = JSON.parse(elem[this.namespacePrefix + 'PropertySet__c'] || '{}');
+
+      // Check for OmniScript dependencies
+      if (type === 'OmniScript') {
+        const nameVal = `${elemName}`;
+        const type = propertySet['Type'];
+        const subtype = propertySet['Sub Type'];
+        const language = propertySet['Language'];
+        const osName = type + '_' + subtype + '_' + language;
+        dependencyOS.push({
+          name: osName,
+          location: nameVal,
+        });
+        if (!existingOmniscriptNames.has(nameVal)) {
+          missingOS.push(nameVal);
+        }
+      }
+
+      // Check for Integration Procedure Action dependencies
+      if (type === 'Integration Procedure Action') {
+        const nameVal = `${elemName}`;
+        dependencyIP.push({ name: propertySet['integrationProcedureKey'], location: nameVal });
+        if (!existingOmniscriptNames.has(nameVal) && !existingFlexCardNames.has(nameVal)) {
+          missingIP.push(nameVal);
+        }
+      }
+
+      // Check for DataRaptor dependencies
+      if (['DataRaptor Extract Action', 'DataRaptor Turbo Action', 'DataRaptor Post Action'].includes(type)) {
+        const nameVal = `${elemName}`;
+        dependencyDR.push({ name: propertySet['bundle'], location: nameVal });
+        if (!existingOmniscriptNames.has(nameVal) && !existingDataRaptorNames.has(nameVal)) {
+          missingDR.push(nameVal);
+        }
+      }
+
+      if (type === 'Remote Action') {
+        const nameVal = `${elemName}`;
+        const className = propertySet['remoteClass'];
+        const methodName = propertySet['remoteMethod'];
+        dependenciesRA.push({ name: className + '.' + methodName, location: nameVal });
+      }
+      // To handle radio , multiselect
+      if (propertySet['optionSource'] && propertySet['optionSource']['type'] === 'Custom') {
+        const nameVal = `${elemName}`;
+        dependenciesRA.push({ name: propertySet['optionSource']['source'], location: nameVal });
+      }
+
+      if (type === 'Custom Lightning Web Component') {
+        const nameVal = `${elemName}`;
+        const lwcName = propertySet['lwcName'];
+        dependenciesLWC.push({ name: lwcName, location: nameVal });
+      }
+      // To fetch custom overrides
+      if (propertySet['lwcComponentOverride']) {
+        const nameVal = `${elemName}`;
+        const lwcName = propertySet['lwcComponentOverride'];
+        dependenciesLWC.push({ name: lwcName, location: nameVal });
+      }
+    }
+
+    const omniProcessType = omniscript[this.namespacePrefix + 'IsProcedure__c']
+      ? 'Integration Procedure'
+      : 'OmniScript';
+
+    const existingType = omniscript[this.namespacePrefix + 'Type__c'];
+    const existingTypeVal = new StringVal(existingType, 'type');
+    const existingSubType = omniscript[this.namespacePrefix + 'SubType__c'];
+    const existingSubTypeVal = new StringVal(existingSubType, 'sub type');
+    const omniScriptName = omniscript[this.namespacePrefix + 'Name'];
+    const existingOmniScriptNameVal = new StringVal(omniScriptName, 'name');
+
+    const warnings: string[] = [];
+
+    const recordName =
+      `${existingTypeVal.cleanName()}_` +
+      `${existingSubTypeVal.cleanName()}` +
+      (omniscript[this.namespacePrefix + 'Language__c'] ? `_${omniscript[this.namespacePrefix + 'Language__c']}` : '') +
+      `_${omniscript[this.namespacePrefix + 'Version__c']}`;
+
+    const oldName =
+      `${existingTypeVal.val}_` +
+      `${existingSubTypeVal.val}` +
+      (omniscript[this.namespacePrefix + 'Language__c'] ? `_${omniscript[this.namespacePrefix + 'Language__c']}` : '') +
+      `_${omniscript[this.namespacePrefix + 'Version__c']}`;
+
+    if (!existingTypeVal.isNameCleaned()) {
+      warnings.push(
+        this.messages.getMessage('changeMessage', [
+          existingTypeVal.type,
+          existingTypeVal.val,
+          existingTypeVal.cleanName(),
+        ])
+      );
+    }
+    if (!existingSubTypeVal.isNameCleaned()) {
+      warnings.push(
+        this.messages.getMessage('changeMessage', [
+          existingSubTypeVal.type,
+          existingSubTypeVal.val,
+          existingSubTypeVal.cleanName(),
+        ])
+      );
+    }
+    if (!existingOmniScriptNameVal.isNameCleaned()) {
+      warnings.push(
+        this.messages.getMessage('changeMessage', [
+          existingOmniScriptNameVal.type,
+          existingOmniScriptNameVal.val,
+          existingOmniScriptNameVal.cleanName(),
+        ])
+      );
+    }
+    if (existingOmniscriptNames.has(recordName)) {
+      warnings.push(this.messages.getMessage('duplicatedName') + '  ' + recordName);
+    } else {
+      existingOmniscriptNames.add(recordName);
+    }
+
+    return {
+      name: recordName,
+      id: omniscript['Id'],
+      oldName: oldName,
+      dependenciesIP: dependencyIP,
+      dependenciesDR: dependencyDR,
+      dependenciesOS: dependencyOS,
+      dependenciesRemoteAction: dependenciesRA,
+      dependenciesLWC: dependenciesLWC,
+      infos: [],
+      warnings: warnings,
+      errors: [],
+      migrationStatus: 'Can be Automated',
+      type: omniProcessType,
+      missingDR: missingDR,
+      missingIP: missingIP,
+      missingOS: missingOS,
+    };
   }
 
   async migrate(): Promise<MigrationResult[]> {
