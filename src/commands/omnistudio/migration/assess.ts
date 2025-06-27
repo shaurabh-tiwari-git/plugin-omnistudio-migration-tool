@@ -1,4 +1,6 @@
 import * as os from 'os';
+import * as path from 'path';
+import * as fs from 'fs';
 import { flags } from '@salesforce/command';
 import { Messages, Connection } from '@salesforce/core';
 import OmniStudioBaseCommand from '../../basecommand';
@@ -13,9 +15,22 @@ import OmnistudioRelatedObjectMigrationFacade from '../../../migration/related/O
 import { OmnistudioOrgDetails, OrgUtils } from '../../../utils/orgUtils';
 import { OrgPreferences } from '../../../utils/orgPreferences';
 import { Constants } from '../../../utils/constants/stringContants';
+import { sfProject } from '../../../utils/sfcli/project/sfProject';
 
 Messages.importMessagesDirectory(__dirname);
 const messages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'assess');
+
+// Helper to create SFDX project if needed
+function ensureSfdxProject(folderPath: string): void {
+  const projectName = path.basename(folderPath);
+  const parentDir = path.dirname(folderPath);
+  sfProject.create(projectName, parentDir);
+}
+
+function isSfdxProject(folderPath: string): boolean {
+  const sfdxProjectJson = path.join(folderPath, 'sfdx-project.json');
+  return fs.existsSync(sfdxProjectJson);
+}
 
 export default class Assess extends OmniStudioBaseCommand {
   public static description = messages.getMessage('commandDescription');
@@ -80,6 +95,91 @@ export default class Assess extends OmniStudioBaseCommand {
 
     const namespace = orgs.packageDetails.namespace;
 
+    let projectPath = '';
+    let mode: 'existing' | 'empty' = 'existing';
+
+    // Prompt for project type
+    const askWithTimeout = async (
+      promptFn: (...args: unknown[]) => Promise<unknown>,
+      ...args: unknown[]
+    ): Promise<string> => {
+      const TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+      let timeoutHandle;
+      const timeoutPromise = new Promise((_, reject) => {
+        timeoutHandle = setTimeout(() => {
+          reject(new Error(messages.getMessage('requestTimedOut')));
+        }, TIMEOUT_MS);
+      });
+      try {
+        const result = await Promise.race([promptFn(...args), timeoutPromise]);
+        clearTimeout(timeoutHandle);
+        if (typeof result === 'string') {
+          return result;
+        } else {
+          throw new Error('Prompt did not return a string');
+        }
+      } catch (err) {
+        clearTimeout(timeoutHandle);
+        throw err;
+      }
+    };
+
+    // Prompt: Existing project?
+    let response = '';
+    try {
+      const resp = await askWithTimeout(Logger.prompt.bind(Logger), messages.getMessage('existingApexPrompt'));
+      response = typeof resp === 'string' ? resp.trim().toLowerCase() : '';
+    } catch (err) {
+      Logger.error(messages.getMessage('requestTimedOut'));
+      process.exit(1);
+    }
+
+    if (response === 'y' || response === 'yes') {
+      mode = 'existing';
+    } else if (response === 'n' || response === 'no') {
+      mode = 'empty';
+    } else {
+      Logger.error(messages.getMessage('invalidYesNoResponse'));
+      return;
+    }
+
+    // Prompt for project path
+    let gotValidPath = false;
+    while (!gotValidPath) {
+      let folderPath = '';
+      try {
+        const resp = await askWithTimeout(
+          Logger.prompt.bind(Logger),
+          mode === 'existing'
+            ? messages.getMessage('enterExistingProjectPath')
+            : messages.getMessage('enterEmptyProjectPath')
+        );
+        folderPath = typeof resp === 'string' ? resp.trim() : '';
+      } catch (err) {
+        Logger.error(messages.getMessage('requestTimedOut'));
+        process.exit(1);
+      }
+      folderPath = path.resolve(folderPath);
+
+      if (!fs.existsSync(folderPath) || !fs.lstatSync(folderPath).isDirectory()) {
+        Logger.error(messages.getMessage('invalidProjectFolderPath'));
+        continue;
+      }
+      if (mode === 'empty' && fs.readdirSync(folderPath).length > 0) {
+        Logger.error(messages.getMessage('notEmptyProjectFolderPath'));
+        continue;
+      }
+      // If empty, create SFDX project
+      if (mode === 'empty') {
+        ensureSfdxProject(folderPath);
+      } else if (!isSfdxProject(folderPath)) {
+        Logger.error(messages.getMessage('notSfdxProjectFolderPath'));
+        continue;
+      }
+      projectPath = folderPath;
+      gotValidPath = true;
+    }
+
     const assesmentInfo: AssessmentInfo = {
       lwcAssessmentInfos: [],
       apexAssessmentInfos: [],
@@ -116,7 +216,8 @@ export default class Assess extends OmniStudioBaseCommand {
         namespace,
         assessOnly,
         allVersions,
-        this.org
+        this.org,
+        projectPath
       );
       const relatedObjectAssessmentResult = omnistudioRelatedObjectsMigration.assessAll(objectsToProcess);
       assesmentInfo.lwcAssessmentInfos = relatedObjectAssessmentResult.lwcAssessmentInfos;
