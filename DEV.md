@@ -1,14 +1,14 @@
-# OmniStudio Migration Tool
+# OmniStudio Migration Assistant
 
-This repository contains the code required to enable the OmniStudio Migration Tool SFDX plugin.
+This repository contains the code required to enable the OmniStudio Migration Assistant SFDX plugin.
 
 ## Running SFDX plugin in developer mode
 
 1. Install SFDX cli using the official documentation located [here](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_install_cli.htm).
 2. Authenticate your SFDX cli into the org you are going to use for development. You can follow authentication steps [here](https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/cli_reference_auth_web.htm).
 3. Clone this repository into your local machine.
-4. Open the migration tool code folder in VSCode or your prefered editor.
-5. In a new command line tool, run the following command:
+4. Open the migration assistant code folder in VSCode or your prefered editor.
+5. In a new command line assistant, run the following command:
 
 ```
 bin/run omnistudio:migration:migrate -u agarcia-vertical238@na46.salesforce.com --namespace=agarciana46_238 --json
@@ -52,7 +52,7 @@ OPTIONS
   - src
     - commands                                          SFDX plugin commands
     - mappings                                          A list of mappings between vertical and standard objects
-    - migration                                         OmniStudio Migration Tool code
+    - migration                                         OmniStudio Migration Assistant code
     - utils                                             Utilities (network, debugging, logging, etc.)
 ```
 

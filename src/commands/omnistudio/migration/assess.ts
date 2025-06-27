@@ -11,7 +11,7 @@ import { DebugTimer } from '../../../utils';
 import { Logger } from '../../../utils/logger';
 import OmnistudioRelatedObjectMigrationFacade from '../../../migration/related/OmnistudioRelatedObjectMigrationFacade';
 import { OmnistudioOrgDetails, OrgUtils } from '../../../utils/orgUtils';
-import { OrgPreferences } from '../../../utils/orgpreferences';
+import { OrgPreferences } from '../../../utils/orgPreferences';
 import { Constants } from '../../../utils/constants/stringContants';
 
 Messages.importMessagesDirectory(__dirname);
