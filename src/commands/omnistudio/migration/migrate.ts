@@ -101,7 +101,7 @@ export default class Migrate extends OmniStudioBaseCommand {
       await OrgPreferences.enableOmniPreferences(conn);
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : String(error);
-      this.ux.log(`Could not enable Omni preferences: ${errMsg}`);
+      Logger.log(`Could not enable Omni preferences: ${errMsg}`);
     }
 
     const namespace = orgs.packageDetails.namespace;
