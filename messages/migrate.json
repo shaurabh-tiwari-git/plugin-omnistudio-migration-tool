@@ -82,6 +82,7 @@
   "integrationProcedureManualUpdateMessage": "Integration Procedure reference {0} may need manual updates after migration.",
   "cardAuthorNameChangeMessage": "Card author name has been modified to fit naming rules: {0}",
   "cardNameChangeMessage": "Card name has been modified to fit naming rules: {0}",
-  "duplicateCardNameMessage": "Potential duplicate: Another card has the same name {0} after name cleaning. This may cause conflicts during migration"
+  "duplicateCardNameMessage": "Potential duplicate: Another card has the same name {0} after name cleaning. This may cause conflicts during migration",
+  "angularOmniscriptWarningMessage": " Angular OmniScript will not be migrated, please convert this to LWC based Omniscript"
 }
 
