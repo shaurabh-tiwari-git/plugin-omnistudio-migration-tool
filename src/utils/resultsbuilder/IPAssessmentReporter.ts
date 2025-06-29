@@ -8,6 +8,7 @@ import {
   SummaryItemDetailParam,
 } from '../reportGenerator/reportInterfaces';
 import { createRowDataParam, getOrgDetailsForReport } from '../reportGenerator/reportUtil';
+import { reportingHelper } from './reportingHelper';
 
 export class IPAssessmentReporter {
   private static rowId = 0;
@@ -29,6 +30,7 @@ export class IPAssessmentReporter {
       rollbackFlags: (omnistudioOrgDetails.rollbackFlags || []).includes('RollbackIPChanges')
         ? ['RollbackIPChanges']
         : undefined,
+      callToAction: reportingHelper.getCallToAction(ipAssessmentInfos),
     };
   }
 

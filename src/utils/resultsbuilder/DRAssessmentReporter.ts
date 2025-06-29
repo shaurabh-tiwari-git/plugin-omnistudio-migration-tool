@@ -8,6 +8,7 @@ import {
   SummaryItemDetailParam,
 } from '../reportGenerator/reportInterfaces';
 import { createFilterGroupParam, createRowDataParam, getOrgDetailsForReport } from '../reportGenerator/reportUtil';
+import { reportingHelper } from './reportingHelper';
 
 export class DRAssessmentReporter {
   private static rowId = 0;
@@ -29,6 +30,7 @@ export class DRAssessmentReporter {
       rollbackFlags: (omnistudioOrgDetails.rollbackFlags || []).includes('RollbackDRChanges')
         ? ['RollbackDRChanges']
         : undefined,
+      callToAction: reportingHelper.getCallToAction(dataRaptorAssessmentInfos),
     };
   }
 

@@ -8,6 +8,7 @@ import {
   SummaryItemDetailParam,
 } from '../reportGenerator/reportInterfaces';
 import { createFilterGroupParam, createRowDataParam, getOrgDetailsForReport } from '../reportGenerator/reportUtil';
+import { reportingHelper } from './reportingHelper';
 
 export class OSAssessmentReporter {
   private static rowId = 0;
@@ -29,6 +30,7 @@ export class OSAssessmentReporter {
       rollbackFlags: (omnistudioOrgDetails.rollbackFlags || []).includes('RollbackOSChanges')
         ? ['RollbackOSChanges']
         : undefined,
+      callToAction: reportingHelper.getCallToAction(OSAssessmentInfos),
     };
   }
 

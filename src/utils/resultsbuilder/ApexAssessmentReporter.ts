@@ -8,6 +8,7 @@ import {
   SummaryItemDetailParam,
 } from '../reportGenerator/reportInterfaces';
 import { createFilterGroupParam, createRowDataParam, getOrgDetailsForReport } from '../reportGenerator/reportUtil';
+import { reportingHelper } from './reportingHelper';
 
 export class ApexAssessmentReporter {
   private static rowId = 0;
@@ -25,6 +26,7 @@ export class ApexAssessmentReporter {
       filterGroups: this.getFilterGroupsForReport(apexAssessmentInfos),
       headerGroups: this.getHeaderGroupsForReport(),
       rows: this.getRowsForReport(apexAssessmentInfos),
+      callToAction: reportingHelper.getCallToAction(apexAssessmentInfos),
     };
   }
 
