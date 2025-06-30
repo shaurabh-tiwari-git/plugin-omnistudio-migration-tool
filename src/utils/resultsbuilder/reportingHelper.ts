@@ -1,15 +1,13 @@
-import * as fs from 'fs';
+import { Messages } from '@salesforce/core';
 import { nameLocation, oldNew } from '../interfaces';
 import { CTASummary } from '../reportGenerator/reportInterfaces';
 import { IPAssessmentInfo, OSAssessmentInfo, DataRaptorAssessmentInfo, ApexAssessmentInfo } from '../interfaces';
+import { callToActionMessages } from '../constants/callToActionMessages';
+
+Messages.importMessagesDirectory(__dirname);
+const assessMessages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'assess');
 
 export class reportingHelper {
-  private static assessMessages: Record<string, string> = JSON.parse(
-    fs.readFileSync('./messages/assess.json', 'utf8')
-  ) as Record<string, string>;
-  private static callToActionMessages: Record<string, string> = JSON.parse(
-    fs.readFileSync('./messages/callToAction.json', 'utf8')
-  ) as Record<string, string>;
   public static decorate(nameLocations: nameLocation[]): string {
     let htmlContent = '<ul class="slds-list_dotted">';
     for (const nameLoc of nameLocations) {
@@ -43,9 +41,10 @@ export class reportingHelper {
   ): CTASummary[] {
     const callToAction = [];
     assessmentInfos.forEach((assessmentInfo) => {
-      if (assessmentInfo.infos && assessmentInfo.infos.length > 0) {
-        for (const info of assessmentInfo.infos) {
-          for (const [key, value] of Object.entries(this.assessMessages)) {
+      if (assessmentInfo.warnings && assessmentInfo.warnings.length > 0) {
+        for (const info of assessmentInfo.warnings) {
+          for (const key of Object.keys(callToActionMessages)) {
+            const value = assessMessages.getMessage(key);
             if (
               typeof value === 'string' &&
               typeof key === 'string' &&
@@ -98,8 +97,8 @@ export class reportingHelper {
   }
 
   private static getLink(key: string): string {
-    if (Object.prototype.hasOwnProperty.call(this.callToActionMessages, key)) {
-      return this.callToActionMessages[key];
+    if (callToActionMessages[key]) {
+      return callToActionMessages[key] as string;
     }
     return undefined;
   }

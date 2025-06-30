@@ -138,13 +138,13 @@ export class DRAssessmentReporter {
         createRowDataParam('type', dataRaptorAssessmentInfo.type, false, 1, 1, false),
         createRowDataParam(
           'summary',
-          dataRaptorAssessmentInfo.infos ? dataRaptorAssessmentInfo.infos.join(', ') : '',
+          dataRaptorAssessmentInfo.warnings ? dataRaptorAssessmentInfo.warnings.join(', ') : '',
           false,
           1,
           1,
           false,
           undefined,
-          dataRaptorAssessmentInfo.infos
+          dataRaptorAssessmentInfo.warnings
         ),
         createRowDataParam(
           'customFunctionDependencies',

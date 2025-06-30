@@ -62,13 +62,13 @@ export class IPAssessmentReporter {
         createRowDataParam('newName', ipAssessmentInfo.name, false, 1, 1, false),
         createRowDataParam(
           'summary',
-          ipAssessmentInfo.infos ? ipAssessmentInfo.infos.join(', ') : '',
+          ipAssessmentInfo.warnings ? ipAssessmentInfo.warnings.join(', ') : '',
           false,
           1,
           1,
           false,
           undefined,
-          ipAssessmentInfo.infos
+          ipAssessmentInfo.warnings
         ),
         createRowDataParam(
           'integrationProcedureDependencies',

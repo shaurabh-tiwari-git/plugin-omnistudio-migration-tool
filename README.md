@@ -34,8 +34,6 @@ sfdx omnistudio:migration:assess -u YOUR_ORG_USERNAME@DOMAIN.COM
 
 // To assess specific related objects:
 --relatedobjects=apex    // for Apex classes only
---relatedobjects=lwc     // for Lightning Web Components only
---relatedobjects=apex,lwc // for both Apex and LWC
 
 // To specify the Velocity Namespace (Optional)
 --namespace=VLOCITY_PACKAGE_NAMESPACE

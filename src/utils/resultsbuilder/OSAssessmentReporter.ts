@@ -72,13 +72,13 @@ export class OSAssessmentReporter {
         createRowDataParam('status', info.migrationStatus, false, 1, 1, false),
         createRowDataParam(
           'summary',
-          info.infos ? info.infos.join(', ') : '',
+          info.warnings ? info.warnings.join(', ') : '',
           false,
           1,
           1,
           false,
           undefined,
-          info.infos
+          info.warnings
         ),
         createRowDataParam(
           'omniScriptDependencies',
