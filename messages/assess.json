@@ -101,5 +101,6 @@
   "notEmptyProjectFolderPath": "Provided project folder is not empty. Please provide a valid empty project folder name and path",
   "operationCancelled": "Operation cancelled.",
   "invalidYesNoResponse": "Invalid response. Please answer y or n.",
-  "notSfdxProjectFolderPath": "Provided folder is not a valid Salesforce DX project. Please select a folder containing sfdx-project.json"
+  "notSfdxProjectFolderPath": "Provided folder is not a valid Salesforce DX project. Please select a folder containing sfdx-project.json",
+  "enableVerboseOutput": "Enable verbose output"
 }

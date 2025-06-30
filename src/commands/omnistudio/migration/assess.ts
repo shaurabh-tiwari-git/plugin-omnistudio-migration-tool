@@ -20,8 +20,15 @@ import { sfProject } from '../../../utils/sfcli/project/sfProject';
 Messages.importMessagesDirectory(__dirname);
 const messages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'assess');
 
+const EXISTING_MODE = 'existing';
+const EMPTY_MODE = 'empty';
+const YES_SHORT = 'y';
+const NO_SHORT = 'n';
+const YES_LONG = 'yes';
+const NO_LONG = 'no';
+
 // Helper to create SFDX project if needed
-function ensureSfdxProject(folderPath: string): void {
+function createSfdxProject(folderPath: string): void {
   const projectName = path.basename(folderPath);
   const parentDir = path.dirname(folderPath);
   sfProject.create(projectName, parentDir);
@@ -59,7 +66,7 @@ export default class Assess extends OmniStudioBaseCommand {
     }),
     verbose: flags.builtin({
       type: 'builtin',
-      description: 'Enable verbose output',
+      description: messages.getMessage('enableVerboseOutput'),
     }),
   };
 
@@ -96,7 +103,7 @@ export default class Assess extends OmniStudioBaseCommand {
     const namespace = orgs.packageDetails.namespace;
 
     let projectPath = '';
-    let mode: 'existing' | 'empty' = 'existing';
+    let mode: string = EXISTING_MODE;
 
     // Prompt for project type
     const askWithTimeout = async (
@@ -104,7 +111,7 @@ export default class Assess extends OmniStudioBaseCommand {
       ...args: unknown[]
     ): Promise<string> => {
       const TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
-      let timeoutHandle;
+      let timeoutHandle: NodeJS.Timeout;
       const timeoutPromise = new Promise((_, reject) => {
         timeoutHandle = setTimeout(() => {
           reject(new Error(messages.getMessage('requestTimedOut')));
@@ -134,10 +141,10 @@ export default class Assess extends OmniStudioBaseCommand {
       process.exit(1);
     }
 
-    if (response === 'y' || response === 'yes') {
-      mode = 'existing';
-    } else if (response === 'n' || response === 'no') {
-      mode = 'empty';
+    if (response === YES_SHORT || response === YES_LONG) {
+      mode = EXISTING_MODE;
+    } else if (response === NO_SHORT || response === NO_LONG) {
+      mode = EMPTY_MODE;
     } else {
       Logger.error(messages.getMessage('invalidYesNoResponse'));
       return;
@@ -150,7 +157,7 @@ export default class Assess extends OmniStudioBaseCommand {
       try {
         const resp = await askWithTimeout(
           Logger.prompt.bind(Logger),
-          mode === 'existing'
+          mode === EXISTING_MODE
             ? messages.getMessage('enterExistingProjectPath')
             : messages.getMessage('enterEmptyProjectPath')
         );
@@ -165,13 +172,13 @@ export default class Assess extends OmniStudioBaseCommand {
         Logger.error(messages.getMessage('invalidProjectFolderPath'));
         continue;
       }
-      if (mode === 'empty' && fs.readdirSync(folderPath).length > 0) {
+      if (mode === EMPTY_MODE && fs.readdirSync(folderPath).length > 0) {
         Logger.error(messages.getMessage('notEmptyProjectFolderPath'));
         continue;
       }
       // If empty, create SFDX project
-      if (mode === 'empty') {
-        ensureSfdxProject(folderPath);
+      if (mode === EMPTY_MODE) {
+        createSfdxProject(folderPath);
       } else if (!isSfdxProject(folderPath)) {
         Logger.error(messages.getMessage('notSfdxProjectFolderPath'));
         continue;
