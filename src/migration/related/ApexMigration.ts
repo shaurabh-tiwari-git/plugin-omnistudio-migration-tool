@@ -151,9 +151,9 @@ export class ApexMigration extends BaseRelatedObjectMigration {
       // Only write file changes if we're in migration mode, not assessment mode
       if (type === 'migration') {
         fs.writeFileSync(file.location, updatedContent);
-        Logger.logger.info(`Applied changes to Apex class ${file.name}`);
+        Logger.logger.info(migrateMessages.getMessage('apexFileChangesApplied', [file.name]));
       } else {
-        Logger.logger.info(`Changes identified for Apex class ${file.name} but not applied (assessment mode)`);
+        Logger.logger.info(assessMessages.getMessage('apexFileChangesIdentifiedNotApplied', [file.name]));
       }
       difference = new FileDiffUtil().getFileDiff(file.name, fileContent, updatedContent);
     }
@@ -182,16 +182,14 @@ export class ApexMigration extends BaseRelatedObjectMigration {
 
     // Case 2: Already implements multiple interfaces including Callable - keep only System.Callable
     if (implementsInterface.has(this.callableInterface) && implementsInterface.size > 1) {
-      Logger.logger.info(
-        `File ${file.name} has multiple interfaces including Callable, standardizing to System.Callable only`
-      );
+      Logger.logger.info(assessMessages.getMessage('apexFileHasMultipleInterfaces', [file.name]));
       // We need to identify the entire implements clause and replace it
       return this.replaceAllInterfaces(implementsInterface, tokenUpdates, parser, file.name);
     }
 
     // Case 3: Implements VlocityOpenInterface2 - replace with System.Callable
     if (implementsInterface.has(this.vlocityOpenInterface2)) {
-      Logger.logger.info(`File ${file.name} implements VlocityOpenInterface2, replacing with System.Callable`);
+      Logger.logger.info(assessMessages.getMessage('apexFileImplementsVlocityOpenInterface2', [file.name]));
       const tokens = implementsInterface.get(this.vlocityOpenInterface2);
       tokenUpdates.push(new RangeTokenUpdate(CALLABLE, tokens[0], tokens[1]));
       tokenUpdates.push(new InsertAfterTokenUpdate(this.callMethodBody(), parser.classDeclaration));
@@ -242,7 +240,7 @@ export class ApexMigration extends BaseRelatedObjectMigration {
       if (!parser.hasCallMethodImplemented) {
         tokenUpdates.push(new InsertAfterTokenUpdate(this.callMethodBody(), parser.classDeclaration));
       } else {
-        Logger.logger.info(`File ${fileName} already has a call() method, not adding`);
+        Logger.logger.info(assessMessages.getMessage('apexFileAlreadyHasCallMethod', [fileName]));
       }
     }
 
