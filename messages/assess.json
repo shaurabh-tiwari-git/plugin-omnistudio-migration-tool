@@ -91,5 +91,13 @@
   "dataRaptorNameChangeMessage": "DataRaptor reference {0} will be changed to {1} during migration.",
   "integrationProcedureNameChangeMessage": "Integration Procedure reference {0} will be changed to {1} during migration.",
   "integrationProcedureManualUpdateMessage": "Integration Procedure reference {0} may need manual updates after migration.",
-  "duplicateCardNameMessage": "Potential duplicate: Another card has the same name {0} after name cleaning. This may cause conflicts during migration"
+  "duplicateCardNameMessage": "Potential duplicate: Another card has the same name {0} after name cleaning. This may cause conflicts during migration",
+  "apexFileChangesIdentifiedNotApplied": "Changes identified for Apex class {0} but not applied (assessment mode)",
+  "apexFileHasMultipleInterfaces": "File {0} has multiple interfaces including Callable, standardizing to System.Callable only",
+  "apexFileImplementsVlocityOpenInterface2": "File {0} implements VlocityOpenInterface2, replacing with System.Callable",
+  "errorParsingHtmlTemplate": "Error while parsing template",
+  "errorParsingData": "Error while parsing data for template",
+  "errorGeneratingHTML": "Error while generating HTML from template for {} with properties {}",
+  "unexpectedError": "Unexpected Assessment error",
+  "errorEvaluatingExpression": "Error evaluating expression: {0}, {1}"
 }

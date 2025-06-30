@@ -51,6 +51,16 @@ export default class Org extends SfdxCommand {
   protected static requiresProject = false;
 
   public async run(): Promise<AnyJson> {
+    try {
+      return await this.runInfo();
+    } catch (error) {
+      Logger.error('Error running info');
+      Logger.error(error);
+      process.exit(1);
+    }
+  }
+
+  public async runInfo(): Promise<AnyJson> {
     const name = (this.flags.name || 'world') as string;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const allVersions = this.flags.allversions || false;

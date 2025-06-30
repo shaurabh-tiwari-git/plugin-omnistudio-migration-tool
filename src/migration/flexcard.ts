@@ -121,51 +121,74 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
     // Now process each OmniScript and its elements
     for (const flexCard of limitedFlexCards) {
-      const flexCardName = flexCard['Name'];
-      Logger.info(this.messages.getMessage('processingFlexCard', [flexCardName]));
-      const flexCardAssessmentInfo: FlexCardAssessmentInfo = {
-        name: flexCardName,
-        id: flexCard['Id'],
-        dependenciesIP: [],
-        dependenciesDR: [],
-        dependenciesOS: [],
-        dependenciesFC: [],
-        dependenciesLWC: [],
-        infos: [],
-        warnings: [],
-      };
-
-      // Check for name changes due to API naming requirements
-      const originalName: string = flexCardName;
-      const cleanedName: string = this.cleanName(originalName);
-      if (cleanedName !== originalName) {
-        flexCardAssessmentInfo.warnings.push(
-          this.messages.getMessage('cardNameChangeMessage', [originalName, cleanedName])
-        );
+      try {
+        const flexCardAssessmentInfo = await this.processFlexCard(flexCard, uniqueNames);
+        flexCardAssessmentInfos.push(flexCardAssessmentInfo);
+      } catch (e) {
+        flexCardAssessmentInfos.push({
+          name: flexCard['Name'],
+          id: flexCard['Id'],
+          dependenciesIP: [],
+          dependenciesDR: [],
+          dependenciesFC: [],
+          dependenciesOS: [],
+          dependenciesLWC: [],
+          infos: [],
+          warnings: [this.messages.getMessage('unexpectedError')],
+        });
+        const error = e as Error;
+        Logger.error(JSON.stringify(error));
+        Logger.error(error.stack);
       }
-
-      // Check for duplicate names
-      if (uniqueNames.has(cleanedName)) {
-        flexCardAssessmentInfo.warnings.push(this.messages.getMessage('duplicateCardNameMessage', [cleanedName]));
-      }
-      uniqueNames.add(cleanedName);
-
-      // Check for author name changes
-      const originalAuthor = flexCard[this.namespacePrefix + 'Author__c'];
-      if (originalAuthor) {
-        const cleanedAuthor = this.cleanName(originalAuthor);
-        if (cleanedAuthor !== originalAuthor) {
-          flexCardAssessmentInfo.warnings.push(
-            this.messages.getMessage('authordNameChangeMessage', [originalAuthor, cleanedAuthor])
-          );
-        }
-      }
-
-      this.updateDependencies(flexCard, flexCardAssessmentInfo);
-      flexCardAssessmentInfos.push(flexCardAssessmentInfo);
       progressBar.update(++progressCounter);
     }
     return flexCardAssessmentInfos;
+  }
+
+  private async processFlexCard(flexCard: AnyJson, uniqueNames: Set<string>): Promise<FlexCardAssessmentInfo> {
+    const flexCardName = flexCard['Name'];
+    Logger.info(this.messages.getMessage('processingFlexCard', [flexCardName]));
+    const flexCardAssessmentInfo: FlexCardAssessmentInfo = {
+      name: flexCardName,
+      id: flexCard['Id'],
+      dependenciesIP: [],
+      dependenciesDR: [],
+      dependenciesOS: [],
+      dependenciesFC: [],
+      dependenciesLWC: [],
+      infos: [],
+      warnings: [],
+    };
+
+    // Check for name changes due to API naming requirements
+    const originalName: string = flexCardName;
+    const cleanedName: string = this.cleanName(originalName);
+    if (cleanedName !== originalName) {
+      flexCardAssessmentInfo.warnings.push(
+        this.messages.getMessage('cardNameChangeMessage', [originalName, cleanedName])
+      );
+    }
+
+    // Check for duplicate names
+    if (uniqueNames.has(cleanedName)) {
+      flexCardAssessmentInfo.warnings.push(this.messages.getMessage('duplicateCardNameMessage', [cleanedName]));
+    }
+    uniqueNames.add(cleanedName);
+
+    // Check for author name changes
+    const originalAuthor = flexCard[this.namespacePrefix + 'Author__c'];
+    if (originalAuthor) {
+      const cleanedAuthor = this.cleanName(originalAuthor);
+      if (cleanedAuthor !== originalAuthor) {
+        flexCardAssessmentInfo.warnings.push(
+          this.messages.getMessage('authordNameChangeMessage', [originalAuthor, cleanedAuthor])
+        );
+      }
+    }
+
+    this.updateDependencies(flexCard, flexCardAssessmentInfo);
+
+    return flexCardAssessmentInfo;
   }
 
   private updateDependencies(flexCard, flexCardAssessmentInfo): void {

@@ -239,72 +239,103 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     // Now process each OmniScript and its elements
     for (const dataRaptor of dataRaptors) {
       if (dataRaptor[this.namespacePrefix + 'Type__c'] === 'Migration') continue;
-      const drName = dataRaptor['Name'];
-      // Await here since processOSComponents is now async
-      Logger.info(this.messages.getMessage('processingDataRaptor', [drName]));
-      const warnings: string[] = [];
-      const existingDRNameVal = new StringVal(drName, 'name');
-
-      if (!existingDRNameVal.isNameCleaned()) {
-        warnings.push(
-          this.messages.getMessage('changeMessage', [
-            existingDRNameVal.type,
-            existingDRNameVal.val,
-            existingDRNameVal.cleanName(),
-          ])
+      try {
+        const dataRaptorAssessmentInfo = await this.processDataMappers(
+          dataRaptor,
+          existingDataRaptorNames,
+          dataRaptorItemsMap,
+          functionDefinitionMetadata
         );
+        dataRaptorAssessmentInfos.push(dataRaptorAssessmentInfo);
+      } catch (e) {
+        dataRaptorAssessmentInfos.push({
+          oldName: dataRaptor['Name'],
+          name: '',
+          id: dataRaptor['Id'],
+          type: dataRaptor[this.namespacePrefix + 'Type__c'] || '',
+          formulaChanges: [],
+          infos: [],
+          warnings: [this.messages.getMessage('unexpectedError')],
+          apexDependencies: [],
+        });
+        const error = e as Error;
+        Logger.error(JSON.stringify(error));
+        Logger.error(error.stack);
       }
-      if (existingDataRaptorNames.has(existingDRNameVal.cleanName())) {
-        warnings.push(this.messages.getMessage('duplicatedName') + '  ' + existingDRNameVal.cleanName());
-      } else {
-        existingDataRaptorNames.add(existingDRNameVal.cleanName());
-      }
-      const apexDependencies = [];
-      if (dataRaptor[this.namespacePrefix + 'CustomInputClass__c']) {
-        apexDependencies.push(dataRaptor[this.namespacePrefix + 'CustomInputClass__c']);
-      }
-      if (dataRaptor[this.namespacePrefix + 'CustomOutputClass__c']) {
-        apexDependencies.push(dataRaptor[this.namespacePrefix + 'CustomOutputClass__c']);
-      }
-
-      const formulaChanges: oldNew[] = [];
-      const drItems = dataRaptorItemsMap.get(drName);
-      if (drItems) {
-        for (const drItem of drItems) {
-          // Logger.log(dataRaptor[this.namespacePrefix + 'Formula__c']);
-          const formula = drItem[this.namespacePrefix + 'Formula__c'];
-          if (formula) {
-            try {
-              const newFormula = getReplacedString(this.namespacePrefix, formula, functionDefinitionMetadata);
-              if (newFormula !== formula) {
-                formulaChanges.push({
-                  old: formula,
-                  new: newFormula,
-                });
-              }
-            } catch (ex) {
-              Logger.error(JSON.stringify(ex));
-              Logger.error(ex.stack);
-              Logger.logVerbose(this.messages.getMessage('formulaSyntaxError', [formula]));
-            }
-          }
-        }
-      }
-      const dataRaptorAssessmentInfo: DataRaptorAssessmentInfo = {
-        oldName: existingDRNameVal.val,
-        name: existingDRNameVal.cleanName(),
-        id: dataRaptor['Id'],
-        type: dataRaptor[this.namespacePrefix + 'Type__c'] || '',
-        formulaChanges: formulaChanges,
-        infos: [],
-        apexDependencies: apexDependencies,
-        warnings: warnings,
-      };
-      dataRaptorAssessmentInfos.push(dataRaptorAssessmentInfo);
       progressBar.update(++progressCounter);
     }
     progressBar.stop();
     return dataRaptorAssessmentInfos;
+  }
+
+  private async processDataMappers(
+    dataRaptor: AnyJson,
+    existingDataRaptorNames: Set<string>,
+    dataRaptorItemsMap: Map<string, AnyJson[]>,
+    functionDefinitionMetadata: AnyJson[]
+  ): Promise<DataRaptorAssessmentInfo> {
+    const drName = dataRaptor['Name'];
+    // Await here since processOSComponents is now async
+    Logger.info(this.messages.getMessage('processingDataRaptor', [drName]));
+    const warnings: string[] = [];
+    const existingDRNameVal = new StringVal(drName, 'name');
+
+    if (!existingDRNameVal.isNameCleaned()) {
+      warnings.push(
+        this.messages.getMessage('changeMessage', [
+          existingDRNameVal.type,
+          existingDRNameVal.val,
+          existingDRNameVal.cleanName(),
+        ])
+      );
+    }
+    if (existingDataRaptorNames.has(existingDRNameVal.cleanName())) {
+      warnings.push(this.messages.getMessage('duplicatedName') + '  ' + existingDRNameVal.cleanName());
+    } else {
+      existingDataRaptorNames.add(existingDRNameVal.cleanName());
+    }
+    const apexDependencies = [];
+    if (dataRaptor[this.namespacePrefix + 'CustomInputClass__c']) {
+      apexDependencies.push(dataRaptor[this.namespacePrefix + 'CustomInputClass__c']);
+    }
+    if (dataRaptor[this.namespacePrefix + 'CustomOutputClass__c']) {
+      apexDependencies.push(dataRaptor[this.namespacePrefix + 'CustomOutputClass__c']);
+    }
+
+    const formulaChanges: oldNew[] = [];
+    const drItems = dataRaptorItemsMap.get(drName);
+    if (drItems) {
+      for (const drItem of drItems) {
+        // Logger.log(dataRaptor[this.namespacePrefix + 'Formula__c']);
+        const formula = drItem[this.namespacePrefix + 'Formula__c'];
+        if (formula) {
+          try {
+            const newFormula = getReplacedString(this.namespacePrefix, formula, functionDefinitionMetadata);
+            if (newFormula !== formula) {
+              formulaChanges.push({
+                old: formula,
+                new: newFormula,
+              });
+            }
+          } catch (ex) {
+            Logger.error(JSON.stringify(ex));
+            Logger.error(ex.stack);
+            Logger.logVerbose(this.messages.getMessage('formulaSyntaxError', [formula]));
+          }
+        }
+      }
+    }
+    const dataRaptorAssessmentInfo: DataRaptorAssessmentInfo = {
+      oldName: existingDRNameVal.val,
+      name: existingDRNameVal.cleanName(),
+      id: dataRaptor['Id'],
+      type: dataRaptor[this.namespacePrefix + 'Type__c'] || '',
+      formulaChanges: formulaChanges,
+      infos: [],
+      apexDependencies: apexDependencies,
+      warnings: warnings,
+    };
+    return dataRaptorAssessmentInfo;
   }
 
   // Get All DRBundle__c records
