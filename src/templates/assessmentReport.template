@@ -153,7 +153,7 @@
                       <c:if exp={!$cell.isHref}>
                         <c:if exp={$cell.searchable}>
                           <td data-name="(cell.value)" rowspan="(cell.rowspan)" colspan="(cell.colspan)"
-                            title="(cell.title)" key="(cell.key)" value="(cell.value)">
+                            key="(cell.key)" value="(cell.value)">
                             <c:if exp={Array.isArray($cell.title)}>
                               <c:for items=(cell.title) var="value">
                                 <div>{{value}}</div>
@@ -163,7 +163,7 @@
                           </td>
                         </c:if>
                         <c:if exp={!$cell.searchable}>
-                          <td rowspan="(cell.rowspan)" colspan="(cell.colspan)" title="(cell.title)" key="(cell.key)"
+                          <td rowspan="(cell.rowspan)" colspan="(cell.colspan)" key="(cell.key)"
                             value="(cell.value)">
                             <c:if exp={Array.isArray($cell.title)}>
                               <c:for items=(cell.title) var="value">
@@ -177,7 +177,7 @@
                       <c:if exp={$cell.isHref}>
                         <c:if exp={$cell.searchable}>
                           <td data-name="(cell.value)" rowspan="(cell.rowspan)" colspan="(cell.colspan)"
-                            title="(cell.title)" key="(cell.key)" value="(cell.value)">
+                            key="(cell.key)" value="(cell.value)">
                             <c:if exp={Array.isArray($cell.title)}>
                               <c:for items=(cell.title) var="value">
                                 <div><a href="(cell.uri)">{{value}}</a></div>
@@ -189,7 +189,7 @@
                           </td>
                         </c:if>
                         <c:if exp={!$cell.searchable}>
-                          <td rowspan="(cell.rowspan)" colspan="(cell.colspan)" title="(cell.title)" key="(cell.key)"
+                          <td rowspan="(cell.rowspan)" colspan="(cell.colspan)" key="(cell.key)"
                             value="(cell.value)">
                             <c:if exp={Array.isArray($cell.title)}>
                               <c:for items=(cell.title) var="value">

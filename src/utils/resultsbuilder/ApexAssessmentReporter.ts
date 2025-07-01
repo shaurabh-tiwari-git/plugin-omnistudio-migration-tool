@@ -9,6 +9,7 @@ import {
 } from '../reportGenerator/reportInterfaces';
 import { createFilterGroupParam, createRowDataParam, getOrgDetailsForReport } from '../reportGenerator/reportUtil';
 import { reportingHelper } from './reportingHelper';
+import { FileDiffUtil } from '../lwcparser/fileutils/FileDiffUtil';
 
 export class ApexAssessmentReporter {
   private static rowId = 0;
@@ -53,7 +54,7 @@ export class ApexAssessmentReporter {
       data: [
         createRowDataParam('name', apexAssessmentInfo.name, true, 1, 1, false),
         createRowDataParam('fileReference', apexAssessmentInfo.path, false, 1, 1, false),
-        createRowDataParam('diff', apexAssessmentInfo.diff, false, 1, 1, false),
+        createRowDataParam('diff', apexAssessmentInfo.name+'diff', false, 1, 1, false, undefined, FileDiffUtil.getDiffHTML(apexAssessmentInfo.diff, apexAssessmentInfo.name)),
         createRowDataParam(
           'comments',
           apexAssessmentInfo.infos ? apexAssessmentInfo.infos.join(', ') : '',
