@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import open from 'open';
-import { Logger } from '@salesforce/core';
+import { Messages } from '@salesforce/core';
 import { pushAssestUtilites } from '../file/fileUtil';
 import { ApexAssessmentInfo, MigratedObject, MigratedRecordInfo, RelatedObjectAssesmentInfo } from '../interfaces';
 import { ReportParam } from '../reportGenerator/reportInterfaces';
@@ -9,47 +9,51 @@ import { OmnistudioOrgDetails } from '../orgUtils';
 import { TemplateParser } from '../templateParser/generate';
 import { createFilterGroupParam, createRowDataParam } from '../reportGenerator/reportUtil';
 import { FileDiffUtil } from '../lwcparser/fileutils/FileDiffUtil';
+import { Logger } from '../logger';
 
 const resultsDir = path.join(process.cwd(), 'migration_report');
 // const lwcConstants = { componentName: 'lwc', title: 'LWC Components Migration Result' };
 const migrationReportHTMLfileName = 'dashboard.html';
-const reportTemplateFilePath = path.join(process.cwd(), 'src', 'templates', 'migrationReport.template');
-const dashboardTemplateFilePath = path.join(process.cwd(), 'src', 'templates', 'dashboard.template');
+const templateDir = 'templates';
+const reportTemplateName = 'migrationReport.template';
+const dashboardTemplateName = 'dashboard.template';
+const reportTemplateFilePath = path.join(__dirname, '..', '..', templateDir, reportTemplateName);
+const dashboardTemplateFilePath = path.join(__dirname, '..', '..', templateDir, dashboardTemplateName);
 const apexFileName = 'apex.html';
 
 export class ResultsBuilder {
   private static rowClass = 'data-row-';
   private static rowId = 0;
-  private static logger: Logger = new Logger('ResultsBuilder');
 
   public static async generateReport(
     results: MigratedObject[],
     relatedObjectMigrationResult: RelatedObjectAssesmentInfo,
     instanceUrl: string,
-    orgDetails: OmnistudioOrgDetails
+    orgDetails: OmnistudioOrgDetails,
+    messages: Messages
   ): Promise<void> {
-    this.logger.info('Generating directories');
     fs.mkdirSync(resultsDir, { recursive: true });
-    this.logger.info('Generating report for components');
+    Logger.info(messages.getMessage('generatingComponentReports'));
     for (const result of results) {
-      this.generateReportForResult(result, instanceUrl, orgDetails);
+      this.generateReportForResult(result, instanceUrl, orgDetails, messages);
     }
-    this.logger.info('Generating report for related objects');
-    this.generateReportForRelatedObject(relatedObjectMigrationResult, instanceUrl, orgDetails);
+    Logger.info(messages.getMessage('generatingRelatedObjectReports'));
+    this.generateReportForRelatedObject(relatedObjectMigrationResult, instanceUrl, orgDetails, messages);
 
-    this.logger.info('Generating migration report dashboard');
-    this.generateMigrationReportDashboard(orgDetails, results, relatedObjectMigrationResult);
-    this.logger.info('Pushing assets');
+    Logger.info(messages.getMessage('generatingMigrationReportDashboard'));
+    this.generateMigrationReportDashboard(orgDetails, results, relatedObjectMigrationResult, messages);
     pushAssestUtilites('javascripts', resultsDir);
     pushAssestUtilites('styles', resultsDir);
-    await open(resultsDir + '/' + migrationReportHTMLfileName);
+    await open(path.join(resultsDir, migrationReportHTMLfileName));
   }
 
   private static generateReportForResult(
     result: MigratedObject,
     instanceUrl: string,
-    orgDetails: OmnistudioOrgDetails
+    orgDetails: OmnistudioOrgDetails,
+    messages: Messages
   ): void {
+    Logger.captureVerboseData(`${result.name} data`, result);
     // Determine which rollback flag to use based on component type
     let rollbackFlagNames: string[] = [];
     const componentName = result.name.toLowerCase();
@@ -81,7 +85,7 @@ export class ResultsBuilder {
               rowspan: 1,
             },
             {
-              name: 'In Org',
+              name: 'In Core',
               colspan: 2,
               rowspan: 1,
             },
@@ -154,7 +158,7 @@ export class ResultsBuilder {
               1,
               false,
               undefined,
-              item.warnings
+              item.warnings || []
             ),
           ],
         })),
@@ -163,23 +167,26 @@ export class ResultsBuilder {
     };
 
     const reportTemplate = fs.readFileSync(reportTemplateFilePath, 'utf8');
-    const html = TemplateParser.generate(reportTemplate, data);
+    const html = TemplateParser.generate(reportTemplate, data, messages);
     fs.writeFileSync(path.join(resultsDir, result.name.replace(/ /g, '_').replace(/\//g, '_') + '.html'), html);
   }
 
   private static generateReportForRelatedObject(
     result: RelatedObjectAssesmentInfo,
     instanceUrl: string,
-    orgDetails: OmnistudioOrgDetails
+    orgDetails: OmnistudioOrgDetails,
+    messages: Messages
   ): void {
-    this.generateReportForApex(result.apexAssessmentInfos, instanceUrl, orgDetails);
+    this.generateReportForApex(result.apexAssessmentInfos, instanceUrl, orgDetails, messages);
   }
 
   private static generateReportForApex(
     result: ApexAssessmentInfo[],
     instanceUrl: string,
-    orgDetails: OmnistudioOrgDetails
+    orgDetails: OmnistudioOrgDetails,
+    messages: Messages
   ): void {
+    Logger.captureVerboseData('apex data', result);
     const data: ReportParam = {
       title: 'Apex Classes',
       heading: 'Apex Classes',
@@ -266,7 +273,7 @@ export class ResultsBuilder {
     };
 
     const reportTemplate = fs.readFileSync(reportTemplateFilePath, 'utf8');
-    const html = TemplateParser.generate(reportTemplate, data);
+    const html = TemplateParser.generate(reportTemplate, data, messages);
     fs.writeFileSync(path.join(resultsDir, apexFileName), html);
 
     // call generate html from template
@@ -275,7 +282,8 @@ export class ResultsBuilder {
   private static generateMigrationReportDashboard(
     orgDetails: OmnistudioOrgDetails,
     results: MigratedObject[],
-    relatedObjectMigrationResult: RelatedObjectAssesmentInfo
+    relatedObjectMigrationResult: RelatedObjectAssesmentInfo,
+    messages: Messages
   ): void {
     const data = {
       title: 'Migration Report Dashboard',
@@ -304,7 +312,7 @@ export class ResultsBuilder {
     };
 
     const dashboardTemplate = fs.readFileSync(dashboardTemplateFilePath, 'utf8');
-    const html = TemplateParser.generate(dashboardTemplate, data);
+    const html = TemplateParser.generate(dashboardTemplate, data, messages);
     fs.writeFileSync(path.join(resultsDir, 'dashboard.html'), html);
   }
 

@@ -1,4 +1,5 @@
 import { IPAssessmentInfo } from '../interfaces';
+import { Logger } from '../logger';
 import { OmnistudioOrgDetails } from '../orgUtils';
 import {
   FilterGroupParam,
@@ -18,6 +19,7 @@ export class IPAssessmentReporter {
     instanceUrl: string,
     omnistudioOrgDetails: OmnistudioOrgDetails
   ): ReportParam {
+    Logger.captureVerboseData('IP data', ipAssessmentInfos);
     return {
       title: 'Integration Procedure Migration Assessment',
       heading: 'Integration Procedure',
@@ -140,7 +142,7 @@ export class IPAssessmentReporter {
             rowspan: 2,
           },
           {
-            name: 'Data Mapper Dependencies',
+            name: 'Remote Action Dependencies',
             colspan: 1,
             rowspan: 2,
           },

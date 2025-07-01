@@ -1,4 +1,5 @@
 import { ApexAssessmentInfo } from '../interfaces';
+import { Logger } from '../logger';
 import { OmnistudioOrgDetails } from '../orgUtils';
 import {
   FilterGroupParam,
@@ -18,6 +19,7 @@ export class ApexAssessmentReporter {
     apexAssessmentInfos: ApexAssessmentInfo[],
     omnistudioOrgDetails: OmnistudioOrgDetails
   ): ReportParam {
+    Logger.captureVerboseData('apex data:', apexAssessmentInfos);
     return {
       title: 'Apex Migration Assessment',
       heading: 'Apex',

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-eval */
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
+import { Messages } from '@salesforce/core';
 import { Logger } from '../../logger';
 import { TemplateParserUtil } from '../util';
 import { NodeType } from './nodeTypes';
@@ -14,12 +15,20 @@ export class ElementNode {
   public name: string;
   public properties: Map<string, string>;
   public children: ElementNode[];
+  public messages: Messages;
 
-  public constructor(type: NodeType, name: string, properties: Map<string, string>, children: ElementNode[]) {
+  public constructor(
+    type: NodeType,
+    name: string,
+    properties: Map<string, string>,
+    children: ElementNode[],
+    messages: Messages
+  ) {
     this.type = type;
     this.name = name;
     this.properties = properties;
     this.children = children;
+    this.messages = messages;
   }
 
   /**
@@ -30,15 +39,20 @@ export class ElementNode {
    * @returns Generated HTML string
    */
   public toHtml(props: Map<string, any>): string {
-    switch (this.type) {
-      case NodeType.NATIVE:
-        return this.nativeToHtml(props);
-      case NodeType.FOR_LOOP:
-        return this.forLoopToHtml(props);
-      case NodeType.PLACEHOLDER:
-        return this.placeholderToHtml(props);
-      case NodeType.IF:
-        return this.ifToHtml(props);
+    try {
+      switch (this.type) {
+        case NodeType.NATIVE:
+          return this.nativeToHtml(props);
+        case NodeType.FOR_LOOP:
+          return this.forLoopToHtml(props);
+        case NodeType.PLACEHOLDER:
+          return this.placeholderToHtml(props);
+        case NodeType.IF:
+          return this.ifToHtml(props);
+      }
+    } catch (error) {
+      Logger.error(this.messages.getMessage('errorGeneratingHTML', [JSON.stringify(this), this.getPropertiesString()]));
+      throw error;
     }
   }
 
@@ -92,6 +106,10 @@ export class ElementNode {
     const indexVarName = this.properties.get('index') || 'index';
 
     array.forEach((item, index) => {
+      if (item == null) {
+        Logger.warn('skipping item in for loop, found to be null or undefined');
+        return;
+      }
       this.addProps(props, index.toString(), item, itemVarName, indexVarName);
       html += this.children.map((child) => child.toHtml(props)).join('');
       this.removeProps(props, item, itemVarName, indexVarName);
@@ -145,7 +163,7 @@ export class ElementNode {
       props.set(itemVarName, value);
       return;
     }
-    TemplateParserUtil.parseKeyPair(value, itemVarName).forEach((val, key) => {
+    TemplateParserUtil.parseKeyPair(value, this.messages, itemVarName).forEach((val, key) => {
       props.set(key, val);
     });
   }
@@ -165,7 +183,7 @@ export class ElementNode {
       props.delete(itemVarName);
       return;
     }
-    TemplateParserUtil.parseKeyPair(value, itemVarName).forEach((_value, key) => {
+    TemplateParserUtil.parseKeyPair(value, this.messages, itemVarName).forEach((_value, key) => {
       props.delete(key);
     });
   }
@@ -182,12 +200,38 @@ export class ElementNode {
     props.forEach((value, key) => {
       expression = expression.replace(`$${key}`, JSON.stringify(value));
     });
-
+    // replace remaining variables with undefined
+    const remainingVariables = expression.match(/\$\w+(?:\.\w+)*/g);
+    if (remainingVariables) {
+      remainingVariables.forEach((variable) => {
+        expression = expression.replace(variable, 'undefined');
+      });
+    }
     try {
       return eval(expression) as boolean;
     } catch (error) {
-      Logger.logger.error('Error evaluating expression:', expression, error);
+      Logger.error(this.messages.getMessage('errorEvaluatingExpression', [expression, error]));
       return false;
     }
+  }
+
+  /**
+   * Returns a string representation of the element's properties.
+   * Formats properties as a JSON object with key-value pairs.
+   * For logging purposes only.
+   *
+   * @returns String representation of properties
+   */
+  private getPropertiesString(): string | number | boolean {
+    if (!this.properties) {
+      return '{}';
+    }
+
+    let propertiesString = '{\n';
+    for (const [key, value] of this.properties.entries()) {
+      propertiesString += `"${key}": "${value}"\n`;
+    }
+    propertiesString += '}';
+    return propertiesString;
   }
 }

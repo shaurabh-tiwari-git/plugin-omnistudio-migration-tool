@@ -339,7 +339,9 @@ export class OrgUtils {
       // Prompt user to select a package
       let selectedIndex: number;
       do {
-        const selection = await Logger.prompt(messages.getMessage('packageSelectionPrompt', [installedOmniPackages.length.toString()]));
+        const selection = await Logger.prompt(
+          messages.getMessage('packageSelectionPrompt', [installedOmniPackages.length.toString()])
+        );
         selectedIndex = parseInt(selection, 10) - 1;
 
         if (isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex >= installedOmniPackages.length) {
