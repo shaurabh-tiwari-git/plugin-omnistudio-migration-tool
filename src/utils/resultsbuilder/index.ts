@@ -228,7 +228,16 @@ export class ResultsBuilder {
         data: [
           createRowDataParam('name', item.name, true, 1, 1, false),
           createRowDataParam('path', item.path, false, 1, 1, false),
-          createRowDataParam('diff', item.name+'diff', false, 1, 1, false, undefined, FileDiffUtil.getDiffHTML(item.diff, item.name)),
+          createRowDataParam(
+            'diff',
+            item.name + 'diff',
+            false,
+            1,
+            1,
+            false,
+            undefined,
+            FileDiffUtil.getDiffHTML(item.diff, item.name)
+          ),
           createRowDataParam(
             'infos',
             item.infos ? item.infos.join(', ') : '',
