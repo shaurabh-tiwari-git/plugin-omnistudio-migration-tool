@@ -18,10 +18,10 @@ sfdx plugins:install @salesforce/plugin-omnistudio-migration-tool
 
 ```
 // To migrate everything
-sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM --namespace=VLOCITY_PACKAGE_NAMESPACE
+sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM
 
 // To assess everything without migrating
-sfdx omnistudio:migration:assess -u YOUR_ORG_USERNAME@DOMAIN.COM --namespace=VLOCITY_PACKAGE_NAMESPACE
+sfdx omnistudio:migration:assess -u YOUR_ORG_USERNAME@DOMAIN.COM
 
 // To migrate/assess specific components: FlexCards, DataMappers, Integration Procedures, or OmniScripts, add the following parameters:
 --only=dr
@@ -34,8 +34,9 @@ sfdx omnistudio:migration:assess -u YOUR_ORG_USERNAME@DOMAIN.COM --namespace=VLO
 
 // To assess specific related objects:
 --relatedobjects=apex    // for Apex classes only
---relatedobjects=lwc     // for Lightning Web Components only
---relatedobjects=apex,lwc // for both Apex and LWC
+
+// To specify the Velocity Namespace (Optional)
+--namespace=VLOCITY_PACKAGE_NAMESPACE
 ```
 
 5. An HTML page will be open in your default browser with the results of your migration/assessment job.

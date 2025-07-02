@@ -162,6 +162,33 @@ function openReport(ele) {
   window.open(file, '_blank');
 }
 
+function toggleCtaPanel() {
+  const panel = document.getElementById('ctaPanel');
+  const overlay = document.getElementById('overlay');
+
+  if (panel.classList.contains('open')) {
+    closeCtaPanel();
+  } else {
+    panel.classList.add('open');
+    overlay.classList.add('open');
+  }
+}
+
+function closeCtaPanel() {
+  const panel = document.getElementById('ctaPanel');
+  const overlay = document.getElementById('overlay');
+
+  panel.classList.remove('open');
+  overlay.classList.remove('open');
+}
+
+// Close panel on escape key
+document.addEventListener('keydown', function (event) {
+  if (event.key === 'Escape') {
+    closeCtaPanel();
+  }
+});
+
 // Expose globally so HTML inline event handlers can access them
 window.toggleFilterDropdown = toggleFilterDropdown;
 window.filterAndSearchTable = filterAndSearchTable;

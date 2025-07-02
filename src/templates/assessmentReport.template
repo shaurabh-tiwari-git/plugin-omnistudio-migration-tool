@@ -12,6 +12,29 @@
   <div style="margin: 20px">
     <div class="report-wrapper">
       <div id="scrollable-wrapper" class="scrollable-wrapper">
+        <c:if exp={$callToAction.length > 0}>
+          <!-- Call To Action Button -->
+          <button class="cta-button" onclick="toggleCtaPanel()">Call To Action</button>
+          
+          <!-- Overlay -->
+          <div class="overlay" id="overlay" onclick="closeCtaPanel()"></div>
+          
+          <!-- Call To Action Panel -->
+          <div class="cta-panel" id="ctaPanel">
+            <div class="cta-panel-header">
+              <div class="cta-panel-title">Call To Action</div>
+              <button class="cta-panel-close" onclick="closeCtaPanel()">&times;</button>
+            </div>
+            <div class="cta-panel-content">
+              <ul>
+                <c:for items=(callToAction) var="cta">
+                  <li> {{cta.message}}: &nbsp <a href="(cta.link)" target="_blank">See More</a></li>
+                </c:for>
+              </ul>
+            </div>
+          </div>
+        </c:if>
+
         <div class="table-summary-wrapper rpt-table-container" id="report-table">
           <div class="report-page-header">
             <div class="slds-text-heading_large">
@@ -130,7 +153,7 @@
                       <c:if exp={!$cell.isHref}>
                         <c:if exp={$cell.searchable}>
                           <td data-name="(cell.value)" rowspan="(cell.rowspan)" colspan="(cell.colspan)"
-                            title="(cell.title)" key="(cell.key)" value="(cell.value)">
+                            key="(cell.key)" value="(cell.value)">
                             <c:if exp={Array.isArray($cell.title)}>
                               <c:for items=(cell.title) var="value">
                                 <div>{{value}}</div>
@@ -140,7 +163,7 @@
                           </td>
                         </c:if>
                         <c:if exp={!$cell.searchable}>
-                          <td rowspan="(cell.rowspan)" colspan="(cell.colspan)" title="(cell.title)" key="(cell.key)"
+                          <td rowspan="(cell.rowspan)" colspan="(cell.colspan)" key="(cell.key)"
                             value="(cell.value)">
                             <c:if exp={Array.isArray($cell.title)}>
                               <c:for items=(cell.title) var="value">
@@ -154,7 +177,7 @@
                       <c:if exp={$cell.isHref}>
                         <c:if exp={$cell.searchable}>
                           <td data-name="(cell.value)" rowspan="(cell.rowspan)" colspan="(cell.colspan)"
-                            title="(cell.title)" key="(cell.key)" value="(cell.value)">
+                            key="(cell.key)" value="(cell.value)">
                             <c:if exp={Array.isArray($cell.title)}>
                               <c:for items=(cell.title) var="value">
                                 <div><a href="(cell.uri)">{{value}}</a></div>
@@ -166,7 +189,7 @@
                           </td>
                         </c:if>
                         <c:if exp={!$cell.searchable}>
-                          <td rowspan="(cell.rowspan)" colspan="(cell.colspan)" title="(cell.title)" key="(cell.key)"
+                          <td rowspan="(cell.rowspan)" colspan="(cell.colspan)" key="(cell.key)"
                             value="(cell.value)">
                             <c:if exp={Array.isArray($cell.title)}>
                               <c:for items=(cell.title) var="value">

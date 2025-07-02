@@ -9,6 +9,7 @@ import {
   SummaryItemDetailParam,
 } from '../reportGenerator/reportInterfaces';
 import { createFilterGroupParam, createRowDataParam, getOrgDetailsForReport } from '../reportGenerator/reportUtil';
+import { reportingHelper } from './reportingHelper';
 
 export class DRAssessmentReporter {
   private static rowId = 0;
@@ -31,6 +32,7 @@ export class DRAssessmentReporter {
       rollbackFlags: (omnistudioOrgDetails.rollbackFlags || []).includes('RollbackDRChanges')
         ? ['RollbackDRChanges']
         : undefined,
+      callToAction: reportingHelper.getCallToAction(dataRaptorAssessmentInfos),
     };
   }
 
@@ -138,13 +140,13 @@ export class DRAssessmentReporter {
         createRowDataParam('type', dataRaptorAssessmentInfo.type, false, 1, 1, false),
         createRowDataParam(
           'summary',
-          dataRaptorAssessmentInfo.infos ? dataRaptorAssessmentInfo.infos.join(', ') : '',
+          dataRaptorAssessmentInfo.warnings ? dataRaptorAssessmentInfo.warnings.join(', ') : '',
           false,
           1,
           1,
           false,
           undefined,
-          dataRaptorAssessmentInfo.infos
+          dataRaptorAssessmentInfo.warnings
         ),
         createRowDataParam(
           'customFunctionDependencies',

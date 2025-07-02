@@ -78,4 +78,5 @@ export interface ReportParam {
   headerGroups: ReportHeaderGroupParam[];
   rows: ReportRowParam[];
   rollbackFlags?: string[];
+  callToAction?: CTASummary[];
 }

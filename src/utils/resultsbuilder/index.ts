@@ -8,6 +8,7 @@ import { ReportParam } from '../reportGenerator/reportInterfaces';
 import { OmnistudioOrgDetails } from '../orgUtils';
 import { TemplateParser } from '../templateParser/generate';
 import { createFilterGroupParam, createRowDataParam } from '../reportGenerator/reportUtil';
+import { FileDiffUtil } from '../lwcparser/fileutils/FileDiffUtil';
 import { Logger } from '../logger';
 
 const resultsDir = path.join(process.cwd(), 'migration_report');
@@ -197,7 +198,7 @@ export class ResultsBuilder {
       },
       assessmentDate: new Date().toString(),
       total: result.length,
-      filterGroups: [createFilterGroupParam('Filter by Errors', 'errors', ['Has Errors', 'Has No Errors'])],
+      filterGroups: [createFilterGroupParam('Filter by Errors', 'warnings', ['Has Errors', 'Has No Errors'])],
       headerGroups: [
         {
           header: [
@@ -234,7 +235,16 @@ export class ResultsBuilder {
         data: [
           createRowDataParam('name', item.name, true, 1, 1, false),
           createRowDataParam('path', item.path, false, 1, 1, false),
-          createRowDataParam('diff', item.diff, false, 1, 1, false),
+          createRowDataParam(
+            'diff',
+            item.name + 'diff',
+            false,
+            1,
+            1,
+            false,
+            undefined,
+            FileDiffUtil.getDiffHTML(item.diff, item.name)
+          ),
           createRowDataParam(
             'infos',
             item.infos ? item.infos.join(', ') : '',
