@@ -266,7 +266,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       }
 
       let childCards = this.readChildCardsFromDefinition(flexCard);
-      flexCardAssessmentInfo.dependenciesFC.push(childCards);
+      flexCardAssessmentInfo.dependenciesFC.push(...childCards);
     } catch (err) {
       // Log the error but continue processing
       Logger.error(`Error parsing definition for card ${flexCard.Name}: ${err.message}`);

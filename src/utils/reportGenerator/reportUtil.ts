@@ -9,8 +9,14 @@ export function createRowDataParam(
   colspan: number,
   isHref: boolean,
   uri?: string,
-  title?: string | string[]
+  title?: string | string[],
+  customClass?: string
 ): ReportDataParam {
+
+  if(title && Array.isArray(title)) {
+    title = title.filter(t => t?.trim?.());
+  }
+
   return {
     key,
     value,
@@ -20,6 +26,7 @@ export function createRowDataParam(
     colspan,
     isHref,
     uri,
+    customClass: customClass || '',
   };
 }
 

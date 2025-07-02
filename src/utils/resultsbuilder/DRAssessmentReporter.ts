@@ -26,7 +26,7 @@ export class DRAssessmentReporter {
       org: getOrgDetailsForReport(omnistudioOrgDetails),
       assessmentDate: new Date().toString(),
       total: dataRaptorAssessmentInfos?.length || 0,
-      filterGroups: this.getFilterGroupsForReport(),
+      filterGroups: this.getFilterGroupsForReport(dataRaptorAssessmentInfos),
       headerGroups: this.getHeaderGroupsForReport(),
       rows: this.getRowsForReport(dataRaptorAssessmentInfos, instanceUrl),
       rollbackFlags: (omnistudioOrgDetails.rollbackFlags || []).includes('RollbackDRChanges')
@@ -57,8 +57,16 @@ export class DRAssessmentReporter {
     ];
   }
 
-  private static getFilterGroupsForReport(): FilterGroupParam[] {
-    return [createFilterGroupParam('Filter By Type', 'type', ['Extract', 'Transform', 'Load', 'Turbo Extract'])];
+  private static getFilterGroupsForReport(dataRaptorAssessmentInfos: DataRaptorAssessmentInfo[]): FilterGroupParam[] {
+    if (!dataRaptorAssessmentInfos || dataRaptorAssessmentInfos.length === 0) {
+      return [];
+    }
+
+    const distinctTypes = [...new Set(dataRaptorAssessmentInfos.map((info) => info.type))];
+    if (distinctTypes.length > 0 && distinctTypes.filter((type) => type).length > 0) {
+      return [createFilterGroupParam('Filter By Type', 'type', distinctTypes)];
+    }
+    return [];
   }
 
   private static getHeaderGroupsForReport(): ReportHeaderGroupParam[] {
