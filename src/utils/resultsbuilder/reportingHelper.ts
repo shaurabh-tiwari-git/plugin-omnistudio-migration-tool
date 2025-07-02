@@ -3,6 +3,7 @@ import { nameLocation, oldNew } from '../interfaces';
 import { CTASummary } from '../reportGenerator/reportInterfaces';
 import { IPAssessmentInfo, OSAssessmentInfo, DataRaptorAssessmentInfo, ApexAssessmentInfo } from '../interfaces';
 import { callToActionMessages } from '../constants/callToActionMessages';
+import { Logger } from '../logger';
 
 Messages.importMessagesDirectory(__dirname);
 const assessMessages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'assess');
@@ -56,6 +57,8 @@ export class reportingHelper {
                 message: info,
                 link: this.getLink(key),
               });
+            } else if (typeof value === 'string' && typeof key === 'string' && this.checkMatch(info, value)) {
+              Logger.logVerbose(`No link found for ${key} and ${value}`);
             }
           }
         }
@@ -79,6 +82,7 @@ export class reportingHelper {
         return true;
       }
     } catch (error) {
+      Logger.error(error);
       return false;
     }
     return false;

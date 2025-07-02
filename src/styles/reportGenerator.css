@@ -347,21 +347,6 @@ html {
   display: block;
 }
 
-.cta-button-container {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.cta-summary-button {
-  background-color: #0070d2;
-  color: white;
-  padding: 8px 16px;
-  font-size: 14px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
 .cta-header,
 .report-page-header {
   display: flex;
@@ -370,8 +355,7 @@ html {
   margin-bottom: 16px;
 }
 
-.close-icon,
-.cta-button-container {
+.close-icon {
   display: flex;
   justify-content: flex-end;
 }
