@@ -57,8 +57,6 @@ export class reportingHelper {
                 message: info,
                 link: this.getLink(key),
               });
-            } else if (typeof value === 'string' && typeof key === 'string' && this.checkMatch(info, value)) {
-              Logger.logVerbose(`No link found for ${key} and ${value}`);
             }
           }
         }
@@ -104,6 +102,7 @@ export class reportingHelper {
     if (callToActionMessages[key]) {
       return callToActionMessages[key] as string;
     }
+    Logger.logVerbose(`No link found for ${key}`);
     return undefined;
   }
 }
