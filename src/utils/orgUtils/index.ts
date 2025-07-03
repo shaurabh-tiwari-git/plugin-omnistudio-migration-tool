@@ -353,7 +353,6 @@ export class OrgUtils {
       const selectedPackage = installedOmniPackages[selectedIndex];
       packageDetails.version = `${selectedPackage.MajorVersion}.${selectedPackage.MinorVersion}`;
       packageDetails.namespace = selectedPackage.NamespacePrefix;
-      hasValidNamespace = true;
 
       Logger.log(messages.getMessage('selectedPackage', [selectedPackage.NamespacePrefix, packageDetails.version]));
     } else if (installedOmniPackages.length === 1) {
@@ -361,7 +360,6 @@ export class OrgUtils {
       const pkg = installedOmniPackages[0];
       packageDetails.version = `${pkg.MajorVersion}.${pkg.MinorVersion}`;
       packageDetails.namespace = pkg.NamespacePrefix;
-      hasValidNamespace = true;
     }
 
     //Execute apex rest resource to get omnistudio org permission

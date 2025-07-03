@@ -100,7 +100,7 @@ export default class Assess extends OmniStudioBaseCommand {
     }
     const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn, this.flags.namespace);
 
-    if (!orgs.hasValidNamespace) {
+    if (!orgs.hasValidNamespace && this.flags.namespace) {
       Logger.warn(messages.getMessage('invalidNamespace') + orgs.packageDetails.namespace);
     }
 
@@ -131,7 +131,7 @@ export default class Assess extends OmniStudioBaseCommand {
     };
 
     Logger.log(messages.getMessage('assessmentInitialization', [String(namespace)]));
-    Logger.logVerbose(messages.getMessage('apiVersionInfo', [String(apiVersion)]));
+    Logger.log(messages.getMessage('apiVersionInfo', [String(apiVersion)]));
     Logger.logVerbose(messages.getMessage('assessmentTargets', [String(this.flags.only || 'all')]));
     Logger.logVerbose(messages.getMessage('relatedObjectsInfo', [relatedObjects || 'none']));
     Logger.logVerbose(messages.getMessage('allVersionsFlagInfo', [String(allVersions)]));
@@ -141,13 +141,15 @@ export default class Assess extends OmniStudioBaseCommand {
     let objectsToProcess: string[];
     // Assess related objects if specified
     if (relatedObjects) {
-      const validOptions = [Constants.Apex, Constants.LWC];
+      // To-Do: Add LWC to valid options when GA is released
+      const validOptions = [Constants.Apex];
       objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
 
       // Validate input
       for (const obj of objectsToProcess) {
         if (!validOptions.includes(obj)) {
-          Logger.warn(messages.getMessage('invalidRelatedObjectsOption', [String(obj)]));
+          Logger.error(messages.getMessage('invalidRelatedObjectsOption', [String(obj)]));
+          process.exit(1);
         }
       }
 

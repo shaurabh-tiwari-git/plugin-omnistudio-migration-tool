@@ -117,10 +117,8 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     progressBar.start(flexCards.length, progressCounter);
     const uniqueNames = new Set<string>();
 
-    const limitedFlexCards = flexCards.slice(0, 200);
-
     // Now process each OmniScript and its elements
-    for (const flexCard of limitedFlexCards) {
+    for (const flexCard of flexCards) {
       try {
         const flexCardAssessmentInfo = await this.processFlexCard(flexCard, uniqueNames);
         flexCardAssessmentInfos.push(flexCardAssessmentInfo);
@@ -143,6 +141,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       }
       progressBar.update(++progressCounter);
     }
+    progressBar.stop();
     return flexCardAssessmentInfos;
   }
 
@@ -242,7 +241,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     } else if (dataSource.type === Constants.ApexRemoteComponentName) {
       const remoteClass = dataSource.value?.remoteClass;
       const remoteMethod = dataSource.value?.remoteMethod;
-      Logger.logVerbose(`Remote Action name: ${remoteClass}.${remoteMethod}`);
+      Logger.info(`Remote Action name: ${remoteClass}.${remoteMethod}`);
 
       // Avoid duplicates
       if (!flexCardAssessmentInfo.dependenciesApexRemoteAction.includes(`${remoteClass}.${remoteMethod}`)) {
@@ -367,7 +366,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       // Check customlwcname property first
       if (component.property.customlwcname) {
         const customLwcName = component.property.customlwcname;
-        Logger.logVerbose(`Custom LWC name: ${customLwcName}`);
+        Logger.info(`Custom LWC name: ${customLwcName}`);
 
         // Avoid duplicates
         if (!flexCardAssessmentInfo.dependenciesLWC.includes(customLwcName)) {
