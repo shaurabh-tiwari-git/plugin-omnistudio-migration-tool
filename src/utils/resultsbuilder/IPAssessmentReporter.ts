@@ -70,7 +70,7 @@ export class IPAssessmentReporter {
           1,
           false,
           undefined,
-          ipAssessmentInfo.warnings
+          ipAssessmentInfo.warnings ? reportingHelper.decorateErrors(ipAssessmentInfo.warnings) : []
         ),
         createRowDataParam(
           'integrationProcedureDependencies',

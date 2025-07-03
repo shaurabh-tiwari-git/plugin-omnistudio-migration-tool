@@ -74,7 +74,7 @@ export class ApexAssessmentReporter {
           1,
           false,
           undefined,
-          apexAssessmentInfo.infos
+          apexAssessmentInfo.infos ? reportingHelper.decorateErrors(apexAssessmentInfo.infos) : []
         ),
         createRowDataParam(
           'errors',
@@ -84,7 +84,7 @@ export class ApexAssessmentReporter {
           1,
           false,
           undefined,
-          apexAssessmentInfo.warnings
+          apexAssessmentInfo.warnings ? reportingHelper.decorateErrors(apexAssessmentInfo.warnings) : []
         ),
       ],
     }));

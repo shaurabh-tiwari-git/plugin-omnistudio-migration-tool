@@ -1,4 +1,4 @@
-export const callToActionMessages = {
+export const documentRegistry = {
   errorNoOrgResults:
     'https://help.salesforce.com/s/articleView?id=xcloud.os_migrate_get_moving_run_the_omnistudio_migration_tool.htm&type=5',
   couldNotDeactivateOmniProcesses:

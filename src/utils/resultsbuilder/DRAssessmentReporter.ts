@@ -146,7 +146,7 @@ export class DRAssessmentReporter {
           1,
           false,
           undefined,
-          dataRaptorAssessmentInfo.warnings
+          dataRaptorAssessmentInfo.warnings ? reportingHelper.decorateErrors(dataRaptorAssessmentInfo.warnings) : []
         ),
         createRowDataParam(
           'customFunctionDependencies',

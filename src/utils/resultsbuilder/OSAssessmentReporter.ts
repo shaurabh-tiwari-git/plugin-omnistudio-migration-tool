@@ -80,7 +80,7 @@ export class OSAssessmentReporter {
           1,
           false,
           undefined,
-          info.warnings
+          info.warnings ? reportingHelper.decorateErrors(info.warnings) : []
         ),
         createRowDataParam(
           'omniScriptDependencies',

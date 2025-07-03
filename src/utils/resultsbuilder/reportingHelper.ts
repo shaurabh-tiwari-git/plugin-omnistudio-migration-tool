@@ -2,7 +2,7 @@ import { Messages } from '@salesforce/core';
 import { nameLocation, oldNew } from '../interfaces';
 import { CTASummary } from '../reportGenerator/reportInterfaces';
 import { IPAssessmentInfo, OSAssessmentInfo, DataRaptorAssessmentInfo, ApexAssessmentInfo } from '../interfaces';
-import { callToActionMessages } from '../constants/callToActionMessages';
+import { documentRegistry } from '../constants/documentRegistry';
 import { Logger } from '../logger';
 
 Messages.importMessagesDirectory(__dirname);
@@ -37,6 +37,25 @@ export class reportingHelper {
     }
   }
 
+  public static decorateErrors(errors: string[]): string[] {
+    if (!errors || errors.length === 0) return [];
+    const errorMessages: string[] = [];
+    for (const error of errors) {
+      errorMessages.push('<div class="slds-text-color_error">' + error + '</div>');
+    }
+    return errorMessages;
+  }
+
+  public static decorateStatus(status: string): string {
+    if (status === 'Can be Automated' || status === 'Complete') {
+      return '<div class="slds-text-color_success">' + status + '</div>';
+    }
+    if (status === 'Skipped') {
+      return '<div class="text-warning">' + status + '</div>';
+    }
+    return '<div class="slds-text-color_error">' + status + '</div>';
+  }
+
   public static getCallToAction(
     assessmentInfos: Array<IPAssessmentInfo | OSAssessmentInfo | DataRaptorAssessmentInfo | ApexAssessmentInfo>
   ): CTASummary[] {
@@ -44,7 +63,7 @@ export class reportingHelper {
     assessmentInfos.forEach((assessmentInfo) => {
       if (assessmentInfo.warnings && assessmentInfo.warnings.length > 0) {
         for (const info of assessmentInfo.warnings) {
-          for (const key of Object.keys(callToActionMessages)) {
+          for (const key of Object.keys(documentRegistry)) {
             const value = assessMessages.getMessage(key);
             if (
               typeof value === 'string' &&
@@ -99,8 +118,8 @@ export class reportingHelper {
   }
 
   private static getLink(key: string): string {
-    if (callToActionMessages[key]) {
-      return callToActionMessages[key] as string;
+    if (documentRegistry[key]) {
+      return documentRegistry[key] as string;
     }
     Logger.logVerbose(`No link found for ${key}`);
     return undefined;
