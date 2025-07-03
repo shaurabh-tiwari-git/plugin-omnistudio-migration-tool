@@ -242,7 +242,12 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     } else if (dataSource.type === Constants.ApexRemoteComponentName) {
       const remoteClass = dataSource.value?.remoteClass;
       const remoteMethod = dataSource.value?.remoteMethod;
-      flexCardAssessmentInfo.dependenciesApexRemoteAction.push(`${remoteClass}.${remoteMethod}`);
+      Logger.logVerbose(`Remote Action name: ${remoteClass}.${remoteMethod}`);
+
+      // Avoid duplicates
+      if (!flexCardAssessmentInfo.dependenciesApexRemoteAction.includes(`${remoteClass}.${remoteMethod}`)) {
+        flexCardAssessmentInfo.dependenciesApexRemoteAction.push(`${remoteClass}.${remoteMethod}`);
+      }
     }
 
     // Check for OmniScript dependencies in the card's definition
@@ -362,7 +367,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       // Check customlwcname property first
       if (component.property.customlwcname) {
         const customLwcName = component.property.customlwcname;
-        Logger.log(`Custom LWC name: ${customLwcName}`);
+        Logger.logVerbose(`Custom LWC name: ${customLwcName}`);
 
         // Avoid duplicates
         if (!flexCardAssessmentInfo.dependenciesLWC.includes(customLwcName)) {
