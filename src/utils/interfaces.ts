@@ -98,6 +98,7 @@ export interface FlexCardAssessmentInfo {
   dependenciesOS: string[];
   dependenciesFC: string[];
   dependenciesLWC: string[];
+  dependenciesApexRemoteAction: string[];
   infos: string[];
   warnings: string[];
 }

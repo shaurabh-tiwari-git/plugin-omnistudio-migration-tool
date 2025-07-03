@@ -16,4 +16,5 @@ export const Constants = {
   IntegrationProcedurePluralName: 'IntegrationProcedures',
   DataRaptorComponentName: 'DataRaptor',
   DataRaptorPluralName: 'DataRaptors',
+  ApexRemoteComponentName: 'ApexRemote',
 };

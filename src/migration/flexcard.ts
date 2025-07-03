@@ -133,6 +133,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           dependenciesFC: [],
           dependenciesOS: [],
           dependenciesLWC: [],
+          dependenciesApexRemoteAction: [],
           infos: [],
           warnings: [this.messages.getMessage('unexpectedError')],
         });
@@ -156,6 +157,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       dependenciesOS: [],
       dependenciesFC: [],
       dependenciesLWC: [],
+      dependenciesApexRemoteAction: [],
       infos: [],
       warnings: [],
     };
@@ -236,6 +238,15 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
             this.messages.getMessage('integrationProcedureManualUpdateMessage', [originalIpMethod])
           );
         }
+      }
+    } else if (dataSource.type === Constants.ApexRemoteComponentName) {
+      const remoteClass = dataSource.value?.remoteClass;
+      const remoteMethod = dataSource.value?.remoteMethod;
+      Logger.logVerbose(`Remote Action name: ${remoteClass}.${remoteMethod}`);
+
+      // Avoid duplicates
+      if (!flexCardAssessmentInfo.dependenciesApexRemoteAction.includes(`${remoteClass}.${remoteMethod}`)) {
+        flexCardAssessmentInfo.dependenciesApexRemoteAction.push(`${remoteClass}.${remoteMethod}`);
       }
     }
 
@@ -353,25 +364,14 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
     // Check for Custom LWC component
     if (component.element === 'customLwc' && component.property) {
-      // Check customlwcname property
-      /*if (component.property.customlwcname) {
-        flexCardAssessmentInfo.dependenciesLWC.push(component.property.customlwcname);
-      } */
+      // Check customlwcname property first
+      if (component.property.customlwcname) {
+        const customLwcName = component.property.customlwcname;
+        Logger.logVerbose(`Custom LWC name: ${customLwcName}`);
 
-      // Also check customLwcData if available (has more details)
-      if (component.property.customLwcData) {
-        const lwcData = component.property.customLwcData;
-
-        // Use DeveloperName as a more reliable identifier
-        if (lwcData.DeveloperName) {
-          const lwcName = lwcData.NamespacePrefix
-            ? `${lwcData.NamespacePrefix}.${lwcData.DeveloperName}`
-            : lwcData.DeveloperName;
-
-          // Avoid duplicates
-          if (!flexCardAssessmentInfo.dependenciesLWC.includes(lwcName)) {
-            flexCardAssessmentInfo.dependenciesLWC.push(lwcName);
-          }
+        // Avoid duplicates
+        if (!flexCardAssessmentInfo.dependenciesLWC.includes(customLwcName)) {
+          flexCardAssessmentInfo.dependenciesLWC.push(customLwcName);
         }
       }
     }
