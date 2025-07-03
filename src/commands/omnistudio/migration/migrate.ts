@@ -11,6 +11,7 @@ import * as os from 'os';
 import * as fs from 'fs';
 import { flags } from '@salesforce/command';
 import { Messages } from '@salesforce/core';
+import { ExecuteAnonymousResult } from 'jsforce';
 import OmniStudioBaseCommand from '../../basecommand';
 import { DataRaptorMigrationTool } from '../../../migration/dataraptor';
 import { DebugTimer, MigratedObject, MigratedRecordInfo } from '../../../utils';
@@ -24,6 +25,7 @@ import { generatePackageXml } from '../../../utils/generatePackageXml';
 import { OmnistudioOrgDetails, OrgUtils } from '../../../utils/orgUtils';
 import { Constants } from '../../../utils/constants/stringContants';
 import { OrgPreferences } from '../../../utils/orgPreferences';
+import { AnonymousApexRunner } from '../../../utils/apex/executor/AnonymousApexRunner';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -179,12 +181,16 @@ export default class Migrate extends OmniStudioBaseCommand {
       relatedObjectMigrationResult.lwcAssessmentInfos
     );
 
+    let actionItems = [];
+    actionItems = await this.setDesignersToUseStandardDataModel(namespace);
+
     await ResultsBuilder.generateReport(
       objectMigrationResults,
       relatedObjectMigrationResult,
       conn.instanceUrl,
       orgs,
-      messages
+      messages,
+      actionItems
     );
 
     // save timer to debug logger
@@ -192,6 +198,29 @@ export default class Migrate extends OmniStudioBaseCommand {
 
     // Return results needed for --json flag
     return { objectMigrationResults };
+  }
+
+  private async setDesignersToUseStandardDataModel(namespace: string): Promise<string[]> {
+    const userActionMessage: string[] = [];
+    try {
+      Logger.logVerbose('Setting designers to use the standard data model');
+      const apexCode = `
+          ${namespace}.OmniStudioPostInstallClass.useStandardDataModel();
+        `;
+
+      const result: ExecuteAnonymousResult = await AnonymousApexRunner.run(this.org, apexCode);
+      if (result?.success === false) {
+        const message = result?.exceptionStackTrace;
+        Logger.error(`Error occurred while setting designers to use the standard data model ${message}`);
+        userActionMessage.push(messages.getMessage('manuallySwitchDesignerToStandardDataModel'));
+      } else if (result?.success === true) {
+        Logger.logVerbose('Successfully executed setDesignersToUseStandardDataModel');
+      }
+    } catch (ex) {
+      Logger.error(`Exception occurred while setting designers to use the standard data model ${JSON.stringify(ex)}`);
+      userActionMessage.push(messages.getMessage('manuallySwitchDesignerToStandardDataModel'));
+    }
+    return userActionMessage;
   }
 
   private async truncateObjects(migrationObjects: MigrationTool[], debugTimer: DebugTimer): Promise<MigratedObject[]> {
