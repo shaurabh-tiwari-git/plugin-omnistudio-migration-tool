@@ -30,8 +30,7 @@ export class Logger {
     FileLogger.writeLog('VERBOSE', message);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public static captureVerboseData(message: string, data: any): void {
+  public static captureVerboseData(message: string, data: unknown): void {
     if (Logger.verbose) {
       FileLogger.writeLog('VERBOSE DATA', `${message}: ${JSON.stringify(data)}`);
     }
