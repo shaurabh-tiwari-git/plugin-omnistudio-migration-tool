@@ -41,6 +41,7 @@ export interface ReportDataParam {
   colspan: number;
   isHref: boolean;
   uri?: string;
+  customClass?: string;
 }
 
 export interface ReportRowParam {

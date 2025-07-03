@@ -527,3 +527,35 @@ td {
   opacity: 1;
   visibility: visible;
 }
+
+ul {
+  list-style: inside !important;
+}
+
+.invalid-icon {
+  position: relative;
+  padding-left: 24px; /* space for icon */
+}
+
+.invalid-icon::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  border: 2px solid red;
+  border-radius: 50%;
+  transform: translateY(-50%);
+}
+
+.invalid-icon::after {
+  content: '';
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  width: 10px;
+  height: 2px;
+  background-color: red;
+  transform: translateY(-50%) rotate(45deg);
+}

@@ -26,7 +26,7 @@ export class OSAssessmentReporter {
       org: getOrgDetailsForReport(omnistudioOrgDetails),
       assessmentDate: new Date().toString(),
       total: OSAssessmentInfos?.length || 0,
-      filterGroups: this.getFilterGroupsForReport(),
+      filterGroups: this.getFilterGroupsForReport(OSAssessmentInfos),
       headerGroups: this.getHeaderGroupsForReport(),
       rows: this.getRowsForReport(OSAssessmentInfos, instanceUrl),
       rollbackFlags: (omnistudioOrgDetails.rollbackFlags || []).includes('RollbackOSChanges')
@@ -67,11 +67,31 @@ export class OSAssessmentReporter {
     return OSAssessmentInfos.map((info) => ({
       rowId: `${this.rowIdPrefix}${this.rowId++}`,
       data: [
-        createRowDataParam('name', info.oldName, true, 1, 1, false),
+        createRowDataParam(
+          'name',
+          info.oldName,
+          true,
+          1,
+          1,
+          false,
+          undefined,
+          undefined,
+          info.migrationStatus !== 'Can be Automated' ? 'invalid-icon' : ''
+        ),
         createRowDataParam('recordId', info.id, false, 1, 1, true, `${instanceUrl}/${info.id}`),
         createRowDataParam('newName', info.name || '', false, 1, 1, false),
         createRowDataParam('type', info.type, false, 1, 1, false),
-        createRowDataParam('status', info.migrationStatus, false, 1, 1, false),
+        createRowDataParam(
+          'status',
+          info.migrationStatus,
+          false,
+          1,
+          1,
+          false,
+          undefined,
+          undefined,
+          info.migrationStatus === 'Can be Automated' ? 'text-success' : 'text-error'
+        ),
         createRowDataParam(
           'summary',
           info.warnings ? info.warnings.join(', ') : '',
@@ -216,10 +236,23 @@ export class OSAssessmentReporter {
     ];
   }
 
-  private static getFilterGroupsForReport(): FilterGroupParam[] {
-    return [
-      createFilterGroupParam('Filter By Type', 'type', ['LWC', 'Angular']),
-      createFilterGroupParam('Filter By Assessment Status', 'status', ['Can be Automated', 'Need Manual Intervention']),
-    ];
+  private static getFilterGroupsForReport(OSAssessmentInfos: OSAssessmentInfo[]): FilterGroupParam[] {
+    if (!OSAssessmentInfos || OSAssessmentInfos.length === 0) {
+      return [];
+    }
+
+    // Get distinct types from OSAssessmentInfos
+    const distinctTypes = [...new Set(OSAssessmentInfos.map((info) => info.type))];
+    const typeFilterGroupParam: FilterGroupParam[] =
+      distinctTypes.length > 0 && distinctTypes.filter((type) => type).length > 0
+        ? [createFilterGroupParam('Filter By Type', 'type', distinctTypes)]
+        : [];
+    const distinctStatuses = [...new Set(OSAssessmentInfos.map((info) => info.migrationStatus))];
+    const statusFilterGroupParam: FilterGroupParam[] =
+      distinctStatuses.length > 0 && distinctStatuses.filter((status) => status).length > 0
+        ? [createFilterGroupParam('Filter By Assessment Status', 'status', distinctStatuses)]
+        : [];
+
+    return [...typeFilterGroupParam, ...statusFilterGroupParam];
   }
 }
