@@ -96,7 +96,7 @@ export default class Migrate extends OmniStudioBaseCommand {
 
     const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn, this.flags.namespace);
 
-    if (!orgs.hasValidNamespace) {
+    if (!orgs.hasValidNamespace && this.flags.namespace) {
       Logger.warn(messages.getMessage('invalidNamespace') + orgs.packageDetails.namespace);
     }
 
@@ -125,12 +125,14 @@ export default class Migrate extends OmniStudioBaseCommand {
     let objectsToProcess: string[] = [];
     let targetApexNamespace: string;
     if (relatedObjects) {
-      const validOptions = [Constants.Apex, Constants.LWC];
+      // To-Do: Add LWC to valid options when GA is released
+      const validOptions = [Constants.Apex];
       objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
       // Validate input
       for (const obj of objectsToProcess) {
         if (!validOptions.includes(obj)) {
-          Logger.warn(messages.getMessage('invalidRelatedObjectsOption', [obj]));
+          Logger.error(messages.getMessage('invalidRelatedObjectsOption', [obj]));
+          process.exit(1);
         }
       }
       // Ask for user consent
@@ -145,7 +147,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     }
 
     Logger.log(messages.getMessage('migrationInitialization', [String(namespace)]));
-    Logger.logVerbose(messages.getMessage('apiVersionInfo', [apiVersion]));
+    Logger.log(messages.getMessage('apiVersionInfo', [apiVersion]));
     Logger.logVerbose(messages.getMessage('migrationTargets', [migrateOnly || 'all']));
     Logger.logVerbose(messages.getMessage('relatedObjectsInfo', [relatedObjects || 'none']));
     Logger.logVerbose(messages.getMessage('allVersionsFlagInfo', [String(allVersions)]));
