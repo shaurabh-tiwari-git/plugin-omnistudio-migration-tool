@@ -10,7 +10,7 @@ import { TemplateParser } from '../templateParser/generate';
 import { createFilterGroupParam, createRowDataParam } from '../reportGenerator/reportUtil';
 import { FileDiffUtil } from '../lwcparser/fileutils/FileDiffUtil';
 import { Logger } from '../logger';
-
+import { reportingHelper } from './reportingHelper';
 const resultsDir = path.join(process.cwd(), 'migration_report');
 // const lwcConstants = { componentName: 'lwc', title: 'LWC Components Migration Result' };
 const migrationReportHTMLfileName = 'dashboard.html';
@@ -140,7 +140,16 @@ export class ResultsBuilder {
             createRowDataParam('name', item.name, true, 1, 1, false),
             createRowDataParam('migratedId', item.migratedId, false, 1, 1, true, `${instanceUrl}/${item.migratedId}`),
             createRowDataParam('migratedName', item.migratedName, false, 1, 1, false),
-            createRowDataParam('status', item.status, false, 1, 1, false),
+            createRowDataParam(
+              'status',
+              item.status,
+              false,
+              1,
+              1,
+              false,
+              undefined,
+              reportingHelper.decorateStatus(item.status)
+            ),
             createRowDataParam(
               'errors',
               item.errors ? 'Has Errors' : 'Has No Errors',
@@ -149,7 +158,7 @@ export class ResultsBuilder {
               1,
               false,
               undefined,
-              item.errors
+              item.errors ? reportingHelper.decorateErrors(item.errors) : []
             ),
             createRowDataParam(
               'warnings',
@@ -159,7 +168,7 @@ export class ResultsBuilder {
               1,
               false,
               undefined,
-              item.warnings || []
+              item.warnings ? reportingHelper.decorateErrors(item.warnings) : []
             ),
           ],
         })),
@@ -264,7 +273,7 @@ export class ResultsBuilder {
             1,
             false,
             undefined,
-            item.warnings
+            item.warnings ? reportingHelper.decorateErrors(item.warnings) : []
           ),
         ],
       })),
