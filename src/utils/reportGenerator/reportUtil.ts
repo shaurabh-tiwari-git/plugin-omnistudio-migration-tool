@@ -12,9 +12,8 @@ export function createRowDataParam(
   title?: string | string[],
   customClass?: string
 ): ReportDataParam {
-
-  if(title && Array.isArray(title)) {
-    title = title.filter(t => t?.trim?.());
+  if (title && Array.isArray(title)) {
+    title = title.filter((t) => t?.trim?.());
   }
 
   return {
