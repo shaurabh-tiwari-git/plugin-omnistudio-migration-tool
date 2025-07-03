@@ -98,6 +98,7 @@ export interface FlexCardAssessmentInfo {
   dependenciesOS: string[];
   dependenciesFC: string[];
   dependenciesLWC: string[];
+  dependenciesApexRemoteAction: string[];
   infos: string[];
   warnings: string[];
 }
@@ -116,6 +117,12 @@ export interface DataRaptorAssessmentInfo {
 export interface OmniAssessmentInfo {
   osAssessmentInfos: OSAssessmentInfo[];
   ipAssessmentInfos: IPAssessmentInfo[];
+}
+
+export interface SitesAssessmentInfo {
+  name: string;
+  changeInfos: FileChangeInfo[];
+  errors: string[];
 }
 
 export interface FileChangeInfo {

@@ -84,6 +84,16 @@ export class FlexcardAssessmentReporter {
             colspan: 1,
             rowspan: 2,
           },
+          {
+            name: 'Remote Action Dependencies',
+            colspan: 1,
+            rowspan: 2,
+          },
+          {
+            name: 'Custom LWC Dependencies',
+            colspan: 1,
+            rowspan: 2,
+          },
         ],
       },
       {
@@ -168,6 +178,28 @@ export class FlexcardAssessmentReporter {
           false,
           undefined,
           flexCardAssessmentInfo.dependenciesFC
+        ),
+        createRowDataParam(
+          'remoteActionDependencies',
+          flexCardAssessmentInfo.dependenciesApexRemoteAction
+            ? flexCardAssessmentInfo.dependenciesApexRemoteAction.join(', ')
+            : '',
+          false,
+          1,
+          1,
+          false,
+          undefined,
+          flexCardAssessmentInfo.dependenciesApexRemoteAction
+        ),
+        createRowDataParam(
+          'customLwcDependencies',
+          flexCardAssessmentInfo.dependenciesLWC ? flexCardAssessmentInfo.dependenciesLWC.join(', ') : '',
+          false,
+          1,
+          1,
+          false,
+          undefined,
+          flexCardAssessmentInfo.dependenciesLWC
         ),
       ],
     }));
