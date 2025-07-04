@@ -185,12 +185,12 @@
                             <c:if exp={Array.isArray($cell.title)}>
                               <ul>
                                 <c:for items=(cell.title) var="value">
-                                  <li><a href="(cell.uri)">{{value}}</a></li>
+                                  <li><a href="(cell.uri)" target="_blank">{{value}}</a></li>
                                 </c:for>
                               </ul>
                             </c:if>
                             <c:if exp={!Array.isArray($cell.title)}>
-                              <a href="(cell.uri)">{{cell.title}}</a>
+                              <a href="(cell.uri)" target="_blank">{{cell.title}}</a>
                             </c:if>
                           </td>
                         </c:if>

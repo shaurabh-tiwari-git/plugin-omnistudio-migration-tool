@@ -166,9 +166,6 @@ export default class Migrate extends OmniStudioBaseCommand {
       objectMigrationResults = await this.migrateObjects(migrationObjects, debugTimer);
     }
 
-    // Stop the debug timer
-    const timer = DebugTimer.getInstance().stop();
-
     const omnistudioRelatedObjectsMigration = new OmnistudioRelatedObjectMigrationFacade(
       namespace,
       migrateOnly,
@@ -194,9 +191,6 @@ export default class Migrate extends OmniStudioBaseCommand {
       messages,
       actionItems
     );
-
-    // save timer to debug logger
-    Logger.logVerbose(timer.toString());
 
     // Return results needed for --json flag
     return { objectMigrationResults };
