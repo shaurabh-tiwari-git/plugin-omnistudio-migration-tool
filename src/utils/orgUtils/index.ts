@@ -329,7 +329,7 @@ export class OrgUtils {
     // Handle multiple packages by prompting user to select one
     if (installedOmniPackages.length > 1) {
       Logger.log(messages.getMessage('multiplePackagesFound'));
-
+      installedOmniPackages.sort((a, b) => a.NamespacePrefix.localeCompare(b.NamespacePrefix));
       // Display available packages
       for (let i = 0; i < installedOmniPackages.length; i++) {
         const pkg = installedOmniPackages[i];

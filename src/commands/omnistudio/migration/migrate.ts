@@ -8,7 +8,6 @@
  * For full license text, see LICENSE.txt file in the repo root or https://opensource.org/licenses/BSD-3-Clause
  */
 import * as os from 'os';
-import * as fs from 'fs';
 import { flags } from '@salesforce/command';
 import { Messages } from '@salesforce/core';
 import { ExecuteAnonymousResult } from 'jsforce';
@@ -26,6 +25,7 @@ import { OmnistudioOrgDetails, OrgUtils } from '../../../utils/orgUtils';
 import { Constants } from '../../../utils/constants/stringContants';
 import { OrgPreferences } from '../../../utils/orgPreferences';
 import { AnonymousApexRunner } from '../../../utils/apex/executor/AnonymousApexRunner';
+import { ProjectPathUtil } from '../../../utils/projectPathUtil';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -135,13 +135,11 @@ export default class Migrate extends OmniStudioBaseCommand {
           process.exit(1);
         }
       }
-      // Ask for user consent
-      const consent = await Logger.confirm(messages.getMessage('userConsentMessage'));
-      if (!consent) {
-        Logger.error(messages.getMessage('userDeclinedConsent', [relatedObjects]));
-      } else {
-        Logger.info(messages.getMessage('userConsentedToProceed'));
-        projectPath = await this.getProjectPath(relatedObjects, projectPath);
+      // Check for general consent to make modifications with OMT
+      const generalConsent = await this.getGeneralConsent();
+      if (generalConsent) {
+        // Use ProjectPathUtil for APEX project folder selection (matches assess.ts logic)
+        projectPath = await ProjectPathUtil.getProjectPath(messages, true);
         targetApexNamespace = await this.getTargetApexNamespace(objectsToProcess, targetApexNamespace);
       }
     }
@@ -333,28 +331,27 @@ export default class Migrate extends OmniStudioBaseCommand {
     return migrationObjects;
   }
 
-  private async getProjectPath(relatedObjects: string, projectPath: string): Promise<string> {
-    const projectPathConfirmation = await Logger.confirm(
-      messages.getMessage('projectPathConfirmation', [relatedObjects])
-    );
-    if (projectPathConfirmation) {
-      Logger.info(messages.getMessage('userConsentedToProceed'));
-      projectPath = await Logger.prompt(messages.getMessage('enterProjectPath', [relatedObjects]));
-      const projectJsonFile = 'sfdx-project.json';
-      if (!fs.existsSync(projectPath + '/' + projectJsonFile)) {
-        throw new Error(messages.getMessage('projectJsonNotFound', [projectJsonFile, projectPath]));
-      }
-      Logger.log(messages.getMessage('usingProjectPath', [projectPath]));
-    }
-    return projectPath;
-  }
-
   private async getTargetApexNamespace(objectsToProcess: string[], targetApexNamespace: string): Promise<string> {
     if (objectsToProcess.includes(Constants.Apex)) {
       targetApexNamespace = await this.ux.prompt(messages.getMessage('enterTargetNamespace'));
       Logger.log(messages.getMessage('usingTargetNamespace', [targetApexNamespace]));
     }
     return targetApexNamespace;
+  }
+
+  private async getGeneralConsent(): Promise<boolean> {
+    let consent: boolean | null = null;
+
+    while (consent === null) {
+      try {
+        consent = await Logger.confirm(messages.getMessage('userConsentMessage'));
+      } catch (error) {
+        Logger.log(messages.getMessage('invalidYesNoResponse'));
+        consent = null;
+      }
+    }
+
+    return consent;
   }
 
   private mergeRecordAndUploadResults(
