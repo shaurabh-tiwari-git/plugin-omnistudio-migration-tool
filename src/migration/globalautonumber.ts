@@ -8,6 +8,7 @@ import { MigrationResult, MigrationTool, ObjectMapping, UploadRecordResult } fro
 import { GlobalAutoNumberAssessmentInfo } from '../utils/interfaces';
 import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
+import { AnonymousApexRunner } from '../utils/apex/executor/AnonymousApexRunner';
 
 export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements MigrationTool {
   static readonly GLOBAL_AUTO_NUMBER_SETTING_NAME = 'GlobalAutoNumberSetting__c';
@@ -209,42 +210,41 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
       this.connection,
       this.namespace,
       GlobalAutoNumberMigrationTool.GLOBAL_AUTO_NUMBER_SETTING_NAME,
-      this.getGlobalAutoNumberFields()
+      Object.keys(GlobalAutoNumberMappings)
     );
   }
 
   private mapGlobalAutoNumberRecord(globalAutoNumberRecord: AnyJson): AnyJson {
-    const mappedRecord: AnyJson = {};
+    // Transformed object
+    const mappedObject = {};
 
-    // Map each field using the mapping configuration
-    for (const [sourceField, targetField] of Object.entries(GlobalAutoNumberMappings)) {
-      if (globalAutoNumberRecord[sourceField] !== undefined) {
-        mappedRecord[targetField] = globalAutoNumberRecord[sourceField];
+    // Get the fields of the record
+    const recordFields = Object.keys(globalAutoNumberRecord);
+
+    // Map individual fields (following same pattern as OS, DR, FC)
+    recordFields.forEach((recordField) => {
+      const cleanFieldName = this.getCleanFieldName(recordField);
+
+      if (GlobalAutoNumberMappings.hasOwnProperty(cleanFieldName)) {
+        mappedObject[GlobalAutoNumberMappings[cleanFieldName]] = globalAutoNumberRecord[recordField];
       }
-    }
+    });
 
-    // Set default values for core fields
-    mappedRecord['IsActive__c'] = true;
-    mappedRecord['IsEnabled__c'] = true;
-    mappedRecord['Type__c'] = 'Sequential';
+    // Set essential default values (following same pattern as other entities)
+    mappedObject['Name'] = this.cleanName(mappedObject['Name']);
 
-    // Calculate NextValue__c based on LastGeneratedNumber and Increment
-    const lastGeneratedNumber = Number(mappedRecord['LastGeneratedNumber']) || 0;
-    const increment = Number(mappedRecord['Increment']) || 1;
-    mappedRecord['NextValue__c'] = lastGeneratedNumber + increment;
+    // BATCH framework requires that each record has an "attributes" property
+    mappedObject['attributes'] = {
+      type: GlobalAutoNumberMigrationTool.OMNI_GLOBAL_AUTO_NUMBER_NAME,
+      referenceId: globalAutoNumberRecord['Id'],
+    };
 
-    // Add migration metadata
-    mappedRecord['MigrationSourceId__c'] = globalAutoNumberRecord['Id'];
-    mappedRecord['MigrationSourceObject__c'] =
-      this.namespacePrefix + GlobalAutoNumberMigrationTool.GLOBAL_AUTO_NUMBER_SETTING_NAME;
-    mappedRecord['MigrationDate__c'] = new Date().toISOString();
-
-    return mappedRecord;
+    return mappedObject;
   }
 
   private async enableOmniGlobalAutoNumberPref(): Promise<void> {
     try {
-      // Use connection.tooling.executeAnonymous for better performance
+      // Use AnonymousApexRunner for better consistency and performance
       const apexCode = `
         // Enable OmniGlobalAutoNumberPref org preference
         try {
@@ -270,23 +270,11 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
         }
       `;
 
-      await this.connection.tooling.executeAnonymous(apexCode);
+      await AnonymousApexRunner.runWithConnection(this.connection, apexCode);
       Logger.log(this.messages.getMessage('omniGlobalAutoNumberPrefEnabled'));
     } catch (error) {
       Logger.error(this.messages.getMessage('errorEnablingOmniGlobalAutoNumberPref'));
       Logger.error(JSON.stringify(error));
     }
-  }
-
-  private getGlobalAutoNumberFields(): string[] {
-    return [
-      'Name',
-      `Increment__c`,
-      `LastGeneratedNumber__c`,
-      `LeftPadDigit__c`,
-      `MinimumLength__c`,
-      `Prefix__c`,
-      `Separator__c`,
-    ];
   }
 }
