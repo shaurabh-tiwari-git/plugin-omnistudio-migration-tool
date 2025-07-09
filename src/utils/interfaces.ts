@@ -84,6 +84,7 @@ export interface AssessmentInfo {
   omniAssessmentInfo: OmniAssessmentInfo; // Corrected to an array
   flexCardAssessmentInfos: FlexCardAssessmentInfo[];
   dataRaptorAssessmentInfos: DataRaptorAssessmentInfo[];
+  globalAutoNumberAssessmentInfos: GlobalAutoNumberAssessmentInfo[];
 }
 
 export interface RelatedObjectAssesmentInfo {
@@ -112,6 +113,13 @@ export interface DataRaptorAssessmentInfo {
   infos: string[];
   warnings: string[];
   apexDependencies: string[];
+}
+
+export interface GlobalAutoNumberAssessmentInfo {
+  name: string;
+  id: string;
+  infos: string[];
+  warnings: string[];
 }
 
 export interface OmniAssessmentInfo {
