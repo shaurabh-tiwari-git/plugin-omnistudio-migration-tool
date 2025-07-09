@@ -6,7 +6,10 @@ export class AnonymousApexRunner {
     return org.getConnection().tooling.executeAnonymous(anonymousApex);
   }
 
-  public static async runWithConnection(connection: Connection, anonymousApex: string): Promise<ExecuteAnonymousResult> {
+  public static async runWithConnection(
+    connection: Connection,
+    anonymousApex: string
+  ): Promise<ExecuteAnonymousResult> {
     return connection.tooling.executeAnonymous(anonymousApex);
   }
 }
