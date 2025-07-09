@@ -1,7 +1,13 @@
 import { Messages } from '@salesforce/core';
 import { nameLocation, oldNew } from '../interfaces';
 import { CTASummary } from '../reportGenerator/reportInterfaces';
-import { IPAssessmentInfo, OSAssessmentInfo, DataRaptorAssessmentInfo, ApexAssessmentInfo } from '../interfaces';
+import {
+  IPAssessmentInfo,
+  OSAssessmentInfo,
+  DataRaptorAssessmentInfo,
+  ApexAssessmentInfo,
+  GlobalAutoNumberAssessmentInfo,
+} from '../interfaces';
 import { documentRegistry } from '../constants/documentRegistry';
 import { Logger } from '../logger';
 
@@ -57,7 +63,13 @@ export class reportingHelper {
   }
 
   public static getCallToAction(
-    assessmentInfos: Array<IPAssessmentInfo | OSAssessmentInfo | DataRaptorAssessmentInfo | ApexAssessmentInfo>
+    assessmentInfos: Array<
+      | IPAssessmentInfo
+      | OSAssessmentInfo
+      | DataRaptorAssessmentInfo
+      | ApexAssessmentInfo
+      | GlobalAutoNumberAssessmentInfo
+    >
   ): CTASummary[] {
     const callToAction = [];
     assessmentInfos.forEach((assessmentInfo) => {

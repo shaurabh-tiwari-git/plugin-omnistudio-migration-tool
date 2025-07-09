@@ -62,6 +62,8 @@ export class ResultsBuilder {
       rollbackFlagNames = ['RollbackDRChanges'];
     } else if (componentName.includes('omniscript') || componentName.includes('integration procedure')) {
       rollbackFlagNames = ['RollbackOSChanges', 'RollbackIPChanges'];
+    } else if (componentName.includes('global auto number') || componentName.includes('globalautonumber')) {
+      rollbackFlagNames = ['RollbackDRChanges', 'RollbackIPChanges'];
     }
     const rollbackFlags = orgDetails.rollbackFlags || [];
     const flags = rollbackFlagNames.filter((flag) => rollbackFlags.includes(flag));

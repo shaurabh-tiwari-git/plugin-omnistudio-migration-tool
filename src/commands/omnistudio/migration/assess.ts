@@ -7,6 +7,7 @@ import { AssessmentReporter } from '../../../utils/resultsbuilder/assessmentRepo
 import { OmniScriptExportType, OmniScriptMigrationTool } from '../../../migration/omniscript';
 import { CardMigrationTool } from '../../../migration/flexcard';
 import { DataRaptorMigrationTool } from '../../../migration/dataraptor';
+import { GlobalAutoNumberMigrationTool } from '../../../migration/globalautonumber';
 import { DebugTimer } from '../../../utils';
 import { Logger } from '../../../utils/logger';
 import OmnistudioRelatedObjectMigrationFacade from '../../../migration/related/OmnistudioRelatedObjectMigrationFacade';
@@ -102,6 +103,7 @@ export default class Assess extends OmniStudioBaseCommand {
       apexAssessmentInfos: [],
       dataRaptorAssessmentInfos: [],
       flexCardAssessmentInfos: [],
+      globalAutoNumberAssessmentInfos: [],
       omniAssessmentInfo: {
         osAssessmentInfos: [],
         ipAssessmentInfos: [],
@@ -164,6 +166,7 @@ export default class Assess extends OmniStudioBaseCommand {
       await this.assessDataRaptors(assesmentInfo, namespace, conn);
       await this.assessFlexCards(assesmentInfo, namespace, conn, allVersions);
       await this.assessOmniScripts(assesmentInfo, namespace, conn, allVersions, OmniScriptExportType.All);
+      await this.assessGlobalAutoNumbers(assesmentInfo, namespace, conn);
       return;
     }
 
@@ -179,6 +182,9 @@ export default class Assess extends OmniStudioBaseCommand {
         break;
       case Constants.IntegrationProcedure:
         await this.assessOmniScripts(assesmentInfo, namespace, conn, allVersions, OmniScriptExportType.IP);
+        break;
+      case Constants.GlobalAutoNumber:
+        await this.assessGlobalAutoNumbers(assesmentInfo, namespace, conn);
         break;
       default:
         throw new Error(messages.getMessage('invalidOnlyFlag'));
@@ -229,5 +235,19 @@ export default class Assess extends OmniStudioBaseCommand {
       ])
     );
     Logger.log(messages.getMessage('omniScriptAssessmentCompleted'));
+  }
+
+  private async assessGlobalAutoNumbers(
+    assesmentInfo: AssessmentInfo,
+    namespace: string,
+    conn: Connection
+  ): Promise<void> {
+    Logger.log(messages.getMessage('startingGlobalAutoNumberAssessment'));
+    const globalAutoNumberMigrationTool = new GlobalAutoNumberMigrationTool(namespace, conn, Logger, messages, this.ux);
+    assesmentInfo.globalAutoNumberAssessmentInfos = await globalAutoNumberMigrationTool.assess();
+    Logger.log(
+      messages.getMessage('assessedGlobalAutoNumbersCount', [assesmentInfo.globalAutoNumberAssessmentInfos.length])
+    );
+    Logger.log(messages.getMessage('globalAutoNumberAssessmentCompleted'));
   }
 }

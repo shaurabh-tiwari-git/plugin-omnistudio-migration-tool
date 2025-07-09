@@ -18,6 +18,7 @@ import { MigrationResult, MigrationTool } from '../../../migration/interfaces';
 import { ResultsBuilder } from '../../../utils/resultsbuilder';
 import { CardMigrationTool } from '../../../migration/flexcard';
 import { OmniScriptExportType, OmniScriptMigrationTool } from '../../../migration/omniscript';
+import { GlobalAutoNumberMigrationTool } from '../../../migration/globalautonumber';
 import { Logger } from '../../../utils/logger';
 import OmnistudioRelatedObjectMigrationFacade from '../../../migration/related/OmnistudioRelatedObjectMigrationFacade';
 import { generatePackageXml } from '../../../utils/generatePackageXml';
@@ -289,6 +290,7 @@ export default class Migrate extends OmniStudioBaseCommand {
           allVersions
         ),
         new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions),
+        new GlobalAutoNumberMigrationTool(namespace, conn, this.logger, messages, this.ux),
       ];
     } else {
       switch (migrateOnly) {
@@ -323,6 +325,9 @@ export default class Migrate extends OmniStudioBaseCommand {
           break;
         case Constants.DataMapper:
           migrationObjects.push(new DataRaptorMigrationTool(namespace, conn, this.logger, messages, this.ux));
+          break;
+        case Constants.GlobalAutoNumber:
+          migrationObjects.push(new GlobalAutoNumberMigrationTool(namespace, conn, this.logger, messages, this.ux));
           break;
         default:
           throw new Error(messages.getMessage('invalidOnlyFlag'));
