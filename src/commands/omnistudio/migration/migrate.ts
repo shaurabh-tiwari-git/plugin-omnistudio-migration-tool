@@ -161,9 +161,9 @@ export default class Migrate extends OmniStudioBaseCommand {
     let objectMigrationResults = await this.truncateObjects(migrationObjects, debugTimer);
     const allTruncateComplete = objectMigrationResults.length === 0;
 
-    // if (allTruncateComplete) {
-    objectMigrationResults = await this.migrateObjects(migrationObjects, debugTimer);
-    // }
+    if (allTruncateComplete) {
+      objectMigrationResults = await this.migrateObjects(migrationObjects, debugTimer);
+    }
 
     // Stop the debug timer
     const timer = DebugTimer.getInstance().stop();
