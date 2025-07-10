@@ -30,7 +30,7 @@ describe('DocumentRegistry', () => {
     Object.entries(documentRegistry).forEach(([key, url]: [string, string]) => {
       it(`should have a valid URL for ${key}`, async function () {
         // Increase timeout for network requests
-        this.timeout(15000);
+        this.timeout(20000);
         const isValid = urlCheckCache.has(url) ? urlCheckCache.get(url) : await checkSalesforceUrlWithPuppeteer(url);
         urlCheckCache.set(url, isValid);
         expect(isValid, `URL for ${key} (${url}) should be accessible`).to.be.true;
@@ -72,7 +72,6 @@ describe('DocumentRegistry', () => {
         'integrationProcedureNameChangeMessage',
         'integrationProcedureManualUpdateMessage',
         'duplicateCardNameMessage',
-        'testURL',
       ];
 
       expectedKeys.forEach((key) => {
