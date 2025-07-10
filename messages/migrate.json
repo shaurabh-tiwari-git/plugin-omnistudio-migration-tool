@@ -99,5 +99,18 @@
   "errorEvaluatingExpression": "Error evaluating expression: {0}, {1}",
   "manuallySwitchDesignerToStandardDataModel": "To complete the setup, please manually run the required Apex code to configure OmniStudio Designers to use the Standard Data Model <br> https://help.salesforce.com/s/articleView?id=xcloud.os_migrate_change_the_sobject_data_model_after_migration.htm&type=5",
   "omniGlobalAutoNumberPrefEnabled": "Successfully enabled OmniGlobalAutoNumberPref org preference",
-  "errorEnablingOmniGlobalAutoNumberPref": "Error enabling OmniGlobalAutoNumberPref org preference"
+  "errorEnablingOmniGlobalAutoNumberPref": "Error enabling OmniGlobalAutoNumberPref org preference",
+  "performingPreMigrationChecks": "Performing pre-migration checks for Global Auto Number...",
+  "preMigrationChecksPassed": "Pre-migration checks passed. Proceeding with Global Auto Number migration.",
+  "preMigrationChecksFailed": "Pre-migration checks failed. Migration cannot proceed.",
+  "globalAutoNumberPrefEnabledError": "Global Auto Number preference (OmniGlobalAutoNumberPref) is enabled. Please disable it before proceeding with migration.",
+  "rollbackFlagsEnabledError": "Rollback flags are enabled: {0}. Please disable these flags before proceeding with Global Auto Number migration.",
+  "bothRollbackFlagsEnabledError": "Both RollbackIPChanges and RollbackDRChanges flags are enabled. Please disable both flags before proceeding with Global Auto Number migration.",
+  "rollbackIPFlagEnabledError": "RollbackIPChanges flag is enabled. Please disable this flag before proceeding with Global Auto Number migration.",
+  "rollbackDRFlagEnabledError": "RollbackDRChanges flag is enabled. Please disable this flag before proceeding with Global Auto Number migration.",
+  "errorCheckingRollbackFlags": "Error checking rollback flags status.",
+  "startingPostMigrationCleanup": "Starting post-migration cleanup for Global Auto Number...",
+  "postMigrationCleanupCompleted": "Post-migration cleanup completed successfully.",
+  "errorDuringPostMigrationCleanup": "Error during post-migration cleanup.",
+  "incompleteMigrationDetected": "Incomplete migration detected. Source objects: {0}, Target objects: {1}."
 }

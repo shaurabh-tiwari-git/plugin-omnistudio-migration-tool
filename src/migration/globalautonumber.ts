@@ -8,11 +8,13 @@ import { MigrationResult, MigrationTool, ObjectMapping, UploadRecordResult } fro
 import { GlobalAutoNumberAssessmentInfo } from '../utils/interfaces';
 import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
-import { AnonymousApexRunner } from '../utils/apex/executor/AnonymousApexRunner';
+import { OrgPreferences } from '../utils/orgPreferences';
+import { OmniGlobalAutoNumberPrefManager } from '../utils/OmniGlobalAutoNumberPrefManager';
 
 export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements MigrationTool {
   static readonly GLOBAL_AUTO_NUMBER_SETTING_NAME = 'GlobalAutoNumberSetting__c';
   static readonly OMNI_GLOBAL_AUTO_NUMBER_NAME = 'OmniGlobalAutoNumber';
+  static readonly ROLLBACK_FLAGS: string[] = ['RollbackIPChanges', 'RollbackDRChanges'];
 
   getName(): string {
     return 'GlobalAutoNumber';
@@ -36,13 +38,116 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
   }
 
   async migrate(): Promise<MigrationResult[]> {
-    return [await this.migrateGlobalAutoNumberData()];
+    // Create preference manager instance once
+    const prefManager = new OmniGlobalAutoNumberPrefManager(this.connection);
+
+    // Pre-migration checks
+    await this.performPreMigrationChecks(prefManager);
+
+    // Migrate Global Auto Number data
+    const migrationResult = await this.migrateGlobalAutoNumberData();
+
+    // Perform post-migration cleanup
+    await this.postMigrationCleanup(migrationResult.results, prefManager);
+
+    return [migrationResult];
+  }
+
+  /**
+   * Post-migration cleanup: Delete source objects from managed package
+   * This should be called after successful migration
+   */
+  async postMigrationCleanup(
+    uploadInfo?: Map<string, UploadRecordResult>,
+    prefManager?: OmniGlobalAutoNumberPrefManager
+  ): Promise<void> {
+    try {
+      Logger.log(this.messages.getMessage('startingPostMigrationCleanup'));
+
+      // Validate that all objects are successfully migrated before truncation
+      if (uploadInfo) {
+        this.validateMigrationSuccess(uploadInfo);
+      }
+
+      // Delete source GlobalAutoNumberSetting__c records using the same truncate pattern
+      await super.truncate(GlobalAutoNumberMigrationTool.GLOBAL_AUTO_NUMBER_SETTING_NAME);
+
+      // Enable the org preference after successful cleanup
+      if (prefManager) {
+        const success = await prefManager.enable();
+        if (success) {
+          Logger.log(this.messages.getMessage('omniGlobalAutoNumberPrefEnabled'));
+        } else {
+          Logger.error(this.messages.getMessage('errorEnablingOmniGlobalAutoNumberPref'));
+        }
+      }
+
+      Logger.log(this.messages.getMessage('postMigrationCleanupCompleted'));
+    } catch (error) {
+      Logger.error(this.messages.getMessage('errorDuringPostMigrationCleanup'));
+      Logger.error(JSON.stringify(error));
+      throw error;
+    }
+  }
+
+  /**
+   * Validate that all Global Auto Number objects are successfully migrated
+   * before proceeding with source object truncation
+   */
+  private validateMigrationSuccess(uploadInfo: Map<string, UploadRecordResult>): void {
+    try {
+      // Check if all uploaded records have success: true
+      const failedRecords = Array.from(uploadInfo.values()).filter((result) => !result.success);
+
+      if (failedRecords.length > 0) {
+        const failedCount = failedRecords.length;
+        const totalCount = uploadInfo.size;
+        throw new Error(
+          this.messages.getMessage('incompleteMigrationDetected', [totalCount, totalCount - failedCount])
+        );
+      }
+    } catch (error) {
+      Logger.error(this.messages.getMessage('migrationValidationFailed'));
+      Logger.error(JSON.stringify(error));
+      throw error;
+    }
+  }
+
+  private async performPreMigrationChecks(prefManager: OmniGlobalAutoNumberPrefManager): Promise<void> {
+    try {
+      // Check if Global Auto Number preference is already enabled
+      const isEnabled = await prefManager.isEnabled();
+      if (isEnabled) {
+        const errorMessage = this.messages.getMessage('globalAutoNumberPrefEnabledError');
+        Logger.error(errorMessage);
+        throw new Error(errorMessage);
+      }
+
+      // Check rollback flags using existing utility
+      const rollbackFlags = await OrgPreferences.checkRollbackFlags(this.connection);
+      const enabledFlags = rollbackFlags.filter((flag) => GlobalAutoNumberMigrationTool.ROLLBACK_FLAGS.includes(flag));
+
+      if (enabledFlags.length > 0) {
+        let errorMessage: string;
+        if (enabledFlags.includes('RollbackIPChanges') && enabledFlags.includes('RollbackDRChanges')) {
+          errorMessage = this.messages.getMessage('bothRollbackFlagsEnabledError');
+        } else if (enabledFlags.includes('RollbackIPChanges')) {
+          errorMessage = this.messages.getMessage('rollbackIPFlagEnabledError');
+        } else if (enabledFlags.includes('RollbackDRChanges')) {
+          errorMessage = this.messages.getMessage('rollbackDRFlagEnabledError');
+        }
+        Logger.error(errorMessage);
+        throw new Error(errorMessage);
+      }
+    } catch (error) {
+      Logger.error(this.messages.getMessage('preMigrationChecksFailed'));
+      throw error;
+    }
   }
 
   private async migrateGlobalAutoNumberData(): Promise<MigrationResult> {
     let originalGlobalAutoNumberRecords = new Map<string, any>();
     let globalAutoNumberUploadInfo = new Map<string, UploadRecordResult>();
-    const duplicatedNames = new Set<string>();
 
     // Query all GlobalAutoNumber settings
     DebugTimer.getInstance().lap('Query GlobalAutoNumber settings');
@@ -53,71 +158,59 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
     const progressBar = createProgressBar('Migrating', 'GlobalAutoNumber');
     progressBar.start(globalAutoNumberSettings.length, progressCounter);
 
-    // Prepare all records for bulk processing
-    const mappedRecords: AnyJson[] = [];
-    const validRecords: AnyJson[] = [];
-
     for (let gan of globalAutoNumberSettings) {
       progressBar.update(++progressCounter);
       const recordId = gan['Id'];
 
-      // Transform the GlobalAutoNumber setting
-      const transformedGlobalAutoNumber = this.mapGlobalAutoNumberRecord(gan);
-
-      // Verify duplicated names before trying to submit
-      if (duplicatedNames.has(transformedGlobalAutoNumber['Name'])) {
-        this.setRecordErrors(gan, this.messages.getMessage('duplicatedGlobalAutoNumberName'));
-        originalGlobalAutoNumberRecords.set(recordId, gan);
-        continue;
-      }
-      duplicatedNames.add(transformedGlobalAutoNumber['Name']);
-
       // Create a map of the original records
       originalGlobalAutoNumberRecords.set(recordId, gan);
-      validRecords.push(gan);
 
-      // Add attributes for bulk processing
-      transformedGlobalAutoNumber['attributes'] = {
-        type: GlobalAutoNumberMigrationTool.OMNI_GLOBAL_AUTO_NUMBER_NAME,
-        referenceId: recordId,
-      };
+      try {
+        // Transform the GlobalAutoNumber setting
+        const transformedGlobalAutoNumber = this.mapGlobalAutoNumberRecord(gan);
+        const transformedName = transformedGlobalAutoNumber['Name'];
 
-      mappedRecords.push(transformedGlobalAutoNumber);
-    }
-    progressBar.stop();
+        // Create Global Auto Number record
+        const uploadResult = await NetUtils.createOne(
+          this.connection,
+          GlobalAutoNumberMigrationTool.OMNI_GLOBAL_AUTO_NUMBER_NAME,
+          recordId,
+          transformedGlobalAutoNumber
+        );
 
-    // Use bulk create for better performance
-    if (mappedRecords.length > 0) {
-      const bulkUploadResponse = await NetUtils.create(
-        this.connection,
-        GlobalAutoNumberMigrationTool.OMNI_GLOBAL_AUTO_NUMBER_NAME,
-        mappedRecords
-      );
+        if (uploadResult) {
+          // Fix errors
+          uploadResult.errors = uploadResult.errors || [];
+          if (!uploadResult.success) {
+            uploadResult.errors = Array.isArray(uploadResult.errors) ? uploadResult.errors : [uploadResult.errors];
+          }
 
-      // Process results
-      for (const [referenceId, result] of bulkUploadResponse) {
-        if (result.success) {
           // Check for name changes
-          const originalRecord = validRecords.find((record) => record['Id'] === referenceId);
-          const mappedRecord = mappedRecords.find((record) => record['attributes']?.referenceId === referenceId);
-
-          if (originalRecord && mappedRecord && mappedRecord['Name'] !== originalRecord['Name']) {
-            result.newName = mappedRecord['Name'];
+          uploadResult.warnings = uploadResult.warnings || [];
+          if (transformedName !== gan['Name']) {
+            uploadResult.newName = transformedName;
+            uploadResult.warnings.unshift(
+              this.messages.getMessage('globalAutoNumberNameChangeMessage', [transformedName])
+            );
           }
 
-          globalAutoNumberUploadInfo.set(referenceId, result);
-        } else {
-          // Handle failed records
-          const originalRecord = validRecords.find((record) => record['Id'] === referenceId);
-          if (originalRecord) {
-            this.setRecordErrors(originalRecord, result.errors?.join(', ') || 'Unknown error');
-          }
+          globalAutoNumberUploadInfo.set(recordId, uploadResult);
         }
+      } catch (err) {
+        this.setRecordErrors(gan, this.messages.getMessage('errorWhileUploadingGlobalAutoNumber') + err);
+        originalGlobalAutoNumberRecords.set(recordId, gan);
+
+        globalAutoNumberUploadInfo.set(recordId, {
+          referenceId: recordId,
+          hasErrors: true,
+          success: false,
+          errors: err,
+          warnings: [],
+        });
       }
     }
 
-    // Enable the org preference after successful migration
-    await this.enableOmniGlobalAutoNumberPref();
+    progressBar.stop();
 
     return {
       name: 'GlobalAutoNumber',
@@ -172,7 +265,7 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
 
   private processGlobalAutoNumber(globalAutoNumber: AnyJson, uniqueNames: Set<string>): GlobalAutoNumberAssessmentInfo {
     const globalAutoNumberName = globalAutoNumber['Name'];
-    Logger.info(this.messages.getMessage('processingGlobalAutoNumber', [globalAutoNumberName]));
+
     const globalAutoNumberAssessmentInfo: GlobalAutoNumberAssessmentInfo = {
       name: globalAutoNumberName,
       id: globalAutoNumber['Id'],
@@ -240,41 +333,5 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
     };
 
     return mappedObject;
-  }
-
-  private async enableOmniGlobalAutoNumberPref(): Promise<void> {
-    try {
-      // Use AnonymousApexRunner for better consistency and performance
-      const apexCode = `
-        // Enable OmniGlobalAutoNumberPref org preference
-        try {
-          // Check if the org preference already exists
-          List<OrgPreference__c> existingPrefs = [SELECT Id, Value__c FROM OrgPreference__c WHERE Name = 'OmniGlobalAutoNumberPref' LIMIT 1];
-          
-          if (existingPrefs.isEmpty()) {
-            // Create the org preference record
-            OrgPreference__c pref = new OrgPreference__c();
-            pref.Name = 'OmniGlobalAutoNumberPref';
-            pref.Value__c = 'true';
-            insert pref;
-            System.debug('Global Auto Number preference created and enabled successfully');
-          } else {
-            // Update existing preference
-            existingPrefs[0].Value__c = 'true';
-            update existingPrefs[0];
-            System.debug('Global Auto Number preference updated and enabled successfully');
-          }
-        } catch (Exception e) {
-          System.debug('Error enabling Global Auto Number preference: ' + e.getMessage());
-          throw e;
-        }
-      `;
-
-      await AnonymousApexRunner.runWithConnection(this.connection, apexCode);
-      Logger.log(this.messages.getMessage('omniGlobalAutoNumberPrefEnabled'));
-    } catch (error) {
-      Logger.error(this.messages.getMessage('errorEnablingOmniGlobalAutoNumberPref'));
-      Logger.error(JSON.stringify(error));
-    }
   }
 }
