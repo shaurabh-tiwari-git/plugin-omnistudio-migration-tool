@@ -30,7 +30,13 @@ export class GlobalAutoNumberAssessmentReporter {
       filterGroups: this.getFilterGroupsForReport(globalAutoNumberAssessmentInfos),
       headerGroups: this.getHeaderGroupsForReport(),
       rows: this.getRowsForReport(globalAutoNumberAssessmentInfos, instanceUrl),
-      rollbackFlags: undefined,
+      rollbackFlags:
+        (omnistudioOrgDetails.rollbackFlags || []).includes('RollbackIPChanges') ||
+        (omnistudioOrgDetails.rollbackFlags || []).includes('RollbackDRChanges')
+          ? ['RollbackIPChanges', 'RollbackDRChanges'].filter((flag) =>
+              (omnistudioOrgDetails.rollbackFlags || []).includes(flag)
+            )
+          : undefined,
       callToAction: reportingHelper.getCallToAction(globalAutoNumberAssessmentInfos),
     };
   }
@@ -65,20 +71,15 @@ export class GlobalAutoNumberAssessmentReporter {
       return [];
     }
 
-    // Create filter groups based on warning types
-    const warningTypes = new Set<string>();
+    // Create filter groups based on migration status
+    const statuses = new Set<string>();
     globalAutoNumberAssessmentInfos.forEach((info) => {
-      info.warnings.forEach((warning) => {
-        if (warning.includes('duplicate')) {
-          warningTypes.add('Duplicate Names');
-        } else if (warning.includes('name change')) {
-          warningTypes.add('Name Changes');
-        }
-      });
+      const status = this.getMigrationStatus(info);
+      statuses.add(status);
     });
 
-    if (warningTypes.size > 0) {
-      return [createFilterGroupParam('Filter By Warning Type', 'warningType', Array.from(warningTypes))];
+    if (statuses.size > 0) {
+      return [createFilterGroupParam('Filter By Status', 'status', Array.from(statuses))];
     }
     return [];
   }
@@ -88,7 +89,7 @@ export class GlobalAutoNumberAssessmentReporter {
       {
         header: [
           {
-            name: 'In Managed Package',
+            name: 'In Package',
             colspan: 2,
             rowspan: 1,
           },
@@ -98,17 +99,12 @@ export class GlobalAutoNumberAssessmentReporter {
             rowspan: 1,
           },
           {
-            name: 'Migration Status',
+            name: 'Assessment Status',
             colspan: 1,
             rowspan: 2,
           },
           {
-            name: 'Warnings',
-            colspan: 1,
-            rowspan: 2,
-          },
-          {
-            name: 'Info',
+            name: 'Summary',
             colspan: 1,
             rowspan: 2,
           },
@@ -155,18 +151,18 @@ export class GlobalAutoNumberAssessmentReporter {
         ),
         createRowDataParam('newName', globalAutoNumberAssessmentInfo.name, false, 1, 1, false),
         createRowDataParam(
-          'migrationStatus',
+          'status',
           this.getMigrationStatus(globalAutoNumberAssessmentInfo),
           false,
           1,
           1,
           false,
           undefined,
-          [],
+          undefined,
           this.getMigrationStatusCssClass(globalAutoNumberAssessmentInfo)
         ),
         createRowDataParam(
-          'warnings',
+          'summary',
           globalAutoNumberAssessmentInfo.warnings ? globalAutoNumberAssessmentInfo.warnings.join(', ') : '',
           false,
           1,
@@ -177,16 +173,6 @@ export class GlobalAutoNumberAssessmentReporter {
             ? reportingHelper.decorateErrors(globalAutoNumberAssessmentInfo.warnings)
             : []
         ),
-        createRowDataParam(
-          'infos',
-          globalAutoNumberAssessmentInfo.infos ? globalAutoNumberAssessmentInfo.infos.join(', ') : '',
-          false,
-          1,
-          1,
-          false,
-          undefined,
-          globalAutoNumberAssessmentInfo.infos || []
-        ),
       ],
     }));
   }
@@ -195,12 +181,12 @@ export class GlobalAutoNumberAssessmentReporter {
     if (globalAutoNumberAssessmentInfo.warnings.length > 0) {
       return 'Has Warnings';
     }
-    return 'Ready';
+    return 'Can be Automated';
   }
 
   private static getMigrationStatusCssClass(globalAutoNumberAssessmentInfo: GlobalAutoNumberAssessmentInfo): string {
     if (globalAutoNumberAssessmentInfo.warnings.length > 0) {
-      return 'text-warning';
+      return 'text-error';
     }
     return 'text-success';
   }
