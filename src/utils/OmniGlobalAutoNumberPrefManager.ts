@@ -23,8 +23,9 @@ export class OmniGlobalAutoNumberPrefManager {
         System.debug('OmniGlobalAutoNumberPref enabled: ' + isEnabled);
       `;
 
-      const result = await this.connection.tooling.executeAnonymous(apexCode);
-      return result.success && result.compiled && !result.exceptionMessage;
+      // const result = await this.connection.tooling.executeAnonymous(apexCode);
+      const result = await this.connection.metadata.read('OmniStudioSettings', ['OmniGlobalAutoNumberPref']);
+      return false;
     } catch (error) {
       return false;
     }
@@ -35,11 +36,6 @@ export class OmniGlobalAutoNumberPrefManager {
    */
   public async enable(): Promise<boolean> {
     try {
-      // First check if it's already enabled
-      if (await this.isEnabled()) {
-        return true;
-      }
-
       const apexCode = `
         industries.ptc.utils.PermissionUtils permissionUtils = 
           (industries.ptc.utils.PermissionUtils)ProviderFactory.get()

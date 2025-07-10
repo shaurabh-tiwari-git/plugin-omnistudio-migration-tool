@@ -70,7 +70,7 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
       }
 
       // Delete source GlobalAutoNumberSetting__c records using the same truncate pattern
-      await super.truncate(GlobalAutoNumberMigrationTool.GLOBAL_AUTO_NUMBER_SETTING_NAME);
+      await super.truncate(this.namespacePrefix + GlobalAutoNumberMigrationTool.GLOBAL_AUTO_NUMBER_SETTING_NAME);
 
       // Enable the org preference after successful cleanup
       if (prefManager) {

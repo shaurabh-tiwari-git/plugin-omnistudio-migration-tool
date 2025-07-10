@@ -127,5 +127,13 @@
   "startingPostMigrationCleanup": "Starting post-migration cleanup for Global Auto Number...",
   "postMigrationCleanupCompleted": "Post-migration cleanup completed successfully.",
   "errorDuringPostMigrationCleanup": "Error during post-migration cleanup.",
+  "globalAutoNumberNameChangeMessage": "Global Auto Number name has been modified to fit naming rules: {0}",
+  "errorWhileUploadingGlobalAutoNumber": "An error occurred while uploading Global Auto Number: ",
+  "startingGlobalAutoNumberAssessment": "Starting Global Auto Number assessment...",
+  "foundGlobalAutoNumbersToAssess": "Found %s Global Auto Numbers to assess",
+  "unexpectedError": "An unexpected error occurred during processing",
+  "duplicateGlobalAutoNumberNameMessage": "Potential duplicate: Another Global Auto Number has the same name {0} after name cleaning. This may cause conflicts during migration",
+  "globalAutoNumberMigrationInfo": "Global Auto Number {0} will be migrated to the new data model",
+  "migrationValidationFailed": "Migration validation failed.",
   "incompleteMigrationDetected": "Incomplete migration detected. Source objects: {0}, Target objects: {1}."
 }
