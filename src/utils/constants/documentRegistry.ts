@@ -56,4 +56,5 @@ export const documentRegistry = {
   integrationProcedureManualUpdateMessage:
     'https://help.salesforce.com/s/articleView?id=xcloud.os_migrate_update_references_to_integration_procedures_after_migration.htm&type=5',
   duplicateCardNameMessage: 'https://help.salesforce.com/s/articleView?id=xcloud.os_clone_a_flexcard.htm&type=5',
+  testURL: 'https://help.salesforce.com/s/articleView?id=xcloud.os_omnistudio_naming_con.htm&type=5',
 };
