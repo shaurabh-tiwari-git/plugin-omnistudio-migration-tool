@@ -23,9 +23,8 @@ export class OmniGlobalAutoNumberPrefManager {
         System.debug('OmniGlobalAutoNumberPref enabled: ' + isEnabled);
       `;
 
-      // const result = await this.connection.tooling.executeAnonymous(apexCode);
-      const result = await this.connection.metadata.read('OmniStudioSettings', ['OmniGlobalAutoNumberPref']);
-      return false;
+      const result = await this.connection.tooling.executeAnonymous(apexCode);
+      return result.success;
     } catch (error) {
       return false;
     }
