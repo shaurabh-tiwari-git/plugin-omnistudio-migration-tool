@@ -1,0 +1,428 @@
+import * as path from 'path';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-var-requires */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+import { expect } from '@salesforce/command/lib/test';
+import { Messages, Org } from '@salesforce/core';
+import sinon = require('sinon');
+import { FlexipageMigration } from '../../../src/migration/related/FlexipageMigration';
+import { Constants } from '../../../src/utils/constants/stringContants';
+import { Flexipage } from '../../../src/migration/interfaces';
+
+interface MockSfProject {
+  retrieve: sinon.SinonStub;
+}
+
+interface MockLogger {
+  info: sinon.SinonStub;
+  logVerbose: sinon.SinonStub;
+  error: sinon.SinonStub;
+}
+
+interface MockXmlUtil {
+  parse: sinon.SinonStub;
+  build: sinon.SinonStub;
+}
+
+interface MockFileDiffUtil {
+  getFileDiff: sinon.SinonStub;
+}
+
+interface MockTransformFlexipageBundle extends sinon.SinonStub {
+  (bundle: Flexipage, namespace: string): Flexipage | boolean;
+}
+
+interface MockFs {
+  readdirSync: sinon.SinonStub;
+  readFileSync: sinon.SinonStub;
+  writeFileSync: sinon.SinonStub;
+}
+
+interface MockPath {
+  join: sinon.SinonStub;
+}
+
+interface MockShell {
+  cd: sinon.SinonStub;
+}
+
+interface MockCreateProgressBar {
+  setTotal: sinon.SinonStub;
+  increment: sinon.SinonStub;
+  stop: sinon.SinonStub;
+}
+
+describe('FlexipageMigration', () => {
+  let flexipageMigration: FlexipageMigration;
+  let sandbox: sinon.SinonSandbox;
+  let mockOrg: Org;
+  let mockMessages: Messages;
+  let mockSfProject: MockSfProject;
+  let mockLogger: MockLogger;
+  let mockXmlUtil: MockXmlUtil;
+  let mockFileDiffUtil: MockFileDiffUtil;
+  let mockTransformFlexipageBundle: MockTransformFlexipageBundle;
+
+  const testProjectPath = '/test/project/path';
+  const testNamespace = 'testNamespace';
+
+  beforeEach(() => {
+    sandbox = sinon.createSandbox();
+
+    // Mock Org
+    mockOrg = {
+      getUsername: sandbox.stub().returns('test@org.com'),
+    } as unknown as Org;
+
+    // Mock Messages
+    mockMessages = {
+      getMessage: sandbox.stub().returns('Mock message'),
+    } as unknown as Messages;
+
+    // Mock sfProject
+    mockSfProject = {
+      retrieve: sandbox.stub().resolves(),
+    };
+
+    // Mock Logger
+    mockLogger = {
+      info: sandbox.stub(),
+      logVerbose: sandbox.stub(),
+      error: sandbox.stub(),
+    };
+
+    // Mock xmlUtil
+    mockXmlUtil = {
+      parse: sandbox.stub(),
+      build: sandbox.stub(),
+    };
+
+    // Mock FileDiffUtil
+    mockFileDiffUtil = {
+      getFileDiff: sandbox.stub().returns('mock-diff'),
+    };
+
+    // Mock transformFlexipageBundle
+    mockTransformFlexipageBundle = sandbox.stub();
+
+    // Stub dependencies
+    sandbox.stub(require('../../../src/utils/sfcli/project/sfProject'), 'sfProject').value(mockSfProject);
+    sandbox.stub(require('../../../src/utils/logger'), 'Logger').value(mockLogger);
+    sandbox.stub(require('../../../src/utils/XMLUtil'), 'xmlUtil').value(mockXmlUtil);
+    sandbox
+      .stub(require('../../../src/utils/flexipage/flexiPageTransformer'), 'transformFlexipageBundle')
+      .value(mockTransformFlexipageBundle);
+
+    // Mock FileDiffUtil constructor
+    const MockFileDiffUtil = function () {
+      return mockFileDiffUtil;
+    };
+    sandbox
+      .stub(require('../../../src/utils/lwcparser/fileutils/FileDiffUtil'), 'FileDiffUtil')
+      .value(MockFileDiffUtil);
+
+    flexipageMigration = new FlexipageMigration(testProjectPath, testNamespace, mockOrg, mockMessages);
+  });
+
+  afterEach(() => {
+    sandbox.restore();
+  });
+
+  describe('processObjectType', () => {
+    it('should return FlexiPage constant', () => {
+      const result = flexipageMigration.processObjectType();
+      expect(result).to.equal(Constants.FlexiPage);
+    });
+  });
+
+  describe('assess', () => {
+    it('should call process with assess mode', () => {
+      const processStub = sandbox.stub(flexipageMigration as any, 'process').returns([]);
+
+      flexipageMigration.assess();
+
+      expect(processStub.calledOnceWith('assess')).to.be.true;
+      expect(mockLogger.info.calledWith('Mock message')).to.be.true;
+    });
+  });
+
+  describe('migrate', () => {
+    it('should call process with migrate mode', () => {
+      const processStub = sandbox.stub(flexipageMigration as any, 'process').returns([]);
+
+      flexipageMigration.migrate();
+
+      expect(processStub.calledOnceWith('migrate')).to.be.true;
+      expect(mockLogger.info.calledWith('Mock message')).to.be.true;
+    });
+  });
+
+  describe('process', () => {
+    let mockFs: MockFs;
+    let mockPath: MockPath;
+    let mockShell: MockShell;
+    let mockCreateProgressBar: MockCreateProgressBar;
+
+    beforeEach(() => {
+      mockFs = {
+        readdirSync: sandbox.stub(),
+        readFileSync: sandbox.stub(),
+        writeFileSync: sandbox.stub(),
+      };
+
+      mockPath = {
+        join: sandbox.stub(),
+      };
+
+      mockShell = {
+        cd: sandbox.stub(),
+      };
+
+      mockCreateProgressBar = {
+        setTotal: sandbox.stub(),
+        increment: sandbox.stub(),
+        stop: sandbox.stub(),
+      };
+
+      // Stub the modules
+      sandbox.stub(require('fs'), 'readdirSync').value(mockFs.readdirSync);
+      sandbox.stub(require('fs'), 'readFileSync').value(mockFs.readFileSync);
+      sandbox.stub(require('fs'), 'writeFileSync').value(mockFs.writeFileSync);
+      sandbox.stub(require('path'), 'join').value(mockPath.join);
+      sandbox.stub(require('shelljs'), 'cd').value(mockShell.cd);
+      sandbox
+        .stub(require('../../../src/migration/base'), 'createProgressBar')
+        .value(sandbox.stub().returns(mockCreateProgressBar));
+    });
+
+    it('should process flexipage files successfully in assess mode', () => {
+      // Arrange
+      const testFiles = ['test1.xml', 'test2.xml'];
+      const testFilePath = '/test/path/file.xml';
+      const testContent = '<FlexiPage>test content</FlexiPage>';
+
+      mockFs.readdirSync.returns(testFiles);
+      mockPath.join.returns(testFilePath);
+      mockFs.readFileSync.returns(testContent);
+      mockXmlUtil.parse.returns({ FlexiPage: { test: 'data', flexiPageRegions: [] } });
+      mockTransformFlexipageBundle.returns({ transformed: 'data', flexiPageRegions: [] });
+      mockXmlUtil.build.returns('<FlexiPage>transformed</FlexiPage>');
+
+      sandbox.stub(flexipageMigration as any, 'processFlexiPage').returns({
+        name: 'test.xml',
+        errors: [],
+        path: testFilePath,
+        diff: 'mock-diff',
+        status: 'Can be Automated',
+      });
+
+      // Act
+      const result = (flexipageMigration as any).process('assess');
+
+      // Assert
+      expect(mockShell.cd.calledWith(testProjectPath)).to.be.true;
+      expect(mockSfProject.retrieve.calledWith(Constants.FlexiPage, 'test@org.com')).to.be.true;
+      expect(mockFs.readdirSync.calledWith(path.join(testProjectPath, 'force-app', 'main', 'default', 'flexipages'))).to
+        .be.true;
+      expect(result).to.be.an('array').with.length(2);
+    });
+
+    it('should handle errors during file processing', () => {
+      // Arrange
+      const testFiles = ['test1.xml'];
+      const testFilePath = '/test/path/file.xml';
+
+      mockFs.readdirSync.returns(testFiles);
+      mockPath.join.returns(testFilePath);
+
+      sandbox.stub(flexipageMigration as any, 'processFlexiPage').throws(new Error('Processing error'));
+
+      // Act
+      const result = (flexipageMigration as any).process('assess');
+
+      // Assert
+      expect(result).to.be.an('array').with.length(1);
+      expect(result[0]).to.deep.include({
+        name: 'test1.xml',
+        errors: ['Processing error'],
+        path: testFilePath,
+        diff: '',
+        status: 'Errors',
+      });
+      expect(mockLogger.error.called).to.be.true;
+    });
+
+    it('should process flexipage files in migrate mode and write files', () => {
+      // Arrange
+      const testFiles = ['test1.xml'];
+      const testFilePath = '/test/path/file.xml';
+      const testContent = '<FlexiPage>test content</FlexiPage>';
+
+      mockFs.readdirSync.returns(testFiles);
+      mockPath.join.returns(testFilePath);
+      mockFs.readFileSync.returns(testContent);
+      mockXmlUtil.parse.returns({ FlexiPage: { test: 'data', flexiPageRegions: [] } });
+      mockTransformFlexipageBundle.returns({ transformed: 'data', flexiPageRegions: [] });
+      mockXmlUtil.build.returns('<FlexiPage>transformed</FlexiPage>');
+
+      sandbox.stub(flexipageMigration as any, 'processFlexiPage').returns({
+        name: 'test.xml',
+        errors: [],
+        path: testFilePath,
+        diff: 'mock-diff',
+        status: 'Can be Automated',
+      });
+
+      // Act
+      const result = (flexipageMigration as any).process('migrate');
+
+      // Assert
+      expect(result).to.be.an('array').with.length(1);
+    });
+  });
+
+  describe('processFlexiPage', () => {
+    let mockFs: MockFs;
+
+    beforeEach(() => {
+      mockFs = {
+        readdirSync: sandbox.stub(),
+        readFileSync: sandbox.stub(),
+        writeFileSync: sandbox.stub(),
+      };
+
+      sandbox.stub(require('fs'), 'readFileSync').value(mockFs.readFileSync);
+      sandbox.stub(require('fs'), 'writeFileSync').value(mockFs.writeFileSync);
+    });
+
+    it('should process flexipage successfully in assess mode', () => {
+      // Arrange
+      const fileName = 'test.xml';
+      const filePath = '/test/path/test.xml';
+      const fileContent = '<FlexiPage>test content</FlexiPage>';
+      const mockFlexipage: Flexipage = { test: 'data', flexiPageRegions: [] };
+      const transformedFlexipage: Flexipage = { transformed: 'data', flexiPageRegions: [] };
+      const modifiedContent = '<FlexiPage>transformed</FlexiPage>';
+
+      mockFs.readFileSync.returns(fileContent);
+      mockXmlUtil.parse.returns({ FlexiPage: mockFlexipage });
+      mockTransformFlexipageBundle.returns(transformedFlexipage);
+      mockXmlUtil.build.returns(modifiedContent);
+
+      // Act
+      const result = (flexipageMigration as any).processFlexiPage(fileName, filePath, 'assess');
+
+      // Assert
+      expect(mockFs.readFileSync.calledWith(filePath, 'utf8')).to.be.true;
+      expect(mockXmlUtil.parse.calledWith(fileContent)).to.be.true;
+      expect(mockTransformFlexipageBundle.calledWith(mockFlexipage, testNamespace)).to.be.true;
+      expect(mockXmlUtil.build.calledWith({ FlexiPage: transformedFlexipage })).to.be.true;
+      expect(mockFs.writeFileSync.called).to.be.false; // Should not write in assess mode
+      expect(result).to.deep.include({
+        path: filePath,
+        name: fileName,
+        diff: JSON.stringify('mock-diff'),
+        errors: [],
+        status: 'Can be Automated',
+      });
+    });
+
+    it('should process flexipage successfully in migrate mode and write file', () => {
+      // Arrange
+      const fileName = 'test.xml';
+      const filePath = '/test/path/test.xml';
+      const fileContent = '<FlexiPage>test content</FlexiPage>';
+      const mockFlexipage: Flexipage = { test: 'data', flexiPageRegions: [] };
+      const transformedFlexipage: Flexipage = { transformed: 'data', flexiPageRegions: [] };
+      const modifiedContent = '<FlexiPage>transformed</FlexiPage>';
+
+      mockFs.readFileSync.returns(fileContent);
+      mockXmlUtil.parse.returns({ FlexiPage: mockFlexipage });
+      mockTransformFlexipageBundle.returns(transformedFlexipage);
+      mockXmlUtil.build.returns(modifiedContent);
+
+      // Act
+      const result = (flexipageMigration as any).processFlexiPage(fileName, filePath, 'migrate');
+
+      // Assert
+      expect(mockFs.writeFileSync.calledWith(filePath, modifiedContent)).to.be.true;
+      expect(result).to.deep.include({
+        path: filePath,
+        name: fileName,
+        diff: JSON.stringify('mock-diff'),
+        errors: [],
+        status: 'Can be Automated',
+      });
+    });
+
+    it('should return No Changes status when transformFlexipageBundle returns false', () => {
+      // Arrange
+      const fileName = 'test.xml';
+      const filePath = '/test/path/test.xml';
+      const fileContent = '<FlexiPage>test content</FlexiPage>';
+      const mockFlexipage: Flexipage = { test: 'data', flexiPageRegions: [] };
+
+      mockFs.readFileSync.returns(fileContent);
+      mockXmlUtil.parse.returns({ FlexiPage: mockFlexipage });
+      mockTransformFlexipageBundle.returns(false);
+
+      // Act
+      const result = (flexipageMigration as any).processFlexiPage(fileName, filePath, 'assess');
+
+      // Assert
+      expect(result).to.deep.include({
+        name: fileName,
+        errors: [],
+        path: filePath,
+        diff: '',
+        status: 'No Changes',
+      });
+    });
+
+    it('should handle errors during processing', () => {
+      // Arrange
+      const fileName = 'test.xml';
+      const filePath = '/test/path/test.xml';
+      const fileContent = '<FlexiPage>test content</FlexiPage>';
+
+      mockFs.readFileSync.returns(fileContent);
+      mockXmlUtil.parse.throws(new Error('Parse error'));
+
+      // Act & Assert
+      expect(() => (flexipageMigration as any).processFlexiPage(fileName, filePath, 'assess')).to.throw('Parse error');
+    });
+  });
+
+  describe('error handling', () => {
+    it('should handle file system errors gracefully', () => {
+      // Arrange
+      const mockFs = {
+        readdirSync: sandbox.stub().throws(new Error('File system error')),
+      };
+      sandbox.stub(require('fs'), 'readdirSync').value(mockFs.readdirSync);
+
+      // Act & Assert
+      expect(() => (flexipageMigration as any).process('assess')).to.throw('File system error');
+    });
+
+    it('should handle sfProject.retrieve errors', async () => {
+      // Arrange
+      mockSfProject.retrieve.rejects(new Error('Retrieve error'));
+      // Mock fs.readdirSync to throw ENOENT error
+      const mockFs = {
+        readdirSync: sandbox.stub().throws(new Error('ENOENT: no such file or directory, scandir')),
+      };
+      sandbox.stub(require('fs'), 'readdirSync').value(mockFs.readdirSync);
+
+      // Act & Assert
+      try {
+        await (flexipageMigration as any).process('assess');
+        expect.fail('Expected error to be thrown');
+      } catch (err) {
+        expect((err as Error).message).to.include('ENOENT');
+      }
+    });
+  });
+});

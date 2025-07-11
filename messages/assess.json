@@ -114,5 +114,16 @@
   "errorParsingData": "Error while parsing data for template",
   "errorGeneratingHTML": "Error while generating HTML from template for {} with properties {}",
   "unexpectedError": "Unexpected Assessment error",
-  "errorEvaluatingExpression": "Error evaluating expression: {0}, {1}"
+  "errorEvaluatingExpression": "Error evaluating expression: {0}, {1}",
+  "retrievingFlexiPages": "Retrieving FlexiPages",
+  "successfullyRetrievedFlexiPages": "Successfully retrieved %s FlexiPages",
+  "assessingFlexiPages": "Assessing FlexiPages",
+  "completedProcessingAllFlexiPages": "Completed processing all flexipage files. Total processed: %s",
+  "completedProcessingFlexiPage": "Completed processing %s - Errors: %s",
+  "processingFlexiPage": "Processing flexipage file: %s",
+  "startingFlexiPageProcessing": "Starting to process flexipage: %s",
+  "readFlexiPageContent": "Read file content, size: %s characters",
+  "updatedModifiedContent": "Wrote modified content to file: %s",
+  "generatedDiffForFile": "Generated diff for file: %s",
+  "errorProcessingFlexiPage": "Error processing flexipage file: %s, %s"
 }

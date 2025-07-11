@@ -6,6 +6,7 @@ export const Constants = {
   DataMapper: 'dr',
   LWC: 'lwc',
   Apex: 'apex',
+  FlexiPage: 'flexipage',
 
   // full form of the omni components
   OmniScriptComponentName: 'OmniScript',

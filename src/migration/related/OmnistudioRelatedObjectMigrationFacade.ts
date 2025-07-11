@@ -4,12 +4,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Org, Messages } from '@salesforce/core';
 import * as shell from 'shelljs';
-import { ApexAssessmentInfo, DebugTimer, LWCAssessmentInfo, RelatedObjectAssesmentInfo } from '../../utils';
+import {
+  ApexAssessmentInfo,
+  DebugTimer,
+  FlexiPageAssessmentInfo,
+  LWCAssessmentInfo,
+  RelatedObjectAssesmentInfo,
+} from '../../utils';
 import { sfProject } from '../../utils/sfcli/project/sfProject';
 import { Logger } from '../../utils/logger';
 import { Constants } from '../../utils/constants/stringContants';
 import { ApexMigration } from './ApexMigration';
 import { LwcMigration } from './LwcMigration';
+import { FlexipageMigration } from './FlexipageMigration';
 
 Messages.importMessagesDirectory(__dirname);
 const assessMessages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'assess');
@@ -32,6 +39,7 @@ export default class OmnistudioRelatedObjectMigrationFacade {
   protected readonly projectPath: string;
   protected readonly apexMigration: ApexMigration;
   protected readonly lwcMigration: LwcMigration;
+  protected readonly flexipageMigration: FlexipageMigration;
 
   public constructor(
     namespace: string,
@@ -49,6 +57,7 @@ export default class OmnistudioRelatedObjectMigrationFacade {
 
     // Initialize migration instances
     this.apexMigration = new ApexMigration(this.projectPath, this.namespace, this.org, targetApexNamespace);
+    this.flexipageMigration = new FlexipageMigration(this.projectPath, this.namespace, this.org, assessMessages);
     // TODO: Uncomment code once MVP for migration is completed
     // this.lwcMigration = new LwcMigration(this.projectPath, this.namespace, this.org);
   }
@@ -89,11 +98,15 @@ export default class OmnistudioRelatedObjectMigrationFacade {
 
     let apexAssessmentInfos: ApexAssessmentInfo[] = [];
     const lwcAssessmentInfos: LWCAssessmentInfo[] = [];
+    let flexipageAssessmentInfos: FlexiPageAssessmentInfo[] = [];
 
     // Proceed with processing logic
     try {
       if (relatedObjects.includes(Constants.Apex)) {
         apexAssessmentInfos = isMigration ? this.apexMigration.migrate() : this.apexMigration.assess();
+      }
+      if (relatedObjects.includes(Constants.FlexiPage)) {
+        flexipageAssessmentInfos = isMigration ? this.flexipageMigration.migrate() : this.flexipageMigration.assess();
       }
     } catch (Error) {
       // Log the error
@@ -117,7 +130,7 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     Logger.debug(timer.toString());
 
     // Return results needed for --json flag
-    return { apexAssessmentInfos, lwcAssessmentInfos };
+    return { apexAssessmentInfos, lwcAssessmentInfos, flexipageAssessmentInfos };
   }
 
   public migrateAll(relatedObjects: string[]): RelatedObjectAssesmentInfo {

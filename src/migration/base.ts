@@ -1,13 +1,13 @@
 import { UX } from '@salesforce/command';
 import { Connection, Messages } from '@salesforce/core';
-import cliProgress from 'cli-progress';
+import * as cliProgress from 'cli-progress';
 import { DebugTimer, QueryTools } from '../utils';
 import { NetUtils } from '../utils/net';
 import { Stringutil } from '../utils/StringValue/stringutil';
 import { Logger } from '../utils/logger';
 import { TransformData, UploadRecordResult } from './interfaces';
 
-export type ComponentType = 'Data Mapper' | 'Flexcard' | 'Omniscript and Integration Procedure';
+export type ComponentType = 'Data Mapper' | 'Flexcard' | 'Omniscript and Integration Procedure' | 'Flexipage';
 
 /**
  * Creates a progress bar for migration/assessment operations
