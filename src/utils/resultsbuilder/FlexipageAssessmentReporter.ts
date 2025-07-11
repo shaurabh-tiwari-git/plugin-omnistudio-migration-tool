@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2025, salesforce.com, inc.
+ * All rights reserved.
+ * Licensed under the BSD 3-Clause license.
+ * For full license text, see LICENSE.txt file in the repo root or https://opensource.org/licenses/BSD-3-Clause
+ */
 import { FlexiPageAssessmentInfo } from '../interfaces';
 import { FileDiffUtil } from '../lwcparser/fileutils/FileDiffUtil';
 import { OmnistudioOrgDetails } from '../orgUtils';
@@ -9,10 +15,31 @@ import {
 } from '../reportGenerator/reportInterfaces';
 import { createFilterGroupParam, createRowDataParam, getOrgDetailsForReport } from '../reportGenerator/reportUtil';
 
+/**
+ * FlexipageAssessmentReporter provides functionality to generate assessment reports
+ * for Flexipage migration operations. It processes FlexiPage assessment information
+ * and converts it into report-ready data structures.
+ *
+ * This class handles:
+ * - Converting FlexiPage assessment data into report parameters
+ * - Generating summary statistics for different migration statuses
+ * - Creating report rows with proper formatting and styling
+ * - Managing header groups and filter options for reports
+ * - Ensuring unique row IDs for report data
+ */
 export class FlexipageAssessmentReporter {
+  /** Static counter for generating unique row IDs */
   private static rowId = 0;
+  /** Prefix for row ID generation */
   private static rowIdPrefix = 'flexipage-row-data-';
 
+  /**
+   * Generates comprehensive assessment data for Flexipage migration reports.
+   *
+   * @param flexipageAssessmentInfos - Array of FlexiPage assessment information
+   * @param omnistudioOrgDetails - Organization details for the report
+   * @returns Complete report parameters including title, headers, filters, and rows
+   */
   public static getFlexipageAssessmentData(
     flexipageAssessmentInfos: FlexiPageAssessmentInfo[],
     omnistudioOrgDetails: OmnistudioOrgDetails
@@ -29,6 +56,12 @@ export class FlexipageAssessmentReporter {
     };
   }
 
+  /**
+   * Generates summary statistics for Flexipage assessment data.
+   *
+   * @param flexipageAssessmentInfos - Array of FlexiPage assessment information
+   * @returns Array of summary items with counts and CSS classes for different statuses
+   */
   public static getSummaryData(
     flexipageAssessmentInfos: FlexiPageAssessmentInfo[]
   ): Array<import('../reportGenerator/reportInterfaces').SummaryItemDetailParam> {
@@ -51,6 +84,12 @@ export class FlexipageAssessmentReporter {
     ];
   }
 
+  /**
+   * Converts FlexiPage assessment information into report row data.
+   *
+   * @param flexipageAssessmentInfos - Array of FlexiPage assessment information
+   * @returns Array of report row parameters with formatted data and unique row IDs
+   */
   private static getRowsForReport(flexipageAssessmentInfos: FlexiPageAssessmentInfo[]): ReportRowParam[] {
     if (!flexipageAssessmentInfos || flexipageAssessmentInfos.length === 0) {
       return [];
@@ -98,6 +137,11 @@ export class FlexipageAssessmentReporter {
     }));
   }
 
+  /**
+   * Generates header groups for Flexipage assessment reports.
+   *
+   * @returns Array of header group parameters defining the report column structure
+   */
   private static getHeaderGroupsForReport(): ReportHeaderGroupParam[] {
     return [
       {
@@ -126,6 +170,11 @@ export class FlexipageAssessmentReporter {
       },
     ];
   }
+  /**
+   * Generates filter groups for Flexipage assessment reports.
+   *
+   * @returns Array of filter group parameters for filtering by errors and status
+   */
   private static getFilterGroupsForReport(): FilterGroupParam[] {
     return [
       createFilterGroupParam('Filter by Errors', 'errors', ['Has Errors', 'Has No Errors']),
