@@ -57,7 +57,7 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
    * Post-migration cleanup: Delete source objects from managed package
    * This should be called after successful migration
    */
-  async postMigrationCleanup(
+  private async postMigrationCleanup(
     uploadInfo?: Map<string, UploadRecordResult>,
     prefManager?: OmniGlobalAutoNumberPrefManager
   ): Promise<void> {

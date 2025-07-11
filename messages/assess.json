@@ -100,8 +100,6 @@
   "globalAutoNumberNameChangeMessage": "GlobalAutoNumber name will be changed from {0} to {1} to follow API naming standards",
   "duplicateGlobalAutoNumberNameMessage": "Potential duplicate: Another GlobalAutoNumber has the same name {0} after name cleaning. This may cause conflicts during migration",
   "globalAutoNumberMigrationInfo": "GlobalAutoNumber {0} will be migrated from custom object to standard BPO",
-  "rollbackDRChangesEnabled": "RollbackDRChanges is enabled - must be disabled before migration",
-  "rollbackIPChangesEnabled": "RollbackIPChanges is enabled - must be disabled before migration",
   "omniScriptNameChangeMessage": "OmniScript reference part {0} will be changed to {1} during migration.",
   "dataRaptorNameChangeMessage": "DataRaptor reference {0} will be changed to {1} during migration.",
   "integrationProcedureNameChangeMessage": "Integration Procedure reference {0} will be changed to {1} during migration.",
