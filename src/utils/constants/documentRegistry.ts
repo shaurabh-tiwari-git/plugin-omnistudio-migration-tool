@@ -56,14 +56,4 @@ export const documentRegistry = {
   integrationProcedureManualUpdateMessage:
     'https://help.salesforce.com/s/articleView?id=xcloud.os_migrate_update_references_to_integration_procedures_after_migration.htm&type=5',
   duplicateCardNameMessage: 'https://help.salesforce.com/s/articleView?id=xcloud.os_clone_a_flexcard.htm&type=5',
-  globalAutoNumberNameChangeMessage:
-    'https://help.salesforce.com/s/articleView?id=xcloud.os_omnistudio_naming_conventions.htm&type=5',
-  duplicateGlobalAutoNumberNameMessage:
-    'https://help.salesforce.com/s/articleView?id=xcloud.os_omnistudio_naming_conventions.htm&type=5',
-  globalAutoNumberMigrationInfo:
-    'https://help.salesforce.com/s/articleView?id=xcloud.os_migrate_global_auto_number_to_core.htm&type=5',
-  rollbackDRChangesEnabled:
-    'https://help.salesforce.com/s/articleView?id=xcloud.os_migrate_disable_rollback_flags.htm&type=5',
-  rollbackIPChangesEnabled:
-    'https://help.salesforce.com/s/articleView?id=xcloud.os_migrate_disable_rollback_flags.htm&type=5',
 };

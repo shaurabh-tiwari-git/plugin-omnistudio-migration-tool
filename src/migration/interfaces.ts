@@ -28,12 +28,6 @@ export interface MigrationTool {
    * Truncates the standard objects.
    */
   truncate(): Promise<void>;
-
-  /**
-   * Optional post-migration cleanup method
-   * This method is called after all objects are successfully migrated
-   */
-  postMigrationCleanup?(uploadInfo?: Map<string, UploadRecordResult>): Promise<void>;
 }
 
 export interface ObjectMapping {

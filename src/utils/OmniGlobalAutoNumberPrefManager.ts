@@ -1,5 +1,5 @@
 import { Connection } from '@salesforce/core';
-import { AnonymousApexRunner } from './apex/executor/AnonymousApexRunner';
+import { MetadataInfo } from './interfaces';
 
 /**
  * Manager class for handling OmniGlobalAutoNumberPref org preference
@@ -12,19 +12,12 @@ export class OmniGlobalAutoNumberPrefManager {
   }
 
   /**
-   * Check if OmniGlobalAutoNumberPref is enabled using FormulaParserService
+   * Check if OmniGlobalAutoNumberPref is enabled
    */
   public async isEnabled(): Promise<boolean> {
     try {
-      const apexCode = `
-        String orgId = UserInfo.getOrganizationId();
-        java:industries.ptc.utils.PermissionUtils permUtils = new java:industries.ptc.utils.PermissionUtils();
-        Boolean isEnabled = permUtils.isOrgPreferenceEnabled(orgId, 'OmniGlobalAutoNumberPref');
-        System.debug('OmniGlobalAutoNumberPref enabled: ' + isEnabled);
-      `;
-
-      const result = await this.connection.tooling.executeAnonymous(apexCode);
-      return result.success;
+      const result = (await this.connection.metadata.read('OmniStudioSettings', ['OmniStudio'])) as MetadataInfo;
+      return result?.enableOmniGlobalAutoNumberPref === 'true' || false;
     } catch (error) {
       return false;
     }
@@ -35,22 +28,13 @@ export class OmniGlobalAutoNumberPrefManager {
    */
   public async enable(): Promise<boolean> {
     try {
-      const apexCode = `
-        industries.ptc.utils.PermissionUtils permissionUtils = 
-          (industries.ptc.utils.PermissionUtils)ProviderFactory.get()
-            .get(industries.ptc.utils.PermissionUtils.class);
-        
-        Boolean success = permissionUtils.setOrgPreference(
-          UserContext.get().getOrganizationId(),
-          'OmniGlobalAutoNumberPref',
-          true
-        );
-        
-        System.debug('Enablement result: ' + success);
-      `;
-
-      const result = await AnonymousApexRunner.runWithConnection(this.connection, apexCode);
-      return result.success && result.compiled && !result.exceptionMessage;
+      await this.connection.metadata.update('OmniStudioSettings', [
+        {
+          fullName: 'OmniStudio',
+          enableOmniGlobalAutoNumberPref: 'true',
+        } as MetadataInfo,
+      ]);
+      return true;
     } catch (error) {
       return false;
     }

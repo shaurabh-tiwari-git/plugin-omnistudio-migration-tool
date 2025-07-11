@@ -161,6 +161,19 @@ export interface OmniStudioSettingsMetadata {
   disableRollbackFlagsPref: boolean;
 }
 
+export interface MetadataInfo {
+  fullName: string;
+  disableRollbackFlagsPref?: boolean;
+  enableOmniGlobalAutoNumberPref?: string;
+  enableOaEventInternalWrites?: string;
+  enableOaEventNotifications?: string;
+  enableOaForCore?: string;
+  enableOmniStudioContentTest?: string;
+  enableOmniStudioDrVersion?: string;
+  enableOmniStudioMetadata?: string;
+  enableStandardOmniStudioRuntime?: string;
+}
+
 export interface QueryResult {
   DeveloperName: string;
   Value: string;
