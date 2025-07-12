@@ -4,7 +4,7 @@ import { Org, Messages } from '@salesforce/core';
 import { FileUtil, File } from '../../utils/file/fileUtil';
 import { Logger } from '../../utils/logger';
 import { Constants } from '../../utils/constants/stringContants';
-import { PageJson, Region } from '../interfaces';
+import { MigrationStorage, OmniScriptStorage, PageJson, Region } from '../interfaces';
 import { FileDiffUtil } from '../../utils/lwcparser/fileutils/FileDiffUtil';
 import { ExperienceSiteAssessmentInfo } from '../../utils';
 import { BaseRelatedObjectMigration } from './BaseRealtedObjectMigration';
@@ -16,10 +16,18 @@ const EXPERIENCE_SITES_PATH = '/force-app/main/default/experiences';
 
 export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
   private targetNamespace: string;
+  private storage: MigrationStorage;
 
-  public constructor(projectPath: string, namespace: string, org: Org, targetNameSpace?: string) {
+  public constructor(
+    projectPath: string,
+    namespace: string,
+    org: Org,
+    storage: MigrationStorage,
+    targetNameSpace?: string
+  ) {
     super(projectPath, namespace, org);
     this.targetNamespace = targetNameSpace;
+    this.storage = storage;
   }
 
   public processObjectType(): string {
@@ -110,6 +118,27 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
               component.type = 'ABC';
               component.subtype = 'DEF';
               component.language = 'GHI';
+
+              // Here just checking if we are able to get the data till here
+
+              Logger.logVerbose(
+                'In experience site migration checking what storage looks like ' + JSON.stringify(this.storage)
+              );
+
+              Logger.logVerbose(
+                `In experience OS site migration checking what storage looks like ${JSON.stringify(
+                  this.storage.osStorage
+                )}`
+              );
+
+              Logger.logVerbose(
+                `In experience flexcards site migration checking what storage looks like ${JSON.stringify(
+                  this.storage.fcStorage
+                )}`
+              );
+
+              const targetData: OmniScriptStorage = this.storage.osStorage.get('ABCDEFGHI');
+              Logger.logVerbose('Printing the data - ' + JSON.stringify(targetData));
             }
           }
         }

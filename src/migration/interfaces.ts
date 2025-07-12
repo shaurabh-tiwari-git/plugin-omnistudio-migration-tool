@@ -43,6 +43,9 @@ export interface UploadRecordResult {
   warnings: string[];
   hasErrors: boolean;
   success?: boolean;
+  type?: string;
+  subtype?: string;
+  language?: string;
 }
 
 export interface MigrationResult {
@@ -137,4 +140,25 @@ export interface ComponentAttributes {
   customHeadTags?: string;
   description?: string;
   title?: string;
+}
+
+export interface MigrationStorage {
+  osStorage: Map<string, OmniScriptStorage>;
+  fcStorage: Map<string, FlexcardStorage>;
+}
+
+export interface Storage {
+  migrationStatus?: string;
+  message?: string;
+}
+
+export interface OmniScriptStorage extends Storage {
+  type: string;
+  subtype: string;
+  language: string;
+}
+
+export interface FlexcardStorage extends Storage {
+  type: string;
+  subtype: string;
 }

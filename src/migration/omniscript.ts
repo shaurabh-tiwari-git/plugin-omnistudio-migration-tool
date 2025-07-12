@@ -13,7 +13,7 @@ import {
   SortDirection,
 } from '../utils';
 import { BaseMigrationTool } from './base';
-import { MigrationResult, MigrationTool, TransformData, UploadRecordResult } from './interfaces';
+import { MigrationResult, MigrationStorage, MigrationTool, TransformData, UploadRecordResult } from './interfaces';
 import { ObjectMapping } from './interfaces';
 import { NetUtils, RequestMethod } from '../utils/net';
 import { Connection, Messages } from '@salesforce/core';
@@ -32,6 +32,7 @@ import { createProgressBar } from './base';
 export class OmniScriptMigrationTool extends BaseMigrationTool implements MigrationTool {
   private readonly exportType: OmniScriptExportType;
   private readonly allVersions: boolean;
+  private readonly storage: MigrationStorage;
 
   // Source Custom Object Names
   static readonly OMNISCRIPT_NAME = 'OmniScript__c';
@@ -51,11 +52,13 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     logger: Logger,
     messages: Messages,
     ux: UX,
-    allVersions: boolean
+    allVersions: boolean,
+    storage?: MigrationStorage
   ) {
     super(namespace, connection, logger, messages, ux);
     this.exportType = exportType;
     this.allVersions = allVersions;
+    this.storage = storage;
   }
 
   getName(): string {
@@ -627,6 +630,9 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         }
 
         osUploadResponse.warnings = osUploadResponse.warnings || [];
+        osUploadResponse.type = mappedOmniScript[OmniScriptMappings.Type__c];
+        osUploadResponse.subtype = mappedOmniScript[OmniScriptMappings.SubType__c];
+        osUploadResponse.language = mappedOmniScript[OmniScriptMappings.Language__c];
 
         const originalOsName =
           omniscript[this.namespacePrefix + 'Type__c'] +
@@ -708,6 +714,8 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     }
     progressBar.stop();
 
+    this.prepareStorage(osUploadInfo, originalOsRecords);
+
     const objectMigrationResults: MigrationResult[] = [];
 
     if (this.exportType === OmniScriptExportType.All || this.exportType === OmniScriptExportType.IP) {
@@ -748,6 +756,45 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       records: recordMap,
       results: resultMap,
     };
+  }
+
+  private prepareStorage(results: Map<string, UploadRecordResult>, records: Map<string, any>) {
+    Logger.logVerbose('Started preparing storage');
+
+    Logger.logVerbose('Seeting key in storeage ABCD');
+
+    this.storage.osStorage.set('ABCDEFGHI', {
+      type: 'ABCD',
+      subtype: 'EFGHIJKLMNOP',
+      language: 'QRSTUVWXYZ',
+      migrationStatus: 'true',
+    });
+
+    for (let key of Array.from(records.keys())) {
+      try {
+        let oldrecord = records.get(key);
+        let newrecord = results.get(key);
+
+        let oldType = oldrecord[this.namespacePrefix + 'Type__c'];
+        let oldSubtype = oldrecord[this.namespacePrefix + 'SubType__c'];
+        let oldLanguage = oldrecord[this.namespacePrefix + 'Language__c'];
+
+        // newrecord is undefined. Will need to populate error
+        let newType = newrecord['type'];
+        let newSubtype = newrecord['subtype'];
+        let newLanguage = newrecord['language']; // Coming as undefined - newLanguage for migrated record
+
+        let finalKey = newType + newSubtype + newLanguage;
+        this.storage.osStorage.set(finalKey, {
+          type: oldType,
+          subtype: oldSubtype,
+          language: oldLanguage,
+          migrationStatus: 'true',
+        });
+      } catch (error) {
+        Logger.logVerbose(error);
+      }
+    }
   }
 
   // Get All OmniScript__c records i.e All IP & OS
