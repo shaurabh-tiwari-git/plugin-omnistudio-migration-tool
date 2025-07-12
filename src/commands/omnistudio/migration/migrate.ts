@@ -237,6 +237,7 @@ export default class Migrate extends OmniStudioBaseCommand {
           name: cls.getName(),
           errors: [ex.message],
         });
+        Logger.error(messages.getMessage('cleaningFailed', [cls.getName()]));
       }
     }
     return objectMigrationResults;
