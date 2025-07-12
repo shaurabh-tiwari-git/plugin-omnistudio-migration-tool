@@ -26,17 +26,14 @@ export class OmniGlobalAutoNumberPrefManager {
   /**
    * Enable OmniGlobalAutoNumberPref
    */
-  public async enable(): Promise<boolean> {
-    try {
-      await this.connection.metadata.update('OmniStudioSettings', [
-        {
-          fullName: 'OmniStudio',
-          enableOmniGlobalAutoNumberPref: 'true',
-        } as MetadataInfo,
-      ]);
-      return true;
-    } catch (error) {
-      return false;
-    }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public async enable(): Promise<any> {
+    const result = await this.connection.metadata.update('OmniStudioSettings', [
+      {
+        fullName: 'OmniStudio',
+        enableOmniGlobalAutoNumberPref: 'true',
+      } as MetadataInfo,
+    ]);
+    return result;
   }
 }

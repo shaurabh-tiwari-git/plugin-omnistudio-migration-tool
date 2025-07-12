@@ -42,8 +42,10 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
     const prefManager = new OmniGlobalAutoNumberPrefManager(this.connection);
 
     // Pre-migration checks
-    await this.performPreMigrationChecks(prefManager);
-
+    const success = await this.performPreMigrationChecks(prefManager);
+    if (!success) {
+      return [];
+    }
     // Migrate Global Auto Number data
     const migrationResult = await this.migrateGlobalAutoNumberData();
 
@@ -58,35 +60,30 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
    * This should be called after successful migration
    */
   private async postMigrationCleanup(
-    uploadInfo?: Map<string, UploadRecordResult>,
-    prefManager?: OmniGlobalAutoNumberPrefManager
+    uploadInfo: Map<string, UploadRecordResult>,
+    prefManager: OmniGlobalAutoNumberPrefManager
   ): Promise<void> {
     try {
       Logger.log(this.messages.getMessage('startingPostMigrationCleanup'));
-
       // Validate that all objects are successfully migrated before truncation
-      if (uploadInfo) {
-        this.validateMigrationSuccess(uploadInfo);
+      const success = this.validateMigrationSuccess(uploadInfo);
+      if (!success) {
+        return;
       }
-
       // Delete source GlobalAutoNumberSetting__c records using the same truncate pattern
       await super.truncate(this.namespacePrefix + GlobalAutoNumberMigrationTool.GLOBAL_AUTO_NUMBER_SETTING_NAME);
 
       // Enable the org preference after successful cleanup
-      if (prefManager) {
-        const success = await prefManager.enable();
-        if (success) {
-          Logger.log(this.messages.getMessage('omniGlobalAutoNumberPrefEnabled'));
-        } else {
-          Logger.error(this.messages.getMessage('errorEnablingOmniGlobalAutoNumberPref'));
-        }
+      const result = await prefManager.enable();
+      if (result?.success) {
+        Logger.log(this.messages.getMessage('omniGlobalAutoNumberPrefEnabled'));
+      } else {
+        Logger.error(this.messages.getMessage('errorEnablingOmniGlobalAutoNumberPref'));
+        Logger.error(result?.errors?.message);
       }
-
       Logger.log(this.messages.getMessage('postMigrationCleanupCompleted'));
     } catch (error) {
       Logger.error(this.messages.getMessage('errorDuringPostMigrationCleanup'));
-      Logger.error(JSON.stringify(error));
-      throw error;
     }
   }
 
@@ -94,40 +91,35 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
    * Validate that all Global Auto Number objects are successfully migrated
    * before proceeding with source object truncation
    */
-  private validateMigrationSuccess(uploadInfo: Map<string, UploadRecordResult>): void {
-    try {
-      // Check if all uploaded records have success: true
-      const failedRecords = Array.from(uploadInfo.values()).filter((result) => !result.success);
-
-      if (failedRecords.length > 0) {
-        const failedCount = failedRecords.length;
-        const totalCount = uploadInfo.size;
-        throw new Error(
-          this.messages.getMessage('incompleteMigrationDetected', [totalCount, totalCount - failedCount])
-        );
-      }
-    } catch (error) {
-      Logger.error(this.messages.getMessage('migrationValidationFailed'));
-      Logger.error(JSON.stringify(error));
-      throw error;
+  private validateMigrationSuccess(uploadInfo: Map<string, UploadRecordResult>): boolean {
+    // Check if all uploaded records have success: true
+    const failedRecords = Array.from(uploadInfo.values()).filter((result) => !result.success);
+    if (!failedRecords.length) {
+      return true;
     }
+    const failedCount = failedRecords.length;
+    const totalCount = uploadInfo.size;
+    Logger.error(this.messages.getMessage('incompleteMigrationDetected', [totalCount, totalCount - failedCount]));
+    Logger.error(this.messages.getMessage('migrationValidationFailed'));
+    return false;
   }
 
-  private async performPreMigrationChecks(prefManager: OmniGlobalAutoNumberPrefManager): Promise<void> {
+  private async performPreMigrationChecks(prefManager: OmniGlobalAutoNumberPrefManager): Promise<boolean> {
     try {
       // Check if Global Auto Number preference is already enabled
       const isEnabled = await prefManager.isEnabled();
       if (isEnabled) {
         const errorMessage = this.messages.getMessage('globalAutoNumberPrefEnabledError');
         Logger.error(errorMessage);
-        throw new Error(errorMessage);
+        return false;
       }
 
       // Check rollback flags using existing utility
       const rollbackFlags = await OrgPreferences.checkRollbackFlags(this.connection);
       const enabledFlags = rollbackFlags.filter((flag) => GlobalAutoNumberMigrationTool.ROLLBACK_FLAGS.includes(flag));
-
-      if (enabledFlags.length > 0) {
+      if (enabledFlags.length === 0) {
+        return true;
+      } else if (enabledFlags.length > 0) {
         let errorMessage: string;
         if (enabledFlags.includes('RollbackIPChanges') && enabledFlags.includes('RollbackDRChanges')) {
           errorMessage = this.messages.getMessage('bothRollbackFlagsEnabledError');
@@ -136,12 +128,12 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
         } else if (enabledFlags.includes('RollbackDRChanges')) {
           errorMessage = this.messages.getMessage('rollbackDRFlagEnabledError');
         }
-        Logger.error(errorMessage);
-        throw new Error(errorMessage);
+        Logger.error(this.messages.getMessage(errorMessage));
+        return false;
       }
     } catch (error) {
       Logger.error(this.messages.getMessage('preMigrationChecksFailed'));
-      throw error;
+      return false;
     }
   }
 
@@ -229,8 +221,6 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
       const globalAutoNumberAssessmentInfos = this.processGlobalAutoNumberComponents(globalAutoNumbers);
       return globalAutoNumberAssessmentInfos;
     } catch (err) {
-      Logger.error(JSON.stringify(err));
-      Logger.error(err.stack);
       return [];
     }
   }
@@ -253,9 +243,6 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
           infos: [],
           warnings: [this.messages.getMessage('unexpectedError')],
         });
-        const error = e as Error;
-        Logger.error(JSON.stringify(error));
-        Logger.error(error.stack);
       }
       progressBar.update(++progressCounter);
     }
