@@ -57,7 +57,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     }),
     relatedobjects: flags.string({
       char: 'r',
-      description: messages.getMessage('apexLwc'),
+      description: messages.getMessage('apexLwc'), // ME123 - TODO ALETER THE MESSAGE
     }),
     verbose: flags.builtin({
       type: 'builtin',
@@ -79,7 +79,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, complexity
   public async runMigration(): Promise<any> {
     let apiVersion = this.flags.apiversion as string;
     const migrateOnly = (this.flags.only || '') as string;
@@ -126,7 +126,8 @@ export default class Migrate extends OmniStudioBaseCommand {
     let targetApexNamespace: string;
     if (relatedObjects) {
       // To-Do: Add LWC to valid options when GA is released
-      const validOptions = [Constants.Apex];
+      // ME - Here add exp site option
+      const validOptions = [Constants.Apex, Constants.ExpSites];
       objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
       // Validate input
       for (const obj of objectsToProcess) {
@@ -138,9 +139,31 @@ export default class Migrate extends OmniStudioBaseCommand {
       // Check for general consent to make modifications with OMT
       const generalConsent = await this.getGeneralConsent();
       if (generalConsent) {
+        if (objectsToProcess.includes(Constants.ExpSites)) {
+          const expMetadataApiConsent = await this.getExpSiteMetadataEnableConsent(); // ME - if false then dont proceed further and return
+
+          Logger.logVerbose(`The consent for exp site is  ${expMetadataApiConsent}`);
+
+          let isSuccessfullyenabled = false;
+          if (expMetadataApiConsent) {
+            isSuccessfullyenabled = await OrgPreferences.enableExperienceBundleMetadataAPI(conn);
+          }
+
+          if (!expMetadataApiConsent || !isSuccessfullyenabled) {
+            Logger.logVerbose(
+              'Since either consent is not given or api could not able enabled the experience sites would not be processed'
+            );
+            objectsToProcess = objectsToProcess.filter((obj) => obj !== 'exp');
+          }
+
+          Logger.logVerbose(`Objects to process are ${JSON.stringify(objectsToProcess)}`);
+        }
+
         // Use ProjectPathUtil for APEX project folder selection (matches assess.ts logic)
         projectPath = await ProjectPathUtil.getProjectPath(messages, true);
         targetApexNamespace = await this.getTargetApexNamespace(objectsToProcess, targetApexNamespace);
+      } else {
+        // TODO - Raise BUG - The general consent is not given, empty related objects here
       }
     }
 
@@ -183,6 +206,8 @@ export default class Migrate extends OmniStudioBaseCommand {
 
     let actionItems = [];
     actionItems = await this.setDesignersToUseStandardDataModel(namespace);
+
+    // ME - 123 Revert the digital experience metadata api, what if it was already enabled?
 
     await ResultsBuilder.generateReport(
       objectMigrationResults,
@@ -345,6 +370,23 @@ export default class Migrate extends OmniStudioBaseCommand {
     while (consent === null) {
       try {
         consent = await Logger.confirm(messages.getMessage('userConsentMessage'));
+      } catch (error) {
+        Logger.log(messages.getMessage('invalidYesNoResponse'));
+        consent = null;
+      }
+    }
+
+    return consent;
+  }
+
+  private async getExpSiteMetadataEnableConsent(): Promise<boolean> {
+    let consent: boolean | null = null;
+
+    while (consent === null) {
+      try {
+        consent = await Logger.confirm(
+          'By proceeding further, you hereby consent to enable digital experience metadata api'
+        );
       } catch (error) {
         Logger.log(messages.getMessage('invalidYesNoResponse'));
         consent = null;

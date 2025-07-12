@@ -487,7 +487,8 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
   async migrate(): Promise<MigrationResult[]> {
     // Get All Records from OmniScript__c (IP & OS Parent Records)
-    const omniscripts = await this.getAllOmniScripts();
+    // const omniscripts = await this.getAllOmniScripts();
+    const omniscripts = [];
     const functionDefinitionMetadata = await getAllFunctionMetadata(this.namespace, this.connection);
     populateRegexForFunctionMetadata(functionDefinitionMetadata);
 

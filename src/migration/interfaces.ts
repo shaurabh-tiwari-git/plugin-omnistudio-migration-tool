@@ -91,3 +91,50 @@ export interface RelatedObjectMigrationResult {
   apexClasses: string[];
   lwcComponents: string[];
 }
+
+export interface Metadata {
+  regions: Region[];
+  key: unknown;
+}
+
+export interface PageJson {
+  appPageId: string;
+  componentName: string;
+  dataProviders: unknown[]; // Replace 'any' with a specific type if known
+  id: string;
+  label: string;
+  regions: Region[];
+  themeLayoutType: string;
+  type: string;
+  viewType: string;
+}
+
+export interface Region {
+  id: string;
+  regionName: string;
+  type: string;
+  components?: Component[]; // Optional, as some regions don't have components
+}
+
+export interface Component {
+  componentAttributes: ComponentAttributes;
+  componentName: string;
+  id: string;
+  renderPriority?: string;
+  renditionMap: unknown; // Replace with better type if known
+  type: string;
+  subtype?: string;
+  language?: string;
+}
+
+export interface ComponentAttributes {
+  // This is a union of possible structures. You can separate them if needed.
+  layout?: string;
+  params?: string;
+  standAlone?: boolean;
+  target?: string;
+
+  customHeadTags?: string;
+  description?: string;
+  title?: string;
+}
