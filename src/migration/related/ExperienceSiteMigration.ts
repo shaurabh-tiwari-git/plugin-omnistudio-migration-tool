@@ -61,8 +61,12 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
         try {
           Logger.logVerbose('Started processing the file - ' + file.name);
           const experienceSiteInfo = this.processExperienceSite(file, type);
-          experienceSiteAssessmentInfo.push(experienceSiteInfo);
-          Logger.logVerbose('Successfully processed experience site file');
+          if (experienceSiteInfo?.hasOmnistudioContent === true) {
+            Logger.logVerbose('Successfully processed experience site file having vlocity wrapper');
+            experienceSiteAssessmentInfo.push(experienceSiteInfo);
+          } else {
+            Logger.logVerbose('File does not contain omnistudio wrapper');
+          }
         } catch (err) {
           Logger.error('Error processing experience site file' + file.name);
           Logger.error(JSON.stringify(err));
@@ -75,6 +79,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
   public processExperienceSite(file: File, type = 'migration'): ExperienceSiteAssessmentInfo {
     // Here we are reading the file. Before only the metadata is being fetchedl
     if (file.name === 'lwcos') {
+      let hasOmnistudioContent = false;
       const fileContent = fs.readFileSync(file.location, 'utf8');
       this.printStorage();
 
@@ -105,6 +110,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
             // TODO - Replace with namespace - targetNamespace, check if namespace or targetnamespace, considering targetNamespace for now
             if (component?.componentName === lookupComponentName) {
               Logger.logVerbose('Omnistudio wrapper component found');
+              hasOmnistudioContent = true;
               component.componentName = targetComponentName;
 
               if (component?.componentAttributes?.target !== undefined) {
@@ -124,6 +130,9 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
                   currentAttribute['language'] = targetData.language;
 
                   // TODO - LEFT TO REMOVE TARGET
+                  if (component?.componentAttributes && 'target' in component.componentAttributes) {
+                    delete component.componentAttributes.target;
+                  }
                 }
               }
             }
@@ -153,6 +162,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
         infos: updateMessage,
         path: file.location,
         diff: JSON.stringify(difference),
+        hasOmnistudioContent,
       };
     } else {
       Logger.logVerbose('File name is ' + file.name);
