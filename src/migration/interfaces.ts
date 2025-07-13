@@ -148,8 +148,8 @@ export interface MigrationStorage {
 }
 
 export interface Storage {
-  migrationStatus?: string;
-  message?: string;
+  migrationSuccess?: boolean;
+  error?: string[];
 }
 
 export interface OmniScriptStorage extends Storage {

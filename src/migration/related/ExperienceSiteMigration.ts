@@ -4,7 +4,7 @@ import { Org, Messages } from '@salesforce/core';
 import { FileUtil, File } from '../../utils/file/fileUtil';
 import { Logger } from '../../utils/logger';
 import { Constants } from '../../utils/constants/stringContants';
-import { MigrationStorage, OmniScriptStorage, PageJson, Region } from '../interfaces';
+import { Component, ComponentAttributes, MigrationStorage, OmniScriptStorage, PageJson, Region } from '../interfaces';
 import { FileDiffUtil } from '../../utils/lwcparser/fileutils/FileDiffUtil';
 import { ExperienceSiteAssessmentInfo } from '../../utils';
 import { BaseRelatedObjectMigration } from './BaseRealtedObjectMigration';
@@ -35,12 +35,12 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
   }
 
   public migrate(): ExperienceSiteAssessmentInfo[] {
-    Logger.logVerbose('StartingExperienceSiteMigration');
+    Logger.logVerbose('Starting experience sites migration');
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
     Logger.logVerbose('Started processing the experience sites');
     const experienceSiteInfo = this.processExperienceSites(this.projectPath, 'migration');
-    Logger.info('successfullyProcessed Experience Sites for Migration');
+    Logger.info('Successfully processed experience sites for migration');
     shell.cd(pwd);
     return experienceSiteInfo;
   }
@@ -53,29 +53,20 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     const experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo[] = [];
     for (const directory of directoryMap.keys()) {
       const fileArray = directoryMap.get(directory);
-
-      Logger.logVerbose('------------------------------------------------');
-      Logger.logVerbose('The directory path is ' + directory);
       for (const file of fileArray) {
         if (file.ext !== '.json') {
-          Logger.logVerbose('skippingNonJsonFile file.name - ' + file.name);
+          Logger.logVerbose('Skipping non-JSON file - ' + file.name);
           continue;
         }
         try {
           Logger.logVerbose('Started processing the file - ' + file.name);
           const experienceSiteInfo = this.processExperienceSite(file, type);
-
           experienceSiteAssessmentInfo.push(experienceSiteInfo);
-          // TODO - Later fileAssessmentInfo.push(apexAssementInfo);
-          Logger.logVerbose('successfullyProcessedExperienceSite');
+          Logger.logVerbose('Successfully processed experience site file');
         } catch (err) {
-          Logger.error('errorProcessingExperienceSite' + file.name);
+          Logger.error('Error processing experience site file' + file.name);
           Logger.error(JSON.stringify(err));
-          if (err instanceof Error) {
-            Logger.error(err.stack);
-          }
         }
-        Logger.logVerbose('successfullyProcessedExperienceSite');
       }
     }
     return experienceSiteAssessmentInfo;
@@ -85,82 +76,77 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     // Here we are reading the file. Before only the metadata is being fetchedl
     if (file.name === 'lwcos') {
       const fileContent = fs.readFileSync(file.location, 'utf8');
-      Logger.logVerbose('ABCD - Printing the parsed file content' + file.name);
-      Logger.logVerbose(JSON.stringify(fileContent));
+      this.printStorage();
 
-      const abc = JSON.parse(fileContent) as PageJson; // Later covert to a wrapper so that later can change easily with 3rd party if required
-      const normalizedOriginal = JSON.stringify(abc, null, 2);
+      const experienceSiteParsedJSON = JSON.parse(fileContent) as PageJson;
+      const normalizedOriginalFileContent = JSON.stringify(experienceSiteParsedJSON, null, 2);
 
-      Logger.logVerbose('Printing the parsed content');
-      Logger.logVerbose(JSON.stringify(abc));
+      const regions: Region[] = experienceSiteParsedJSON['regions'];
+      // const attrsToRemove = ['target'];
 
-      // Now we have to take regions array and iterate over it
-      const regions: Region[] = abc['regions'];
+      // TODO - When will it be Flexcard
+      // TODO - Namespace const lookupComponentName = `${this.targetNamespace}:vlocityLWCOmniWrapper`;
+      Logger.logVerbose('The target namspace is ' + this.targetNamespace);
+      const lookupComponentName = 'vlocity_ins:vlocityLWCOmniWrapper';
+      const targetComponentName = 'runtime_omnistudio:omniscript';
+      const warningMessage: string[] = [];
+      const updateMessage: string[] = [];
 
+      // TODO - THERE SEEMS TO BE ONLY ONE REGION
       for (const region of regions) {
-        Logger.logVerbose('-------');
-        Logger.logVerbose('Now printing the regions ABCD ' + JSON.stringify(region));
+        Logger.logVerbose('The current region being processed is' + JSON.stringify(region));
 
-        // Now for each region we want to process the components and change its values
-        const regionComponents = region['components'];
+        const regionComponents: Component[] = region['components'];
 
         if (Array.isArray(regionComponents)) {
           for (const component of regionComponents) {
-            Logger.logVerbose('----Now printing the components----');
-            Logger.logVerbose('Printing the component ' + JSON.stringify(component));
+            Logger.logVerbose('The current component being processed is ' + JSON.stringify(component));
 
-            // TODO - Replace with namespace - targetNamespace
-            Logger.logVerbose('The target namespace is ' + this.targetNamespace);
-            if (component?.componentName === 'vlocity_ins:vlocityLWCOmniWrapper') {
-              Logger.logVerbose('EUREKA - Component has been found -------------- EUREKA');
-              component.componentName = 'KAPOOR';
+            // TODO - Replace with namespace - targetNamespace, check if namespace or targetnamespace, considering targetNamespace for now
+            if (component?.componentName === lookupComponentName) {
+              Logger.logVerbose('Omnistudio wrapper component found');
+              component.componentName = targetComponentName;
 
-              component.type = 'ABC';
-              component.subtype = 'DEF';
-              component.language = 'GHI';
+              if (component?.componentAttributes?.target !== undefined) {
+                const currentAttribute: ComponentAttributes = component.componentAttributes;
+                const oldTypeSubtypeLanguage = component?.componentAttributes?.target;
 
-              // Here just checking if we are able to get the data till here
+                // Use storage to find the updated properties
+                const targetData: OmniScriptStorage = this.storage.osStorage.get(oldTypeSubtypeLanguage);
+                if (
+                  targetData === undefined ||
+                  (targetData?.migrationSuccess === false && warningMessage.length === 0)
+                ) {
+                  warningMessage.push(`${oldTypeSubtypeLanguage} needs manual intervention`);
+                } else {
+                  currentAttribute['type'] = targetData.type;
+                  currentAttribute['subType'] = targetData.subtype;
+                  currentAttribute['language'] = targetData.language;
 
-              Logger.logVerbose(
-                'In experience site migration checking what storage looks like ' + JSON.stringify(this.storage)
-              );
-
-              Logger.logVerbose(
-                `In experience OS site migration checking what storage looks like ${JSON.stringify(
-                  this.storage.osStorage
-                )}`
-              );
-
-              Logger.logVerbose(
-                `In experience flexcards site migration checking what storage looks like ${JSON.stringify(
-                  this.storage.fcStorage
-                )}`
-              );
-
-              const targetData: OmniScriptStorage = this.storage.osStorage.get('ABCDEFGHI');
-              Logger.logVerbose('Printing the data - ' + JSON.stringify(targetData));
+                  // TODO - LEFT TO REMOVE TARGET
+                }
+              }
             }
           }
         }
-
-        // In each region take the object having components key. This value of that will be an object array lets call it RegionComponents
-        // For each RegionComponents, iterate over all the components and replace the keys with hardcoded values.
       }
 
-      Logger.logVerbose('Now printing the updated object' + JSON.stringify(abc));
+      Logger.logVerbose('Now printing the updated object' + JSON.stringify(experienceSiteParsedJSON));
 
-      const noarmalizeUpdatedFileContent = JSON.stringify(abc, null, 2); // Pretty-print with 2 spaces
-      const difference = new FileDiffUtil().getFileDiff(file.name, normalizedOriginal, noarmalizeUpdatedFileContent);
+      const noarmalizeUpdatedFileContent = JSON.stringify(experienceSiteParsedJSON, null, 2); // Pretty-print with 2 spaces
+      const difference = new FileDiffUtil().getFileDiff(
+        file.name,
+        normalizedOriginalFileContent,
+        noarmalizeUpdatedFileContent
+      );
 
       Logger.logVerbose('Printing the difference' + JSON.stringify(difference));
 
-      if (normalizedOriginal !== noarmalizeUpdatedFileContent) {
+      if (normalizedOriginalFileContent !== noarmalizeUpdatedFileContent) {
         Logger.logVerbose('Updating the file content');
         fs.writeFileSync(file.location, noarmalizeUpdatedFileContent, 'utf8');
       }
 
-      const warningMessage: string[] = [];
-      const updateMessage: string[] = [];
       return {
         name: file.name,
         warnings: warningMessage,
@@ -172,11 +158,29 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       Logger.logVerbose('File name is ' + file.name);
       return {
         name: file.name,
-        warnings: [],
+        warnings: ['Error occurred while processing the file'],
         infos: [],
         path: file.location,
         diff: '[]',
       };
     }
+  }
+
+  private printStorage(): void {
+    Logger.logVerbose('Debug - Printing the storage from experience sites');
+    Logger.logVerbose(
+      JSON.stringify(this.storage, (key, value) => {
+        if (value instanceof Map) {
+          const safeEntries = [...value.entries()].map(([k, v]) => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            return [k, v ?? { note: 'Value was undefined' }];
+          });
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+          return Object.fromEntries(safeEntries);
+        }
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return value;
+      })
+    );
   }
 }
