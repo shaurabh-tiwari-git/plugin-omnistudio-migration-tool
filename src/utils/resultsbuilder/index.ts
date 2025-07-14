@@ -244,7 +244,7 @@ export class ResultsBuilder {
         rowId: `${this.rowClass}${this.rowId++}`,
         data: [
           createRowDataParam('name', item.name, true, 1, 1, false),
-          createRowDataParam('path', item.path, false, 1, 1, false),
+          createRowDataParam('path', item.name, false, 1, 1, true, item.path, item.name + '.cls'),
           createRowDataParam(
             'diff',
             item.name + 'diff',

@@ -55,7 +55,27 @@ export class ApexAssessmentReporter {
       rowId: `${this.rowIdPrefix}${this.rowId++}`,
       data: [
         createRowDataParam('name', apexAssessmentInfo.name, true, 1, 1, false),
-        createRowDataParam('fileReference', apexAssessmentInfo.path, false, 1, 1, false),
+        createRowDataParam(
+          'fileReference',
+          apexAssessmentInfo.name,
+          false,
+          1,
+          1,
+          true,
+          apexAssessmentInfo.path,
+          apexAssessmentInfo.name + '.cls'
+        ),
+        createRowDataParam(
+          'status',
+          apexAssessmentInfo.warnings.length > 0 ? 'Has Warnings' : 'Can be Automated',
+          false,
+          1,
+          1,
+          false,
+          undefined,
+          undefined,
+          apexAssessmentInfo.warnings.length > 0 ? 'text-error' : 'text-success'
+        ),
         createRowDataParam(
           'diff',
           apexAssessmentInfo.name + 'diff',
@@ -118,6 +138,11 @@ export class ApexAssessmentReporter {
             name: 'File Reference',
             colspan: 1,
             rowspan: 1,
+          },
+          {
+            name: 'Assessment Status',
+            colspan: 1,
+            rowspan: 2,
           },
           {
             name: 'Diff',
