@@ -32,6 +32,7 @@ export class FileDiffUtil {
     }
     return result;
   }
+
   /*
     This function provides the diff html based on the diff array recieved
     linelimit is the number of lines we want in the html, this is required as we are showing only few lines in the table not the entire diff
@@ -123,6 +124,78 @@ export class FileDiffUtil {
     } catch (error) {
       Logger.error(`Error in FileDiffUtil: ${String(error)}`);
     }
+  }
+
+  public getFullFileDiff(filename: string, originalFileContent: string, modifiedFileContent: string): DiffPair[] {
+    const originalLines = originalFileContent.split('\n');
+    const modifiedLines = modifiedFileContent.split('\n');
+    const patch: string = createPatch('', originalFileContent, modifiedFileContent);
+    const patchLines = patch.split('\n');
+
+    let origIdx = 0;
+    let modIdx = 0;
+    const result: DiffPair[] = [];
+
+    // Skip the first line of the patch (the file header)
+    let i = 0;
+    while (i < patchLines.length) {
+      const line = patchLines[i];
+      const hunkHeader = /^@@ -(\d+),?(\d*) \+(\d+),?(\d*) @@/;
+      const match = hunkHeader.exec(line);
+
+      if (match) {
+        // Move to the start of the hunk
+        const origStart = parseInt(match[1], 10) - 1;
+        const modStart = parseInt(match[3], 10) - 1;
+
+        // Emit unchanged lines before the hunk
+        while (origIdx < origStart && modIdx < modStart) {
+          result.push({ old: originalLines[origIdx], new: modifiedLines[modIdx] });
+          origIdx++;
+          modIdx++;
+        }
+
+        i++;
+        // Now process the hunk lines
+        while (i < patchLines.length && !patchLines[i].startsWith('@@')) {
+          const hunkLine = patchLines[i];
+          if (hunkLine.startsWith('-')) {
+            result.push({ old: originalLines[origIdx], new: null });
+            origIdx++;
+          } else if (hunkLine.startsWith('+')) {
+            result.push({ old: null, new: modifiedLines[modIdx] });
+            modIdx++;
+          } else if (hunkLine.startsWith(' ')) {
+            result.push({ old: originalLines[origIdx], new: modifiedLines[modIdx] });
+            origIdx++;
+            modIdx++;
+          }
+          i++;
+        }
+      } else {
+        i++;
+      }
+    }
+
+    // Emit any remaining unchanged lines at the end
+    while (origIdx < originalLines.length && modIdx < modifiedLines.length) {
+      result.push({ old: originalLines[origIdx], new: modifiedLines[modIdx] });
+      origIdx++;
+      modIdx++;
+    }
+    // If there are trailing additions or deletions
+    while (origIdx < originalLines.length) {
+      result.push({ old: originalLines[origIdx], new: null });
+      origIdx++;
+    }
+    while (modIdx < modifiedLines.length) {
+      result.push({ old: null, new: modifiedLines[modIdx] });
+      modIdx++;
+    }
+
+    // Only return if there are any changes
+    const hasChanges = result.some((diff) => diff.old !== diff.new);
+    return hasChanges ? result : [];
   }
 
   public getXMLDiff(originalFileContent: string, modifiedFileContent: string): DiffPair[] {
