@@ -60,8 +60,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
 
     // Query all dataraptors and the respective items
     DebugTimer.getInstance().lap('Query data raptors');
-    // const dataRaptors = await this.getAllDataRaptors();
-    const dataRaptors = [];
+    const dataRaptors = await this.getAllDataRaptors();
     const dataRaptorItemsData = await this.getAllItems();
 
     // Query all the functionMetadata with all required fields
