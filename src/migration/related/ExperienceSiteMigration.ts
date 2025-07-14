@@ -47,7 +47,10 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
 
   public processExperienceSites(dir: string, type = 'migration'): ExperienceSiteAssessmentInfo[] {
     dir += EXPERIENCE_SITES_PATH;
-    const directoryMap: Map<string, File[]> = FileUtil.readAllFiles(dir);
+    Logger.logVerbose('Started reading the files');
+    const directoryMap: Map<string, File[]> = FileUtil.getAllFilesInsideDirectory(dir);
+    Logger.logVerbose('Printing the directory map');
+    this.printDirectoryMap(directoryMap);
 
     // TODO - Can do chunking here later, so as to minimize the memory usage
     const experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo[] = [];
@@ -77,103 +80,90 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
   }
 
   public processExperienceSite(file: File, type = 'migration'): ExperienceSiteAssessmentInfo {
-    // Here we are reading the file. Before only the metadata is being fetchedl
-    if (file.name === 'lwcos') {
-      let hasOmnistudioContent = false;
-      const fileContent = fs.readFileSync(file.location, 'utf8');
-      this.printStorage();
+    // Here we are reading the file. Before only the metadata is being fetched
+    Logger.logVerbose('DELTA - Processing for file' + file.name);
+    let hasOmnistudioContent = false;
+    const fileContent = fs.readFileSync(file.location, 'utf8');
+    this.printStorage();
 
-      const experienceSiteParsedJSON = JSON.parse(fileContent) as PageJson;
-      const normalizedOriginalFileContent = JSON.stringify(experienceSiteParsedJSON, null, 2);
+    const experienceSiteParsedJSON = JSON.parse(fileContent) as PageJson;
+    const normalizedOriginalFileContent = JSON.stringify(experienceSiteParsedJSON, null, 2);
 
-      const regions: Region[] = experienceSiteParsedJSON['regions'];
-      // const attrsToRemove = ['target'];
+    const regions: Region[] = experienceSiteParsedJSON['regions'];
+    // const attrsToRemove = ['target'];
 
-      // TODO - When will it be Flexcard
-      // TODO - Namespace const lookupComponentName = `${this.targetNamespace}:vlocityLWCOmniWrapper`;
-      Logger.logVerbose('The target namspace is ' + this.targetNamespace);
-      const lookupComponentName = 'vlocity_ins:vlocityLWCOmniWrapper';
-      const targetComponentName = 'runtime_omnistudio:omniscript';
-      const warningMessage: string[] = [];
-      const updateMessage: string[] = [];
+    // TODO - When will it be Flexcard
+    // TODO - Namespace const lookupComponentName = `${this.targetNamespace}:vlocityLWCOmniWrapper`;
+    Logger.logVerbose('The target namspace is ' + this.targetNamespace);
+    const lookupComponentName = 'vlocity_ins:vlocityLWCOmniWrapper';
+    const targetComponentName = 'runtime_omnistudio:omniscript';
+    const warningMessage: string[] = [];
+    const updateMessage: string[] = [];
 
-      // TODO - THERE SEEMS TO BE ONLY ONE REGION
-      for (const region of regions) {
-        Logger.logVerbose('The current region being processed is' + JSON.stringify(region));
+    // TODO - THERE SEEMS TO BE ONLY ONE REGION
+    for (const region of regions) {
+      Logger.logVerbose('The current region being processed is' + JSON.stringify(region));
 
-        const regionComponents: Component[] = region['components'];
+      const regionComponents: Component[] = region['components'];
 
-        if (Array.isArray(regionComponents)) {
-          for (const component of regionComponents) {
-            Logger.logVerbose('The current component being processed is ' + JSON.stringify(component));
+      if (Array.isArray(regionComponents)) {
+        for (const component of regionComponents) {
+          Logger.logVerbose('The current component being processed is ' + JSON.stringify(component));
 
-            // TODO - Replace with namespace - targetNamespace, check if namespace or targetnamespace, considering targetNamespace for now
-            if (component?.componentName === lookupComponentName) {
-              Logger.logVerbose('Omnistudio wrapper component found');
-              hasOmnistudioContent = true;
-              component.componentName = targetComponentName;
+          // TODO - Replace with namespace - targetNamespace, check if namespace or targetnamespace, considering targetNamespace for now
+          if (component?.componentName === lookupComponentName) {
+            Logger.logVerbose('Omnistudio wrapper component found');
+            hasOmnistudioContent = true;
+            component.componentName = targetComponentName;
 
-              if (component?.componentAttributes?.target !== undefined) {
-                const currentAttribute: ComponentAttributes = component.componentAttributes;
-                const oldTypeSubtypeLanguage = component?.componentAttributes?.target;
+            if (component?.componentAttributes?.target !== undefined) {
+              const currentAttribute: ComponentAttributes = component.componentAttributes;
+              const oldTypeSubtypeLanguage = component?.componentAttributes?.target;
 
-                // Use storage to find the updated properties
-                const targetData: OmniScriptStorage = this.storage.osStorage.get(oldTypeSubtypeLanguage);
-                if (
-                  targetData === undefined ||
-                  (targetData?.migrationSuccess === false && warningMessage.length === 0)
-                ) {
-                  warningMessage.push(`${oldTypeSubtypeLanguage} needs manual intervention`);
-                } else {
-                  currentAttribute['type'] = targetData.type;
-                  currentAttribute['subType'] = targetData.subtype;
-                  currentAttribute['language'] = targetData.language;
+              // Use storage to find the updated properties
+              const targetData: OmniScriptStorage = this.storage.osStorage.get(oldTypeSubtypeLanguage);
+              if (targetData === undefined || (targetData?.migrationSuccess === false && warningMessage.length === 0)) {
+                warningMessage.push(`${oldTypeSubtypeLanguage} needs manual intervention`);
+              } else {
+                currentAttribute['type'] = targetData.type;
+                currentAttribute['subType'] = targetData.subtype;
+                currentAttribute['language'] = targetData.language;
 
-                  // TODO - LEFT TO REMOVE TARGET
-                  if (component?.componentAttributes && 'target' in component.componentAttributes) {
-                    delete component.componentAttributes.target;
-                  }
+                // TODO - LEFT TO REMOVE TARGET
+                if (component?.componentAttributes && 'target' in component.componentAttributes) {
+                  delete component.componentAttributes.target;
                 }
               }
             }
           }
         }
       }
-
-      Logger.logVerbose('Now printing the updated object' + JSON.stringify(experienceSiteParsedJSON));
-
-      const noarmalizeUpdatedFileContent = JSON.stringify(experienceSiteParsedJSON, null, 2); // Pretty-print with 2 spaces
-      const difference = new FileDiffUtil().getFileDiff(
-        file.name,
-        normalizedOriginalFileContent,
-        noarmalizeUpdatedFileContent
-      );
-
-      Logger.logVerbose('Printing the difference' + JSON.stringify(difference));
-
-      if (normalizedOriginalFileContent !== noarmalizeUpdatedFileContent) {
-        Logger.logVerbose('Updating the file content');
-        fs.writeFileSync(file.location, noarmalizeUpdatedFileContent, 'utf8');
-      }
-
-      return {
-        name: file.name,
-        warnings: warningMessage,
-        infos: updateMessage,
-        path: file.location,
-        diff: JSON.stringify(difference),
-        hasOmnistudioContent,
-      };
-    } else {
-      Logger.logVerbose('File name is ' + file.name);
-      return {
-        name: file.name,
-        warnings: ['Error occurred while processing the file'],
-        infos: [],
-        path: file.location,
-        diff: '[]',
-      };
     }
+
+    Logger.logVerbose('Now printing the updated object' + JSON.stringify(experienceSiteParsedJSON));
+
+    const noarmalizeUpdatedFileContent = JSON.stringify(experienceSiteParsedJSON, null, 2); // Pretty-print with 2 spaces
+    const difference = new FileDiffUtil().getFileDiff(
+      file.name,
+      normalizedOriginalFileContent,
+      noarmalizeUpdatedFileContent
+    );
+
+    Logger.logVerbose('Printing the difference' + JSON.stringify(difference));
+
+    if (normalizedOriginalFileContent !== noarmalizeUpdatedFileContent) {
+      Logger.logVerbose('Updating the file content');
+      fs.writeFileSync(file.location, noarmalizeUpdatedFileContent, 'utf8');
+    }
+
+    return {
+      name: file.name,
+      warnings: warningMessage,
+      infos: updateMessage,
+      path: file.location,
+      diff: JSON.stringify(difference),
+      hasOmnistudioContent,
+    };
   }
 
   private printStorage(): void {
@@ -192,5 +182,27 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
         return value;
       })
     );
+  }
+
+  private printDirectoryMap(directoryMap: Map<string, File[]>): void {
+    if (directoryMap.size === 0) {
+      Logger.log('Directory map is empty - no files found');
+      return;
+    }
+
+    Logger.log(`Found ${directoryMap.size} directories with files:`);
+    Logger.log('='.repeat(50));
+
+    directoryMap.forEach((files, directoryPath) => {
+      Logger.log(`\nDirectory: ${directoryPath}`);
+      Logger.log(`Files (${files.length}):`);
+
+      files.forEach((file, index) => {
+        Logger.log(`  ${index + 1}. ${file.name}${file.ext}`);
+        Logger.log(`     Location: ${file.location}`);
+      });
+    });
+
+    Logger.log('='.repeat(50));
   }
 }
