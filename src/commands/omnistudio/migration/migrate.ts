@@ -9,7 +9,7 @@
  */
 import * as os from 'os';
 import { flags } from '@salesforce/command';
-import { Messages } from '@salesforce/core';
+import { Connection, Messages } from '@salesforce/core';
 import { ExecuteAnonymousResult } from 'jsforce';
 import OmniStudioBaseCommand from '../../basecommand';
 import { DataRaptorMigrationTool } from '../../../migration/dataraptor';
@@ -134,9 +134,9 @@ export default class Migrate extends OmniStudioBaseCommand {
     let projectPath: string;
     let objectsToProcess: string[] = [];
     let targetApexNamespace: string;
+    let isExperienceBundleMetadataAPIPreEnabled: boolean;
     if (relatedObjects) {
       // To-Do: Add LWC to valid options when GA is released
-      // ME - Here add exp site option
       const validOptions = [Constants.Apex, Constants.ExpSites];
       objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
       // Validate input
@@ -149,26 +149,7 @@ export default class Migrate extends OmniStudioBaseCommand {
       // Check for general consent to make modifications with OMT
       const generalConsent = await this.getGeneralConsent();
       if (generalConsent) {
-        if (objectsToProcess.includes(Constants.ExpSites)) {
-          const expMetadataApiConsent = await this.getExpSiteMetadataEnableConsent(); // ME - if false then dont proceed further and return
-
-          Logger.logVerbose(`The consent for exp site is  ${expMetadataApiConsent}`);
-
-          let isSuccessfullyenabled = false;
-          if (expMetadataApiConsent) {
-            isSuccessfullyenabled = await OrgPreferences.enableExperienceBundleMetadataAPI(conn);
-          }
-
-          if (!expMetadataApiConsent || !isSuccessfullyenabled) {
-            Logger.logVerbose(
-              'Since either consent is not given or api could not able enabled the experience sites would not be processed'
-            );
-            objectsToProcess = objectsToProcess.filter((obj) => obj !== 'exp');
-          }
-
-          Logger.logVerbose(`Objects to process are ${JSON.stringify(objectsToProcess)}`);
-        }
-
+        await this.handleExperienceSitePrerequisites(objectsToProcess, conn, isExperienceBundleMetadataAPIPreEnabled);
         // Use ProjectPathUtil for APEX project folder selection (matches assess.ts logic)
         projectPath = await ProjectPathUtil.getProjectPath(messages, true);
         targetApexNamespace = await this.getTargetApexNamespace(objectsToProcess, targetApexNamespace);
@@ -223,6 +204,12 @@ export default class Migrate extends OmniStudioBaseCommand {
       relatedObjectMigrationResult.lwcAssessmentInfos
     );
 
+    if (objectsToProcess.includes(Constants.ExpSites) && isExperienceBundleMetadataAPIPreEnabled === false) {
+      // If it was preenabled we dont need to revert it
+      // If we have switched it on. Switching it off again
+      await OrgPreferences.setExperienceBundleMetadataAPI(conn, false);
+    }
+
     let actionItems = [];
     actionItems = await this.setDesignersToUseStandardDataModel(namespace);
 
@@ -242,6 +229,37 @@ export default class Migrate extends OmniStudioBaseCommand {
 
     // Return results needed for --json flag
     return { objectMigrationResults };
+  }
+
+  private async handleExperienceSitePrerequisites(
+    objectsToProcess: string[],
+    conn: Connection,
+    isExperienceBundleMetadataAPIPreEnabled: boolean
+  ): Promise<void> {
+    if (objectsToProcess.includes(Constants.ExpSites)) {
+      const expMetadataApiConsent = await this.getExpSiteMetadataEnableConsent(); // ME - if false then dont proceed further and return
+      Logger.logVerbose(`The consent for exp site is  ${expMetadataApiConsent}`);
+
+      if (expMetadataApiConsent === false) {
+        Logger.logVerbose('Consent for experience sites is not provided. Experience sites will not be processed');
+        objectsToProcess = objectsToProcess.filter((obj) => obj !== 'exp');
+        return;
+      }
+
+      isExperienceBundleMetadataAPIPreEnabled = await OrgPreferences.isExperienceBundleMetadataAPIEnabled(conn);
+      if (isExperienceBundleMetadataAPIPreEnabled === true) {
+        Logger.logVerbose('ExperienceBundle metadata api is already enabled');
+        return;
+      }
+
+      const isSuccessfullyenabled = await OrgPreferences.setExperienceBundleMetadataAPI(conn, true);
+      if (isSuccessfullyenabled === false) {
+        Logger.logVerbose('Since the api could not able enabled the experience sites would not be processed');
+        objectsToProcess = objectsToProcess.filter((obj) => obj !== 'exp');
+      }
+
+      Logger.logVerbose(`Objects to process are ${JSON.stringify(objectsToProcess)}`);
+    }
   }
 
   private async setDesignersToUseStandardDataModel(namespace: string): Promise<string[]> {

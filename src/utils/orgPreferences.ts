@@ -74,24 +74,56 @@ export class OrgPreferences {
   }
 
   /**
-   * Enables the ExperienceBundle Metadata API setting in Digital Experience Settings
+   * Checks if the ExperienceBundle Metadata API is already enabled
+   *
+   * @public
+   * @static
+   * @async
+   * @param {Connection} connection - Salesforce connection instance
+   * @throws {Error} If checking the setting fails
+   * @returns {Promise<boolean>} True if the ExperienceBundle Metadata API is enabled, false otherwise
+   */
+  public static async isExperienceBundleMetadataAPIEnabled(connection: Connection): Promise<boolean> {
+    try {
+      const result = await connection.metadata.read('ExperienceBundleSettings', ['ExperienceBundle']);
+      Logger.logVerbose(`The api is returning ${JSON.stringify(result)}`);
+
+      // Check if the result is valid and contains the expected property
+      if (result && Array.isArray(result) && result.length > 0) {
+        const settings = result[0] as ExperienceBundleSettingsMetadata;
+        return settings.enableExperienceBundleMetadata === true;
+      }
+
+      // If no settings found or property is undefined, assume it's disabled
+      return false;
+    } catch (error) {
+      // If the metadata type doesn't exist or there's an error, assume it's disabled
+      Logger.logVerbose('Unable to check ExperienceBundle Metadata API status');
+      return false;
+    }
+  }
+
+  /**
+   * Sets the ExperienceBundle Metadata API setting in Digital Experience Settings
    *
    * @public
    * @static
    * @async
    * @param {Connection} connection - Salesforce connection instance
    * @throws {Error} If enabling the setting fails
-   * @returns {Promise<void>}
+   * @returns {Promise<boolean>} True if successfully set, false otherwise
    */
-  public static async enableExperienceBundleMetadataAPI(connection: Connection): Promise<boolean> {
+  public static async setExperienceBundleMetadataAPI(connection: Connection, enable: boolean): Promise<boolean> {
     try {
+      // Enable the setting
       await connection.metadata.update('ExperienceBundleSettings', [
         {
           fullName: 'ExperienceBundle',
-          enableExperienceBundleMetadata: true,
+          enableExperienceBundleMetadata: enable,
         } as ExperienceBundleSettingsMetadata,
       ]);
-      Logger.logVerbose('Successfully enabled the experienceBundleMetadata API');
+
+      Logger.logVerbose(`Successfully set the experienceBundleMetadata API to ${enable}`);
       return true;
     } catch (error) {
       Logger.logVerbose(
