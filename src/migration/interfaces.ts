@@ -95,32 +95,27 @@ export interface RelatedObjectMigrationResult {
   lwcComponents: string[];
 }
 
-export interface Metadata {
-  regions: Region[];
-  key: unknown;
-}
-
-export interface PageJson {
+export interface ExpSitePageJson {
   appPageId: string;
   componentName: string;
   dataProviders: unknown[]; // Replace 'any' with a specific type if known
   id: string;
   label: string;
-  regions: Region[];
+  regions: ExpSiteRegion[];
   themeLayoutType: string;
   type: string;
   viewType: string;
 }
 
-export interface Region {
+export interface ExpSiteRegion {
   id: string;
   regionName: string;
   type: string;
-  components?: Component[]; // Optional, as some regions don't have components
+  components?: ExpSiteComponent[]; // Optional, as some regions don't have components
 }
 
-export interface Component {
-  componentAttributes: ComponentAttributes;
+export interface ExpSiteComponent {
+  componentAttributes: ExpSiteComponentAttributes;
   componentName: string;
   id: string;
   renderPriority?: string;
@@ -130,7 +125,7 @@ export interface Component {
   language?: string;
 }
 
-export interface ComponentAttributes {
+export interface ExpSiteComponentAttributes {
   // This is a union of possible structures. You can separate them if needed.
   layout?: string;
   params?: string;

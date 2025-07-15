@@ -4,7 +4,14 @@ import { Org, Messages } from '@salesforce/core';
 import { FileUtil, File } from '../../utils/file/fileUtil';
 import { Logger } from '../../utils/logger';
 import { Constants } from '../../utils/constants/stringContants';
-import { Component, ComponentAttributes, MigrationStorage, OmniScriptStorage, PageJson, Region } from '../interfaces';
+import {
+  ExpSiteComponent,
+  ExpSiteComponentAttributes,
+  MigrationStorage,
+  OmniScriptStorage,
+  ExpSitePageJson,
+  ExpSiteRegion,
+} from '../interfaces';
 import { FileDiffUtil } from '../../utils/lwcparser/fileutils/FileDiffUtil';
 import { ExperienceSiteAssessmentInfo } from '../../utils';
 import { BaseRelatedObjectMigration } from './BaseRealtedObjectMigration';
@@ -86,16 +93,16 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     const fileContent = fs.readFileSync(file.location, 'utf8');
     this.printStorage();
 
-    const experienceSiteParsedJSON = JSON.parse(fileContent) as PageJson;
+    const experienceSiteParsedJSON = JSON.parse(fileContent) as ExpSitePageJson;
     const normalizedOriginalFileContent = JSON.stringify(experienceSiteParsedJSON, null, 2);
 
-    const regions: Region[] = experienceSiteParsedJSON['regions'];
+    const regions: ExpSiteRegion[] = experienceSiteParsedJSON['regions'];
     // const attrsToRemove = ['target'];
 
     // TODO - When will it be Flexcard
     // TODO - Namespace const lookupComponentName = `${this.targetNamespace}:vlocityLWCOmniWrapper`;
     Logger.logVerbose('The target namspace is ' + this.targetNamespace);
-    const lookupComponentName = 'vlocity_ins:vlocityLWCOmniWrapper';
+    const lookupComponentName = 'vlocity_cmt:vlocityLWCOmniWrapper';
     const targetComponentName = 'runtime_omnistudio:omniscript';
     const warningMessage: string[] = [];
     const updateMessage: string[] = [];
@@ -104,7 +111,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     for (const region of regions) {
       Logger.logVerbose('The current region being processed is' + JSON.stringify(region));
 
-      const regionComponents: Component[] = region['components'];
+      const regionComponents: ExpSiteComponent[] = region['components'];
 
       if (Array.isArray(regionComponents)) {
         for (const component of regionComponents) {
@@ -117,7 +124,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
             component.componentName = targetComponentName;
 
             if (component?.componentAttributes?.target !== undefined) {
-              const currentAttribute: ComponentAttributes = component.componentAttributes;
+              const currentAttribute: ExpSiteComponentAttributes = component.componentAttributes;
               const oldTypeSubtypeLanguage = component?.componentAttributes?.target;
 
               // Use storage to find the updated properties

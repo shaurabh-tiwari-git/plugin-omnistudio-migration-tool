@@ -85,7 +85,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, complexity
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async runMigration(): Promise<any> {
     let apiVersion = this.flags.apiversion as string;
     const migrateOnly = (this.flags.only || '') as string;
