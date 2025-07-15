@@ -213,8 +213,6 @@ export default class Migrate extends OmniStudioBaseCommand {
     let actionItems = [];
     actionItems = await this.setDesignersToUseStandardDataModel(namespace);
 
-    // ME - 123 Revert the digital experience metadata api, what if it was already enabled?
-
     await ResultsBuilder.generateReport(
       objectMigrationResults,
       relatedObjectMigrationResult,

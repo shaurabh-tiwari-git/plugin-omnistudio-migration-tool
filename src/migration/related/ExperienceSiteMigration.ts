@@ -38,7 +38,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
   }
 
   public processObjectType(): string {
-    return Constants.Apex;
+    return Constants.ExpSites;
   }
 
   public migrate(): ExperienceSiteAssessmentInfo[] {
