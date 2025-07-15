@@ -4,7 +4,14 @@ import CardMappings from '../mappings/VlocityCard';
 import { DebugTimer, QueryTools, SortDirection } from '../utils';
 import { NetUtils } from '../utils/net';
 import { BaseMigrationTool } from './base';
-import { MigrationResult, MigrationTool, ObjectMapping, UploadRecordResult } from './interfaces';
+import {
+  MigrationResult,
+  MigrationTool,
+  ObjectMapping,
+  UploadRecordResult,
+  MigrationStorage,
+  FlexcardStorage,
+} from './interfaces';
 import { Connection, Messages } from '@salesforce/core';
 import { UX } from '@salesforce/command';
 import { FlexCardAssessmentInfo } from '../../src/utils';
@@ -16,6 +23,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   static readonly VLOCITYCARD_NAME = 'VlocityCard__c';
   static readonly OMNIUICARD_NAME = 'OmniUiCard';
   private readonly allVersions: boolean;
+  private readonly storage: MigrationStorage;
 
   constructor(
     namespace: string,
@@ -23,10 +31,12 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     logger: Logger,
     messages: Messages,
     ux: UX,
-    allVersions: boolean
+    allVersions: boolean,
+    storage?: MigrationStorage
   ) {
     super(namespace, connection, logger, messages, ux);
     this.allVersions = allVersions;
+    this.storage = storage;
   }
 
   getName(): string {
@@ -74,7 +84,14 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   // Perform Records Migration from VlocityCard__c to OmniUiCard
   async migrate(): Promise<MigrationResult[]> {
     // Get All the Active VlocityCard__c records
-    const cards = await this.getAllActiveCards();
+    // const cards = await this.getAllActiveCards();
+
+    let cards = await this.getAllActiveCards();
+    let filteredCards = cards.filter(
+      (card: any) => typeof card === 'object' && 'Name' in card && card.Name.includes('ABCChild')
+    );
+    cards = filteredCards;
+
     Logger.log(this.messages.getMessage('foundFlexCardsToMigrate', [cards.length]));
 
     const progressBar = createProgressBar('Migrating', 'Flexcard');
@@ -445,9 +462,32 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       await this.uploadCard(cards, card, cardsUploadInfo, originalRecords, uniqueNames);
       progressBar.update(++progressCounter);
     }
+
+    this.prepareStorageForFlexcards(cardsUploadInfo, originalRecords);
+
+    Logger.logVerbose('Now printing storage from flexacards');
+    this.printStorage();
     progressBar.stop();
 
     return cardsUploadInfo;
+  }
+
+  private printStorage(): void {
+    Logger.logVerbose('Debug - Printing the storage from experience sites');
+    Logger.logVerbose(
+      JSON.stringify(this.storage, (key, value) => {
+        if (value instanceof Map) {
+          const safeEntries = [...value.entries()].map(([k, v]) => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            return [k, v ?? { note: 'Value was undefined' }];
+          });
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+          return Object.fromEntries(safeEntries);
+        }
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return value;
+      })
+    );
   }
 
   private async uploadCard(
@@ -526,8 +566,9 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
             this.messages.getMessage('cardAuthorNameChangeMessage', [transformedCardAuthorName])
           );
         }
+
+        uploadResult.newName = transformedCardName; // CONFIRM ONCE
         if (transformedCardName !== card['Name']) {
-          uploadResult.newName = transformedCardName;
           uploadResult.warnings.unshift(this.messages.getMessage('cardNameChangeMessage', [transformedCardName]));
         }
 
@@ -568,6 +609,43 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         errors: err,
         warnings: [],
       });
+    }
+  }
+
+  private prepareStorageForFlexcards(
+    cardsUploadInfo: Map<string, UploadRecordResult>,
+    originalRecords: Map<string, any>
+  ) {
+    Logger.logVerbose('Started preparing storage');
+
+    if (this.storage?.fcStorage !== undefined) {
+      for (let key of Array.from(originalRecords.keys())) {
+        try {
+          let oldrecord = originalRecords.get(key);
+          let newrecord = cardsUploadInfo.get(key);
+
+          Logger.logVerbose('Oldrecord - ' + JSON.stringify(oldrecord));
+          Logger.logVerbose('Newrecord - ' + JSON.stringify(newrecord));
+
+          let value: FlexcardStorage = {
+            name: newrecord['newName'] || oldrecord['Name'],
+          };
+
+          if (newrecord.hasErrors) {
+            value.error = newrecord.errors;
+            value.migrationSuccess = false;
+          } else {
+            value.migrationSuccess = true;
+          }
+
+          let finalKey = `${oldrecord['Name']}`;
+          this.storage.fcStorage.set(finalKey, value);
+        } catch (error) {
+          Logger.logVerbose(error);
+        }
+      }
+    } else {
+      Logger.logVerbose('Storge has not been initialized');
     }
   }
 

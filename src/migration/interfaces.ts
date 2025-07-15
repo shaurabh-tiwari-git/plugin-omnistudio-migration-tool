@@ -96,6 +96,8 @@ export interface RelatedObjectMigrationResult {
 }
 
 export interface ExpSitePageJson {
+  // Index signature to allow any additional properties
+  [key: string]: any;
   appPageId: string;
   componentName: string;
   dataProviders: unknown[]; // Replace 'any' with a specific type if known
@@ -108,6 +110,8 @@ export interface ExpSitePageJson {
 }
 
 export interface ExpSiteRegion {
+  // Index signature to allow any additional properties
+  [key: string]: any;
   id: string;
   regionName: string;
   type: string;
@@ -115,6 +119,8 @@ export interface ExpSiteRegion {
 }
 
 export interface ExpSiteComponent {
+  // Index signature to allow any additional properties
+  [key: string]: any;
   componentAttributes: ExpSiteComponentAttributes;
   componentName: string;
   id: string;
@@ -126,15 +132,17 @@ export interface ExpSiteComponent {
 }
 
 export interface ExpSiteComponentAttributes {
+  // Index signature to allow any additional string properties
+  [key: string]: any;
   // This is a union of possible structures. You can separate them if needed.
   layout?: string;
   params?: string;
   standAlone?: boolean;
   target?: string;
-
   customHeadTags?: string;
   description?: string;
   title?: string;
+  richTextValue?: string;
 }
 
 export interface MigrationStorage {
@@ -154,6 +162,5 @@ export interface OmniScriptStorage extends Storage {
 }
 
 export interface FlexcardStorage extends Storage {
-  type: string;
-  subtype: string;
+  name: string;
 }

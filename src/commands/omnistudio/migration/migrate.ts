@@ -350,7 +350,7 @@ export default class Migrate extends OmniStudioBaseCommand {
           allVersions,
           storage
         ),
-        new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions),
+        new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions, storage),
       ];
     } else {
       switch (migrateOnly) {
@@ -383,7 +383,9 @@ export default class Migrate extends OmniStudioBaseCommand {
           );
           break;
         case Constants.Flexcard:
-          migrationObjects.push(new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions));
+          migrationObjects.push(
+            new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions, storage)
+          );
           break;
         case Constants.DataMapper:
           migrationObjects.push(new DataRaptorMigrationTool(namespace, conn, this.logger, messages, this.ux));

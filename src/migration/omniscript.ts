@@ -497,7 +497,13 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
   async migrate(): Promise<MigrationResult[]> {
     // Get All Records from OmniScript__c (IP & OS Parent Records)
-    const omniscripts = await this.getAllOmniScripts();
+    // const omniscripts = await this.getAllOmniScripts();
+
+    let omniscripts = await this.getAllOmniScripts();
+    let filteredOmniscripts = omniscripts.filter(
+      (omniscript: any) => typeof omniscript === 'object' && 'Name' in omniscript && omniscript.Name.includes('ABC')
+    );
+    omniscripts = filteredOmniscripts;
 
     const functionDefinitionMetadata = await getAllFunctionMetadata(this.namespace, this.connection);
     populateRegexForFunctionMetadata(functionDefinitionMetadata);
@@ -776,13 +782,16 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     };
   }
 
-  private prepareStorageForOmniscript(results: Map<string, UploadRecordResult>, records: Map<string, any>) {
+  private prepareStorageForOmniscript(
+    osUploadInfo: Map<string, UploadRecordResult>,
+    originalOsRecords: Map<string, any>
+  ) {
     Logger.logVerbose('Started preparing storage');
 
-    for (let key of Array.from(records.keys())) {
+    for (let key of Array.from(originalOsRecords.keys())) {
       try {
-        let oldrecord = records.get(key);
-        let newrecord = results.get(key);
+        let oldrecord = originalOsRecords.get(key);
+        let newrecord = osUploadInfo.get(key);
 
         if (!oldrecord[`${this.namespacePrefix}IsProcedure__c`]) {
           let value: OmniScriptStorage = {

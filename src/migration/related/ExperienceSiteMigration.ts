@@ -58,6 +58,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     const directoryMap: Map<string, File[]> = FileUtil.getAllFilesInsideDirectory(dir);
     Logger.logVerbose('Printing the directory map');
     this.printDirectoryMap(directoryMap);
+    this.printStorage();
 
     // TODO - Can do chunking here later, so as to minimize the memory usage
     const experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo[] = [];
@@ -72,6 +73,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
           Logger.logVerbose('Started processing the file - ' + file.name);
           const experienceSiteInfo = this.processExperienceSite(file, type);
           if (experienceSiteInfo?.hasOmnistudioContent === true) {
+            // TODO - Condition to be upated
             Logger.logVerbose('Successfully processed experience site file having vlocity wrapper');
             experienceSiteAssessmentInfo.push(experienceSiteInfo);
           } else {
@@ -91,8 +93,6 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     Logger.logVerbose('DELTA - Processing for file' + file.name);
     let hasOmnistudioContent = false;
     const fileContent = fs.readFileSync(file.location, 'utf8');
-    this.printStorage();
-
     const experienceSiteParsedJSON = JSON.parse(fileContent) as ExpSitePageJson;
     const normalizedOriginalFileContent = JSON.stringify(experienceSiteParsedJSON, null, 2);
 
@@ -103,11 +103,21 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     // TODO - Namespace const lookupComponentName = `${this.targetNamespace}:vlocityLWCOmniWrapper`;
     Logger.logVerbose('The target namspace is ' + this.targetNamespace);
     const lookupComponentName = 'vlocity_cmt:vlocityLWCOmniWrapper';
-    const targetComponentName = 'runtime_omnistudio:omniscript';
+    const targetComponentName = 'runtime_omnistudio_omniscript';
     const warningMessage: string[] = [];
     const updateMessage: string[] = [];
 
-    // TODO - THERE SEEMS TO BE ONLY ONE REGION
+    if (regions === undefined) {
+      return {
+        name: file.name,
+        warnings: warningMessage,
+        infos: updateMessage,
+        path: file.location,
+        diff: JSON.stringify([]),
+        hasOmnistudioContent: false,
+      };
+    }
+
     for (const region of regions) {
       Logger.logVerbose('The current region being processed is' + JSON.stringify(region));
 
@@ -158,6 +168,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
 
     Logger.logVerbose('Printing the difference' + JSON.stringify(difference));
 
+    // TODO - CHECK SOME IF ELSES HERE
     if (normalizedOriginalFileContent !== noarmalizeUpdatedFileContent) {
       Logger.logVerbose('Updating the file content');
       fs.writeFileSync(file.location, noarmalizeUpdatedFileContent, 'utf8');
