@@ -23,11 +23,12 @@ sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM
 // To assess everything without migrating
 sfdx omnistudio:migration:assess -u YOUR_ORG_USERNAME@DOMAIN.COM
 
-// To migrate/assess specific components: FlexCards, DataMappers, Integration Procedures, or OmniScripts, add the following parameters:
---only=dr
---only=ip
---only=os
---only=fc
+// To migrate/assess specific components: FlexCards, DataMappers, Integration Procedures, OmniScripts, or Global Auto Numbers, add the following parameters:
+--only=dr    // DataMappers (DataRaptors)
+--only=ip    // Integration Procedures
+--only=os    // OmniScripts
+--only=fc    // FlexCards
+--only=gan   // Global Auto Numbers
 
 // To migrate all versions of the components and not just the active ones:
 --allversions
@@ -37,6 +38,45 @@ sfdx omnistudio:migration:assess -u YOUR_ORG_USERNAME@DOMAIN.COM
 
 // To specify the Velocity Namespace (Optional)
 --namespace=VLOCITY_PACKAGE_NAMESPACE
+```
+
+## Global Auto Number Migration
+
+Global Auto Numbers are components that generate sequential numbers across your Salesforce org. The migration tool supports both assessment and migration of these components.
+
+### Prerequisites for Global Auto Number Migration
+
+Before migrating Global Auto Numbers, ensure that:
+
+1. **Org Preference is Disabled**: The `OmniGlobalAutoNumberPref` org preference must be disabled before migration
+2. **Rollback Flags are Disabled**: Both `RollbackIPChanges` and `RollbackDRChanges` flags must be disabled
+3. **Namespace is Specified**: Provide the correct namespace for your OmniStudio package
+
+### Global Auto Number Migration Process
+
+The migration process for Global Auto Numbers includes:
+
+1. **Pre-migration Checks**: Validates that org preferences and rollback flags are properly configured
+2. **Data Migration**: Transforms Global Auto Number settings from custom objects to standard Business Process Objects (BPO)
+3. **Post-migration Cleanup**: Removes source objects and enables the `OmniGlobalAutoNumberPref` org preference
+4. **Validation**: Ensures all records are successfully migrated before cleanup
+
+### Global Auto Number Assessment
+
+Assessment provides detailed information about:
+
+- **Name Changes**: Identifies any naming modifications required to comply with API naming standards
+- **Migration Readiness**: Determines if components can be automatically migrated or require manual intervention
+- **Warnings**: Highlights potential issues that may affect migration success
+
+### Usage Examples for Global Auto Numbers
+
+```bash
+# Assess Global Auto Numbers only
+sfdx omnistudio:migration:assess -u YOUR_ORG_USERNAME@DOMAIN.COM --only=gan --namespace=YOUR_PACKAGE_NAMESPACE
+
+# Migrate Global Auto Numbers only
+sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM --only=gan --namespace=YOUR_PACKAGE_NAMESPACE
 ```
 
 5. An HTML page will be open in your default browser with the results of your migration/assessment job.
@@ -70,7 +110,7 @@ OPTIONS
 
   --only=only                                                                       specify components to migrate/assess:
                                                                                     dr (DataRaptors), ip (Integration Procedures),
-                                                                                    os (OmniScripts), fc (FlexCards)
+                                                                                    os (OmniScripts), fc (FlexCards), gan (Global Auto Numbers)
 
   --relatedobjects=relatedobjects                                                   specify related objects to assess:
                                                                                     'apex' for Apex classes, 'lwc' for Lightning

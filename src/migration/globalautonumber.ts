@@ -171,7 +171,6 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
         );
 
         if (uploadResult) {
-          // Fix errors
           uploadResult.errors = uploadResult.errors || [];
           if (!uploadResult.success) {
             uploadResult.errors = Array.isArray(uploadResult.errors) ? uploadResult.errors : [uploadResult.errors];
@@ -230,11 +229,10 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
     let progressCounter = 0;
     const progressBar = createProgressBar('Assessing', 'GlobalAutoNumber');
     progressBar.start(globalAutoNumbers.length, progressCounter);
-    const uniqueNames = new Set<string>();
 
     for (const globalAutoNumber of globalAutoNumbers) {
       try {
-        const globalAutoNumberAssessmentInfo = this.processGlobalAutoNumber(globalAutoNumber, uniqueNames);
+        const globalAutoNumberAssessmentInfo = this.processGlobalAutoNumber(globalAutoNumber);
         globalAutoNumberAssessmentInfos.push(globalAutoNumberAssessmentInfo);
       } catch (e) {
         globalAutoNumberAssessmentInfos.push({
@@ -250,7 +248,7 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
     return Promise.resolve(globalAutoNumberAssessmentInfos);
   }
 
-  private processGlobalAutoNumber(globalAutoNumber: AnyJson, uniqueNames: Set<string>): GlobalAutoNumberAssessmentInfo {
+  private processGlobalAutoNumber(globalAutoNumber: AnyJson): GlobalAutoNumberAssessmentInfo {
     const globalAutoNumberName = globalAutoNumber['Name'];
 
     const globalAutoNumberAssessmentInfo: GlobalAutoNumberAssessmentInfo = {
@@ -268,14 +266,6 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
         this.messages.getMessage('globalAutoNumberNameChangeMessage', [originalName, cleanedName])
       );
     }
-
-    // Check for duplicate names
-    if (uniqueNames.has(cleanedName)) {
-      globalAutoNumberAssessmentInfo.warnings.push(
-        this.messages.getMessage('duplicateGlobalAutoNumberNameMessage', [cleanedName])
-      );
-    }
-    uniqueNames.add(cleanedName);
 
     // Add migration info
     globalAutoNumberAssessmentInfo.infos.push(
