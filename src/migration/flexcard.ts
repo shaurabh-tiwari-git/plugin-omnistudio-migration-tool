@@ -464,30 +464,10 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     }
 
     this.prepareStorageForFlexcards(cardsUploadInfo, originalRecords);
-
     Logger.logVerbose('Now printing storage from flexacards');
-    this.printStorage();
     progressBar.stop();
 
     return cardsUploadInfo;
-  }
-
-  private printStorage(): void {
-    Logger.logVerbose('Debug - Printing the storage from experience sites');
-    Logger.logVerbose(
-      JSON.stringify(this.storage, (key, value) => {
-        if (value instanceof Map) {
-          const safeEntries = [...value.entries()].map(([k, v]) => {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            return [k, v ?? { note: 'Value was undefined' }];
-          });
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-          return Object.fromEntries(safeEntries);
-        }
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return value;
-      })
-    );
   }
 
   private async uploadCard(

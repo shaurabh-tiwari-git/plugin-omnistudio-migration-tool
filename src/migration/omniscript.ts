@@ -35,11 +35,11 @@ import { StringVal } from '../utils/StringValue/stringval';
 import { formatUnicorn } from '../utils/stringUtils';
 import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
+import { StorageUtil } from '../utils/storageUtil';
 
 export class OmniScriptMigrationTool extends BaseMigrationTool implements MigrationTool {
   private readonly exportType: OmniScriptExportType;
   private readonly allVersions: boolean;
-  private readonly storage: MigrationStorage;
 
   // Source Custom Object Names
   static readonly OMNISCRIPT_NAME = 'OmniScript__c';
@@ -59,13 +59,11 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     logger: Logger,
     messages: Messages,
     ux: UX,
-    allVersions: boolean,
-    storage?: MigrationStorage
+    allVersions: boolean
   ) {
     super(namespace, connection, logger, messages, ux);
     this.exportType = exportType;
     this.allVersions = allVersions;
-    this.storage = storage;
   }
 
   getName(): string {
@@ -497,13 +495,15 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
   async migrate(): Promise<MigrationResult[]> {
     // Get All Records from OmniScript__c (IP & OS Parent Records)
-    // const omniscripts = await this.getAllOmniScripts();
+    const omniscripts = await this.getAllOmniScripts();
 
+    /*
     let omniscripts = await this.getAllOmniScripts();
     let filteredOmniscripts = omniscripts.filter(
       (omniscript: any) => typeof omniscript === 'object' && 'Name' in omniscript && omniscript.Name.includes('ABC')
     );
     omniscripts = filteredOmniscripts;
+    */
 
     const functionDefinitionMetadata = await getAllFunctionMetadata(this.namespace, this.connection);
     populateRegexForFunctionMetadata(functionDefinitionMetadata);
@@ -738,7 +738,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     }
     progressBar.stop();
 
-    this.prepareStorageForOmniscript(osUploadInfo, originalOsRecords);
+    this.updateStorageForOmniscript(osUploadInfo, originalOsRecords);
 
     const objectMigrationResults: MigrationResult[] = [];
 
@@ -782,11 +782,12 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     };
   }
 
-  private prepareStorageForOmniscript(
+  private updateStorageForOmniscript(
     osUploadInfo: Map<string, UploadRecordResult>,
     originalOsRecords: Map<string, any>
   ) {
-    Logger.logVerbose('Started preparing storage');
+    let storage: MigrationStorage = StorageUtil.getOmnistudioMigrationStorage();
+    Logger.logVerbose('Started updating migration storage');
 
     for (let key of Array.from(originalOsRecords.keys())) {
       try {
@@ -810,26 +811,13 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           let finalKey = `${oldrecord[this.namespacePrefix + 'Type__c']}${
             oldrecord[this.namespacePrefix + 'SubType__c']
           }${oldrecord[this.namespacePrefix + 'Language__c']}`;
-          this.storage.osStorage.set(finalKey, value);
+          storage.osStorage.set(finalKey, value);
         }
       } catch (error) {
         Logger.logVerbose(error);
       }
     }
-
-    Logger.logVerbose(
-      'Migration Storage: ' +
-        JSON.stringify(this.storage, (key, value) => {
-          if (value instanceof Map) {
-            const safeEntries = [...value.entries()].map(([k, v]) => {
-              // Replace undefined/null with a placeholder or skip
-              return [k, v ?? { note: 'Value was undefined' }];
-            });
-            return Object.fromEntries(safeEntries);
-          }
-          return value;
-        })
-    );
+    StorageUtil.printMigrationStorage();
   }
 
   // Get All OmniScript__c records i.e All IP & OS

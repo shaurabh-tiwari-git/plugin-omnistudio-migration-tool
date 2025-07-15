@@ -347,8 +347,7 @@ export default class Migrate extends OmniStudioBaseCommand {
           this.logger,
           messages,
           this.ux,
-          allVersions,
-          storage
+          allVersions
         ),
         new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions, storage),
       ];
@@ -363,8 +362,7 @@ export default class Migrate extends OmniStudioBaseCommand {
               this.logger,
               messages,
               this.ux,
-              allVersions,
-              storage
+              allVersions
             )
           );
           break;
@@ -377,8 +375,7 @@ export default class Migrate extends OmniStudioBaseCommand {
               this.logger,
               messages,
               this.ux,
-              allVersions,
-              storage
+              allVersions
             )
           );
           break;
