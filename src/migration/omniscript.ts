@@ -495,15 +495,13 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
   async migrate(): Promise<MigrationResult[]> {
     // Get All Records from OmniScript__c (IP & OS Parent Records)
-    const omniscripts = await this.getAllOmniScripts();
+    // const omniscripts = await this.getAllOmniScripts();
 
-    /*
     let omniscripts = await this.getAllOmniScripts();
     let filteredOmniscripts = omniscripts.filter(
-      (omniscript: any) => typeof omniscript === 'object' && 'Name' in omniscript && omniscript.Name.includes('ABC')
+      (omniscript: any) => typeof omniscript === 'object' && 'Name' in omniscript && omniscript.Name.includes('AB')
     );
     omniscripts = filteredOmniscripts;
-    */
 
     const functionDefinitionMetadata = await getAllFunctionMetadata(this.namespace, this.connection);
     populateRegexForFunctionMetadata(functionDefinitionMetadata);
@@ -787,7 +785,10 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     originalOsRecords: Map<string, any>
   ) {
     let storage: MigrationStorage = StorageUtil.getOmnistudioMigrationStorage();
-    Logger.logVerbose('Started updating migration storage');
+    Logger.logVerbose('Started updating migration storage for omniscript');
+    if (storage?.osStorage === undefined) {
+      storage.osStorage = new Map<string, OmniScriptStorage>();
+    }
 
     for (let key of Array.from(originalOsRecords.keys())) {
       try {

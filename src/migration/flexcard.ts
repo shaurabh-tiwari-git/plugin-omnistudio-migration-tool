@@ -18,12 +18,12 @@ import { FlexCardAssessmentInfo } from '../../src/utils';
 import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
 import { Constants } from '../utils/constants/stringContants';
+import { StorageUtil } from '../utils/storageUtil';
 
 export class CardMigrationTool extends BaseMigrationTool implements MigrationTool {
   static readonly VLOCITYCARD_NAME = 'VlocityCard__c';
   static readonly OMNIUICARD_NAME = 'OmniUiCard';
   private readonly allVersions: boolean;
-  private readonly storage: MigrationStorage;
 
   constructor(
     namespace: string,
@@ -31,12 +31,10 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     logger: Logger,
     messages: Messages,
     ux: UX,
-    allVersions: boolean,
-    storage?: MigrationStorage
+    allVersions: boolean
   ) {
     super(namespace, connection, logger, messages, ux);
     this.allVersions = allVersions;
-    this.storage = storage;
   }
 
   getName(): string {
@@ -464,7 +462,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     }
 
     this.prepareStorageForFlexcards(cardsUploadInfo, originalRecords);
-    Logger.logVerbose('Now printing storage from flexacards');
+
     progressBar.stop();
 
     return cardsUploadInfo;
@@ -596,36 +594,35 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     cardsUploadInfo: Map<string, UploadRecordResult>,
     originalRecords: Map<string, any>
   ) {
-    Logger.logVerbose('Started preparing storage');
+    Logger.logVerbose('Started preparing storage for flexcards');
+    let storage: MigrationStorage = StorageUtil.getOmnistudioMigrationStorage();
 
-    if (this.storage?.fcStorage !== undefined) {
-      for (let key of Array.from(originalRecords.keys())) {
-        try {
-          let oldrecord = originalRecords.get(key);
-          let newrecord = cardsUploadInfo.get(key);
+    for (let key of Array.from(originalRecords.keys())) {
+      try {
+        let oldrecord = originalRecords.get(key);
+        let newrecord = cardsUploadInfo.get(key);
 
-          Logger.logVerbose('Oldrecord - ' + JSON.stringify(oldrecord));
-          Logger.logVerbose('Newrecord - ' + JSON.stringify(newrecord));
+        Logger.logVerbose('Oldrecord - ' + JSON.stringify(oldrecord));
+        Logger.logVerbose('Newrecord - ' + JSON.stringify(newrecord));
 
-          let value: FlexcardStorage = {
-            name: newrecord['newName'] || oldrecord['Name'],
-          };
+        let value: FlexcardStorage = {
+          name: newrecord['newName'] || oldrecord['Name'],
+        };
 
-          if (newrecord.hasErrors) {
-            value.error = newrecord.errors;
-            value.migrationSuccess = false;
-          } else {
-            value.migrationSuccess = true;
-          }
-
-          let finalKey = `${oldrecord['Name']}`;
-          this.storage.fcStorage.set(finalKey, value);
-        } catch (error) {
-          Logger.logVerbose(error);
+        if (newrecord.hasErrors) {
+          value.error = newrecord.errors;
+          value.migrationSuccess = false;
+        } else {
+          value.migrationSuccess = true;
         }
+
+        let finalKey = `${oldrecord['Name']}`;
+        storage.fcStorage.set(finalKey, value);
+      } catch (error) {
+        Logger.logVerbose(error);
       }
-    } else {
-      Logger.logVerbose('Storge has not been initialized');
+
+      StorageUtil.printMigrationStorage();
     }
   }
 

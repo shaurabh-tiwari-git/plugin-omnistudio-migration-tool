@@ -14,13 +14,7 @@ import { ExecuteAnonymousResult } from 'jsforce';
 import OmniStudioBaseCommand from '../../basecommand';
 import { DataRaptorMigrationTool } from '../../../migration/dataraptor';
 import { DebugTimer, MigratedObject, MigratedRecordInfo } from '../../../utils';
-import {
-  FlexcardStorage,
-  MigrationResult,
-  MigrationStorage,
-  MigrationTool,
-  OmniScriptStorage,
-} from '../../../migration/interfaces';
+import { MigrationResult, MigrationTool } from '../../../migration/interfaces';
 import { ResultsBuilder } from '../../../utils/resultsbuilder';
 import { CardMigrationTool } from '../../../migration/flexcard';
 import { OmniScriptExportType, OmniScriptMigrationTool } from '../../../migration/omniscript';
@@ -91,11 +85,6 @@ export default class Migrate extends OmniStudioBaseCommand {
     const migrateOnly = (this.flags.only || '') as string;
     const allVersions = this.flags.allversions || (false as boolean);
     const relatedObjects = (this.flags.relatedobjects || '') as string;
-    const migrationStorage: MigrationStorage = {
-      osStorage: new Map<string, OmniScriptStorage>(),
-      fcStorage: new Map<string, FlexcardStorage>(),
-    };
-
     // this.org is guaranteed because requiresUsername=true, as opposed to supportsUsername
     const conn = this.org.getConnection();
     if (apiVersion) {
@@ -167,14 +156,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     // const includeLwc = this.flags.lwc ? await this.ux.confirm('Do you want to include LWC migration? (yes/no)') : false;
     // Register the migration objects
     let migrationObjects: MigrationTool[] = [];
-    migrationObjects = this.getMigrationObjects(
-      migrateOnly,
-      migrationObjects,
-      namespace,
-      conn,
-      allVersions,
-      migrationStorage
-    );
+    migrationObjects = this.getMigrationObjects(migrateOnly, migrationObjects, namespace, conn, allVersions);
     // Migrate individual objects
     const debugTimer = DebugTimer.getInstance();
     // We need to truncate the standard objects first
@@ -188,15 +170,13 @@ export default class Migrate extends OmniStudioBaseCommand {
     // Stop the debug timer
     const timer = DebugTimer.getInstance().stop();
 
-    Logger.logVerbose('Here passing the storage to related objects constructor ' + JSON.stringify(migrationStorage));
     const omnistudioRelatedObjectsMigration = new OmnistudioRelatedObjectMigrationFacade(
       namespace,
       migrateOnly,
       allVersions,
       this.org,
       projectPath,
-      targetApexNamespace,
-      migrationStorage
+      targetApexNamespace
     );
     const relatedObjectMigrationResult = omnistudioRelatedObjectsMigration.migrateAll(objectsToProcess);
     generatePackageXml.createChangeList(
@@ -334,8 +314,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     migrationObjects: MigrationTool[],
     namespace: string,
     conn,
-    allVersions: any,
-    storage: MigrationStorage
+    allVersions: any
   ): MigrationTool[] {
     if (!migrateOnly) {
       migrationObjects = [
@@ -349,7 +328,7 @@ export default class Migrate extends OmniStudioBaseCommand {
           this.ux,
           allVersions
         ),
-        new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions, storage),
+        new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions),
       ];
     } else {
       switch (migrateOnly) {
@@ -380,9 +359,7 @@ export default class Migrate extends OmniStudioBaseCommand {
           );
           break;
         case Constants.Flexcard:
-          migrationObjects.push(
-            new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions, storage)
-          );
+          migrationObjects.push(new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions));
           break;
         case Constants.DataMapper:
           migrationObjects.push(new DataRaptorMigrationTool(namespace, conn, this.logger, messages, this.ux));

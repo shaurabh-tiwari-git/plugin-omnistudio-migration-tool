@@ -13,6 +13,21 @@ export class StorageUtil {
   };
 
   public static getOmnistudioMigrationStorage(): MigrationStorage {
+    if (this.omnistudioMigrationStorage === undefined) {
+      this.omnistudioAssessmentStorage = {
+        osStorage: new Map<string, OmniScriptStorage>(),
+        fcStorage: new Map<string, FlexcardStorage>(),
+      };
+    }
+
+    if (this.omnistudioMigrationStorage.osStorage === undefined) {
+      this.omnistudioMigrationStorage.osStorage = new Map<string, OmniScriptStorage>();
+    }
+
+    if (this.omnistudioMigrationStorage.fcStorage === undefined) {
+      this.omnistudioMigrationStorage.fcStorage = new Map<string, FlexcardStorage>();
+    }
+
     return this.omnistudioMigrationStorage;
   }
 
