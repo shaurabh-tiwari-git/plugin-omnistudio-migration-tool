@@ -25,7 +25,6 @@
   "duplicatedCardName": "Duplicated Flex Card name",
   "duplicatedDrName": "Duplicated DataMapper name",
   "duplicatedOSName": "Duplicated OmniScript name",
-  "duplicatedGlobalAutoNumberName": "Duplicated GlobalAutoNumber name",
   "errorWhileActivatingOs": "Could not activate OmniScript / Integration Procedure: ",
   "errorWhileActivatingCard": "Could not activate Card: ",
   "errorWhileUploadingCard": "An error ocurred while uploading Card: ",
@@ -120,7 +119,6 @@
   "preMigrationChecksPassed": "Pre-migration checks passed. Proceeding with Global Auto Number migration.",
   "preMigrationChecksFailed": "Pre-migration checks failed. Migration cannot proceed.",
   "globalAutoNumberPrefEnabledError": "Global Auto Number preference (OmniGlobalAutoNumberPref) is enabled. Please disable it before proceeding with migration.",
-  "rollbackFlagsEnabledError": "Rollback flags are enabled: {0}. Please disable these flags before proceeding with Global Auto Number migration.",
   "bothRollbackFlagsEnabledError": "Both RollbackIPChanges and RollbackDRChanges flags are enabled. Please disable both flags before proceeding with Global Auto Number migration.",
   "rollbackIPFlagEnabledError": "RollbackIPChanges flag is enabled. Please disable this flag before proceeding with Global Auto Number migration.",
   "rollbackDRFlagEnabledError": "RollbackDRChanges flag is enabled. Please disable this flag before proceeding with Global Auto Number migration.",
@@ -128,13 +126,12 @@
   "startingPostMigrationCleanup": "Starting post-migration cleanup for Global Auto Number...",
   "postMigrationCleanupCompleted": "Post-migration cleanup completed successfully.",
   "errorDuringPostMigrationCleanup": "Error during post-migration cleanup.",
-  "globalAutoNumberNameChangeMessage": "Global Auto Number name has been modified to fit naming rules: {0}",
+  "globalAutoNumberNameChangeMessage": "Global Auto Number name has been modified to fit naming rules: %s",
   "errorWhileUploadingGlobalAutoNumber": "An error occurred while uploading Global Auto Number: ",
   "startingGlobalAutoNumberAssessment": "Starting Global Auto Number assessment...",
   "foundGlobalAutoNumbersToAssess": "Found %s Global Auto Numbers to assess",
   "unexpectedError": "An unexpected error occurred during processing",
-  "duplicateGlobalAutoNumberNameMessage": "Potential duplicate: Another Global Auto Number has the same name {0} after name cleaning. This may cause conflicts during migration",
-  "globalAutoNumberMigrationInfo": "Global Auto Number {0} will be migrated to the new data model",
+  "globalAutoNumberMigrationInfo": "Global Auto Number %s will be migrated from custom object to standard BPO",
   "migrationValidationFailed": "Post Migration validation failed.",
-  "incompleteMigrationDetected": "Incomplete migration detected. Source objects: {0}, Target objects: {1}."
+  "incompleteMigrationDetected": "Incomplete migration detected. Source objects: %s, Target objects: %s."
 }
