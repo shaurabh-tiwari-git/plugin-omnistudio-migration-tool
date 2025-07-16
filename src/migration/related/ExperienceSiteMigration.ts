@@ -170,28 +170,34 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       return;
     }
 
-    if (currentAttribute.target === undefined) {
-      experienceSiteAssessmentInfo.warnings.push('Target is null. Please check experience site configuration');
+    if (currentAttribute.target === undefined || currentAttribute.target === '') {
+      experienceSiteAssessmentInfo.warnings.push('Target is invalid. Please check experience site configuration');
       return;
     }
 
-    const newAttribute: ExpSiteComponentAttributes = {};
     const oldTypeSubtypeLanguage = currentAttribute.target.substring(currentAttribute.target.indexOf(':') + 1);
 
     // Use storage to find the updated properties
     const targetData: OmniScriptStorage = storage.osStorage.get(oldTypeSubtypeLanguage);
+    Logger.logVerbose('In component attribute updation');
     if (targetData === undefined || targetData.migrationSuccess === false) {
       experienceSiteAssessmentInfo.warnings.push(`${oldTypeSubtypeLanguage} needs manual intervention`);
     } else {
-      newAttribute['direction'] = 'ltr';
-      newAttribute['display'] = 'Display button to open Omniscript';
-      newAttribute['inlineVariant'] = 'brand';
-      newAttribute['language'] = targetData.language;
-      newAttribute['subType'] = targetData.subtype;
-      newAttribute['theme'] = currentAttribute['layout'];
-      newAttribute['type'] = targetData.type;
-    }
+      // Preserve the layout value before clearing
+      const originalLayout = currentAttribute['layout'];
 
-    currentAttribute = newAttribute;
+      // define an array and delete those keys
+      // Clear existing properties and set new ones
+      Object.keys(currentAttribute).forEach((key) => delete currentAttribute[key]);
+
+      currentAttribute['direction'] = 'ltr';
+      currentAttribute['display'] = 'Display button to open Omniscript';
+      currentAttribute['inlineVariant'] = 'brand';
+      currentAttribute['language'] = targetData.language === undefined ? 'English' : targetData.language;
+      currentAttribute['subType'] = targetData.subtype;
+      currentAttribute['theme'] = originalLayout;
+      currentAttribute['type'] = targetData.type;
+    }
+    Logger.logVerbose('updatedComponentAttribute = ' + JSON.stringify(currentAttribute));
   }
 }
