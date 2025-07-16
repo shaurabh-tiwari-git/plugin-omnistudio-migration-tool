@@ -221,7 +221,7 @@ export class ResultsBuilder {
         {
           header: [
             {
-              name: 'Class Name',
+              name: 'Component Name',
               colspan: 1,
               rowspan: 1,
             },

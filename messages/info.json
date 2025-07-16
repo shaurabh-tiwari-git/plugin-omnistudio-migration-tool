@@ -12,6 +12,5 @@
   "greetingOrgInfo": "Hello %s! This is org: %s",
   "greetingOrgInfoWithDate": "Hello %s! This is org: %s and I will be around until %s!",
   "hubOrgId": "My hub org id is: %s",
-  "allVersionsAppended": " and all versions will be migrated",
-  "apexLwcExp": "Please select the type of components to migrate: 'apex' for Apex classes, 'lwc' for Lightning Web Components, 'expsites' for ExperienceSites, or 'apex,lwc,expsites' if you want to include all types"
+  "allVersionsAppended": " and all versions will be migrated"
 }

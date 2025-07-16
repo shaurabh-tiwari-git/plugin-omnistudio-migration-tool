@@ -12,7 +12,6 @@ describe('OrgPreferences', () => {
     connection = {
       metadata: {
         update: sandbox.stub(),
-        read: sandbox.stub(),
       },
       query: sandbox.stub(),
     } as unknown as Connection;

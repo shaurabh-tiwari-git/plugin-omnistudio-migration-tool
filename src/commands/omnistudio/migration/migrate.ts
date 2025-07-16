@@ -57,7 +57,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     }),
     relatedobjects: flags.string({
       char: 'r',
-      description: messages.getMessage('apexLwc'), // ME123 - TODO ALETER THE MESSAGE
+      description: messages.getMessage('apexLwc'),
     }),
     verbose: flags.builtin({
       type: 'builtin',
@@ -142,9 +142,7 @@ export default class Migrate extends OmniStudioBaseCommand {
         // Use ProjectPathUtil for APEX project folder selection (matches assess.ts logic)
         projectPath = await ProjectPathUtil.getProjectPath(messages, true);
         targetApexNamespace = await this.getTargetApexNamespace(objectsToProcess, targetApexNamespace);
-      } else {
-        // TODO - Raise BUG - The general consent is not given, empty related objects here
-      }
+      } // TODO - What if general consent is no
     }
 
     Logger.log(messages.getMessage('migrationInitialization', [String(namespace)]));
@@ -215,11 +213,11 @@ export default class Migrate extends OmniStudioBaseCommand {
     isExperienceBundleMetadataAPIPreEnabled: boolean
   ): Promise<void> {
     if (objectsToProcess.includes(Constants.ExpSites)) {
-      const expMetadataApiConsent = await this.getExpSiteMetadataEnableConsent(); // ME - if false then dont proceed further and return
+      const expMetadataApiConsent = await this.getExpSiteMetadataEnableConsent();
       Logger.logVerbose(`The consent for exp site is  ${expMetadataApiConsent}`);
 
       if (expMetadataApiConsent === false) {
-        Logger.logVerbose('Consent for experience sites is not provided. Experience sites will not be processed');
+        Logger.warn('Consent for experience sites is not provided. Experience sites will not be processed');
         objectsToProcess = objectsToProcess.filter((obj) => obj !== 'exp');
         return;
       }
@@ -232,7 +230,7 @@ export default class Migrate extends OmniStudioBaseCommand {
 
       const isSuccessfullyenabled = await OrgPreferences.setExperienceBundleMetadataAPI(conn, true);
       if (isSuccessfullyenabled === false) {
-        Logger.logVerbose('Since the api could not able enabled the experience sites would not be processed');
+        Logger.warn('Since the api could not able enabled the experience sites would not be processed');
         objectsToProcess = objectsToProcess.filter((obj) => obj !== 'exp');
       }
 
@@ -400,7 +398,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     while (consent === null) {
       try {
         consent = await Logger.confirm(
-          'By proceeding further, you hereby consent to enable digital experience metadata api'
+          'By proceeding further, you hereby consent to enable digital experience metadata api(y/n). If y sites will be processed, if n expsites will not be processed'
         );
       } catch (error) {
         Logger.log(messages.getMessage('invalidYesNoResponse'));
