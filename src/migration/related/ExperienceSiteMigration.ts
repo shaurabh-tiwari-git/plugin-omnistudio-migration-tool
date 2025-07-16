@@ -46,7 +46,9 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     Logger.logVerbose('Started reading the files');
     const directoryMap: Map<string, File[]> = FileUtil.getAllFilesInsideDirectory(dir);
 
-    const experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo[] = [];
+    // TODO - IF directory is empty
+
+    const experienceSitesAssessmentInfo: ExperienceSiteAssessmentInfo[] = [];
     for (const directory of directoryMap.keys()) {
       const fileArray = directoryMap.get(directory);
       for (const file of fileArray) {
@@ -55,12 +57,10 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
           continue;
         }
         try {
-          Logger.logVerbose('Started processing the file - ' + file.name);
           const experienceSiteInfo = this.processExperienceSite(file, type);
-          if (experienceSiteInfo?.hasOmnistudioContent === true) {
-            // TODO - Condition to be upated
+          if (experienceSiteInfo.hasOmnistudioContent === true) {
             Logger.logVerbose('Successfully processed experience site file having vlocity wrapper');
-            experienceSiteAssessmentInfo.push(experienceSiteInfo);
+            experienceSitesAssessmentInfo.push(experienceSiteInfo);
           } else {
             Logger.logVerbose('File does not contain omnistudio wrapper');
           }
@@ -70,72 +70,65 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
         }
       }
     }
-    return experienceSiteAssessmentInfo;
+    return experienceSitesAssessmentInfo;
   }
 
   public processExperienceSite(file: File, type = 'migration'): ExperienceSiteAssessmentInfo {
-    // Here we are reading the file. Before only the metadata is being fetched
-    Logger.logVerbose('DELTA - Processing for file' + file.name);
-    let hasOmnistudioContent = false;
-    const fileContent = fs.readFileSync(file.location, 'utf8');
-    const experienceSiteParsedJSON = JSON.parse(fileContent) as ExpSitePageJson;
-    const normalizedOriginalFileContent = JSON.stringify(experienceSiteParsedJSON, null, 2);
+    Logger.logVerbose('Processing for file' + file.name);
 
-    const regions: ExpSiteRegion[] = experienceSiteParsedJSON['regions'];
-    // const attrsToRemove = ['target'];
+    const experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo = {
+      name: file.name,
+      warnings: [],
+      infos: [],
+      path: file.location,
+      diff: JSON.stringify([]),
+      hasOmnistudioContent: false,
+    };
 
-    // TODO - When will it be Flexcard
-    Logger.logVerbose('The namspace is ' + this.namespace);
     const lookupComponentName = `${this.namespace}:vlocityLWCOmniWrapper`;
     const targetComponentName = 'runtime_omnistudio_omniscript';
     const warningMessage: string[] = [];
     const updateMessage: string[] = [];
+    let hasOmnistudioContent = false;
+
+    const fileContent = fs.readFileSync(file.location, 'utf8');
+    // TODO - undefined check here
+    const experienceSiteParsedJSON = JSON.parse(fileContent) as ExpSitePageJson;
+    const normalizedOriginalFileContent = JSON.stringify(experienceSiteParsedJSON, null, 2);
+    const regions: ExpSiteRegion[] = experienceSiteParsedJSON['regions'];
+
+    // TODO - When will it be Flexcard
 
     if (regions === undefined) {
-      return {
-        name: file.name,
-        warnings: warningMessage,
-        infos: updateMessage,
-        path: file.location,
-        diff: JSON.stringify([]),
-        hasOmnistudioContent: false,
-      };
+      hasOmnistudioContent = false;
     }
 
     const storage: MigrationStorage = StorageUtil.getOmnistudioMigrationStorage();
+
     for (const region of regions) {
       Logger.logVerbose('The current region being processed is' + JSON.stringify(region));
 
       const regionComponents: ExpSiteComponent[] = region['components'];
 
+      if (regionComponents === undefined) {
+        continue;
+      }
+
       if (Array.isArray(regionComponents)) {
         for (const component of regionComponents) {
+          if (component === undefined) {
+            continue;
+          }
+
           Logger.logVerbose('The current component being processed is ' + JSON.stringify(component));
 
-          // TODO - Replace with namespace - targetNamespace, check if namespace or targetnamespace, considering targetNamespace for now
-          if (component?.componentName === lookupComponentName) {
+          if (component.componentName === lookupComponentName) {
             Logger.logVerbose('Omnistudio wrapper component found');
             hasOmnistudioContent = true;
+
+            // Updating component
             component.componentName = targetComponentName;
-
-            if (component?.componentAttributes?.target !== undefined) {
-              const currentAttribute: ExpSiteComponentAttributes = component.componentAttributes;
-              const oldTypeSubtypeLanguage = component?.componentAttributes?.target;
-
-              // Use storage to find the updated properties
-              const targetData: OmniScriptStorage = storage.osStorage.get(oldTypeSubtypeLanguage);
-              if (targetData === undefined || (targetData?.migrationSuccess === false && warningMessage.length === 0)) {
-                warningMessage.push(`${oldTypeSubtypeLanguage} needs manual intervention`);
-              } else {
-                currentAttribute['type'] = targetData.type;
-                currentAttribute['subType'] = targetData.subtype;
-                currentAttribute['language'] = targetData.language;
-
-                if (component?.componentAttributes && 'target' in component.componentAttributes) {
-                  delete component.componentAttributes.target;
-                }
-              }
-            }
+            this.updateComponentAttributes(component.componentAttributes, experienceSiteAssessmentInfo, storage);
           }
         }
       }
@@ -166,5 +159,39 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       diff: JSON.stringify(difference),
       hasOmnistudioContent,
     };
+  }
+
+  private updateComponentAttributes(
+    currentAttribute: ExpSiteComponentAttributes,
+    experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo,
+    storage: MigrationStorage
+  ): void {
+    if (currentAttribute === undefined) {
+      return;
+    }
+
+    if (currentAttribute.target === undefined) {
+      experienceSiteAssessmentInfo.warnings.push('Target is null. Please check experience site configuration');
+      return;
+    }
+
+    const newAttribute: ExpSiteComponentAttributes = {};
+    const oldTypeSubtypeLanguage = currentAttribute.target.substring(currentAttribute.target.indexOf(':') + 1);
+
+    // Use storage to find the updated properties
+    const targetData: OmniScriptStorage = storage.osStorage.get(oldTypeSubtypeLanguage);
+    if (targetData === undefined || targetData.migrationSuccess === false) {
+      experienceSiteAssessmentInfo.warnings.push(`${oldTypeSubtypeLanguage} needs manual intervention`);
+    } else {
+      newAttribute['direction'] = 'ltr';
+      newAttribute['display'] = 'Display button to open Omniscript';
+      newAttribute['inlineVariant'] = 'brand';
+      newAttribute['language'] = targetData.language;
+      newAttribute['subType'] = targetData.subtype;
+      newAttribute['theme'] = currentAttribute['layout'];
+      newAttribute['type'] = targetData.type;
+    }
+
+    currentAttribute = newAttribute;
   }
 }

@@ -138,7 +138,7 @@ export interface FileParser {
 export interface ExperienceSiteAssessmentInfo extends FileChangeInfo {
   warnings: string[];
   infos: string[];
-  hasOmnistudioContent?: boolean;
+  hasOmnistudioContent: boolean;
 }
 
 export interface FileProcessor {
