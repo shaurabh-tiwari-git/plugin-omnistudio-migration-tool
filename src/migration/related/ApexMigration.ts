@@ -155,7 +155,7 @@ export class ApexMigration extends BaseRelatedObjectMigration {
       } else {
         Logger.logger.info(assessMessages.getMessage('apexFileChangesIdentifiedNotApplied', [file.name]));
       }
-      difference = new FileDiffUtil().getFullFileDiff(file.name, fileContent, updatedContent);
+      difference = new FileDiffUtil().getFileDiff(file.name, fileContent, updatedContent);
     }
     if (updateMessages.length === 0) {
       Logger.info(assessMessages.getMessage('fileNoOmnistudioCalls', [file.name]));
