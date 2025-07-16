@@ -601,6 +601,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
         let value: FlexcardStorage = {
           name: newrecord['newName'],
+          isDuplicate: false,
         };
 
         if (newrecord.hasErrors) {

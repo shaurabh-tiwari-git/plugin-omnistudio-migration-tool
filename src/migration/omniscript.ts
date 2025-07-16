@@ -789,7 +789,8 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           let value: OmniScriptStorage = {
             type: newrecord['type'],
             subtype: newrecord['subtype'],
-            language: newrecord['language'], // Coming as undefined - newLanguage for migrated record
+            language: newrecord['language'],
+            isDuplicate: false,
           };
 
           if (newrecord.hasErrors) {
@@ -802,7 +803,16 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           let finalKey = `${oldrecord[this.namespacePrefix + 'Type__c']}${
             oldrecord[this.namespacePrefix + 'SubType__c']
           }${oldrecord[this.namespacePrefix + 'Language__c']}`;
-          storage.osStorage.set(finalKey, value);
+
+          if (storage.osStorage.has(finalKey)) {
+            // Key already exists - handle accordingly
+            Logger.logVerbose(`Key ${finalKey} already exists in storage`);
+            value.isDuplicate = true;
+            storage.osStorage.set(finalKey, value);
+          } else {
+            // Key doesn't exist - safe to set
+            storage.osStorage.set(finalKey, value);
+          }
         }
       } catch (error) {
         Logger.logVerbose(error);
