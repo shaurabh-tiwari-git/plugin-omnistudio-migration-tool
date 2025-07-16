@@ -138,10 +138,13 @@ export default class Migrate extends OmniStudioBaseCommand {
       // Check for general consent to make modifications with OMT
       const generalConsent = await this.getGeneralConsent();
       if (generalConsent) {
-        await this.handleExperienceSitePrerequisites(objectsToProcess, conn, isExperienceBundleMetadataAPIPreEnabled);
         // Use ProjectPathUtil for APEX project folder selection (matches assess.ts logic)
         projectPath = await ProjectPathUtil.getProjectPath(messages, true);
         targetApexNamespace = await this.getTargetApexNamespace(objectsToProcess, targetApexNamespace);
+        await this.handleExperienceSitePrerequisites(objectsToProcess, conn, isExperienceBundleMetadataAPIPreEnabled);
+        Logger.logVerbose(
+          'The objects to process after handleExpSitePrerequisite are ' + JSON.stringify(objectsToProcess)
+        );
       } // TODO - What if general consent is no
     }
 
@@ -218,7 +221,9 @@ export default class Migrate extends OmniStudioBaseCommand {
 
       if (expMetadataApiConsent === false) {
         Logger.warn('Consent for experience sites is not provided. Experience sites will not be processed');
-        objectsToProcess = objectsToProcess.filter((obj) => obj !== 'exp');
+        this.removeKeyFromRelatedObjectsToProcess(Constants.ExpSites, objectsToProcess);
+        Logger.logVerbose(`Objects to process after removing expsite are ${JSON.stringify(objectsToProcess)}`);
+
         return;
       }
 
@@ -230,11 +235,18 @@ export default class Migrate extends OmniStudioBaseCommand {
 
       const isSuccessfullyenabled = await OrgPreferences.setExperienceBundleMetadataAPI(conn, true);
       if (isSuccessfullyenabled === false) {
+        this.removeKeyFromRelatedObjectsToProcess(Constants.ExpSites, objectsToProcess);
         Logger.warn('Since the api could not able enabled the experience sites would not be processed');
-        objectsToProcess = objectsToProcess.filter((obj) => obj !== 'exp');
       }
 
       Logger.logVerbose(`Objects to process are ${JSON.stringify(objectsToProcess)}`);
+    }
+  }
+
+  private removeKeyFromRelatedObjectsToProcess(keyToRemove: string, relatedObjects: string[]): void {
+    const index = relatedObjects.indexOf(Constants.ExpSites);
+    if (index > -1) {
+      relatedObjects.splice(index, 1);
     }
   }
 
