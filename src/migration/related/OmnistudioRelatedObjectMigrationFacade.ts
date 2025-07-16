@@ -14,7 +14,6 @@ import {
 import { sfProject } from '../../utils/sfcli/project/sfProject';
 import { Logger } from '../../utils/logger';
 import { Constants } from '../../utils/constants/stringContants';
-import { MigrationStorage } from '../interfaces';
 import { ApexMigration } from './ApexMigration';
 import { ExperienceSiteMigration } from './ExperienceSiteMigration';
 import { LwcMigration } from './LwcMigration';
@@ -48,8 +47,7 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     allversions: boolean,
     org: Org,
     projectPath?: string,
-    targetApexNamespace?: string,
-    storage?: MigrationStorage
+    targetApexNamespace?: string
   ) {
     this.namespace = namespace;
     this.only = only;
@@ -62,7 +60,7 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     // TODO: Uncomment code once MVP for migration is completed
     // this.lwcMigration = new LwcMigration(this.projectPath, this.namespace, this.org);
 
-    this.experienceSiteMigration = new ExperienceSiteMigration(this.projectPath, this.namespace, this.org, storage);
+    this.experienceSiteMigration = new ExperienceSiteMigration(this.projectPath, this.namespace, this.org);
   }
 
   private createProject(): string {
