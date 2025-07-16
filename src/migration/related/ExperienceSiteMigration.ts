@@ -58,7 +58,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
         }
         try {
           const experienceSiteInfo = this.processExperienceSite(file, type);
-          if (experienceSiteInfo.hasOmnistudioContent === true) {
+          if (experienceSiteInfo?.hasOmnistudioContent === true) {
             Logger.logVerbose('Successfully processed experience site file having vlocity wrapper');
             experienceSitesAssessmentInfo.push(experienceSiteInfo);
           } else {
@@ -74,7 +74,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
   }
 
   public processExperienceSite(file: File, type = 'migration'): ExperienceSiteAssessmentInfo {
-    Logger.logVerbose('Processing for file' + file.name);
+    Logger.logVerbose('Processing for file ' + file.name);
 
     const experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo = {
       name: file.name,
@@ -101,6 +101,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
 
     if (regions === undefined) {
       hasOmnistudioContent = false;
+      return experienceSiteAssessmentInfo;
     }
 
     const storage: MigrationStorage = StorageUtil.getOmnistudioMigrationStorage();
