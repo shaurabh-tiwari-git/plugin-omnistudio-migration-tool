@@ -173,24 +173,10 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     // Use storage to find the updated properties
     const targetDataFromStorage: OmniScriptStorage = storage.osStorage.get(oldTypeSubtypeLanguage);
     Logger.logVerbose('The target data is ' + JSON.stringify(targetDataFromStorage));
-    if (
-      targetDataFromStorage === undefined ||
-      targetDataFromStorage.migrationSuccess === false ||
-      targetDataFromStorage.isDuplicate === true
-    ) {
-      if (targetDataFromStorage === undefined) {
-        experienceSiteAssessmentInfo.warnings.push(
-          `${oldTypeSubtypeLanguage} needs manual intervention as the migrated key does not exist`
-        );
-      } else if (targetDataFromStorage.migrationSuccess === false) {
-        experienceSiteAssessmentInfo.warnings.push(
-          `${oldTypeSubtypeLanguage} needs manual intervention as the migrated key does not exist`
-        );
-      } else {
-        experienceSiteAssessmentInfo.warnings.push(
-          `${oldTypeSubtypeLanguage} needs manual intervention as duplicated key found in storage`
-        );
-      }
+
+    if (this.shouldAddWarning(targetDataFromStorage)) {
+      const warningMsg: string = this.getWarningMessage(oldTypeSubtypeLanguage, targetDataFromStorage);
+      experienceSiteAssessmentInfo.warnings.push(warningMsg);
     } else {
       // Preserve the layout value before clearing
       const originalLayout = currentAttribute['layout'];
@@ -209,5 +195,19 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       currentAttribute['type'] = targetDataFromStorage.type;
     }
     Logger.logVerbose('updatedComponentAttribute = ' + JSON.stringify(currentAttribute));
+  }
+
+  private shouldAddWarning(targetData: OmniScriptStorage): boolean {
+    return targetData === undefined || targetData.migrationSuccess === false || targetData.isDuplicate === true;
+  }
+
+  private getWarningMessage(oldTypeSubtypeLanguage: string, targetDataFromStorage: OmniScriptStorage): string {
+    if (targetDataFromStorage === undefined) {
+      return `${oldTypeSubtypeLanguage} needs manual intervention as the migrated key does not exist`;
+    } else if (targetDataFromStorage.migrationSuccess === false) {
+      return `${oldTypeSubtypeLanguage} needs manual intervention as migration failed`;
+    } else {
+      return `${oldTypeSubtypeLanguage} needs manual intervention as duplicated key found in storage`;
+    }
   }
 }
