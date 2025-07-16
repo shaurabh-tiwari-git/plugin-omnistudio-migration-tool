@@ -165,6 +165,11 @@ export interface ExperienceBundleSettingsMetadata {
   enableExperienceBundleMetadata: boolean;
 }
 
+export interface ExperienceBundleSettingsReadMetadata {
+  fullName: string;
+  enableExperienceBundleMetadata: string;
+}
+
 export interface QueryResult {
   DeveloperName: string;
   Value: string;

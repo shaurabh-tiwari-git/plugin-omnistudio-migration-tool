@@ -1,5 +1,10 @@
 import { Connection } from '@salesforce/core';
-import { OmniStudioSettingsMetadata, ExperienceBundleSettingsMetadata, QueryResult } from './interfaces';
+import {
+  OmniStudioSettingsMetadata,
+  ExperienceBundleSettingsMetadata,
+  QueryResult,
+  ExperienceBundleSettingsReadMetadata,
+} from './interfaces';
 import { Logger } from './logger';
 
 /**
@@ -89,9 +94,22 @@ export class OrgPreferences {
       Logger.logVerbose(`The api is returning ${JSON.stringify(result)}`);
 
       // Check if the result is valid and contains the expected property
+      let settings: ExperienceBundleSettingsReadMetadata = {
+        fullName: '',
+        enableExperienceBundleMetadata: 'false',
+      };
       if (result && Array.isArray(result) && result.length > 0) {
-        const settings = result[0] as ExperienceBundleSettingsMetadata;
-        return settings.enableExperienceBundleMetadata === true;
+        settings = result[0] as ExperienceBundleSettingsReadMetadata;
+      } else if (result && typeof result === 'object' && 'enableExperienceBundleMetadata' in result) {
+        settings = result as ExperienceBundleSettingsReadMetadata;
+      } else {
+        return false;
+      }
+
+      // Handle both boolean true and string "true"
+      const value = settings.enableExperienceBundleMetadata;
+      if (value === 'true') {
+        return true;
       }
 
       // If no settings found or property is undefined, assume it's disabled

@@ -123,7 +123,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     let projectPath: string;
     let objectsToProcess: string[] = [];
     let targetApexNamespace: string;
-    let isExperienceBundleMetadataAPIPreEnabled: boolean;
+    const isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean } = { value: false };
     if (relatedObjects) {
       // To-Do: Add LWC to valid options when GA is released
       const validOptions = [Constants.Apex, Constants.ExpSites];
@@ -141,7 +141,11 @@ export default class Migrate extends OmniStudioBaseCommand {
         // Use ProjectPathUtil for APEX project folder selection (matches assess.ts logic)
         projectPath = await ProjectPathUtil.getProjectPath(messages, true);
         targetApexNamespace = await this.getTargetApexNamespace(objectsToProcess, targetApexNamespace);
-        await this.handleExperienceSitePrerequisites(objectsToProcess, conn, isExperienceBundleMetadataAPIPreEnabled);
+        await this.handleExperienceSitePrerequisites(
+          objectsToProcess,
+          conn,
+          isExperienceBundleMetadataAPIProgramaticallyEnabled
+        );
         Logger.logVerbose(
           'The objects to process after handleExpSitePrerequisite are ' + JSON.stringify(objectsToProcess)
         );
@@ -185,9 +189,12 @@ export default class Migrate extends OmniStudioBaseCommand {
       relatedObjectMigrationResult.lwcAssessmentInfos
     );
 
-    if (objectsToProcess.includes(Constants.ExpSites) && isExperienceBundleMetadataAPIPreEnabled === false) {
-      // If it was preenabled we dont need to revert it
-      // If we have switched it on. Switching it off again
+    // If we processed exp sites and switched metadata api from off->on then only we revert it
+    if (
+      objectsToProcess.includes(Constants.ExpSites) &&
+      isExperienceBundleMetadataAPIProgramaticallyEnabled.value === true
+    ) {
+      Logger.logVerbose('Since api was programatically enabled, turing it off');
       await OrgPreferences.setExperienceBundleMetadataAPI(conn, false);
     }
 
@@ -213,7 +220,7 @@ export default class Migrate extends OmniStudioBaseCommand {
   private async handleExperienceSitePrerequisites(
     objectsToProcess: string[],
     conn: Connection,
-    isExperienceBundleMetadataAPIPreEnabled: boolean
+    isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean }
   ): Promise<void> {
     if (objectsToProcess.includes(Constants.ExpSites)) {
       const expMetadataApiConsent = await this.getExpSiteMetadataEnableConsent();
@@ -223,18 +230,21 @@ export default class Migrate extends OmniStudioBaseCommand {
         Logger.warn('Consent for experience sites is not provided. Experience sites will not be processed');
         this.removeKeyFromRelatedObjectsToProcess(Constants.ExpSites, objectsToProcess);
         Logger.logVerbose(`Objects to process after removing expsite are ${JSON.stringify(objectsToProcess)}`);
-
         return;
       }
 
-      isExperienceBundleMetadataAPIPreEnabled = await OrgPreferences.isExperienceBundleMetadataAPIEnabled(conn);
-      if (isExperienceBundleMetadataAPIPreEnabled === true) {
+      const isMetadataAPIPreEnabled = await OrgPreferences.isExperienceBundleMetadataAPIEnabled(conn);
+      if (isMetadataAPIPreEnabled === true) {
         Logger.logVerbose('ExperienceBundle metadata api is already enabled');
         return;
       }
 
-      const isSuccessfullyenabled = await OrgPreferences.setExperienceBundleMetadataAPI(conn, true);
-      if (isSuccessfullyenabled === false) {
+      Logger.logVerbose('ExperienceBundle metadata api needs to be programatically enabled');
+      isExperienceBundleMetadataAPIProgramaticallyEnabled.value = await OrgPreferences.setExperienceBundleMetadataAPI(
+        conn,
+        true
+      );
+      if (isExperienceBundleMetadataAPIProgramaticallyEnabled.value === false) {
         this.removeKeyFromRelatedObjectsToProcess(Constants.ExpSites, objectsToProcess);
         Logger.warn('Since the api could not able enabled the experience sites would not be processed');
       }
