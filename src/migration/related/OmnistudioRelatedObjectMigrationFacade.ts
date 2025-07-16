@@ -25,6 +25,7 @@ const migrateMessages = Messages.loadMessages('@salesforce/plugin-omnistudio-mig
 // TODO: Uncomment code once MVP for migration is completed
 // const LWCTYPE = 'LightningComponentBundle';
 const APEXCLASS = 'Apexclass';
+const EXPERIENCEBUNDLE = 'EXPERIENCEBUNDLE';
 
 const defaultProjectName = 'omnistudio_migration';
 export default class OmnistudioRelatedObjectMigrationFacade {
@@ -80,7 +81,7 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     }
 
     if (relatedObjects.includes(Constants.ExpSites)) {
-      sfProject.retrieve('EXPERIENCEBUNDLE', this.org.getUsername());
+      sfProject.retrieve(EXPERIENCEBUNDLE, this.org.getUsername());
     }
 
     shell.cd(pwd);

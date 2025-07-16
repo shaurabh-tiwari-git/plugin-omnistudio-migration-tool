@@ -87,10 +87,6 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
 
     const lookupComponentName = `${this.namespace}:vlocityLWCOmniWrapper`;
     const targetComponentName = 'runtime_omnistudio_omniscript';
-    const warningMessage: string[] = [];
-    const updateMessage: string[] = [];
-    let hasOmnistudioContent = false;
-
     const fileContent = fs.readFileSync(file.location, 'utf8');
     // TODO - undefined check here
     const experienceSiteParsedJSON = JSON.parse(fileContent) as ExpSitePageJson;
@@ -100,7 +96,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     // TODO - When will it be Flexcard
 
     if (regions === undefined) {
-      hasOmnistudioContent = false;
+      experienceSiteAssessmentInfo.hasOmnistudioContent = false;
       return experienceSiteAssessmentInfo;
     }
 
@@ -125,7 +121,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
 
           if (component.componentName === lookupComponentName) {
             Logger.logVerbose('Omnistudio wrapper component found');
-            hasOmnistudioContent = true;
+            experienceSiteAssessmentInfo.hasOmnistudioContent = true;
 
             // Updating component
             component.componentName = targetComponentName;
@@ -152,14 +148,8 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       fs.writeFileSync(file.location, noarmalizeUpdatedFileContent, 'utf8');
     }
 
-    return {
-      name: file.name,
-      warnings: warningMessage,
-      infos: updateMessage,
-      path: file.location,
-      diff: JSON.stringify(difference),
-      hasOmnistudioContent,
-    };
+    experienceSiteAssessmentInfo.diff = JSON.stringify(difference);
+    return experienceSiteAssessmentInfo;
   }
 
   private updateComponentAttributes(
@@ -172,17 +162,35 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     }
 
     if (currentAttribute.target === undefined || currentAttribute.target === '') {
-      experienceSiteAssessmentInfo.warnings.push('Target is invalid. Please check experience site configuration');
+      experienceSiteAssessmentInfo.warnings.push(
+        'Target exists as empty string. Please check experience site configuration'
+      );
       return;
     }
 
     const oldTypeSubtypeLanguage = currentAttribute.target.substring(currentAttribute.target.indexOf(':') + 1);
 
     // Use storage to find the updated properties
-    const targetData: OmniScriptStorage = storage.osStorage.get(oldTypeSubtypeLanguage);
-    Logger.logVerbose('In component attribute updation');
-    if (targetData === undefined || targetData.migrationSuccess === false || targetData.isDuplicate === true) {
-      experienceSiteAssessmentInfo.warnings.push(`${oldTypeSubtypeLanguage} needs manual intervention`);
+    const targetDataFromStorage: OmniScriptStorage = storage.osStorage.get(oldTypeSubtypeLanguage);
+    Logger.logVerbose('The target data is ' + JSON.stringify(targetDataFromStorage));
+    if (
+      targetDataFromStorage === undefined ||
+      targetDataFromStorage.migrationSuccess === false ||
+      targetDataFromStorage.isDuplicate === true
+    ) {
+      if (targetDataFromStorage === undefined) {
+        experienceSiteAssessmentInfo.warnings.push(
+          `${oldTypeSubtypeLanguage} needs manual intervention as the migrated key does not exist`
+        );
+      } else if (targetDataFromStorage.migrationSuccess === false) {
+        experienceSiteAssessmentInfo.warnings.push(
+          `${oldTypeSubtypeLanguage} needs manual intervention as the migrated key does not exist`
+        );
+      } else {
+        experienceSiteAssessmentInfo.warnings.push(
+          `${oldTypeSubtypeLanguage} needs manual intervention as duplicated key found in storage`
+        );
+      }
     } else {
       // Preserve the layout value before clearing
       const originalLayout = currentAttribute['layout'];
@@ -194,10 +202,11 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       currentAttribute['direction'] = 'ltr';
       currentAttribute['display'] = 'Display button to open Omniscript';
       currentAttribute['inlineVariant'] = 'brand';
-      currentAttribute['language'] = targetData.language === undefined ? 'English' : targetData.language;
-      currentAttribute['subType'] = targetData.subtype;
+      currentAttribute['language'] =
+        targetDataFromStorage.language === undefined ? 'English' : targetDataFromStorage.language;
+      currentAttribute['subType'] = targetDataFromStorage.subtype;
       currentAttribute['theme'] = originalLayout;
-      currentAttribute['type'] = targetData.type;
+      currentAttribute['type'] = targetDataFromStorage.type;
     }
     Logger.logVerbose('updatedComponentAttribute = ' + JSON.stringify(currentAttribute));
   }
