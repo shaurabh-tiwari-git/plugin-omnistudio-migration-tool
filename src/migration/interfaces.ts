@@ -153,6 +153,7 @@ export interface MigrationStorage {
 export interface Storage {
   migrationSuccess?: boolean;
   error?: string[];
+  isDuplicate: boolean;
 }
 
 export interface OmniScriptStorage extends Storage {

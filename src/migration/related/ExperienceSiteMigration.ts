@@ -181,7 +181,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     // Use storage to find the updated properties
     const targetData: OmniScriptStorage = storage.osStorage.get(oldTypeSubtypeLanguage);
     Logger.logVerbose('In component attribute updation');
-    if (targetData === undefined || targetData.migrationSuccess === false) {
+    if (targetData === undefined || targetData.migrationSuccess === false || targetData.isDuplicate === true) {
       experienceSiteAssessmentInfo.warnings.push(`${oldTypeSubtypeLanguage} needs manual intervention`);
     } else {
       // Preserve the layout value before clearing
