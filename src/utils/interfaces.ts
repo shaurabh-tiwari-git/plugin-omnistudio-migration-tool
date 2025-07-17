@@ -120,6 +120,7 @@ export interface GlobalAutoNumberAssessmentInfo {
   id: string;
   infos: string[];
   warnings: string[];
+  errors: string[];
 }
 
 export interface OmniAssessmentInfo {

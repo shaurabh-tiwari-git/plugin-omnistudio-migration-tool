@@ -276,8 +276,12 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
           name: globalAutoNumber['Name'],
           id: globalAutoNumber['Id'],
           infos: [],
-          warnings: [this.messages.getMessage('unexpectedError')],
+          warnings: [],
+          errors: [this.messages.getMessage('unexpectedError')],
         });
+        const error = e as Error;
+        Logger.error(JSON.stringify(error));
+        Logger.error(error.stack);
       }
       progressBar.update(++progressCounter);
     }
@@ -293,6 +297,7 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
       id: globalAutoNumber['Id'],
       infos: [],
       warnings: [],
+      errors: [],
     };
 
     // Check for name changes due to API naming requirements

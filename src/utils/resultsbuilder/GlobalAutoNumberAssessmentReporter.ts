@@ -49,7 +49,8 @@ export class GlobalAutoNumberAssessmentReporter {
         name: 'Can be Automated',
         count: globalAutoNumberAssessmentInfos.filter(
           (globalAutoNumberAssessmentInfo) =>
-            !globalAutoNumberAssessmentInfo.warnings || globalAutoNumberAssessmentInfo.warnings.length === 0
+            (!globalAutoNumberAssessmentInfo.warnings || globalAutoNumberAssessmentInfo.warnings.length === 0) &&
+            (!globalAutoNumberAssessmentInfo.errors || globalAutoNumberAssessmentInfo.errors.length === 0)
         ).length,
         cssClass: 'text-success',
       },
@@ -60,6 +61,14 @@ export class GlobalAutoNumberAssessmentReporter {
             globalAutoNumberAssessmentInfo.warnings && globalAutoNumberAssessmentInfo.warnings.length > 0
         ).length,
         cssClass: 'text-warning',
+      },
+      {
+        name: 'Has Errors',
+        count: globalAutoNumberAssessmentInfos.filter(
+          (globalAutoNumberAssessmentInfo) =>
+            globalAutoNumberAssessmentInfo.errors && globalAutoNumberAssessmentInfo.errors.length > 0
+        ).length,
+        cssClass: 'text-error',
       },
     ];
   }
@@ -136,57 +145,68 @@ export class GlobalAutoNumberAssessmentReporter {
     globalAutoNumberAssessmentInfos: GlobalAutoNumberAssessmentInfo[],
     instanceUrl: string
   ): ReportRowParam[] {
-    return globalAutoNumberAssessmentInfos.map((globalAutoNumberAssessmentInfo) => ({
-      rowId: `${this.rowIdPrefix}${this.rowId++}`,
-      data: [
-        createRowDataParam('name', globalAutoNumberAssessmentInfo.name, true, 1, 1, false),
-        createRowDataParam(
-          'id',
-          globalAutoNumberAssessmentInfo.id,
-          false,
-          1,
-          1,
-          true,
-          `${instanceUrl}/${globalAutoNumberAssessmentInfo.id}`
-        ),
-        createRowDataParam('newName', globalAutoNumberAssessmentInfo.name, false, 1, 1, false),
-        createRowDataParam(
-          'status',
-          this.getMigrationStatus(globalAutoNumberAssessmentInfo),
-          false,
-          1,
-          1,
-          false,
-          undefined,
-          undefined,
-          this.getMigrationStatusCssClass(globalAutoNumberAssessmentInfo)
-        ),
-        createRowDataParam(
-          'summary',
-          globalAutoNumberAssessmentInfo.warnings ? globalAutoNumberAssessmentInfo.warnings.join(', ') : '',
-          false,
-          1,
-          1,
-          false,
-          undefined,
-          globalAutoNumberAssessmentInfo.warnings
-            ? reportingHelper.decorateErrors(globalAutoNumberAssessmentInfo.warnings)
-            : []
-        ),
-      ],
-    }));
+    return globalAutoNumberAssessmentInfos.map((globalAutoNumberAssessmentInfo) => {
+      const allMessages = [
+        ...(globalAutoNumberAssessmentInfo.warnings || []),
+        ...(globalAutoNumberAssessmentInfo.errors || []),
+      ];
+
+      return {
+        rowId: `${this.rowIdPrefix}${this.rowId++}`,
+        data: [
+          createRowDataParam('name', globalAutoNumberAssessmentInfo.name, true, 1, 1, false),
+          createRowDataParam(
+            'id',
+            globalAutoNumberAssessmentInfo.id,
+            false,
+            1,
+            1,
+            true,
+            `${instanceUrl}/${globalAutoNumberAssessmentInfo.id}`
+          ),
+          createRowDataParam('newName', globalAutoNumberAssessmentInfo.name, false, 1, 1, false),
+          createRowDataParam(
+            'status',
+            this.getMigrationStatus(globalAutoNumberAssessmentInfo),
+            false,
+            1,
+            1,
+            false,
+            undefined,
+            undefined,
+            this.getMigrationStatusCssClass(globalAutoNumberAssessmentInfo)
+          ),
+          createRowDataParam(
+            'summary',
+            allMessages.length > 0 ? allMessages.join(', ') : '',
+            false,
+            1,
+            1,
+            false,
+            undefined,
+            allMessages.length > 0 ? reportingHelper.decorateErrors(allMessages) : []
+          ),
+        ],
+      };
+    });
   }
 
   private static getMigrationStatus(globalAutoNumberAssessmentInfo: GlobalAutoNumberAssessmentInfo): string {
-    if (globalAutoNumberAssessmentInfo.warnings.length > 0) {
+    if (globalAutoNumberAssessmentInfo.errors && globalAutoNumberAssessmentInfo.errors.length > 0) {
+      return 'Has Errors';
+    }
+    if (globalAutoNumberAssessmentInfo.warnings && globalAutoNumberAssessmentInfo.warnings.length > 0) {
       return 'Has Warnings';
     }
     return 'Can be Automated';
   }
 
   private static getMigrationStatusCssClass(globalAutoNumberAssessmentInfo: GlobalAutoNumberAssessmentInfo): string {
-    if (globalAutoNumberAssessmentInfo.warnings.length > 0) {
+    if (globalAutoNumberAssessmentInfo.errors && globalAutoNumberAssessmentInfo.errors.length > 0) {
       return 'text-error';
+    }
+    if (globalAutoNumberAssessmentInfo.warnings && globalAutoNumberAssessmentInfo.warnings.length > 0) {
+      return 'text-warning';
     }
     return 'text-success';
   }
