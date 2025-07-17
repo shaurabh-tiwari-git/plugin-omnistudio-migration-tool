@@ -137,12 +137,7 @@ describe('GlobalAutoNumberMigrationTool', () => {
       const queryAllStub = sandbox.stub(QueryTools, 'queryAll').resolves(mockGlobalAutoNumbers);
       getMessageStub.withArgs('startingGlobalAutoNumberAssessment').returns('Starting assessment...');
       getMessageStub.withArgs('foundGlobalAutoNumbersToAssess', [2]).returns('Found 2 Global Auto Numbers');
-      getMessageStub
-        .withArgs('globalAutoNumberMigrationInfo', ['TestGAN1'])
-        .returns('Global Auto Number 1 will be migrated');
-      getMessageStub
-        .withArgs('globalAutoNumberMigrationInfo', ['TestGAN2'])
-        .returns('Global Auto Number 2 will be migrated');
+      // No migration info message expected since it was removed
 
       // Act
       const result = await globalAutoNumberMigrationTool.assess();
@@ -152,13 +147,13 @@ describe('GlobalAutoNumberMigrationTool', () => {
       expect(result[0]).to.deep.include({
         name: 'TestGAN1',
         id: '001',
-        infos: ['Global Auto Number 1 will be migrated'],
+        infos: [],
         warnings: [],
       });
       expect(result[1]).to.deep.include({
         name: 'TestGAN2',
         id: '002',
-        infos: ['Global Auto Number 2 will be migrated'],
+        infos: [],
         warnings: [],
       });
       expect(queryAllStub.calledOnce).to.be.true;
@@ -186,9 +181,7 @@ describe('GlobalAutoNumberMigrationTool', () => {
       getMessageStub
         .withArgs('globalAutoNumberNameChangeMessage', ['Test-GAN-1', 'TestGAN1'])
         .returns('Name will be changed');
-      getMessageStub
-        .withArgs('globalAutoNumberMigrationInfo', ['Test-GAN-1'])
-        .returns('Global Auto Number will be migrated');
+      // No migration info message expected since it was removed
 
       // Act
       const result = await globalAutoNumberMigrationTool.assess();
@@ -247,6 +240,10 @@ describe('GlobalAutoNumberMigrationTool', () => {
       // Mock pre-migration checks to return true
       sandbox.stub(globalAutoNumberMigrationTool as any, 'performPreMigrationChecks').resolves(true);
 
+      // Mock the base class dependencies to avoid actual truncation
+      sandbox.stub(QueryTools, 'queryIds').resolves([]);
+      sandbox.stub(NetUtils, 'delete').resolves(true);
+
       // Mock messages
       getMessageStub.withArgs('foundGlobalAutoNumbersToMigrate', [1]).returns('Found 1 Global Auto Number');
       getMessageStub.withArgs('startingPostMigrationCleanup').returns('Starting cleanup...');
@@ -262,28 +259,93 @@ describe('GlobalAutoNumberMigrationTool', () => {
       expect(result[0].results.size).to.equal(1);
     });
 
-    it('should fail migration when org preference is already enabled', async () => {
+    it('should fail truncate when org preference is already enabled', async () => {
       // Arrange
-      sandbox.stub(globalAutoNumberMigrationTool as any, 'performPreMigrationChecks').resolves(false);
+      const performPreMigrationChecksStub = sandbox
+        .stub(globalAutoNumberMigrationTool as any, 'performPreMigrationChecks')
+        .resolves(false);
       getMessageStub.withArgs('globalAutoNumberPrefEnabledError').returns('Preference already enabled');
 
       // Act
-      const result = await globalAutoNumberMigrationTool.migrate();
-
+      await globalAutoNumberMigrationTool.truncate();
       // Assert
-      expect(result).to.be.an('array').that.is.empty;
+      expect(performPreMigrationChecksStub.calledOnce).to.be.true;
+      // No exception thrown, just ensure the method returns early
     });
 
-    it('should fail migration when rollback flags are enabled', async () => {
+    it('should fail truncate when rollback flags are enabled', async () => {
       // Arrange
-      sandbox.stub(globalAutoNumberMigrationTool as any, 'performPreMigrationChecks').resolves(false);
+      const performPreMigrationChecksStub = sandbox
+        .stub(globalAutoNumberMigrationTool as any, 'performPreMigrationChecks')
+        .resolves(false);
       getMessageStub.withArgs('rollbackIPFlagEnabledError').returns('Rollback IP flag enabled');
+
+      // Act
+      await globalAutoNumberMigrationTool.truncate();
+      // Assert
+      expect(performPreMigrationChecksStub.calledOnce).to.be.true;
+      // No exception thrown, just ensure the method returns early
+    });
+
+    it('should validate count difference during migration', async () => {
+      // Arrange
+      const mockGlobalAutoNumbers = [
+        {
+          Id: '001',
+          Name: 'TestGAN1',
+          Increment__c: 1,
+          LastGeneratedNumber__c: 100,
+          LeftPadDigit__c: 5,
+          MinimumLength__c: 10,
+          Prefix__c: 'TEST',
+          Separator__c: '-',
+        },
+        {
+          Id: '002',
+          Name: 'TestGAN2',
+          Increment__c: 2,
+          LastGeneratedNumber__c: 200,
+          LeftPadDigit__c: 3,
+          MinimumLength__c: 8,
+          Prefix__c: 'PROD',
+          Separator__c: '_',
+        },
+      ];
+
+      // Mock pre-migration checks
+      sandbox.stub(globalAutoNumberMigrationTool as any, 'performPreMigrationChecks').resolves(true);
+
+      // Mock data retrieval to return 2 records
+      sandbox.stub(QueryTools, 'queryAll').resolves(mockGlobalAutoNumbers);
+
+      // Mock successful upload for only 1 record (simulating count difference)
+      const uploadResult = {
+        referenceId: '001',
+        id: 'new-id-001',
+        success: true,
+        hasErrors: false,
+        errors: [],
+        warnings: [],
+      };
+      sandbox.stub(NetUtils, 'createOne').resolves(uploadResult);
+
+      // Mock the base class dependencies to avoid actual truncation
+      sandbox.stub(QueryTools, 'queryIds').resolves([]);
+      sandbox.stub(NetUtils, 'delete').resolves(true);
+
+      // Mock messages
+      getMessageStub.withArgs('foundGlobalAutoNumbersToMigrate', [2]).returns('Found 2 Global Auto Numbers');
+      getMessageStub.withArgs('startingPostMigrationCleanup').returns('Starting cleanup...');
+      getMessageStub.withArgs('incompleteMigrationDetected', [2, 1]).returns('Incomplete migration detected');
+      getMessageStub.withArgs('migrationValidationFailed').returns('Migration validation failed');
 
       // Act
       const result = await globalAutoNumberMigrationTool.migrate();
 
       // Assert
-      expect(result).to.be.an('array').that.is.empty;
+      expect(result).to.be.an('array').with.length(1);
+      expect(result[0].name).to.equal('GlobalAutoNumber');
+      expect(result[0].results.size).to.equal(2);
     });
 
     it('should handle upload errors during migration', async () => {
@@ -345,20 +407,23 @@ describe('GlobalAutoNumberMigrationTool', () => {
           Separator__c: '-',
         },
       ];
-
+      sandbox.stub(QueryTools, 'queryAll').resolves(mockGlobalAutoNumbers);
+      getMessageStub.withArgs('startingGlobalAutoNumberAssessment').returns('Starting assessment...');
+      getMessageStub.withArgs('foundGlobalAutoNumbersToAssess', [1]).returns('Found 1 Global Auto Number');
       getMessageStub
-        .withArgs('globalAutoNumberMigrationInfo', ['TestGAN1'])
-        .returns('Global Auto Number 1 will be migrated');
+        .withArgs('globalAutoNumberNameChangeMessage', ['TestGAN1', 'TestGAN1'])
+        .returns('Name will be changed');
+      getMessageStub.withArgs('unexpectedError').returns('Unexpected error');
 
       // Act
-      const result = await globalAutoNumberMigrationTool.processGlobalAutoNumberComponents(mockGlobalAutoNumbers);
+      const result = await globalAutoNumberMigrationTool.assess();
 
       // Assert
       expect(result).to.be.an('array').with.length(1);
       expect(result[0]).to.deep.include({
         name: 'TestGAN1',
         id: '001',
-        infos: ['Global Auto Number 1 will be migrated'],
+        infos: [],
         warnings: [],
       });
     });

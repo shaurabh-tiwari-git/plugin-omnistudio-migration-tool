@@ -98,7 +98,7 @@
   "cardNameChangeMessage": "Card name will be changed from {0} to {1} to follow API naming standards",
   "authordNameChangeMessage": "Author name will be changed from {0} to {1} to follow API naming standards",
   "globalAutoNumberNameChangeMessage": "GlobalAutoNumber name will be changed from %s to %s to follow API naming standards",
-  "globalAutoNumberMigrationInfo": "GlobalAutoNumber %s will be migrated from custom object to standard BPO",
+  "duplicateGlobalAutoNumberNameMessage": "Potential duplicate: Another Global Auto Number has the same name %s after name cleaning. This may cause conflicts during migration",
   "omniScriptNameChangeMessage": "OmniScript reference part {0} will be changed to {1} during migration.",
   "dataRaptorNameChangeMessage": "DataRaptor reference {0} will be changed to {1} during migration.",
   "integrationProcedureNameChangeMessage": "Integration Procedure reference {0} will be changed to {1} during migration.",

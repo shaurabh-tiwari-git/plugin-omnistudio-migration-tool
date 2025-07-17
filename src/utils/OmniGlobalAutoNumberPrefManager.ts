@@ -1,5 +1,6 @@
 import { Connection } from '@salesforce/core';
 import { MetadataInfo } from './interfaces';
+import { Logger } from './logger';
 
 /**
  * Manager class for handling OmniGlobalAutoNumberPref org preference
@@ -19,6 +20,8 @@ export class OmniGlobalAutoNumberPrefManager {
       const result = (await this.connection.metadata.read('OmniStudioSettings', ['OmniStudio'])) as MetadataInfo;
       return result?.enableOmniGlobalAutoNumberPref === 'true' || false;
     } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      Logger.error(`Error checking OmniGlobalAutoNumberPref status: ${errMsg}`);
       return false;
     }
   }

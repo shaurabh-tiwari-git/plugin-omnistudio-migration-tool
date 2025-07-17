@@ -127,11 +127,11 @@
   "postMigrationCleanupCompleted": "Post-migration cleanup completed successfully.",
   "errorDuringPostMigrationCleanup": "Error during post-migration cleanup.",
   "globalAutoNumberNameChangeMessage": "Global Auto Number name has been modified to fit naming rules: %s",
+  "duplicatedGlobalAutoNumberName": "Duplicated Global Auto Number name",
   "errorWhileUploadingGlobalAutoNumber": "An error occurred while uploading Global Auto Number: ",
   "startingGlobalAutoNumberAssessment": "Starting Global Auto Number assessment...",
   "foundGlobalAutoNumbersToAssess": "Found %s Global Auto Numbers to assess",
   "unexpectedError": "An unexpected error occurred during processing",
-  "globalAutoNumberMigrationInfo": "Global Auto Number %s will be migrated from custom object to standard BPO",
   "migrationValidationFailed": "Post Migration validation failed.",
   "incompleteMigrationDetected": "Incomplete migration detected. Source objects: %s, Target objects: %s."
 }
