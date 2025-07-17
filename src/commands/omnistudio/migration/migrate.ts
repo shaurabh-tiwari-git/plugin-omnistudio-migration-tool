@@ -10,7 +10,6 @@
 import * as os from 'os';
 import { flags } from '@salesforce/command';
 import { Connection, Messages } from '@salesforce/core';
-import { ExecuteAnonymousResult } from 'jsforce';
 import OmniStudioBaseCommand from '../../basecommand';
 import { DataRaptorMigrationTool } from '../../../migration/dataraptor';
 import { DebugTimer, MigratedObject, MigratedRecordInfo } from '../../../utils';
@@ -24,8 +23,8 @@ import { generatePackageXml } from '../../../utils/generatePackageXml';
 import { OmnistudioOrgDetails, OrgUtils } from '../../../utils/orgUtils';
 import { Constants } from '../../../utils/constants/stringContants';
 import { OrgPreferences } from '../../../utils/orgPreferences';
-import { AnonymousApexRunner } from '../../../utils/apex/executor/AnonymousApexRunner';
 import { ProjectPathUtil } from '../../../utils/projectPathUtil';
+import { PostMigrate } from '../../../migration/postMigrate';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -198,8 +197,20 @@ export default class Migrate extends OmniStudioBaseCommand {
       await OrgPreferences.setExperienceBundleMetadataAPI(conn, false);
     }
 
+    // POST MIGRATION
     let actionItems = [];
-    actionItems = await this.setDesignersToUseStandardDataModel(namespace);
+    const postMigrate: PostMigrate = new PostMigrate(
+      this.org,
+      namespace,
+      conn,
+      this.logger,
+      messages,
+      this.ux,
+      objectsToProcess
+    );
+
+    actionItems = await postMigrate.setDesignersToUseStandardDataModel(namespace);
+    await postMigrate.restoreExperienceAPIMetadataSettings(isExperienceBundleMetadataAPIProgramaticallyEnabled);
 
     await ResultsBuilder.generateReport(
       objectMigrationResults,
@@ -258,29 +269,6 @@ export default class Migrate extends OmniStudioBaseCommand {
     if (index > -1) {
       relatedObjects.splice(index, 1);
     }
-  }
-
-  private async setDesignersToUseStandardDataModel(namespace: string): Promise<string[]> {
-    const userActionMessage: string[] = [];
-    try {
-      Logger.logVerbose('Setting designers to use the standard data model');
-      const apexCode = `
-          ${namespace}.OmniStudioPostInstallClass.useStandardDataModel();
-        `;
-
-      const result: ExecuteAnonymousResult = await AnonymousApexRunner.run(this.org, apexCode);
-      if (result?.success === false) {
-        const message = result?.exceptionStackTrace;
-        Logger.error(`Error occurred while setting designers to use the standard data model ${message}`);
-        userActionMessage.push(messages.getMessage('manuallySwitchDesignerToStandardDataModel'));
-      } else if (result?.success === true) {
-        Logger.logVerbose('Successfully executed setDesignersToUseStandardDataModel');
-      }
-    } catch (ex) {
-      Logger.error(`Exception occurred while setting designers to use the standard data model ${JSON.stringify(ex)}`);
-      userActionMessage.push(messages.getMessage('manuallySwitchDesignerToStandardDataModel'));
-    }
-    return userActionMessage;
   }
 
   private async truncateObjects(migrationObjects: MigrationTool[], debugTimer: DebugTimer): Promise<MigratedObject[]> {
