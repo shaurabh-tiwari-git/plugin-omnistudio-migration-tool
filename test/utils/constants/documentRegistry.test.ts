@@ -26,7 +26,7 @@ const titles = {
   formulaSyntaxError: 'Formulas and Functions',
   fileNoOmnistudioCalls: 'Callable Implementations',
   fileAlreadyImplementsCallable: 'Callable Implementations',
-  inApexDrNameWillBeUpdated: 'Update References to Omnistudio Data Mappers from Apex After Migration',
+  inApexDrNameWillBeUpdated: 'Update References to Omnistudio Components After Migration',
   fileUpdatedToAllowRemoteCalls: 'Make a Long-Running Remote Call Using Omnistudio.OmniContinuation',
   fileUpdatedToAllowCalls: 'Make a Long-Running Remote Call Using Omnistudio.OmniContinuation',
   fileImplementsVlocityOpenInterface: 'VlocityOpenInterface',
@@ -35,7 +35,7 @@ const titles = {
   authordNameChangeMessage: 'Omnistudio Naming Conventions',
   omniScriptNameChangeMessage:
     'Update Omniscript Custom Lightning Web Components and Omniscript Elements Overridden with Customized Components',
-  dataRaptorNameChangeMessage: 'Update References to Omnistudio Data Mappers from Apex After Migration',
+  dataRaptorNameChangeMessage: 'Update References to Omnistudio Components After Migration',
   integrationProcedureNameChangeMessage: 'Update Integration Procedure Type and Subtype After Migration',
   integrationProcedureManualUpdateMessage: 'Update Integration Procedure Type and Subtype After Migration',
   duplicateCardNameMessage: 'Clone a Flexcard',
