@@ -113,9 +113,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       const flexCardsAssessmentInfos = this.processCardComponents(flexCards);
       return flexCardsAssessmentInfos;
     } catch (err) {
-      Logger.error(this.messages.getMessage('errorDuringFlexCardAssessment'));
-      Logger.error(JSON.stringify(err));
-      Logger.error(err.stack);
+      Logger.error(this.messages.getMessage('errorDuringFlexCardAssessment'), err);
     }
   }
 
@@ -145,8 +143,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           warnings: [this.messages.getMessage('unexpectedError')],
         });
         const error = e as Error;
-        Logger.error(JSON.stringify(error));
-        Logger.error(error.stack);
+        Logger.error('Error processing flex card', error);
       }
       progressBar.update(++progressCounter);
     }
