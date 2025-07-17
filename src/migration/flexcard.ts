@@ -614,7 +614,8 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         let finalKey = `${oldrecord['Name']}`;
         storage.fcStorage.set(finalKey, value);
       } catch (error) {
-        Logger.logVerbose(error);
+        Logger.logVerbose('Error occurred while processing key for flexcard storage');
+        Logger.error(error);
       }
 
       StorageUtil.printMigrationStorage();

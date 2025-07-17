@@ -116,7 +116,7 @@ export class OrgPreferences {
       return false;
     } catch (error) {
       // If the metadata type doesn't exist or there's an error, assume it's disabled
-      Logger.logVerbose('Unable to check ExperienceBundle Metadata API status');
+      Logger.error('Unable to check ExperienceBundle Metadata API status');
       return false;
     }
   }
@@ -144,7 +144,7 @@ export class OrgPreferences {
       Logger.logVerbose(`Successfully set the experienceBundleMetadata API to ${enable}`);
       return true;
     } catch (error) {
-      Logger.logVerbose(
+      Logger.error(
         `Failed to enable ExperienceBundle Metadata API: ${error instanceof Error ? error.message : String(error)}`
       );
       return false;

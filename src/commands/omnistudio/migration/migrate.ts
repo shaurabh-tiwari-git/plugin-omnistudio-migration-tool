@@ -194,7 +194,7 @@ export default class Migrate extends OmniStudioBaseCommand {
       objectsToProcess.includes(Constants.ExpSites) &&
       isExperienceBundleMetadataAPIProgramaticallyEnabled.value === true
     ) {
-      Logger.logVerbose('Since api was programatically enabled, turing it off');
+      Logger.logVerbose('Since ExperienceSiteMetadata API was programatically enabled, turing it off');
       await OrgPreferences.setExperienceBundleMetadataAPI(conn, false);
     }
 
