@@ -11,7 +11,9 @@ import {
   MigrationStorage,
   OmniScriptStorage,
   ExpSitePageJson,
+  Storage,
   ExpSiteRegion,
+  FlexcardStorage,
 } from '../interfaces';
 import { FileDiffUtil } from '../../utils/lwcparser/fileutils/FileDiffUtil';
 import { ExperienceSiteAssessmentInfo } from '../../utils';
@@ -20,8 +22,13 @@ import { BaseRelatedObjectMigration } from './BaseRealtedObjectMigration';
 
 Messages.importMessagesDirectory(__dirname);
 
+const TARGET_COMPONENT_NAME_OS = 'runtime_omnistudio_omniscript';
+const TARGET_COMPONENT_NAME_FC = 'runtime_omnisctudio_flexcard';
+const FLEXCARD_PREFIX = 'cf';
+
 export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
   private EXPERIENCE_SITES_PATH: string;
+
   public constructor(projectPath: string, namespace: string, org: Org) {
     super(projectPath, namespace, org);
   }
@@ -87,7 +94,6 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     };
 
     const lookupComponentName = `${this.namespace}:vlocityLWCOmniWrapper`;
-    const targetComponentName = 'runtime_omnistudio_omniscript';
     const fileContent = fs.readFileSync(file.location, 'utf8');
     // TODO - undefined check here
     const experienceSiteParsedJSON = JSON.parse(fileContent) as ExpSitePageJson;
@@ -124,9 +130,12 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
             Logger.logVerbose('Omnistudio wrapper component found');
             experienceSiteAssessmentInfo.hasOmnistudioContent = true;
 
-            // Updating component
-            component.componentName = targetComponentName;
-            this.updateComponentAttributes(component.componentAttributes, experienceSiteAssessmentInfo, storage);
+            this.updateComponentAndItsAttributes(
+              component,
+              component.componentAttributes,
+              experienceSiteAssessmentInfo,
+              storage
+            );
           }
         }
       }
@@ -153,12 +162,13 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     return experienceSiteAssessmentInfo;
   }
 
-  private updateComponentAttributes(
+  private updateComponentAndItsAttributes(
+    component: ExpSiteComponent,
     currentAttribute: ExpSiteComponentAttributes,
     experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo,
     storage: MigrationStorage
   ): void {
-    if (currentAttribute === undefined) {
+    if (component === undefined || currentAttribute === undefined) {
       return;
     }
 
@@ -169,16 +179,61 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       return;
     }
 
-    const oldTypeSubtypeLanguage = currentAttribute.target.substring(currentAttribute.target.indexOf(':') + 1);
+    const targetName = currentAttribute.target.substring(currentAttribute.target.indexOf(':') + 1); // c:ABCD -> ABCD
 
+    if (targetName.startsWith(FLEXCARD_PREFIX)) {
+      this.processFCComponent(targetName, component, currentAttribute, experienceSiteAssessmentInfo, storage);
+    } else {
+      this.processOSComponent(targetName, component, currentAttribute, experienceSiteAssessmentInfo, storage);
+    }
+    Logger.logVerbose('updatedComponentAttribute = ' + JSON.stringify(currentAttribute));
+  }
+
+  private processFCComponent(
+    targetName: string,
+    component: ExpSiteComponent,
+    currentAttribute: ExpSiteComponentAttributes,
+    experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo,
+    storage: MigrationStorage
+  ): void {
+    Logger.logVerbose(`Started processing FC component + ${JSON.stringify(component)} `);
+    const flexcardName = targetName.substring(2); // cfCardName -> CardName
+    const targetDataFromStorageFC: FlexcardStorage = storage.fcStorage.get(flexcardName);
+
+    Logger.logVerbose('The target data is ' + JSON.stringify(targetDataFromStorageFC));
+
+    // Remove later
+    if (this.shouldAddWarning(targetDataFromStorageFC)) {
+      const warningMsg: string = this.getWarningMessage(flexcardName, targetDataFromStorageFC);
+      experienceSiteAssessmentInfo.warnings.push(warningMsg);
+    } else {
+      component.componentName = TARGET_COMPONENT_NAME_FC;
+
+      currentAttribute['direction'] = 'ltr';
+      currentAttribute['display'] = 'Display button to open Omniscript';
+      currentAttribute['inlineVariant'] = 'brand';
+      currentAttribute['name'] = targetDataFromStorageFC.name;
+    }
+  }
+
+  private processOSComponent(
+    targetName: string,
+    component: ExpSiteComponent,
+    currentAttribute: ExpSiteComponentAttributes,
+    experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo,
+    storage: MigrationStorage
+  ): void {
+    Logger.logVerbose(`Started processing OS component + ${JSON.stringify(component)} `);
     // Use storage to find the updated properties
-    const targetDataFromStorage: OmniScriptStorage = storage.osStorage.get(oldTypeSubtypeLanguage);
+    const targetDataFromStorage: OmniScriptStorage = storage.osStorage.get(targetName);
     Logger.logVerbose('The target data is ' + JSON.stringify(targetDataFromStorage));
 
     if (this.shouldAddWarning(targetDataFromStorage)) {
-      const warningMsg: string = this.getWarningMessage(oldTypeSubtypeLanguage, targetDataFromStorage);
+      const warningMsg: string = this.getWarningMessage(targetName, targetDataFromStorage);
       experienceSiteAssessmentInfo.warnings.push(warningMsg);
     } else {
+      component.componentName = TARGET_COMPONENT_NAME_OS;
+
       // Preserve the layout value before clearing
       const originalLayout = currentAttribute['layout'];
 
@@ -195,14 +250,13 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       currentAttribute['theme'] = originalLayout;
       currentAttribute['type'] = targetDataFromStorage.type;
     }
-    Logger.logVerbose('updatedComponentAttribute = ' + JSON.stringify(currentAttribute));
   }
 
-  private shouldAddWarning(targetData: OmniScriptStorage): boolean {
+  private shouldAddWarning(targetData: Storage): boolean {
     return targetData === undefined || targetData.migrationSuccess === false || targetData.isDuplicate === true;
   }
 
-  private getWarningMessage(oldTypeSubtypeLanguage: string, targetDataFromStorage: OmniScriptStorage): string {
+  private getWarningMessage(oldTypeSubtypeLanguage: string, targetDataFromStorage: Storage): string {
     if (targetDataFromStorage === undefined) {
       return `${oldTypeSubtypeLanguage} needs manual intervention as the migrated key does not exist`;
     } else if (targetDataFromStorage.migrationSuccess === false) {

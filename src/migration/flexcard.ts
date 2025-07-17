@@ -612,7 +612,15 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         }
 
         let finalKey = `${oldrecord['Name']}`;
-        storage.fcStorage.set(finalKey, value);
+        if (storage.fcStorage.has(finalKey)) {
+          // Key already exists - handle accordingly
+          Logger.logVerbose(`Key ${finalKey} already exists in flexcard storage`);
+          value.isDuplicate = true;
+          storage.fcStorage.set(finalKey, value);
+        } else {
+          // Key doesn't exist - safe to set
+          storage.fcStorage.set(finalKey, value);
+        }
       } catch (error) {
         Logger.logVerbose('Error occurred while processing key for flexcard storage');
         Logger.error(error);
