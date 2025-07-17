@@ -4,7 +4,7 @@ export const Constants = {
   Flexcard: 'fc',
   IntegrationProcedure: 'ip',
   DataMapper: 'dr',
-  GlobalAutoNumber: 'gan',
+  GlobalAutoNumber: 'autonumber',
   LWC: 'lwc',
   Apex: 'apex',
 

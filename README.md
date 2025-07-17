@@ -46,7 +46,7 @@ sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM
 --only=ip    // Integration Procedures
 --only=os    // OmniScripts
 --only=fc    // FlexCards
---only=gan   // Global Auto Numbers
+--only=autonumber   // Global Auto Numbers
 
 // To migrate all versions of the components and not just the active ones:
 --allversions
@@ -62,7 +62,7 @@ sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM
 
 ## Global Auto Number Migration
 
-Global Auto Numbers are components that generate sequential numbers across your Salesforce org. The migration tool supports both assessment and migration of these components.
+Global Auto Numbers are components that generate sequential numbers across your Omnistudio org. The migration tool supports both assessment and migration of these components.
 
 ### Prerequisites for Global Auto Number Migration
 
@@ -93,10 +93,10 @@ Assessment provides detailed information about:
 
 ```bash
 # Assess Global Auto Numbers only
-sfdx omnistudio:migration:assess -u YOUR_ORG_USERNAME@DOMAIN.COM --only=gan --namespace=YOUR_PACKAGE_NAMESPACE
+sfdx omnistudio:migration:assess -u YOUR_ORG_USERNAME@DOMAIN.COM --only=autonumber --namespace=YOUR_PACKAGE_NAMESPACE
 
 # Migrate Global Auto Numbers only
-sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM --only=gan --namespace=YOUR_PACKAGE_NAMESPACE
+sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM --only=autonumber --namespace=YOUR_PACKAGE_NAMESPACE
 ```
 
 5. An HTML page will be open in your default browser with the results of your migration/assessment job.
@@ -130,7 +130,7 @@ OPTIONS
 
   --only=only                                                                       specify components to assess:
                                                                                     dr (DataRaptors), ip (Integration Procedures),
-                                                                                    os (OmniScripts), fc (FlexCards), gan (Global Auto Numbers)
+                                                                                    os (OmniScripts), fc (FlexCards), autonumber (Global Auto Numbers)
 
   --relatedobjects=relatedobjects                                                   specify related objects to assess:
                                                                                     'apex' for Apex classes

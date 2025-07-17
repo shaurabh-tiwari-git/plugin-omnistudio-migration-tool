@@ -137,8 +137,12 @@ describe('GlobalAutoNumberMigrationTool', () => {
       const queryAllStub = sandbox.stub(QueryTools, 'queryAll').resolves(mockGlobalAutoNumbers);
       getMessageStub.withArgs('startingGlobalAutoNumberAssessment').returns('Starting assessment...');
       getMessageStub.withArgs('foundGlobalAutoNumbersToAssess', [2]).returns('Found 2 Global Auto Numbers');
-      getMessageStub.withArgs('globalAutoNumberMigrationInfo', ['TestGAN1']).returns('GAN1 will be migrated');
-      getMessageStub.withArgs('globalAutoNumberMigrationInfo', ['TestGAN2']).returns('GAN2 will be migrated');
+      getMessageStub
+        .withArgs('globalAutoNumberMigrationInfo', ['TestGAN1'])
+        .returns('Global Auto Number 1 will be migrated');
+      getMessageStub
+        .withArgs('globalAutoNumberMigrationInfo', ['TestGAN2'])
+        .returns('Global Auto Number 2 will be migrated');
 
       // Act
       const result = await globalAutoNumberMigrationTool.assess();
@@ -148,13 +152,13 @@ describe('GlobalAutoNumberMigrationTool', () => {
       expect(result[0]).to.deep.include({
         name: 'TestGAN1',
         id: '001',
-        infos: ['GAN1 will be migrated'],
+        infos: ['Global Auto Number 1 will be migrated'],
         warnings: [],
       });
       expect(result[1]).to.deep.include({
         name: 'TestGAN2',
         id: '002',
-        infos: ['GAN2 will be migrated'],
+        infos: ['Global Auto Number 2 will be migrated'],
         warnings: [],
       });
       expect(queryAllStub.calledOnce).to.be.true;
@@ -182,7 +186,9 @@ describe('GlobalAutoNumberMigrationTool', () => {
       getMessageStub
         .withArgs('globalAutoNumberNameChangeMessage', ['Test-GAN-1', 'TestGAN1'])
         .returns('Name will be changed');
-      getMessageStub.withArgs('globalAutoNumberMigrationInfo', ['Test-GAN-1']).returns('GAN will be migrated');
+      getMessageStub
+        .withArgs('globalAutoNumberMigrationInfo', ['Test-GAN-1'])
+        .returns('Global Auto Number will be migrated');
 
       // Act
       const result = await globalAutoNumberMigrationTool.assess();
@@ -340,7 +346,9 @@ describe('GlobalAutoNumberMigrationTool', () => {
         },
       ];
 
-      getMessageStub.withArgs('globalAutoNumberMigrationInfo', ['TestGAN1']).returns('GAN1 will be migrated');
+      getMessageStub
+        .withArgs('globalAutoNumberMigrationInfo', ['TestGAN1'])
+        .returns('Global Auto Number 1 will be migrated');
 
       // Act
       const result = await globalAutoNumberMigrationTool.processGlobalAutoNumberComponents(mockGlobalAutoNumbers);
@@ -350,7 +358,7 @@ describe('GlobalAutoNumberMigrationTool', () => {
       expect(result[0]).to.deep.include({
         name: 'TestGAN1',
         id: '001',
-        infos: ['GAN1 will be migrated'],
+        infos: ['Global Auto Number 1 will be migrated'],
         warnings: [],
       });
     });

@@ -13,7 +13,7 @@ import { reportingHelper } from './reportingHelper';
 
 export class GlobalAutoNumberAssessmentReporter {
   private static rowId = 0;
-  private static rowIdPrefix = 'gan-row-data-';
+  private static rowIdPrefix = 'autonumber-row-data-';
 
   public static getGlobalAutoNumberAssessmentData(
     globalAutoNumberAssessmentInfos: GlobalAutoNumberAssessmentInfo[],

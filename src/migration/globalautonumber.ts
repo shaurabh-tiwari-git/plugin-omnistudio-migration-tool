@@ -150,16 +150,16 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
     const progressBar = createProgressBar('Migrating', 'GlobalAutoNumber');
     progressBar.start(globalAutoNumberSettings.length, progressCounter);
 
-    for (let gan of globalAutoNumberSettings) {
+    for (let autonumber of globalAutoNumberSettings) {
       progressBar.update(++progressCounter);
-      const recordId = gan['Id'];
+      const recordId = autonumber['Id'];
 
       // Create a map of the original records
-      originalGlobalAutoNumberRecords.set(recordId, gan);
+      originalGlobalAutoNumberRecords.set(recordId, autonumber);
 
       try {
         // Transform the GlobalAutoNumber setting
-        const transformedGlobalAutoNumber = this.mapGlobalAutoNumberRecord(gan);
+        const transformedGlobalAutoNumber = this.mapGlobalAutoNumberRecord(autonumber);
         const transformedName = transformedGlobalAutoNumber['Name'];
 
         // Create Global Auto Number record
@@ -178,7 +178,7 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
 
           // Check for name changes
           uploadResult.warnings = uploadResult.warnings || [];
-          if (transformedName !== gan['Name']) {
+          if (transformedName !== autonumber['Name']) {
             uploadResult.newName = transformedName;
             uploadResult.warnings.unshift(
               this.messages.getMessage('globalAutoNumberNameChangeMessage', [transformedName])
@@ -188,8 +188,8 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
           globalAutoNumberUploadInfo.set(recordId, uploadResult);
         }
       } catch (err) {
-        this.setRecordErrors(gan, this.messages.getMessage('errorWhileUploadingGlobalAutoNumber') + err);
-        originalGlobalAutoNumberRecords.set(recordId, gan);
+        this.setRecordErrors(autonumber, this.messages.getMessage('errorWhileUploadingGlobalAutoNumber') + err);
+        originalGlobalAutoNumberRecords.set(recordId, autonumber);
 
         globalAutoNumberUploadInfo.set(recordId, {
           referenceId: recordId,
