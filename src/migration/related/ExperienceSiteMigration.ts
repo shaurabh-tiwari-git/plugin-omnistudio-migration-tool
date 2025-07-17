@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import path from 'path';
+import * as path from 'path';
 import * as shell from 'shelljs';
 import { Org, Messages } from '@salesforce/core';
 import { FileUtil, File } from '../../utils/file/fileUtil';
