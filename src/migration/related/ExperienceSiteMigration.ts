@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import path from 'path';
 import * as shell from 'shelljs';
 import { Org, Messages } from '@salesforce/core';
 import { FileUtil, File } from '../../utils/file/fileUtil';
@@ -19,9 +20,8 @@ import { BaseRelatedObjectMigration } from './BaseRealtedObjectMigration';
 
 Messages.importMessagesDirectory(__dirname);
 
-const EXPERIENCE_SITES_PATH = '/force-app/main/default/experiences';
-
 export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
+  private EXPERIENCE_SITES_PATH: string;
   public constructor(projectPath: string, namespace: string, org: Org) {
     super(projectPath, namespace, org);
   }
@@ -34,15 +34,16 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     Logger.logVerbose('Starting experience sites migration');
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
+    this.EXPERIENCE_SITES_PATH = path.join(this.projectPath, 'force-app', 'main', 'default', 'experiences');
+
     Logger.logVerbose('Started processing the experience sites');
-    const experienceSiteInfo = this.processExperienceSites(this.projectPath, 'migration');
+    const experienceSiteInfo = this.processExperienceSites(this.EXPERIENCE_SITES_PATH, 'migration');
     Logger.info('Successfully processed experience sites for migration');
     shell.cd(pwd);
     return experienceSiteInfo;
   }
 
   public processExperienceSites(dir: string, type = 'migration'): ExperienceSiteAssessmentInfo[] {
-    dir += EXPERIENCE_SITES_PATH;
     Logger.logVerbose('Started reading the files');
     const directoryMap: Map<string, File[]> = FileUtil.getAllFilesInsideDirectory(dir);
 

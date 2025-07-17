@@ -188,15 +188,6 @@ export default class Migrate extends OmniStudioBaseCommand {
       relatedObjectMigrationResult.lwcAssessmentInfos
     );
 
-    // If we processed exp sites and switched metadata api from off->on then only we revert it
-    if (
-      objectsToProcess.includes(Constants.ExpSites) &&
-      isExperienceBundleMetadataAPIProgramaticallyEnabled.value === true
-    ) {
-      Logger.logVerbose('Since ExperienceSiteMetadata API was programatically enabled, turing it off');
-      await OrgPreferences.setExperienceBundleMetadataAPI(conn, false);
-    }
-
     // POST MIGRATION
     let actionItems = [];
     const postMigrate: PostMigrate = new PostMigrate(

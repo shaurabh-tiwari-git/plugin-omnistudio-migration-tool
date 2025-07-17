@@ -539,7 +539,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           );
         }
 
-        uploadResult.newName = transformedCardName; // CONFIRM ONCE
+        uploadResult.newName = transformedCardName;
         if (transformedCardName !== card['Name']) {
           uploadResult.warnings.unshift(this.messages.getMessage('cardNameChangeMessage', [transformedCardName]));
         }

@@ -52,6 +52,7 @@ export class PostMigrate extends BaseMigrationTool {
     return userActionMessage;
   }
 
+  // If we processed exp sites and switched metadata api from off->on then only we revert it
   public async restoreExperienceAPIMetadataSettings(isExperienceBundleMetadataAPIProgramaticallyEnabled: {
     value: boolean;
   }): Promise<void> {
