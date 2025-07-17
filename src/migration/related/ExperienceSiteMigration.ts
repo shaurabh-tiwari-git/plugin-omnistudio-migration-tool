@@ -113,7 +113,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
 
       if (Array.isArray(regionComponents)) {
         for (const component of regionComponents) {
-          if (component === undefined) {
+          if (component === undefined || component === null) {
             continue;
           }
 
