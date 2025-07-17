@@ -4,12 +4,13 @@ import open from 'open';
 import { Messages } from '@salesforce/core';
 import { pushAssestUtilites } from '../file/fileUtil';
 import { ApexAssessmentInfo, MigratedObject, MigratedRecordInfo, RelatedObjectAssesmentInfo } from '../interfaces';
-import { ReportParam } from '../reportGenerator/reportInterfaces';
+import { DashboardParam, ReportParam } from '../reportGenerator/reportInterfaces';
 import { OmnistudioOrgDetails } from '../orgUtils';
 import { TemplateParser } from '../templateParser/generate';
 import { createFilterGroupParam, createRowDataParam } from '../reportGenerator/reportUtil';
 import { FileDiffUtil } from '../lwcparser/fileutils/FileDiffUtil';
 import { Logger } from '../logger';
+import { getMigrationHeading } from '../stringUtils';
 import { reportingHelper } from './reportingHelper';
 const resultsDir = path.join(process.cwd(), 'migration_report');
 // const lwcConstants = { componentName: 'lwc', title: 'LWC Components Migration Result' };
@@ -66,8 +67,8 @@ export class ResultsBuilder {
     const rollbackFlags = orgDetails.rollbackFlags || [];
     const flags = rollbackFlagNames.filter((flag) => rollbackFlags.includes(flag));
     const data: ReportParam = {
-      title: result.name,
-      heading: result.name,
+      title: `${getMigrationHeading(result.name)} Migration Report`,
+      heading: `${getMigrationHeading(result.name)} Migration Report`,
       org: {
         name: orgDetails.orgDetails.Name,
         id: orgDetails.orgDetails.Id,
@@ -76,22 +77,24 @@ export class ResultsBuilder {
       },
       assessmentDate: new Date().toString(),
       total: result.data?.length || 0,
-      filterGroups: [createFilterGroupParam('Filter By Migration Status', 'status', ['Complete', 'Error', 'Skipped'])],
+      filterGroups: [
+        createFilterGroupParam('Filter By Status', 'status', ['Successfully Completed', 'Error', 'Skipped']),
+      ],
       headerGroups: [
         {
           header: [
             {
-              name: 'In Package',
+              name: 'Managed Package',
               colspan: 2,
               rowspan: 1,
             },
             {
-              name: 'In Core',
+              name: 'Standard',
               colspan: 2,
               rowspan: 1,
             },
             {
-              name: 'Migration Status',
+              name: 'Status',
               colspan: 1,
               rowspan: 2,
             },
@@ -110,22 +113,22 @@ export class ResultsBuilder {
         {
           header: [
             {
-              name: 'Record ID',
+              name: 'ID',
               colspan: 1,
               rowspan: 1,
             },
             {
-              name: 'Record Name',
+              name: 'Name',
               colspan: 1,
               rowspan: 1,
             },
             {
-              name: 'Record ID',
+              name: 'ID',
               colspan: 1,
               rowspan: 1,
             },
             {
-              name: 'Record Name',
+              name: 'Name',
               colspan: 1,
               rowspan: 1,
             },
@@ -142,7 +145,7 @@ export class ResultsBuilder {
             createRowDataParam('migratedName', item.migratedName, false, 1, 1, false),
             createRowDataParam(
               'status',
-              item.status,
+              item.status === 'Complete' ? 'Successfully Completed' : item.status,
               false,
               1,
               1,
@@ -198,8 +201,8 @@ export class ResultsBuilder {
   ): void {
     Logger.captureVerboseData('apex data', result);
     const data: ReportParam = {
-      title: 'Apex Classes',
-      heading: 'Apex Classes',
+      title: 'Apex File Migration Report',
+      heading: 'Apex File Migration Report',
       org: {
         name: orgDetails.orgDetails.Name,
         id: orgDetails.orgDetails.Id,
@@ -213,7 +216,7 @@ export class ResultsBuilder {
         {
           header: [
             {
-              name: 'Class Name',
+              name: 'Name',
               colspan: 1,
               rowspan: 1,
             },
@@ -223,12 +226,12 @@ export class ResultsBuilder {
               rowspan: 1,
             },
             {
-              name: 'Diff',
+              name: 'Code Difference',
               colspan: 1,
               rowspan: 1,
             },
             {
-              name: 'Comments',
+              name: 'Summary',
               colspan: 1,
               rowspan: 1,
             },
@@ -296,9 +299,9 @@ export class ResultsBuilder {
     messages: Messages,
     actionItems: string[]
   ): void {
-    const data = {
-      title: 'Migration Report Dashboard',
-      heading: 'Migration Report Dashboard',
+    const data: DashboardParam = {
+      title: 'Omnistudio Migration Report Dashboard',
+      heading: 'Omnistudio Migration Report Dashboard',
       org: {
         name: orgDetails.orgDetails.Name,
         id: orgDetails.orgDetails.Id,
@@ -308,19 +311,20 @@ export class ResultsBuilder {
       assessmentDate: new Date().toString(),
       summaryItems: [
         ...results.map((result) => ({
-          name: result.name,
+          name: `${getMigrationHeading(result.name)} Migration`,
           total: result.data?.length || 0,
           data: this.getDifferentStatusDataForResult(result.data),
           file: result.name.replace(/ /g, '_').replace(/\//g, '_') + '.html',
         })),
         {
-          name: 'Apex Classes',
+          name: 'Apex File Migration',
           total: relatedObjectMigrationResult.apexAssessmentInfos?.length || 0,
           data: this.getDifferentStatusDataForApex(relatedObjectMigrationResult.apexAssessmentInfos),
           file: apexFileName,
         },
       ],
       actionItems,
+      mode: 'migrate',
     };
 
     const dashboardTemplate = fs.readFileSync(dashboardTemplateFilePath, 'utf8');
@@ -340,7 +344,7 @@ export class ResultsBuilder {
       if (item.status === 'Skipped') skip++;
     });
     return [
-      { name: 'Completed without errors', count: complete, cssClass: 'text-success' },
+      { name: 'Successfully Completed', count: complete, cssClass: 'text-success' },
       { name: 'Error', count: error, cssClass: 'text-error' },
       { name: 'Skipped', count: skip, cssClass: 'text-warning' },
     ];
@@ -356,7 +360,7 @@ export class ResultsBuilder {
       else error++;
     });
     return [
-      { name: 'Completed without errors', count: complete, cssClass: 'text-success' },
+      { name: 'Successfully Completed', count: complete, cssClass: 'text-success' },
       { name: 'Error', count: error, cssClass: 'text-error' },
     ];
   }

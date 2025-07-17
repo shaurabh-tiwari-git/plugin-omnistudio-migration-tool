@@ -194,9 +194,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       );
       return omniAssessmentInfos;
     } catch (err) {
-      Logger.error(this.messages.getMessage('errorDuringOmniScriptAssessment'));
-      Logger.error(JSON.stringify(err));
-      Logger.error(err.stack);
+      Logger.error(this.messages.getMessage('errorDuringOmniScriptAssessment'), err);
     }
   }
 
@@ -267,8 +265,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           });
         }
         const error = e as Error;
-        Logger.error(JSON.stringify(error));
-        Logger.error(error.stack);
+        Logger.error('Error processing omniscripts', error);
         continue;
       }
       if (omniAssessmentInfo.type === 'OmniScript') {
@@ -557,8 +554,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
                 );
                 ipElement[`${this.namespacePrefix}PropertySet__c`] = originalString;
               } catch (ex) {
-                Logger.error(JSON.stringify(ex));
-                Logger.error(ex.stack);
+                Logger.error('Error processing formula for integration procedure', ex);
                 Logger.logVerbose(
                   this.messages.getMessage('formulaSyntaxError', [ipElement[`${this.namespacePrefix}PropertySet__c`]])
                 );
