@@ -78,8 +78,12 @@ describe('transformFlexipageBundle', () => {
     expect(item.componentInstance.componentInstanceProperties.find((p) => p.name === 'type')).to.exist;
     expect(item.componentInstance.componentInstanceProperties.find((p) => p.name === 'subType')).to.exist;
     expect(item.componentInstance.componentInstanceProperties.find((p) => p.name === 'theme')).to.exist;
-    // Should keep other properties
-    expect(item.componentInstance.componentInstanceProperties.find((p) => p.name === 'other')).to.exist;
+    expect(item.componentInstance.componentInstanceProperties.find((p) => p.name === 'inlineVariant')).to.exist;
+    expect(item.componentInstance.componentInstanceProperties.find((p) => p.name === 'inlineLabel')).to.exist;
+    expect(item.componentInstance.componentInstanceProperties.find((p) => p.name === 'display')).to.exist;
+    expect(item.componentInstance.componentInstanceProperties.find((p) => p.name === 'direction')).to.exist;
+    // Should not keep other properties (implementation replaces all properties)
+    expect(item.componentInstance.componentInstanceProperties.find((p) => p.name === 'other')).to.be.undefined;
   });
 
   it('returns false if no matching component', () => {

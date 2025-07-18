@@ -14,9 +14,6 @@ import {
 } from '../../migration/interfaces';
 import { StorageUtil } from '../storageUtil';
 
-/** Attributes to remove during transformation */
-const attrsToRemove = ['target'];
-
 /** Component name to look for during transformation */
 const lookupComponentName = 'vlocityLWCOmniWrapper';
 /** Target component name after transformation */
@@ -52,16 +49,6 @@ export function transformFlexipageBundle(
   const bundle: Flexipage = JSON.parse(JSON.stringify(ogBundle)) as Flexipage;
   let changes = false;
 
-  /**
-   * Filters out properties that should be removed during transformation
-   *
-   * @param item - The component instance property to check
-   * @returns true if the property should be kept, false if it should be removed
-   */
-  const propRemover = (item: FlexiComponentInstanceProperty): boolean => {
-    return !attrsToRemove.includes(item.name);
-  };
-
   for (const region of bundle.flexiPageRegions) {
     if (!region.itemInstances) {
       continue;
@@ -80,18 +67,19 @@ export function transformFlexipageBundle(
       if (!typeSubtypeLanguage) {
         throw new TargetPropertyNotFoundError(item.componentInstance.componentName);
       }
-      const newProps = createNewProps(typeSubtypeLanguage.split(':')[1], namespace, mode);
-      const targetComponentName = newProps.componentName;
-      const targetIdentifier = newProps.identifier;
-      delete newProps.componentName;
-      delete newProps.identifier;
-      const leftProps = item.componentInstance.componentInstanceProperties?.filter?.(propRemover) ?? [];
-      const replacedProps = [
-        ...leftProps,
-        ...Object.entries(newProps).map(([key, value]: [string, string]) => ({ name: key, value })),
-      ];
+      const newPropsWithComponentNameAndIdentifier = createNewProps(
+        typeSubtypeLanguage.split(':')[1],
+        namespace,
+        mode,
+        item.componentInstance.componentInstanceProperties
+      );
+      const newProps = newPropsWithComponentNameAndIdentifier.props;
+      const targetComponentName = newPropsWithComponentNameAndIdentifier.componentName;
+      const targetIdentifier = newPropsWithComponentNameAndIdentifier.identifier;
       changes = true;
-      item.componentInstance.componentInstanceProperties = replacedProps;
+      item.componentInstance.componentInstanceProperties = Object.entries(newProps).map(
+        ([key, value]: [string, string]) => ({ name: key, value })
+      );
       item.componentInstance.componentName = targetComponentName;
       item.componentInstance.identifier = targetIdentifier;
     }
@@ -108,24 +96,24 @@ export function transformFlexipageBundle(
  * @returns Object containing the new properties for the transformed component
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-function createNewProps(nameKey: string, namespace: string, mode: 'assess' | 'migrate'): Record<string, string> {
+function createNewProps(
+  nameKey: string,
+  namespace: string,
+  mode: 'assess' | 'migrate',
+  componentInstanceProperties: FlexiComponentInstanceProperty[]
+): { componentName: string; identifier: string; props: Record<string, string> } {
   if (nameKey.startsWith(flexCardPrefix)) {
     return createNewPropsForFlexCard(nameKey.substring(flexCardPrefix.length), namespace, mode);
   }
-  return createNewPropsForOmniScript(nameKey, namespace, mode);
-  // return {
-  //   language: 'English',
-  //   subType: 'OSForCustomLWC',
-  //   theme: 'lightning',
-  //   type: 'OSForCustomLWC',
-  // };
+  return createNewPropsForOmniScript(nameKey, namespace, mode, componentInstanceProperties);
 }
 
 function createNewPropsForOmniScript(
   nameKey: string,
   namespace: string,
-  mode: 'assess' | 'migrate'
-): Record<string, string> {
+  mode: 'assess' | 'migrate',
+  componentInstanceProperties: FlexiComponentInstanceProperty[]
+): { componentName: string; identifier: string; props: Record<string, string> } {
   let migratedScriptName: OmniScriptStorage;
   if (mode === 'assess') {
     migratedScriptName = StorageUtil.getOmnistudioAssessmentStorage().osStorage.get(nameKey);
@@ -141,16 +129,21 @@ function createNewPropsForOmniScript(
     throw new DuplicateKeyError(nameKey, 'OmniScript');
   }
 
-  return {
-    componentName: targetComponentNameOS,
-    identifier: targetIdentifierOS,
+  const newProps = {
     language: migratedScriptName.language || 'English',
     subType: migratedScriptName.subtype,
     type: migratedScriptName.type,
-    theme: 'OSForCustomLWC',
-    direction: 'ltr',
-    display: 'Display button to open Omniscript',
+    theme: componentInstanceProperties.find((prop) => prop.name === 'layout')?.value || 'lightning',
     inlineVariant: 'brand',
+    inlineLabel: '',
+    display: 'Display OmniScript on page',
+    direction: 'ltr',
+  };
+
+  return {
+    componentName: targetComponentNameOS,
+    identifier: targetIdentifierOS,
+    props: newProps,
   };
 }
 
@@ -158,7 +151,7 @@ function createNewPropsForFlexCard(
   nameKey: string,
   namespace: string,
   mode: 'assess' | 'migrate'
-): Record<string, string> {
+): { componentName: string; identifier: string; props: Record<string, string> } {
   let migratedCardName: FlexcardStorage;
   if (mode === 'assess') {
     migratedCardName = StorageUtil.getOmnistudioAssessmentStorage().fcStorage.get(nameKey);
@@ -174,11 +167,13 @@ function createNewPropsForFlexCard(
     throw new DuplicateKeyError(nameKey, 'Flexcard');
   }
 
+  const newProps = {
+    flexcardName: migratedCardName.name,
+  };
+
   return {
     componentName: targetComponentNameFlexCard,
     identifier: targetIdentifierFlexCard,
-    flexcardName: migratedCardName.name,
-    objectApiName: '{!objectApiName}',
-    recordId: '{!recordId}',
+    props: newProps,
   };
 }
