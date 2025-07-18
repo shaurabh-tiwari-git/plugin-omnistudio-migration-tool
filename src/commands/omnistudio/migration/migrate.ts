@@ -17,6 +17,7 @@ import { MigrationResult, MigrationTool } from '../../../migration/interfaces';
 import { ResultsBuilder } from '../../../utils/resultsbuilder';
 import { CardMigrationTool } from '../../../migration/flexcard';
 import { OmniScriptExportType, OmniScriptMigrationTool } from '../../../migration/omniscript';
+import { GlobalAutoNumberMigrationTool } from '../../../migration/globalautonumber';
 import { Logger } from '../../../utils/logger';
 import OmnistudioRelatedObjectMigrationFacade from '../../../migration/related/OmnistudioRelatedObjectMigrationFacade';
 import { generatePackageXml } from '../../../utils/generatePackageXml';
@@ -202,6 +203,8 @@ export default class Migrate extends OmniStudioBaseCommand {
 
     actionItems = await postMigrate.setDesignersToUseStandardDataModel(namespace);
     await postMigrate.restoreExperienceAPIMetadataSettings(isExperienceBundleMetadataAPIProgramaticallyEnabled);
+    const migrationActionItems = this.collectActionItems(objectMigrationResults);
+    actionItems = [...actionItems, ...migrationActionItems];
 
     await ResultsBuilder.generateReport(
       objectMigrationResults,
@@ -255,6 +258,18 @@ export default class Migrate extends OmniStudioBaseCommand {
     }
   }
 
+  private collectActionItems(objectMigrationResults: MigratedObject[]): string[] {
+    const actionItems: string[] = [];
+    // Collect errors from migration results and add them to action items
+    for (const result of objectMigrationResults) {
+      if (result.errors && result.errors.length > 0) {
+        actionItems.push(...result.errors);
+      }
+    }
+
+    return actionItems;
+  }
+
   private removeKeyFromRelatedObjectsToProcess(keyToRemove: string, relatedObjects: string[]): void {
     const index = relatedObjects.indexOf(Constants.ExpSites);
     if (index > -1) {
@@ -273,8 +288,10 @@ export default class Migrate extends OmniStudioBaseCommand {
       } catch (ex: any) {
         objectMigrationResults.push({
           name: cls.getName(),
+          data: [],
           errors: [ex.message],
         });
+        Logger.error(messages.getMessage('cleaningFailed', [cls.getName()]));
       }
     }
     return objectMigrationResults;
@@ -293,6 +310,7 @@ export default class Migrate extends OmniStudioBaseCommand {
             return {
               name: r.name,
               data: this.mergeRecordAndUploadResults(r, cls),
+              errors: r.errors,
             };
           })
         );
@@ -301,6 +319,7 @@ export default class Migrate extends OmniStudioBaseCommand {
         Logger.error(ex.stack);
         objectMigrationResults.push({
           name: cls.getName(),
+          data: [],
           errors: [ex.message],
         });
       }
@@ -328,6 +347,7 @@ export default class Migrate extends OmniStudioBaseCommand {
           allVersions
         ),
         new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions),
+        new GlobalAutoNumberMigrationTool(namespace, conn, this.logger, messages, this.ux),
       ];
     } else {
       switch (migrateOnly) {
@@ -362,6 +382,9 @@ export default class Migrate extends OmniStudioBaseCommand {
           break;
         case Constants.DataMapper:
           migrationObjects.push(new DataRaptorMigrationTool(namespace, conn, this.logger, messages, this.ux));
+          break;
+        case Constants.GlobalAutoNumber:
+          migrationObjects.push(new GlobalAutoNumberMigrationTool(namespace, conn, this.logger, messages, this.ux));
           break;
         default:
           throw new Error(messages.getMessage('invalidOnlyFlag'));
