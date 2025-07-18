@@ -149,7 +149,7 @@ export class FlexipageAssessmentReporter {
             rowspan: 1,
           },
           {
-            name: 'Status',
+            name: 'Assessment Status',
             colspan: 1,
             rowspan: 1,
           },
