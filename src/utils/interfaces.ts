@@ -91,6 +91,7 @@ export interface RelatedObjectAssesmentInfo {
   apexAssessmentInfos: ApexAssessmentInfo[];
   lwcAssessmentInfos: LWCAssessmentInfo[];
   flexipageAssessmentInfos: FlexiPageAssessmentInfo[];
+  experienceSiteAssessmentInfos: ExperienceSiteAssessmentInfo[];
 }
 export interface FlexCardAssessmentInfo {
   name: string;
@@ -136,6 +137,12 @@ export interface FileParser {
   // saveToFile(filePath: string, content: string | undefined): void;
 }
 
+export interface ExperienceSiteAssessmentInfo extends FileChangeInfo {
+  warnings: string[];
+  infos: string[];
+  hasOmnistudioContent: boolean;
+}
+
 export interface FileProcessor {
   process(file: File, type: string, namespace: string): string;
 }
@@ -153,6 +160,16 @@ export interface oldNew {
 export interface OmniStudioSettingsMetadata {
   fullName: string;
   disableRollbackFlagsPref: boolean;
+}
+
+export interface ExperienceBundleSettingsMetadata {
+  fullName: string;
+  enableExperienceBundleMetadata: boolean;
+}
+
+export interface ExperienceBundleSettingsReadMetadata {
+  fullName: string;
+  enableExperienceBundleMetadata: string;
 }
 
 export interface QueryResult {
