@@ -96,6 +96,33 @@ export interface RelatedObjectMigrationResult {
   lwcComponents: string[];
 }
 
+export interface Flexipage {
+  [key: string]: string | FlexiPageRegion[];
+  flexiPageRegions: FlexiPageRegion[];
+}
+
+export interface FlexiPageRegion {
+  [key: string]: string | FlexiItemInstance[];
+  itemInstances?: FlexiItemInstance[];
+}
+
+export interface FlexiItemInstance {
+  [key: string]: string | FlexiComponentInstance;
+  componentInstance: FlexiComponentInstance;
+}
+
+export interface FlexiComponentInstance {
+  [key: string]: string | FlexiComponentInstanceProperty[];
+  componentInstanceProperties: FlexiComponentInstanceProperty[];
+  componentName: string;
+  identifier?: string;
+}
+
+export interface FlexiComponentInstanceProperty {
+  name: string;
+  value?: string;
+}
+
 export interface ExpSitePageJson {
   // Index signature to allow any additional properties
   [key: string]: any;

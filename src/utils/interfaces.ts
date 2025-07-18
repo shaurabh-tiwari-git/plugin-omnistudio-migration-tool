@@ -84,12 +84,14 @@ export interface AssessmentInfo {
   omniAssessmentInfo: OmniAssessmentInfo; // Corrected to an array
   flexCardAssessmentInfos: FlexCardAssessmentInfo[];
   dataRaptorAssessmentInfos: DataRaptorAssessmentInfo[];
+  flexipageAssessmentInfos: FlexiPageAssessmentInfo[];
   globalAutoNumberAssessmentInfos: GlobalAutoNumberAssessmentInfo[];
 }
 
 export interface RelatedObjectAssesmentInfo {
   apexAssessmentInfos: ApexAssessmentInfo[];
   lwcAssessmentInfos: LWCAssessmentInfo[];
+  flexipageAssessmentInfos: FlexiPageAssessmentInfo[];
   experienceSiteAssessmentInfos: ExperienceSiteAssessmentInfo[];
 }
 export interface FlexCardAssessmentInfo {
@@ -206,4 +208,9 @@ export interface QueryResult {
     DeveloperName: string;
     Value: string;
   }>;
+}
+
+export interface FlexiPageAssessmentInfo extends FileChangeInfo {
+  errors: string[];
+  status: 'Can be Automated' | 'Errors' | 'No Changes' | 'Complete' | 'Failed';
 }

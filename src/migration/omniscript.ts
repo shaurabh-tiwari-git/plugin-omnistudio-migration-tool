@@ -428,6 +428,13 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
     const warnings: string[] = [];
 
+    if (omniProcessType === 'OmniScript') {
+      this.addToAssessmentStorage(
+        existingTypeVal,
+        existingSubTypeVal,
+        omniscript[this.namespacePrefix + 'Language__c']
+      );
+    }
     const recordName =
       `${existingTypeVal.cleanName()}_` +
       `${existingSubTypeVal.cleanName()}` +
@@ -772,6 +779,21 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       records: recordMap,
       results: resultMap,
     };
+  }
+
+  private addToAssessmentStorage(type: StringVal, subtype: StringVal, language: string) {
+    let storage: MigrationStorage = StorageUtil.getOmnistudioAssessmentStorage();
+    const key = `${type.val}${subtype.val}${language}`;
+    if (storage.osStorage.has(key)) {
+      storage.osStorage.get(key).isDuplicate = true;
+    } else {
+      storage.osStorage.set(key, {
+        type: type.cleanName(),
+        subtype: subtype.cleanName(),
+        language: language || 'English',
+        isDuplicate: false,
+      });
+    }
   }
 
   private updateStorageForOmniscript(

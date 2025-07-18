@@ -262,6 +262,8 @@ html {
   border-radius: 4px;
   text-align: left;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .closeButton {
@@ -278,6 +280,7 @@ html {
   align-items: center;
   justify-content: center;
   border-radius: 3px;
+  padding-right: 0;
 }
 
 .modalHeader {
@@ -289,6 +292,11 @@ html {
 }
 
 .modalContent {
+  overflow: auto;
+}
+
+.modalContent p {
+  margin: 0;
   margin-top: 20px;
 }
 

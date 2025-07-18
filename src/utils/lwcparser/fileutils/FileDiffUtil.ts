@@ -2,12 +2,15 @@
 /* eslint-disable @typescript-eslint/explicit-member-accessibility */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { createPatch } from 'diff';
+import { createPatch, diffLines } from 'diff';
 import { Logger } from '../../../utils/logger';
 import { DiffPair } from '../../interfaces';
 
 export class FileDiffUtil {
   public static getDiffHTML(diff: string, name: string): string {
+    if (!diff) {
+      return '';
+    }
     const diffArray: DiffPair[] = JSON.parse(diff) as DiffPair[];
     let result = '<div style="height: 120px; text-align: left; overflow-x: auto;">';
     if (diffArray.length <= 6) {
@@ -21,7 +24,9 @@ export class FileDiffUtil {
               <div class="diffModalContent">
                 <span onclick="toggleDiffModal('${name}')" class="closeButton">&times;</span>
                 <h2 class="modalHeader">Summary</h2>
-                <p class="modalContent">${this.getDiffContent(diff, -1)}</p>
+                <div class="modalContent">
+                  ${this.getDiffContent(diff, -1)}
+                </div>
         </div>
       </div>`;
     }
@@ -40,16 +45,16 @@ export class FileDiffUtil {
     let linecount = 0;
     for (const { old: original, new: modified } of diffArray) {
       if (original === modified) {
-        result += `<div style="color: black;">• Line ${modifiedLine}: ${original}</div>`;
+        result += `<div style="color: black;">• Line ${modifiedLine}: ${this.escapeHtml(original)}</div>`;
         modifiedLine++;
         originalLine++;
         linecount++;
       } else if (original !== null && modified === null) {
-        result += `<div style="color: red;">- Line ${originalLine}: ${original}</div>`;
+        result += `<div style="color: red;">- Line ${originalLine}: ${this.escapeHtml(original)}</div>`;
         originalLine++;
         linecount++;
       } else if (original === null && modified !== null) {
-        result += `<div style="color: green;">+ Line ${modifiedLine}: ${modified}</div>`;
+        result += `<div style="color: green;">+ Line ${modifiedLine}: ${this.escapeHtml(modified)}</div>`;
         modifiedLine++;
         linecount++;
       }
@@ -59,6 +64,10 @@ export class FileDiffUtil {
       }
     }
     return result;
+  }
+
+  private static escapeHtml(text: string): string {
+    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
   }
 
   public getFileDiff(filename: string, originalFileContent: string, modifiedFileContent: string): DiffPair[] {
@@ -116,7 +125,25 @@ export class FileDiffUtil {
     }
   }
 
-  escapeHtml(text: string): string {
-    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  public getXMLDiff(originalFileContent: string, modifiedFileContent: string): DiffPair[] {
+    const diff = diffLines(originalFileContent, modifiedFileContent, { newlineIsToken: true });
+    return diff.map((line): DiffPair => {
+      if (line.added) {
+        return {
+          old: null,
+          new: line.value,
+        };
+      } else if (line.removed) {
+        return {
+          old: line.value,
+          new: null,
+        };
+      } else {
+        return {
+          old: line.value,
+          new: line.value,
+        };
+      }
+    }) as DiffPair[];
   }
 }

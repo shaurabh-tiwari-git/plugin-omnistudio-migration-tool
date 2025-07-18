@@ -42,7 +42,7 @@ export default class Assess extends OmniStudioBaseCommand {
     }),
     relatedobjects: flags.string({
       char: 'r',
-      description: messages.getMessage('apexLwc'),
+      description: messages.getMessage('relatedObjectGA'),
     }),
     verbose: flags.builtin({
       type: 'builtin',
@@ -108,6 +108,7 @@ export default class Assess extends OmniStudioBaseCommand {
         osAssessmentInfos: [],
         ipAssessmentInfos: [],
       },
+      flexipageAssessmentInfos: [],
     };
 
     Logger.log(messages.getMessage('assessmentInitialization', [String(namespace)]));
@@ -122,7 +123,7 @@ export default class Assess extends OmniStudioBaseCommand {
     // Assess related objects if specified
     if (relatedObjects) {
       // To-Do: Add LWC to valid options when GA is released
-      const validOptions = [Constants.Apex];
+      const validOptions = [Constants.Apex, Constants.FlexiPage];
       objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
 
       // Validate input
@@ -143,6 +144,7 @@ export default class Assess extends OmniStudioBaseCommand {
       const relatedObjectAssessmentResult = omnistudioRelatedObjectsMigration.assessAll(objectsToProcess);
       assesmentInfo.lwcAssessmentInfos = relatedObjectAssessmentResult.lwcAssessmentInfos;
       assesmentInfo.apexAssessmentInfos = relatedObjectAssessmentResult.apexAssessmentInfos;
+      assesmentInfo.flexipageAssessmentInfos = relatedObjectAssessmentResult.flexipageAssessmentInfos;
     }
     try {
       orgs.rollbackFlags = await OrgPreferences.checkRollbackFlags(conn);

@@ -57,7 +57,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     }),
     relatedobjects: flags.string({
       char: 'r',
-      description: messages.getMessage('apexLwc'),
+      description: messages.getMessage('relatedObjectGA'),
     }),
     verbose: flags.builtin({
       type: 'builtin',
@@ -126,7 +126,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     const isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean } = { value: false };
     if (relatedObjects) {
       // To-Do: Add LWC to valid options when GA is released
-      const validOptions = [Constants.Apex, Constants.ExpSites];
+      const validOptions = [Constants.Apex, Constants.ExpSites, Constants.FlexiPage];
       objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
       // Validate input
       for (const obj of objectsToProcess) {
@@ -186,7 +186,8 @@ export default class Migrate extends OmniStudioBaseCommand {
     const relatedObjectMigrationResult = omnistudioRelatedObjectsMigration.migrateAll(objectsToProcess);
     generatePackageXml.createChangeList(
       relatedObjectMigrationResult.apexAssessmentInfos,
-      relatedObjectMigrationResult.lwcAssessmentInfos
+      relatedObjectMigrationResult.lwcAssessmentInfos,
+      relatedObjectMigrationResult.flexipageAssessmentInfos
     );
 
     // POST MIGRATION
