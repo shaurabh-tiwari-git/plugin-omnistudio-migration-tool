@@ -5,7 +5,14 @@
  * For full license text, see LICENSE.txt file in the repo root or https://opensource.org/licenses/BSD-3-Clause
  */
 
-import { Flexipage, FlexiComponentInstanceProperty } from '../../migration/interfaces';
+import { DuplicateKeyError, KeyNotFoundInStorageError, TargetPropertyNotFoundError } from '../../error/errorInterfaces';
+import {
+  Flexipage,
+  FlexiComponentInstanceProperty,
+  OmniScriptStorage,
+  FlexcardStorage,
+} from '../../migration/interfaces';
+import { StorageUtil } from '../storageUtil';
 
 /** Attributes to remove during transformation */
 const attrsToRemove = ['target'];
@@ -13,9 +20,14 @@ const attrsToRemove = ['target'];
 /** Component name to look for during transformation */
 const lookupComponentName = 'vlocityLWCOmniWrapper';
 /** Target component name after transformation */
-const targetComponentName = 'runtime_omnistudio:omniscript';
+const targetComponentNameOS = 'runtime_omnistudio:omniscript';
 /** Target identifier after transformation */
-const targetIdentifier = 'runtime_omnistudio_omniscript';
+const targetIdentifierOS = 'runtime_omnistudio_omniscript';
+
+const targetComponentNameFlexCard = 'runtime_omnistudio:flexcard';
+const targetIdentifierFlexCard = 'runtime_omnistudio_flexcard';
+
+const flexCardPrefix = 'cf';
 
 /**
  * Transforms a Flexipage bundle by replacing vlocityLWCOmniWrapper components
@@ -32,7 +44,11 @@ const targetIdentifier = 'runtime_omnistudio_omniscript';
  * @returns The transformed Flexipage bundle if changes were made, or false if no changes were needed
  * @throws Error if the 'target' property is not found for a component
  */
-export function transformFlexipageBundle(ogBundle: Flexipage, namespace: string): Flexipage | boolean {
+export function transformFlexipageBundle(
+  ogBundle: Flexipage,
+  namespace: string,
+  mode: 'assess' | 'migrate'
+): Flexipage | boolean {
   const bundle: Flexipage = JSON.parse(JSON.stringify(ogBundle)) as Flexipage;
   let changes = false;
 
@@ -62,9 +78,13 @@ export function transformFlexipageBundle(ogBundle: Flexipage, namespace: string)
         (prop) => prop.name === 'target'
       )?.value;
       if (!typeSubtypeLanguage) {
-        throw new Error('target property not found for component ' + item.componentInstance.componentName);
+        throw new TargetPropertyNotFoundError(item.componentInstance.componentName);
       }
-      const newProps = createNewProps(typeSubtypeLanguage);
+      const newProps = createNewProps(typeSubtypeLanguage.split(':')[1], namespace, mode);
+      const targetComponentName = newProps.componentName;
+      const targetIdentifier = newProps.identifier;
+      delete newProps.componentName;
+      delete newProps.identifier;
       const leftProps = item.componentInstance.componentInstanceProperties?.filter?.(propRemover) ?? [];
       const replacedProps = [
         ...leftProps,
@@ -88,11 +108,77 @@ export function transformFlexipageBundle(ogBundle: Flexipage, namespace: string)
  * @returns Object containing the new properties for the transformed component
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-function createNewProps(_property: string): Record<string, string> {
+function createNewProps(nameKey: string, namespace: string, mode: 'assess' | 'migrate'): Record<string, string> {
+  if (nameKey.startsWith(flexCardPrefix)) {
+    return createNewPropsForFlexCard(nameKey.substring(flexCardPrefix.length), namespace, mode);
+  }
+  return createNewPropsForOmniScript(nameKey, namespace, mode);
+  // return {
+  //   language: 'English',
+  //   subType: 'OSForCustomLWC',
+  //   theme: 'lightning',
+  //   type: 'OSForCustomLWC',
+  // };
+}
+
+function createNewPropsForOmniScript(
+  nameKey: string,
+  namespace: string,
+  mode: 'assess' | 'migrate'
+): Record<string, string> {
+  let migratedScriptName: OmniScriptStorage;
+  if (mode === 'assess') {
+    migratedScriptName = StorageUtil.getOmnistudioAssessmentStorage().osStorage.get(nameKey);
+  } else {
+    migratedScriptName = StorageUtil.getOmnistudioMigrationStorage().osStorage.get(nameKey);
+  }
+
+  if (!migratedScriptName) {
+    throw new KeyNotFoundInStorageError(nameKey, 'OmniScript');
+  }
+
+  if (migratedScriptName.isDuplicate) {
+    throw new DuplicateKeyError(nameKey, 'OmniScript');
+  }
+
   return {
-    language: 'English',
-    subType: 'OSForCustomLWC',
-    theme: 'lightning',
-    type: 'OSForCustomLWC',
+    componentName: targetComponentNameOS,
+    identifier: targetIdentifierOS,
+    language: migratedScriptName.language || 'English',
+    subType: migratedScriptName.subtype,
+    type: migratedScriptName.type,
+    theme: 'OSForCustomLWC',
+    direction: 'ltr',
+    display: 'Display button to open Omniscript',
+    inlineVariant: 'brand',
+  };
+}
+
+function createNewPropsForFlexCard(
+  nameKey: string,
+  namespace: string,
+  mode: 'assess' | 'migrate'
+): Record<string, string> {
+  let migratedCardName: FlexcardStorage;
+  if (mode === 'assess') {
+    migratedCardName = StorageUtil.getOmnistudioAssessmentStorage().fcStorage.get(nameKey);
+  } else {
+    migratedCardName = StorageUtil.getOmnistudioMigrationStorage().fcStorage.get(nameKey);
+  }
+
+  if (!migratedCardName) {
+    throw new KeyNotFoundInStorageError(nameKey, 'Flexcard');
+  }
+
+  if (migratedCardName.isDuplicate) {
+    throw new DuplicateKeyError(nameKey, 'Flexcard');
+  }
+
+  return {
+    componentName: targetComponentNameFlexCard,
+    identifier: targetIdentifierFlexCard,
+    flexcardName: migratedCardName.name,
+    objectApiName: '{!objectApiName}',
+    recordId: '{!recordId}',
   };
 }

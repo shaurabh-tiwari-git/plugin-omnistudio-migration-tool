@@ -126,5 +126,6 @@
   "updatedModifiedContent": "updated content in file: %s",
   "generatedDiffForFile": "Generated diff for file: %s",
   "errorProcessingFlexiPage": "Error processing flexipage file: %s, %s",
-  "flexipagesWithChanges": "Found %s flexipage files with changes"
+  "flexipagesWithChanges": "Found %s flexipage files with changes",
+  "migratingFlexiPages": "Migrating FlexiPages"
 }

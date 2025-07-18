@@ -185,6 +185,8 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     }
     uniqueNames.add(cleanedName);
 
+    this.addToAssessmentStorage(originalName, cleanedName);
+
     // Check for author name changes
     const originalAuthor = flexCard[this.namespacePrefix + 'Author__c'];
     if (originalAuthor) {
@@ -580,6 +582,18 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         success: false,
         errors: err,
         warnings: [],
+      });
+    }
+  }
+
+  private addToAssessmentStorage(originalName: string, cleanedName: string) {
+    let storage: MigrationStorage = StorageUtil.getOmnistudioAssessmentStorage();
+    if (storage.fcStorage.has(originalName)) {
+      storage.fcStorage.get(originalName).isDuplicate = true;
+    } else {
+      storage.fcStorage.set(originalName, {
+        name: cleanedName,
+        isDuplicate: false,
       });
     }
   }

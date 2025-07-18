@@ -68,7 +68,7 @@ export class FlexipageAssessmentReporter {
       {
         name: 'Can be Automated',
         count: flexipageAssessmentInfos.filter((info) => info.status === 'Can be Automated').length,
-        cssClass: 'text-warning',
+        cssClass: 'text-success',
       },
       {
         name: 'Has Errors',

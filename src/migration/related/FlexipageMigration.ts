@@ -18,6 +18,7 @@ import { XMLUtil } from '../../utils/XMLUtil';
 import { FileDiffUtil } from '../../utils/lwcparser/fileutils/FileDiffUtil';
 import { transformFlexipageBundle } from '../../utils/flexipage/flexiPageTransformer';
 import { Flexipage } from '../interfaces';
+import { DuplicateKeyError, KeyNotFoundInStorageError, TargetPropertyNotFoundError } from '../../error/errorInterfaces';
 import { BaseRelatedObjectMigration } from './BaseRealtedObjectMigration';
 
 /**
@@ -72,7 +73,7 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
    * @returns Array of FlexiPage assessment information
    */
   public assess(): FlexiPageAssessmentInfo[] {
-    Logger.info(this.messages.getMessage('assessingFlexiPages'));
+    Logger.log(this.messages.getMessage('assessingFlexiPages'));
     return this.process('assess');
   }
 
@@ -82,7 +83,7 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
    * @returns Array of FlexiPage assessment information after migration
    */
   public migrate(): FlexiPageAssessmentInfo[] {
-    Logger.info(this.messages.getMessage('migratingFlexiPages'));
+    Logger.log(this.messages.getMessage('migratingFlexiPages'));
     return this.process('migrate');
   }
 
@@ -100,13 +101,13 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
    * @returns Array of FlexiPage assessment information
    */
   private process(mode: 'assess' | 'migrate'): FlexiPageAssessmentInfo[] {
-    Logger.info(this.messages.getMessage('retrievingFlexiPages'));
+    Logger.logVerbose(this.messages.getMessage('retrievingFlexiPages'));
     shell.cd(this.projectPath);
     sfProject.retrieve(Constants.FlexiPage, this.org.getUsername());
     const files = fs
       .readdirSync(path.join(this.projectPath, 'force-app', 'main', 'default', 'flexipages'))
       .filter((file) => file.endsWith('.xml'));
-    Logger.info(this.messages.getMessage('successfullyRetrievedFlexiPages', [files.length]));
+    Logger.logVerbose(this.messages.getMessage('successfullyRetrievedFlexiPages', [files.length]));
     const progressBar = createProgressBar('Migrating', 'Flexipage');
     progressBar.setTotal(files.length);
     const flexPageAssessmentInfos: FlexiPageAssessmentInfo[] = [];
@@ -124,8 +125,16 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
           ])
         );
       } catch (error) {
-        Logger.error(this.messages.getMessage('errorProcessingFlexiPage', [file, error]));
-        Logger.error(error);
+        if (error instanceof KeyNotFoundInStorageError) {
+          Logger.error(`${error.componentType} ${error.key} can't be migrated`);
+        } else if (error instanceof TargetPropertyNotFoundError) {
+          Logger.error(error.message);
+        } else if (error instanceof DuplicateKeyError) {
+          Logger.error(`${error.componentType} ${error.key} is duplicate`);
+        } else {
+          Logger.error(this.messages.getMessage('errorProcessingFlexiPage', [file, error]));
+          Logger.error(error);
+        }
         flexPageAssessmentInfos.push({
           name: file,
           errors: [error instanceof Error ? error.message : JSON.stringify(error)],
@@ -137,10 +146,12 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
       progressBar.increment();
     }
     progressBar.stop();
-    Logger.info(this.messages.getMessage('completedProcessingAllFlexiPages', [flexPageAssessmentInfos.length]));
-    flexPageAssessmentInfos.filter((flexPageAssessmentInfo) => flexPageAssessmentInfo.status !== 'No Changes');
-    Logger.info(this.messages.getMessage('flexipagesWithChanges', [flexPageAssessmentInfos.length]));
-    return flexPageAssessmentInfos;
+    Logger.logVerbose(this.messages.getMessage('completedProcessingAllFlexiPages', [flexPageAssessmentInfos.length]));
+    const filteredResults = flexPageAssessmentInfos.filter(
+      (flexPageAssessmentInfo) => flexPageAssessmentInfo.status !== 'No Changes'
+    );
+    Logger.log(this.messages.getMessage('flexipagesWithChanges', [filteredResults.length]));
+    return filteredResults;
   }
 
   /**
@@ -165,9 +176,7 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
     Logger.logVerbose(this.messages.getMessage('readFlexiPageContent', [fileContent.length]));
 
     const json = this.xmlUtil.parse(fileContent) as Flexipage;
-    const jsonPath = path.join(shell.pwd().toString(), 'json', fileName + '.json');
-    fs.writeFileSync(jsonPath.toString(), JSON.stringify(json) || '');
-    const transformedFlexiPage = transformFlexipageBundle(json, this.namespace);
+    const transformedFlexiPage = transformFlexipageBundle(json, this.namespace, mode);
     if (transformedFlexiPage === false) {
       return {
         name: fileName,
@@ -178,9 +187,6 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
       };
     }
     const modifiedContent = this.xmlUtil.build(transformedFlexiPage, 'FlexiPage');
-
-    const xmlPath = path.join(shell.pwd().toString(), 'xml', fileName);
-    fs.writeFileSync(xmlPath.toString(), modifiedContent);
 
     if (mode === 'migrate') {
       fs.writeFileSync(filePath, modifiedContent);

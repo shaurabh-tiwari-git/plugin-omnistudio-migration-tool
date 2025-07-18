@@ -149,7 +149,7 @@ describe('FlexipageAssessmentReporter', () => {
       const canBeAutomated = result.find((item) => item.name === 'Can be Automated');
       expect(canBeAutomated).to.exist;
       expect(canBeAutomated.count).to.equal(2);
-      expect(canBeAutomated.cssClass).to.equal('text-warning');
+      expect(canBeAutomated.cssClass).to.equal('text-success');
 
       const hasErrors = result.find((item) => item.name === 'Has Errors');
       expect(hasErrors).to.exist;

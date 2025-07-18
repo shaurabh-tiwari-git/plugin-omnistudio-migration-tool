@@ -41,7 +41,7 @@ export default class Assess extends OmniStudioBaseCommand {
     }),
     relatedobjects: flags.string({
       char: 'r',
-      description: messages.getMessage('apexLwc'),
+      description: messages.getMessage('relatedObjectGA'),
     }),
     verbose: flags.builtin({
       type: 'builtin',

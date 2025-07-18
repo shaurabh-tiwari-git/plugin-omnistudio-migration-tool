@@ -11,7 +11,7 @@ import {
   ExperienceSiteAssessmentInfo,
   FlexiPageAssessmentInfo,
 } from '../interfaces';
-import { ReportParam } from '../reportGenerator/reportInterfaces';
+import { ReportParam, SummaryItemDetailParam } from '../reportGenerator/reportInterfaces';
 import { OmnistudioOrgDetails } from '../orgUtils';
 import { TemplateParser } from '../templateParser/generate';
 import { createFilterGroupParam, createRowDataParam } from '../reportGenerator/reportUtil';
@@ -334,7 +334,7 @@ export class ResultsBuilder {
               rowspan: 1,
             },
             {
-              name: 'Diff',
+              name: 'Code Difference',
               colspan: 1,
               rowspan: 1,
             },
@@ -362,16 +362,7 @@ export class ResultsBuilder {
             undefined,
             item.status === 'Failed' ? 'text-error' : 'text-success'
           ),
-          createRowDataParam(
-            'diff',
-            item.name + 'diff',
-            false,
-            1,
-            1,
-            false,
-            undefined,
-            FileDiffUtil.getDiffHTML(item.diff, item.name)
-          ),
+          createRowDataParam('diff', '', false, 1, 1, false, undefined, FileDiffUtil.getDiffHTML(item.diff, item.name)),
           createRowDataParam('error', 'error', false, 1, 1, false, undefined, item.errors, 'text-error'),
         ],
       })),

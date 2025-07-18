@@ -19,6 +19,7 @@ interface MockLogger {
   info: sinon.SinonStub;
   logVerbose: sinon.SinonStub;
   error: sinon.SinonStub;
+  log: sinon.SinonStub;
 }
 
 interface MockXmlUtil {
@@ -91,6 +92,7 @@ describe('FlexipageMigration', () => {
       info: sandbox.stub(),
       logVerbose: sandbox.stub(),
       error: sandbox.stub(),
+      log: sandbox.stub(),
     };
 
     // Mock xmlUtil
@@ -151,7 +153,7 @@ describe('FlexipageMigration', () => {
       flexipageMigration.assess();
 
       expect(processStub.calledOnceWith('assess')).to.be.true;
-      expect(mockLogger.info.calledWith('Mock message')).to.be.true;
+      expect(mockLogger.log.calledWith('Mock message')).to.be.true;
     });
   });
 
@@ -162,7 +164,7 @@ describe('FlexipageMigration', () => {
       flexipageMigration.migrate();
 
       expect(processStub.calledOnceWith('migrate')).to.be.true;
-      expect(mockLogger.info.calledWith('Mock message')).to.be.true;
+      expect(mockLogger.log.calledWith('Mock message')).to.be.true;
     });
   });
 

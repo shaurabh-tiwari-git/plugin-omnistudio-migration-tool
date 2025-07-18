@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import sinon = require('sinon');
 import { transformFlexipageBundle } from '../../../src/utils/flexipage/flexiPageTransformer';
 import {
   Flexipage,
@@ -7,9 +8,20 @@ import {
   FlexiComponentInstance,
   FlexiComponentInstanceProperty,
 } from '../../../src/migration/interfaces';
+import { StorageUtil } from '../../../src/utils/storageUtil';
 
 describe('transformFlexipageBundle', () => {
-  const namespace = 'runtime_omnistudio';
+  let sandbox: sinon.SinonSandbox;
+
+  beforeEach(() => {
+    sandbox = sinon.createSandbox();
+  });
+
+  afterEach(() => {
+    sandbox.restore();
+  });
+
+  const namespace = 'clocity_ins';
   const lookupComponentName = 'vlocityLWCOmniWrapper';
   const targetComponentName = 'runtime_omnistudio:omniscript';
   const targetIdentifier = 'runtime_omnistudio_omniscript';
@@ -34,17 +46,26 @@ describe('transformFlexipageBundle', () => {
   }
 
   it('transforms a matching component and returns a changed bundle', () => {
+    // Mock StorageUtil
+    const mockStorage = {
+      osStorage: new Map([
+        ['subtype', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
+      ]),
+      fcStorage: new Map(),
+    };
+    sandbox.stub(StorageUtil, 'getOmnistudioMigrationStorage').returns(mockStorage);
+
     const bundle: Flexipage = {
       flexiPageRegions: [
         makeRegion([
           makeItemInstance([
-            { name: 'target', value: 'foo' },
+            { name: 'target', value: 'type:subtype' },
             { name: 'other', value: 'bar' },
           ]),
         ]),
       ],
     };
-    const result = transformFlexipageBundle(bundle, namespace);
+    const result = transformFlexipageBundle(bundle, namespace, 'migrate');
     expect(result).to.not.equal(false);
     const changed = result as Flexipage;
     const item = changed.flexiPageRegions[0].itemInstances[0];
@@ -67,7 +88,7 @@ describe('transformFlexipageBundle', () => {
         makeRegion([makeItemInstance([{ name: 'target', value: 'foo' }], 'othernamespace:otherComponent')]),
       ],
     };
-    const result = transformFlexipageBundle(bundle, namespace);
+    const result = transformFlexipageBundle(bundle, namespace, 'migrate');
     expect(result).to.equal(false);
   });
 
@@ -75,22 +96,33 @@ describe('transformFlexipageBundle', () => {
     const bundle: Flexipage = {
       flexiPageRegions: [makeRegion([makeItemInstance([{ name: 'other', value: 'bar' }])])],
     };
-    expect(() => transformFlexipageBundle(bundle, namespace)).to.throw('target property not found');
+    expect(() => transformFlexipageBundle(bundle, namespace, 'migrate')).to.throw(
+      'Target property not found for component clocity_ins:vlocityLWCOmniWrapper'
+    );
   });
 
   it('does not mutate the original bundle', () => {
+    // Mock StorageUtil
+    const mockStorage = {
+      osStorage: new Map([
+        ['subtype', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
+      ]),
+      fcStorage: new Map(),
+    };
+    sandbox.stub(StorageUtil, 'getOmnistudioMigrationStorage').returns(mockStorage);
+
     const bundle: Flexipage = {
       flexiPageRegions: [
         makeRegion([
           makeItemInstance([
-            { name: 'target', value: 'foo' },
+            { name: 'target', value: 'type:subtype' },
             { name: 'other', value: 'bar' },
           ]),
         ]),
       ],
     };
     const original = JSON.stringify(bundle);
-    transformFlexipageBundle(bundle, namespace);
+    transformFlexipageBundle(bundle, namespace, 'migrate');
     expect(JSON.stringify(bundle)).to.equal(original);
   });
 });
