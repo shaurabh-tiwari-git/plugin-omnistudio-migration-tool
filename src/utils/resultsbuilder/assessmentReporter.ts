@@ -16,6 +16,7 @@ import { ApexAssessmentReporter } from './ApexAssessmentReporter';
 import { IPAssessmentReporter } from './IPAssessmentReporter';
 import { DRAssessmentReporter } from './DRAssessmentReporter';
 import { FlexcardAssessmentReporter } from './FlexcardAssessmentReporter';
+import { LWCAssessmentReporter } from './LWCAssessmentReporter';
 
 export class AssessmentReporter {
   private static basePath = path.join(process.cwd(), 'assessment_reports');
@@ -24,13 +25,13 @@ export class AssessmentReporter {
   private static integrationProcedureAssessmentFileName = 'integration_procedure_assessment.html';
   private static dataMapperAssessmentFileName = 'datamapper_assessment.html';
   private static apexAssessmentFileName = 'apex_assessment.html';
+  private static lwcAssessmentFileName = 'lwc_assessment.html';
   private static dashboardFileName = 'dashboard.html';
   private static templateDir = 'templates';
   private static dashboardTemplateName = 'dashboard.template';
   private static reportTemplateName = 'assessmentReport.template';
   private static dashboardTemplate = path.join(__dirname, '..', '..', this.templateDir, this.dashboardTemplateName);
-  // TODO: Uncomment code once MVP for migration is completed
-  // private static lwcAssessmentFilePath = this.basePath + '/lwc_assessment.html';
+
   public static async generate(
     result: AssessmentInfo,
     instanceUrl: string,
@@ -45,6 +46,7 @@ export class AssessmentReporter {
       path.join(__dirname, '..', '..', this.templateDir, this.reportTemplateName),
       'utf8'
     );
+    console.log('result.lwcAssessmentInfos', JSON.stringify(result.lwcAssessmentInfos));
     if (!assessOnly) {
       this.createDocument(
         path.join(this.basePath, this.omniscriptAssessmentFileName),
@@ -76,6 +78,15 @@ export class AssessmentReporter {
         TemplateParser.generate(
           assessmentReportTemplate,
           ApexAssessmentReporter.getApexAssessmentData(result.apexAssessmentInfos, omnistudioOrgDetails),
+          messages
+        )
+      );
+
+      this.createDocument(
+        path.join(this.basePath, this.lwcAssessmentFileName),
+        TemplateParser.generate(
+          assessmentReportTemplate,
+          LWCAssessmentReporter.getLwcAssessmentData(result.lwcAssessmentInfos, omnistudioOrgDetails),
           messages
         )
       );
@@ -186,13 +197,16 @@ export class AssessmentReporter {
         )
       );
     }
-    // TODO: Uncomment code once MVP for migration is completed
-    // if (relatedObjects && relatedObjects.includes(Constants.LWC)) {
-    //   this.createDocument(
-    //     lwcAssessmentFilePath,
-    //     LWCAssessmentReporter.generateLwcAssesment(result.lwcAssessmentInfos, instanceUrl, orgDetails)
-    //   );
-    // }
+    if (relatedObjects && relatedObjects.includes(Constants.LWC)) {
+      this.createDocument(
+        path.join(this.basePath, this.lwcAssessmentFileName),
+        TemplateParser.generate(
+          assessmentReportTemplate,
+          LWCAssessmentReporter.getLwcAssessmentData(result.lwcAssessmentInfos, omnistudioOrgDetails),
+          messages
+        )
+      );
+    }
 
     // await this.createMasterDocument(nameUrls, basePath);
     this.createDashboard(this.basePath, result, omnistudioOrgDetails, messages);
@@ -251,6 +265,12 @@ export class AssessmentReporter {
           total: result.apexAssessmentInfos.length,
           data: ApexAssessmentReporter.getSummaryData(result.apexAssessmentInfos),
           file: this.apexAssessmentFileName,
+        },
+        {
+          name: 'LWC',
+          total: result.lwcAssessmentInfos.length,
+          data: LWCAssessmentReporter.getSummaryData(result.lwcAssessmentInfos),
+          file: this.lwcAssessmentFileName,
         },
       ],
     };

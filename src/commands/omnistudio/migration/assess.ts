@@ -119,8 +119,7 @@ export default class Assess extends OmniStudioBaseCommand {
     let objectsToProcess: string[];
     // Assess related objects if specified
     if (relatedObjects) {
-      // To-Do: Add LWC to valid options when GA is released
-      const validOptions = [Constants.Apex];
+      const validOptions = [Constants.Apex, Constants.LWC];
       objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
 
       // Validate input
