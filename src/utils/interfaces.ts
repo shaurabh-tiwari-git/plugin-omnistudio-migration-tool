@@ -172,5 +172,5 @@ export interface QueryResult {
 
 export interface FlexiPageAssessmentInfo extends FileChangeInfo {
   errors: string[];
-  status: 'Can be Automated' | 'Errors' | 'No Changes';
+  status: 'Can be Automated' | 'Errors' | 'No Changes' | 'Complete' | 'Failed';
 }

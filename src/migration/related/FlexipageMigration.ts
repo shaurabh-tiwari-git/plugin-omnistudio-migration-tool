@@ -14,7 +14,7 @@ import { Logger } from '../../utils/logger';
 import { Constants } from '../../utils/constants/stringContants';
 import { FlexiPageAssessmentInfo } from '../../utils/interfaces';
 import { createProgressBar } from '../base';
-import { xmlUtil } from '../../utils/XMLUtil';
+import { XMLUtil } from '../../utils/XMLUtil';
 import { FileDiffUtil } from '../../utils/lwcparser/fileutils/FileDiffUtil';
 import { transformFlexipageBundle } from '../../utils/flexipage/flexiPageTransformer';
 import { Flexipage } from '../interfaces';
@@ -41,6 +41,7 @@ import { BaseRelatedObjectMigration } from './BaseRealtedObjectMigration';
 export class FlexipageMigration extends BaseRelatedObjectMigration {
   /** Messages instance for internationalization */
   private messages: Messages;
+  private xmlUtil: XMLUtil;
 
   /**
    * Creates a new FlexipageMigration instance.
@@ -53,6 +54,7 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
   public constructor(projectPath: string, namespace: string, org: Org, messages: Messages) {
     super(projectPath, namespace, org);
     this.messages = messages;
+    this.xmlUtil = new XMLUtil(['flexiPageRegions', 'itemInstances', 'componentInstanceProperties']);
   }
 
   /**
@@ -123,18 +125,21 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
         );
       } catch (error) {
         Logger.error(this.messages.getMessage('errorProcessingFlexiPage', [file, error]));
+        Logger.error(error);
         flexPageAssessmentInfos.push({
           name: file,
           errors: [error instanceof Error ? error.message : JSON.stringify(error)],
           path: filePath,
           diff: '',
-          status: 'Errors',
+          status: mode === 'assess' ? 'Errors' : 'Failed',
         });
       }
       progressBar.increment();
     }
     progressBar.stop();
     Logger.info(this.messages.getMessage('completedProcessingAllFlexiPages', [flexPageAssessmentInfos.length]));
+    flexPageAssessmentInfos.filter((flexPageAssessmentInfo) => flexPageAssessmentInfo.status !== 'No Changes');
+    Logger.info(this.messages.getMessage('flexipagesWithChanges', [flexPageAssessmentInfos.length]));
     return flexPageAssessmentInfos;
   }
 
@@ -159,8 +164,9 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
     const fileContent = fs.readFileSync(filePath, 'utf8');
     Logger.logVerbose(this.messages.getMessage('readFlexiPageContent', [fileContent.length]));
 
-    const parent: { FlexiPage: Flexipage } = xmlUtil.parse(fileContent) as { FlexiPage: Flexipage };
-    const json = parent.FlexiPage;
+    const json = this.xmlUtil.parse(fileContent) as Flexipage;
+    const jsonPath = path.join(shell.pwd().toString(), 'json', fileName + '.json');
+    fs.writeFileSync(jsonPath.toString(), JSON.stringify(json) || '');
     const transformedFlexiPage = transformFlexipageBundle(json, this.namespace);
     if (transformedFlexiPage === false) {
       return {
@@ -171,8 +177,10 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
         status: 'No Changes',
       };
     }
-    parent.FlexiPage = transformedFlexiPage as Flexipage;
-    const modifiedContent = xmlUtil.build(parent);
+    const modifiedContent = this.xmlUtil.build(transformedFlexiPage, 'FlexiPage');
+
+    const xmlPath = path.join(shell.pwd().toString(), 'xml', fileName);
+    fs.writeFileSync(xmlPath.toString(), modifiedContent);
 
     if (mode === 'migrate') {
       fs.writeFileSync(filePath, modifiedContent);
@@ -187,7 +195,7 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
       name: fileName,
       diff: JSON.stringify(diff),
       errors: [],
-      status: 'Can be Automated',
+      status: mode === 'assess' ? 'Can be Automated' : 'Complete',
     };
   }
 }

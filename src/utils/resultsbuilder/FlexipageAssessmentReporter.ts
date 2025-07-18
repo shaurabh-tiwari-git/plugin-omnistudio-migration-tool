@@ -12,6 +12,7 @@ import {
   ReportHeaderGroupParam,
   ReportParam,
   ReportRowParam,
+  SummaryItemDetailParam,
 } from '../reportGenerator/reportInterfaces';
 import { createFilterGroupParam, createRowDataParam, getOrgDetailsForReport } from '../reportGenerator/reportUtil';
 
@@ -62,15 +63,8 @@ export class FlexipageAssessmentReporter {
    * @param flexipageAssessmentInfos - Array of FlexiPage assessment information
    * @returns Array of summary items with counts and CSS classes for different statuses
    */
-  public static getSummaryData(
-    flexipageAssessmentInfos: FlexiPageAssessmentInfo[]
-  ): Array<import('../reportGenerator/reportInterfaces').SummaryItemDetailParam> {
+  public static getSummaryData(flexipageAssessmentInfos: FlexiPageAssessmentInfo[]): SummaryItemDetailParam[] {
     return [
-      {
-        name: 'No Changes',
-        count: flexipageAssessmentInfos.filter((info) => info.status === 'No Changes').length,
-        cssClass: 'text-success',
-      },
       {
         name: 'Can be Automated',
         count: flexipageAssessmentInfos.filter((info) => info.status === 'Can be Automated').length,
@@ -97,6 +91,7 @@ export class FlexipageAssessmentReporter {
     return flexipageAssessmentInfos.map((flexipageAssessmentInfo) => ({
       data: [
         createRowDataParam('name', flexipageAssessmentInfo.name, true, 1, 1, false),
+        createRowDataParam('path', flexipageAssessmentInfo.path, true, 1, 1, false),
         createRowDataParam(
           'status',
           flexipageAssessmentInfo.status,
@@ -106,11 +101,7 @@ export class FlexipageAssessmentReporter {
           false,
           undefined,
           undefined,
-          flexipageAssessmentInfo.status === 'Errors'
-            ? 'text-error'
-            : flexipageAssessmentInfo.status === 'Can be Automated'
-            ? 'text-warning'
-            : 'text-success'
+          flexipageAssessmentInfo.status === 'Errors' ? 'text-error' : 'text-success'
         ),
         createRowDataParam(
           'diff',
@@ -130,7 +121,8 @@ export class FlexipageAssessmentReporter {
           1,
           false,
           undefined,
-          flexipageAssessmentInfo.errors
+          flexipageAssessmentInfo.errors,
+          'text-error'
         ),
       ],
       rowId: `${this.rowIdPrefix}${this.rowId++}`,
@@ -152,6 +144,11 @@ export class FlexipageAssessmentReporter {
             rowspan: 1,
           },
           {
+            name: 'File Reference',
+            colspan: 1,
+            rowspan: 1,
+          },
+          {
             name: 'Status',
             colspan: 1,
             rowspan: 1,
@@ -162,7 +159,7 @@ export class FlexipageAssessmentReporter {
             rowspan: 1,
           },
           {
-            name: 'Errors',
+            name: 'Summary',
             colspan: 1,
             rowspan: 1,
           },
@@ -178,7 +175,7 @@ export class FlexipageAssessmentReporter {
   private static getFilterGroupsForReport(): FilterGroupParam[] {
     return [
       createFilterGroupParam('Filter by Errors', 'errors', ['Has Errors', 'Has No Errors']),
-      createFilterGroupParam('Filter by Status', 'status', ['No Changes', 'Can be Automated', 'Errors']),
+      createFilterGroupParam('Filter by Status', 'status', ['Can be Automated', 'Errors']),
     ];
   }
 }

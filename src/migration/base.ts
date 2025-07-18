@@ -7,19 +7,20 @@ import { Stringutil } from '../utils/StringValue/stringutil';
 import { Logger } from '../utils/logger';
 import { TransformData, UploadRecordResult } from './interfaces';
 
-export type ComponentType = 'Data Mapper' | 'Flexcard' | 'Omniscript and Integration Procedure' | 'Flexipage';
+export type ComponentType = 'Data Mapper' | 'Flexcard' | 'Omniscript and Integration Procedure';
+export type RelatedObjectType = 'Flexipage';
 
 /**
  * Creates a progress bar for migration/assessment operations
  *
  * @param action - The action being performed (e.g., 'Migrating', 'Assessing')
- * @param componentType - The type of component being processed
+ * @param type - The type of component being processed
  * @returns A configured cliProgress.SingleBar instance
  */
-export const createProgressBar = (action: string, componentType: ComponentType): cliProgress.SingleBar => {
+export const createProgressBar = (action: string, type: ComponentType | RelatedObjectType): cliProgress.SingleBar => {
   return new cliProgress.SingleBar({
-    format: `${action} ${componentType} |${
-      componentType === 'Omniscript and Integration Procedure' ? '' : '\t\t\t\t'
+    format: `${action} ${type} |${
+      type === 'Omniscript and Integration Procedure' ? '' : '\t\t\t\t'
     } {bar} | {percentage}% || {value}/{total} Tasks`,
     barCompleteChar: '\u2588',
     barIncompleteChar: '\u2591',

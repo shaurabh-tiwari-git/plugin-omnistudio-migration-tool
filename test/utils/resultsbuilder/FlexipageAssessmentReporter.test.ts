@@ -144,12 +144,7 @@ describe('FlexipageAssessmentReporter', () => {
       const result = FlexipageAssessmentReporter.getSummaryData(mockAssessmentInfos);
 
       // Assert
-      expect(result).to.have.length(3);
-
-      const noChanges = result.find((item) => item.name === 'No Changes');
-      expect(noChanges).to.exist;
-      expect(noChanges.count).to.equal(2);
-      expect(noChanges.cssClass).to.equal('text-success');
+      expect(result).to.have.length(2);
 
       const canBeAutomated = result.find((item) => item.name === 'Can be Automated');
       expect(canBeAutomated).to.exist;
@@ -167,7 +162,7 @@ describe('FlexipageAssessmentReporter', () => {
       const result = FlexipageAssessmentReporter.getSummaryData([]);
 
       // Assert
-      expect(result).to.have.length(3);
+      expect(result).to.have.length(2);
       result.forEach((item) => {
         expect(item.count).to.equal(0);
       });
@@ -202,19 +197,21 @@ describe('FlexipageAssessmentReporter', () => {
 
       // Check first row
       expect(result[0].rowId).to.match(/^flexipage-row-data-\d+$/);
-      expect(result[0].data).to.have.length(4);
+      expect(result[0].data).to.have.length(5);
       expect(result[0].data[0].value).to.equal('TestPage1');
-      expect(result[0].data[1].value).to.equal('Can be Automated');
-      expect(result[0].data[1].customClass).to.equal('text-warning');
-      expect(result[0].data[2].value).to.equal('');
-      expect(result[0].data[3].value).to.equal('Has No Errors');
+      expect(result[0].data[1].value).to.equal('/test/path1');
+      expect(result[0].data[2].value).to.equal('Can be Automated');
+      expect(result[0].data[2].customClass).to.equal('text-success');
+      expect(result[0].data[3].value).to.equal('');
+      expect(result[0].data[4].value).to.equal('Has No Errors');
 
       // Check second row
       expect(result[1].data[0].value).to.equal('TestPage2');
-      expect(result[1].data[1].value).to.equal('Errors');
-      expect(result[1].data[1].customClass).to.equal('text-error');
-      expect(result[1].data[3].value).to.equal('Has Errors');
-      expect(result[1].data[3].title).to.deep.equal(['Error 1', 'Error 2']);
+      expect(result[1].data[1].value).to.equal('/test/path2');
+      expect(result[1].data[2].value).to.equal('Errors');
+      expect(result[1].data[2].customClass).to.equal('text-error');
+      expect(result[1].data[4].value).to.equal('Has Errors');
+      expect(result[1].data[4].title).to.deep.equal(['Error 1', 'Error 2']);
     });
 
     it('should handle empty assessment infos', () => {
@@ -269,13 +266,14 @@ describe('FlexipageAssessmentReporter', () => {
 
       // Assert
       expect(result).to.have.length(1);
-      expect(result[0].header).to.have.length(4);
+      expect(result[0].header).to.have.length(5);
 
       const headers = result[0].header;
       expect(headers[0].name).to.equal('Page Name');
-      expect(headers[1].name).to.equal('Status');
-      expect(headers[2].name).to.equal('Differences');
-      expect(headers[3].name).to.equal('Errors');
+      expect(headers[1].name).to.equal('File Reference');
+      expect(headers[2].name).to.equal('Status');
+      expect(headers[3].name).to.equal('Differences');
+      expect(headers[4].name).to.equal('Summary');
 
       headers.forEach((header) => {
         expect(header.colspan).to.equal(1);
@@ -302,10 +300,9 @@ describe('FlexipageAssessmentReporter', () => {
       const statusFilter = result.find((filter) => filter.label === 'Filter by Status');
       expect(statusFilter).to.exist;
       expect(statusFilter.key).to.equal('status');
-      expect(statusFilter.filters).to.have.length(3);
-      expect(statusFilter.filters[0].label).to.equal('No Changes');
-      expect(statusFilter.filters[1].label).to.equal('Can be Automated');
-      expect(statusFilter.filters[2].label).to.equal('Errors');
+      expect(statusFilter.filters).to.have.length(2);
+      expect(statusFilter.filters[0].label).to.equal('Can be Automated');
+      expect(statusFilter.filters[1].label).to.equal('Errors');
     });
   });
 
