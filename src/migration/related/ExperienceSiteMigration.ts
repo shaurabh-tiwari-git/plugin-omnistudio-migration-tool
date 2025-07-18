@@ -152,7 +152,6 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
 
     Logger.logVerbose('Printing the difference' + JSON.stringify(difference));
 
-    // TODO - CHECK SOME IF ELSES HERE
     if (normalizedOriginalFileContent !== noarmalizeUpdatedFileContent) {
       Logger.logVerbose('Updating the file content');
       fs.writeFileSync(file.location, noarmalizeUpdatedFileContent, 'utf8');
@@ -208,11 +207,9 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       experienceSiteAssessmentInfo.warnings.push(warningMsg);
     } else {
       component.componentName = TARGET_COMPONENT_NAME_FC;
-
-      currentAttribute['direction'] = 'ltr';
-      currentAttribute['display'] = 'Display button to open Omniscript';
-      currentAttribute['inlineVariant'] = 'brand';
-      currentAttribute['name'] = targetDataFromStorageFC.name;
+      currentAttribute['flexcardName'] = targetDataFromStorageFC.name;
+      currentAttribute['objectApiName'] = '{!objectApiName}';
+      currentAttribute['recordId'] = '{!recordId}';
     }
   }
 

@@ -285,9 +285,6 @@ export class ResultsBuilder {
           ),
         ],
       })),
-      rollbackFlags: (orgDetails.rollbackFlags || []).includes('RollbackApexChanges')
-        ? ['RollbackApexChanges']
-        : undefined,
     };
 
     const reportTemplate = fs.readFileSync(reportTemplateFilePath, 'utf8');
