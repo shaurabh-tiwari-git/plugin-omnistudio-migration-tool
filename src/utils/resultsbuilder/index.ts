@@ -4,13 +4,14 @@ import open from 'open';
 import { Messages } from '@salesforce/core';
 import { pushAssestUtilites } from '../file/fileUtil';
 import { ApexAssessmentInfo, MigratedObject, MigratedRecordInfo, RelatedObjectAssesmentInfo } from '../interfaces';
-import { DashboardParam, ReportParam } from '../reportGenerator/reportInterfaces';
+import { DashboardParam, ReportParam, SummaryItemParam } from '../reportGenerator/reportInterfaces';
 import { OmnistudioOrgDetails } from '../orgUtils';
 import { TemplateParser } from '../templateParser/generate';
 import { createFilterGroupParam, createRowDataParam } from '../reportGenerator/reportUtil';
 import { FileDiffUtil } from '../lwcparser/fileutils/FileDiffUtil';
 import { Logger } from '../logger';
 import { getMigrationHeading } from '../stringUtils';
+import { Constants } from '../constants/stringContants';
 import { reportingHelper } from './reportingHelper';
 const resultsDir = path.join(process.cwd(), 'migration_report');
 // const lwcConstants = { componentName: 'lwc', title: 'LWC Components Migration Result' };
@@ -32,7 +33,8 @@ export class ResultsBuilder {
     instanceUrl: string,
     orgDetails: OmnistudioOrgDetails,
     messages: Messages,
-    actionItems: string[]
+    actionItems: string[],
+    objectsToProcess: string[]
   ): Promise<void> {
     fs.mkdirSync(resultsDir, { recursive: true });
     Logger.info(messages.getMessage('generatingComponentReports'));
@@ -40,10 +42,23 @@ export class ResultsBuilder {
       this.generateReportForResult(result, instanceUrl, orgDetails, messages);
     }
     Logger.info(messages.getMessage('generatingRelatedObjectReports'));
-    this.generateReportForRelatedObject(relatedObjectMigrationResult, instanceUrl, orgDetails, messages);
+    this.generateReportForRelatedObject(
+      relatedObjectMigrationResult,
+      instanceUrl,
+      orgDetails,
+      messages,
+      objectsToProcess
+    );
 
     Logger.info(messages.getMessage('generatingMigrationReportDashboard'));
-    this.generateMigrationReportDashboard(orgDetails, results, relatedObjectMigrationResult, messages, actionItems);
+    this.generateMigrationReportDashboard(
+      orgDetails,
+      results,
+      relatedObjectMigrationResult,
+      messages,
+      actionItems,
+      objectsToProcess
+    );
     pushAssestUtilites('javascripts', resultsDir);
     pushAssestUtilites('styles', resultsDir);
     await open(path.join(resultsDir, migrationReportHTMLfileName));
@@ -78,7 +93,7 @@ export class ResultsBuilder {
       assessmentDate: new Date().toString(),
       total: result.data?.length || 0,
       filterGroups: [
-        createFilterGroupParam('Filter By Status', 'status', ['Successfully Completed', 'Error', 'Skipped']),
+        createFilterGroupParam('Filter By Status', 'status', ['Successfully Completed', 'Failed', 'Skipped']),
       ],
       headerGroups: [
         {
@@ -188,9 +203,12 @@ export class ResultsBuilder {
     result: RelatedObjectAssesmentInfo,
     instanceUrl: string,
     orgDetails: OmnistudioOrgDetails,
-    messages: Messages
+    messages: Messages,
+    objectsToProcess: string[]
   ): void {
-    this.generateReportForApex(result.apexAssessmentInfos, instanceUrl, orgDetails, messages);
+    if (objectsToProcess.includes(Constants.Apex)) {
+      this.generateReportForApex(result.apexAssessmentInfos, instanceUrl, orgDetails, messages);
+    }
   }
 
   private static generateReportForApex(
@@ -297,11 +315,22 @@ export class ResultsBuilder {
     results: MigratedObject[],
     relatedObjectMigrationResult: RelatedObjectAssesmentInfo,
     messages: Messages,
-    actionItems: string[]
+    actionItems: string[],
+    objectsToProcess: string[]
   ): void {
+    const relatedObjectSummaryItems: SummaryItemParam[] = [];
+    if (objectsToProcess.includes(Constants.Apex)) {
+      relatedObjectSummaryItems.push({
+        name: 'Apex Classes',
+        total: relatedObjectMigrationResult.apexAssessmentInfos?.length || 0,
+        data: this.getDifferentStatusDataForApex(relatedObjectMigrationResult.apexAssessmentInfos),
+        file: apexFileName,
+      });
+    }
+
     const data: DashboardParam = {
-      title: 'Omnistudio Migration Report Dashboard',
-      heading: 'Omnistudio Migration Report Dashboard',
+      title: 'Migration Report Dashboard',
+      heading: 'Migration Report Dashboard',
       org: {
         name: orgDetails.orgDetails.Name,
         id: orgDetails.orgDetails.Id,
@@ -316,12 +345,7 @@ export class ResultsBuilder {
           data: this.getDifferentStatusDataForResult(result.data),
           file: result.name.replace(/ /g, '_').replace(/\//g, '_') + '.html',
         })),
-        {
-          name: 'Apex File Migration',
-          total: relatedObjectMigrationResult.apexAssessmentInfos?.length || 0,
-          data: this.getDifferentStatusDataForApex(relatedObjectMigrationResult.apexAssessmentInfos),
-          file: apexFileName,
-        },
+        ...relatedObjectSummaryItems,
       ],
       actionItems,
       mode: 'migrate',
@@ -340,12 +364,12 @@ export class ResultsBuilder {
     let skip = 0;
     data.forEach((item) => {
       if (item.status === 'Complete') complete++;
-      if (item.status === 'Error') error++;
+      if (item.status === 'Failed') error++;
       if (item.status === 'Skipped') skip++;
     });
     return [
       { name: 'Successfully Completed', count: complete, cssClass: 'text-success' },
-      { name: 'Error', count: error, cssClass: 'text-error' },
+      { name: 'Failed', count: error, cssClass: 'text-error' },
       { name: 'Skipped', count: skip, cssClass: 'text-warning' },
     ];
   }
@@ -361,7 +385,7 @@ export class ResultsBuilder {
     });
     return [
       { name: 'Successfully Completed', count: complete, cssClass: 'text-success' },
-      { name: 'Error', count: error, cssClass: 'text-error' },
+      { name: 'Failed', count: error, cssClass: 'text-error' },
     ];
   }
 }

@@ -186,7 +186,8 @@ export default class Migrate extends OmniStudioBaseCommand {
       conn.instanceUrl,
       orgs,
       messages,
-      actionItems
+      actionItems,
+      objectsToProcess
     );
 
     // Return results needed for --json flag

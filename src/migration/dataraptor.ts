@@ -253,8 +253,10 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
           type: dataRaptor[this.namespacePrefix + 'Type__c'] || '',
           formulaChanges: [],
           infos: [],
-          warnings: [this.messages.getMessage('unexpectedError')],
+          warnings: [],
+          errors: [this.messages.getMessage('unexpectedError')],
           apexDependencies: [],
+          migrationStatus: 'Failed',
         });
         const error = e as Error;
         Logger.error('Error processing data mapper', error);
@@ -276,6 +278,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     Logger.info(this.messages.getMessage('processingDataRaptor', [drName]));
     const warnings: string[] = [];
     const existingDRNameVal = new StringVal(drName, 'name');
+    let assessmentStatus = 'Can be Automated';
 
     if (!existingDRNameVal.isNameCleaned()) {
       warnings.push(
@@ -285,9 +288,11 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
           existingDRNameVal.cleanName(),
         ])
       );
+      assessmentStatus = 'Has Warnings';
     }
     if (existingDataRaptorNames.has(existingDRNameVal.cleanName())) {
       warnings.push(this.messages.getMessage('duplicatedName') + '  ' + existingDRNameVal.cleanName());
+      assessmentStatus = 'Need Manual Intervention';
     } else {
       existingDataRaptorNames.add(existingDRNameVal.cleanName());
     }
@@ -330,6 +335,8 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
       infos: [],
       apexDependencies: apexDependencies,
       warnings: warnings,
+      errors: [],
+      migrationStatus: assessmentStatus,
     };
     return dataRaptorAssessmentInfo;
   }

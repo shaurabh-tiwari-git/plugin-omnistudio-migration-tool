@@ -123,6 +123,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       } catch (e) {
         flexCardAssessmentInfos.push({
           name: flexCard['Name'],
+          oldName: flexCard['Name'],
           id: flexCard['Id'],
           dependenciesIP: [],
           dependenciesDR: [],
@@ -131,7 +132,9 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           dependenciesLWC: [],
           dependenciesApexRemoteAction: [],
           infos: [],
-          warnings: [this.messages.getMessage('unexpectedError')],
+          warnings: [],
+          errors: [this.messages.getMessage('unexpectedError')],
+          migrationStatus: 'Failed',
         });
         const error = e as Error;
         Logger.error('Error processing flex card', error);
@@ -147,6 +150,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     Logger.info(this.messages.getMessage('processingFlexCard', [flexCardName]));
     const flexCardAssessmentInfo: FlexCardAssessmentInfo = {
       name: flexCardName,
+      oldName: flexCardName,
       id: flexCard['Id'],
       dependenciesIP: [],
       dependenciesDR: [],
@@ -156,20 +160,26 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       dependenciesApexRemoteAction: [],
       infos: [],
       warnings: [],
+      errors: [],
+      migrationStatus: '',
     };
 
     // Check for name changes due to API naming requirements
     const originalName: string = flexCardName;
     const cleanedName: string = this.cleanName(originalName);
+    let assessmentStatus = 'Can be Automated';
+    flexCardAssessmentInfo.name = cleanedName;
     if (cleanedName !== originalName) {
       flexCardAssessmentInfo.warnings.push(
         this.messages.getMessage('cardNameChangeMessage', [originalName, cleanedName])
       );
+      assessmentStatus = 'Has Warnings';
     }
 
     // Check for duplicate names
     if (uniqueNames.has(cleanedName)) {
       flexCardAssessmentInfo.warnings.push(this.messages.getMessage('duplicateCardNameMessage', [cleanedName]));
+      assessmentStatus = 'Need Manual Intervention';
     }
     uniqueNames.add(cleanedName);
 
@@ -181,9 +191,11 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         flexCardAssessmentInfo.warnings.push(
           this.messages.getMessage('authordNameChangeMessage', [originalAuthor, cleanedAuthor])
         );
+        assessmentStatus = 'Has Warnings';
       }
     }
 
+    flexCardAssessmentInfo.migrationStatus = assessmentStatus;
     this.updateDependencies(flexCard, flexCardAssessmentInfo);
 
     return flexCardAssessmentInfo;
@@ -210,6 +222,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           flexCardAssessmentInfo.warnings.push(
             this.messages.getMessage('dataRaptorNameChangeMessage', [originalBundle, cleanedBundle])
           );
+          flexCardAssessmentInfo.migrationStatus = 'Has Warnings';
         }
       }
     } else if (dataSource.type === Constants.IntegrationProcedurePluralName) {
@@ -226,6 +239,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           flexCardAssessmentInfo.warnings.push(
             this.messages.getMessage('integrationProcedureNameChangeMessage', [originalIpMethod, cleanedIpMethod])
           );
+          flexCardAssessmentInfo.migrationStatus = 'Has Warnings';
         }
 
         // Add warning for IP references with more than 2 parts (which potentially need manual updates)
@@ -233,6 +247,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           flexCardAssessmentInfo.warnings.push(
             this.messages.getMessage('integrationProcedureManualUpdateMessage', [originalIpMethod])
           );
+          flexCardAssessmentInfo.migrationStatus = 'Need Manual Intervention';
         }
       }
     } else if (dataSource.type === Constants.ApexRemoteComponentName) {
@@ -319,6 +334,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
                     flexCardAssessmentInfo.warnings.push(
                       this.messages.getMessage('omniScriptNameChangeMessage', [parts[i], cleanedParts[i]])
                     );
+                    flexCardAssessmentInfo.migrationStatus = 'Has Warnings';
                   }
                 }
               }
@@ -349,6 +365,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
                     flexCardAssessmentInfo.warnings.push(
                       this.messages.getMessage('omniScriptNameChangeMessage', [parts[i], cleanedParts[i]])
                     );
+                    flexCardAssessmentInfo.migrationStatus = 'Has Warnings';
                   }
                 }
               }

@@ -16,7 +16,7 @@ const assessMessages = Messages.loadMessages('@salesforce/plugin-omnistudio-migr
 const migrateMessages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'migrate');
 
 // TODO: Uncomment code once MVP for migration is completed
-// const LWCTYPE = 'LightningComponentBundle';
+const LWCTYPE = 'LightningComponentBundle';
 const APEXCLASS = 'Apexclass';
 
 const defaultProjectName = 'omnistudio_migration';
@@ -50,7 +50,7 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     // Initialize migration instances
     this.apexMigration = new ApexMigration(this.projectPath, this.namespace, this.org, targetApexNamespace);
     // TODO: Uncomment code once MVP for migration is completed
-    // this.lwcMigration = new LwcMigration(this.projectPath, this.namespace, this.org);
+    this.lwcMigration = new LwcMigration(this.projectPath, this.namespace, this.org);
   }
 
   private createProject(): string {
@@ -62,9 +62,9 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
     // TODO: Uncomment code once MVP for migration is completed
-    // if (relatedObjects.includes(Constants.LWC)) {
-    //   sfProject.retrieve(LWCTYPE, this.org.getUsername());
-    // }
+    if (relatedObjects.includes(Constants.LWC)) {
+      sfProject.retrieve(LWCTYPE, this.org.getUsername());
+    }
     if (relatedObjects.includes(Constants.Apex)) {
       sfProject.retrieve(APEXCLASS, this.org.getUsername());
     }
@@ -88,7 +88,7 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     debugTimer.start();
 
     let apexAssessmentInfos: ApexAssessmentInfo[] = [];
-    const lwcAssessmentInfos: LWCAssessmentInfo[] = [];
+    let lwcAssessmentInfos: LWCAssessmentInfo[] = [];
 
     // Proceed with processing logic
     try {
@@ -99,15 +99,15 @@ export default class OmnistudioRelatedObjectMigrationFacade {
       // Log the error
       Logger.error('Error processing related objects', error);
     }
-    // TODO: Uncomment code once MVP for migration is completed
-    // try {
-    //   if (relatedObjects.includes(Constants.LWC)) {
-    //     lwcAssessmentInfos = isMigration ? this.lwcMigration.migrate() : this.lwcMigration.assessment();
-    //   }
-    // } catch (Error) {
-    //   // Log the error
-    //   Logger.error(Error.message);
-    // }
+
+    try {
+      if (relatedObjects.includes(Constants.LWC)) {
+        Logger.logVerbose(migrateMessages.getMessage('startingLwcMigration', [this.projectPath]));
+        lwcAssessmentInfos = isMigration ? this.lwcMigration.migrate() : this.lwcMigration.assessment();
+      }
+    } catch (Error) {
+      Logger.error(Error.message);
+    }
 
     // Stop the debug timer
     const timer = debugTimer.stop();
