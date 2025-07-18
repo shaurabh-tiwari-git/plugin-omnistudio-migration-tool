@@ -271,7 +271,7 @@ describe('FlexipageAssessmentReporter', () => {
       const headers = result[0].header;
       expect(headers[0].name).to.equal('Page Name');
       expect(headers[1].name).to.equal('File Reference');
-      expect(headers[2].name).to.equal('Status');
+      expect(headers[2].name).to.equal('Assessment Status');
       expect(headers[3].name).to.equal('Differences');
       expect(headers[4].name).to.equal('Summary');
 
