@@ -104,9 +104,8 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
     Logger.logVerbose(this.messages.getMessage('retrievingFlexiPages'));
     shell.cd(this.projectPath);
     sfProject.retrieve(Constants.FlexiPage, this.org.getUsername());
-    const files = fs
-      .readdirSync(path.join(this.projectPath, 'force-app', 'main', 'default', 'flexipages'))
-      .filter((file) => file.endsWith('.xml'));
+    const flexiPageDir = path.join(this.projectPath, 'force-app', 'main', 'default', 'flexipages');
+    const files = fs.readdirSync(flexiPageDir).filter((file) => file.endsWith('.xml'));
     Logger.logVerbose(this.messages.getMessage('successfullyRetrievedFlexiPages', [files.length]));
     const progressBar = createProgressBar('Migrating', 'Flexipage');
     progressBar.setTotal(files.length);
@@ -114,7 +113,7 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
 
     for (const file of files) {
       Logger.logVerbose(this.messages.getMessage('processingFlexiPage', [file]));
-      const filePath = path.join(this.projectPath, 'force-app', 'main', 'default', 'flexipages', file);
+      const filePath = path.join(flexiPageDir, file);
       try {
         const flexPageAssessmentInfo: FlexiPageAssessmentInfo = this.processFlexiPage(file, filePath, mode);
         flexPageAssessmentInfos.push(flexPageAssessmentInfo);
