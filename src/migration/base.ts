@@ -7,7 +7,7 @@ import { Stringutil } from '../utils/StringValue/stringutil';
 import { Logger } from '../utils/logger';
 import { TransformData, UploadRecordResult } from './interfaces';
 
-export type ComponentType = 'Data Mapper' | 'Flexcard' | 'Omniscript and Integration Procedure';
+export type ComponentType = 'Data Mapper' | 'Flexcard' | 'Omniscript and Integration Procedure' | 'GlobalAutoNumber';
 export type RelatedObjectType = 'Flexipage';
 
 /**

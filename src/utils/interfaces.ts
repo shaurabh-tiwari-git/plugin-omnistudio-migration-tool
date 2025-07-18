@@ -85,6 +85,7 @@ export interface AssessmentInfo {
   flexCardAssessmentInfos: FlexCardAssessmentInfo[];
   dataRaptorAssessmentInfos: DataRaptorAssessmentInfo[];
   flexipageAssessmentInfos: FlexiPageAssessmentInfo[];
+  globalAutoNumberAssessmentInfos: GlobalAutoNumberAssessmentInfo[];
 }
 
 export interface RelatedObjectAssesmentInfo {
@@ -115,6 +116,15 @@ export interface DataRaptorAssessmentInfo {
   infos: string[];
   warnings: string[];
   apexDependencies: string[];
+}
+
+export interface GlobalAutoNumberAssessmentInfo {
+  oldName: string;
+  name: string;
+  id: string;
+  infos: string[];
+  warnings: string[];
+  errors: string[];
 }
 
 export interface OmniAssessmentInfo {
@@ -160,6 +170,19 @@ export interface oldNew {
 export interface OmniStudioSettingsMetadata {
   fullName: string;
   disableRollbackFlagsPref: boolean;
+}
+
+export interface MetadataInfo {
+  fullName: string;
+  disableRollbackFlagsPref?: boolean;
+  enableOmniGlobalAutoNumberPref?: string;
+  enableOaEventInternalWrites?: string;
+  enableOaEventNotifications?: string;
+  enableOaForCore?: string;
+  enableOmniStudioContentTest?: string;
+  enableOmniStudioDrVersion?: string;
+  enableOmniStudioMetadata?: string;
+  enableStandardOmniStudioRuntime?: string;
 }
 
 export interface ExperienceBundleSettingsMetadata {

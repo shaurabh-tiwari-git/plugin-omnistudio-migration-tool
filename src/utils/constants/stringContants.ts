@@ -4,6 +4,7 @@ export const Constants = {
   Flexcard: 'fc',
   IntegrationProcedure: 'ip',
   DataMapper: 'dr',
+  GlobalAutoNumber: 'autonumber',
   LWC: 'lwc',
   Apex: 'apex',
   FlexiPage: 'flexipage',
@@ -18,5 +19,7 @@ export const Constants = {
   IntegrationProcedurePluralName: 'IntegrationProcedures',
   DataRaptorComponentName: 'DataRaptor',
   DataRaptorPluralName: 'DataRaptors',
+  GlobalAutoNumberComponentName: 'GlobalAutoNumber',
+  GlobalAutoNumberPluralName: 'GlobalAutoNumbers',
   ApexRemoteComponentName: 'ApexRemote',
 };
