@@ -61,9 +61,9 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
     // TODO: Uncomment code once MVP for migration is completed
-    if (relatedObjects.includes(Constants.LWC)) {
-      // sfProject.retrieve(LWCTYPE, this.org.getUsername());
-    }
+    // if (relatedObjects.includes(Constants.LWC)) {
+    //   // sfProject.retrieve(LWCTYPE, this.org.getUsername());
+    // }
     if (relatedObjects.includes(Constants.Apex)) {
       sfProject.retrieve(APEXCLASS, this.org.getUsername());
     }
@@ -98,7 +98,7 @@ export default class OmnistudioRelatedObjectMigrationFacade {
       // Log the error
       Logger.error('Error processing related objects', error);
     }
-
+    // TODO: Uncomment code once MVP for migration is completed
     // try {
     //   if (relatedObjects.includes(Constants.LWC)) {
     //     Logger.logVerbose(migrateMessages.getMessage('startingLwcMigration', [this.projectPath]));
