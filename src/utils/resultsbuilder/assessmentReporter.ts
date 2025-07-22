@@ -18,6 +18,7 @@ import { DRAssessmentReporter } from './DRAssessmentReporter';
 import { FlexcardAssessmentReporter } from './FlexcardAssessmentReporter';
 import { GlobalAutoNumberAssessmentReporter } from './GlobalAutoNumberAssessmentReporter';
 import { FlexipageAssessmentReporter } from './FlexipageAssessmentReporter';
+import { ExperienceSiteAssessmentReporter } from './ExperienceSiteAssessmentReporter';
 
 export class AssessmentReporter {
   private static basePath = path.join(process.cwd(), 'assessment_reports');
@@ -29,6 +30,7 @@ export class AssessmentReporter {
   private static apexAssessmentFileName = 'apex_assessment.html';
   private static dashboardFileName = 'dashboard.html';
   private static templateDir = 'templates';
+  private static experienceSiteAssessmentFileName = 'experience_site_assessment.html';
   private static flexipageAssessmentFileName = 'flexipage_assessment.html';
   private static dashboardTemplateName = 'dashboard.template';
   private static reportTemplateName = 'assessmentReport.template';
@@ -228,6 +230,20 @@ export class AssessmentReporter {
       );
     }
 
+    if (relatedObjects && relatedObjects.includes(Constants.ExpSites)) {
+      this.createDocument(
+        path.join(this.basePath, this.experienceSiteAssessmentFileName),
+        TemplateParser.generate(
+          assessmentReportTemplate,
+          ExperienceSiteAssessmentReporter.getExperienceSiteAssessmentData(
+            result.experienceSiteAssessmentInfos,
+            omnistudioOrgDetails
+          ),
+          messages
+        )
+      );
+    }
+
     if (relatedObjects && relatedObjects.includes(Constants.FlexiPage)) {
       this.createDocument(
         path.join(this.basePath, this.flexipageAssessmentFileName),
@@ -252,6 +268,7 @@ export class AssessmentReporter {
     pushAssestUtilites('styles', this.basePath);
     await open(path.join(this.basePath, this.dashboardFileName));
   }
+
   private static createDashboard(
     basePath: string,
     result: AssessmentInfo,
@@ -315,6 +332,12 @@ export class AssessmentReporter {
           total: result.flexipageAssessmentInfos.length,
           data: FlexipageAssessmentReporter.getSummaryData(result.flexipageAssessmentInfos),
           file: this.flexipageAssessmentFileName,
+        },
+        {
+          name: 'ExperienceSite',
+          total: result.experienceSiteAssessmentInfos.length,
+          data: ExperienceSiteAssessmentReporter.getSummaryData(result.experienceSiteAssessmentInfos),
+          file: this.experienceSiteAssessmentFileName,
         },
       ],
     };

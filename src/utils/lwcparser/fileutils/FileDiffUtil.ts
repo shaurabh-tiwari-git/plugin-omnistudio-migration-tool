@@ -144,6 +144,6 @@ export class FileDiffUtil {
           new: line.value,
         };
       }
-    }) as DiffPair[];
+    });
   }
 }

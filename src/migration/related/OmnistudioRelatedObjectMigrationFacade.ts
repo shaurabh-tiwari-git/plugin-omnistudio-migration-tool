@@ -118,8 +118,10 @@ export default class OmnistudioRelatedObjectMigrationFacade {
         apexAssessmentInfos = isMigration ? this.apexMigration.migrate() : this.apexMigration.assess();
       }
 
-      if (isMigration && relatedObjects.includes(Constants.ExpSites)) {
-        experienceSiteAssessmentInfos = this.experienceSiteMigration.migrate();
+      if (relatedObjects.includes(Constants.ExpSites)) {
+        experienceSiteAssessmentInfos = isMigration
+          ? this.experienceSiteMigration.migrate()
+          : this.experienceSiteMigration.assess();
       }
       if (relatedObjects.includes(Constants.FlexiPage)) {
         flexipageAssessmentInfos = isMigration ? this.flexipageMigration.migrate() : this.flexipageMigration.assess();

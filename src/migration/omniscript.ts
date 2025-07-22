@@ -192,7 +192,14 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
   ): Promise<OmniAssessmentInfo> {
     try {
       Logger.log(this.messages.getMessage('startingOmniScriptAssessment'));
-      const omniscripts = await this.getAllOmniScripts();
+      // const omniscripts = await this.getAllOmniScripts();
+
+      let omniscripts = await this.getAllOmniScripts();
+      let filteredOmniscripts = omniscripts.filter(
+        (omniscript: any) => typeof omniscript === 'object' && 'Name' in omniscript && omniscript.Name.includes('ABC')
+      );
+      omniscripts = filteredOmniscripts;
+
       Logger.log(this.messages.getMessage('foundOmniScriptsToAssess', [omniscripts.length]));
 
       const omniAssessmentInfos = await this.processOmniComponents(

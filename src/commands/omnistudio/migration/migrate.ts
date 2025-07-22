@@ -9,7 +9,7 @@
  */
 import * as os from 'os';
 import { flags } from '@salesforce/command';
-import { Connection, Messages } from '@salesforce/core';
+import { Messages } from '@salesforce/core';
 import OmniStudioBaseCommand from '../../basecommand';
 import { DataRaptorMigrationTool } from '../../../migration/dataraptor';
 import { DebugTimer, MigratedObject, MigratedRecordInfo } from '../../../utils';
@@ -26,6 +26,7 @@ import { Constants } from '../../../utils/constants/stringContants';
 import { OrgPreferences } from '../../../utils/orgPreferences';
 import { ProjectPathUtil } from '../../../utils/projectPathUtil';
 import { PostMigrate } from '../../../migration/postMigrate';
+import { PreMigrate } from '../../../migration/premigrate';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -123,6 +124,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     let projectPath: string;
     let objectsToProcess: string[] = [];
     let targetApexNamespace: string;
+    const preMigrate: PreMigrate = new PreMigrate(this.org, namespace, conn, this.logger, messages, this.ux);
     const isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean } = { value: false };
     if (relatedObjects) {
       // To-Do: Add LWC to valid options when GA is released
@@ -141,7 +143,7 @@ export default class Migrate extends OmniStudioBaseCommand {
         // Use ProjectPathUtil for APEX project folder selection (matches assess.ts logic)
         projectPath = await ProjectPathUtil.getProjectPath(messages, true);
         targetApexNamespace = await this.getTargetApexNamespace(objectsToProcess, targetApexNamespace);
-        await this.handleExperienceSitePrerequisites(
+        await preMigrate.handleExperienceSitePrerequisites(
           objectsToProcess,
           conn,
           isExperienceBundleMetadataAPIProgramaticallyEnabled
@@ -223,42 +225,6 @@ export default class Migrate extends OmniStudioBaseCommand {
     return { objectMigrationResults };
   }
 
-  private async handleExperienceSitePrerequisites(
-    objectsToProcess: string[],
-    conn: Connection,
-    isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean }
-  ): Promise<void> {
-    if (objectsToProcess.includes(Constants.ExpSites)) {
-      const expMetadataApiConsent = await this.getExpSiteMetadataEnableConsent();
-      Logger.logVerbose(`The consent for exp site is  ${expMetadataApiConsent}`);
-
-      if (expMetadataApiConsent === false) {
-        Logger.warn('Consent for experience sites is not provided. Experience sites will not be processed');
-        this.removeKeyFromRelatedObjectsToProcess(Constants.ExpSites, objectsToProcess);
-        Logger.logVerbose(`Objects to process after removing expsite are ${JSON.stringify(objectsToProcess)}`);
-        return;
-      }
-
-      const isMetadataAPIPreEnabled = await OrgPreferences.isExperienceBundleMetadataAPIEnabled(conn);
-      if (isMetadataAPIPreEnabled === true) {
-        Logger.logVerbose('ExperienceBundle metadata api is already enabled');
-        return;
-      }
-
-      Logger.logVerbose('ExperienceBundle metadata api needs to be programatically enabled');
-      isExperienceBundleMetadataAPIProgramaticallyEnabled.value = await OrgPreferences.setExperienceBundleMetadataAPI(
-        conn,
-        true
-      );
-      if (isExperienceBundleMetadataAPIProgramaticallyEnabled.value === false) {
-        this.removeKeyFromRelatedObjectsToProcess(Constants.ExpSites, objectsToProcess);
-        Logger.warn('Since the api could not able enabled the experience sites would not be processed');
-      }
-
-      Logger.logVerbose(`Objects to process are ${JSON.stringify(objectsToProcess)}`);
-    }
-  }
-
   private collectActionItems(objectMigrationResults: MigratedObject[]): string[] {
     const actionItems: string[] = [];
     // Collect errors from migration results and add them to action items
@@ -269,13 +235,6 @@ export default class Migrate extends OmniStudioBaseCommand {
     }
 
     return actionItems;
-  }
-
-  private removeKeyFromRelatedObjectsToProcess(keyToRemove: string, relatedObjects: string[]): void {
-    const index = relatedObjects.indexOf(Constants.ExpSites);
-    if (index > -1) {
-      relatedObjects.splice(index, 1);
-    }
   }
 
   private async truncateObjects(migrationObjects: MigrationTool[], debugTimer: DebugTimer): Promise<MigratedObject[]> {
@@ -408,23 +367,6 @@ export default class Migrate extends OmniStudioBaseCommand {
     while (consent === null) {
       try {
         consent = await Logger.confirm(messages.getMessage('userConsentMessage'));
-      } catch (error) {
-        Logger.log(messages.getMessage('invalidYesNoResponse'));
-        consent = null;
-      }
-    }
-
-    return consent;
-  }
-
-  private async getExpSiteMetadataEnableConsent(): Promise<boolean> {
-    let consent: boolean | null = null;
-
-    while (consent === null) {
-      try {
-        consent = await Logger.confirm(
-          'By proceeding further, you hereby consent to enable digital experience metadata api(y/n). If y sites will be processed, if n expsites will not be processed'
-        );
       } catch (error) {
         Logger.log(messages.getMessage('invalidYesNoResponse'));
         consent = null;

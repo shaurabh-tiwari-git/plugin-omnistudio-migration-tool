@@ -28,6 +28,8 @@ const FLEXCARD_PREFIX = 'cf';
 
 export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
   private EXPERIENCE_SITES_PATH: string;
+  private MIGRATE = 'Migrate';
+  private ASSESS = 'Assess';
 
   public constructor(projectPath: string, namespace: string, org: Org) {
     super(projectPath, namespace, org);
@@ -37,20 +39,28 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     return Constants.ExpSites;
   }
 
+  public assess(): ExperienceSiteAssessmentInfo[] {
+    return this.process(this.MIGRATE);
+  }
+
   public migrate(): ExperienceSiteAssessmentInfo[] {
-    Logger.logVerbose('Starting experience sites migration');
+    return this.process(this.ASSESS);
+  }
+
+  public process(type: string): ExperienceSiteAssessmentInfo[] {
+    Logger.logVerbose(`Starting experience sites processing for ${type}`);
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
     this.EXPERIENCE_SITES_PATH = path.join(this.projectPath, 'force-app', 'main', 'default', 'experiences');
 
     Logger.logVerbose('Started processing the experience sites');
-    const experienceSiteInfo = this.processExperienceSites(this.EXPERIENCE_SITES_PATH, 'migration');
-    Logger.info('Successfully processed experience sites for migration');
+    const experienceSiteInfo = this.processExperienceSites(this.EXPERIENCE_SITES_PATH, type);
+    Logger.info(`Successfully processed experience sites for ${type}`);
     shell.cd(pwd);
     return experienceSiteInfo;
   }
 
-  public processExperienceSites(dir: string, type = 'migration'): ExperienceSiteAssessmentInfo[] {
+  public processExperienceSites(dir: string, type: string): ExperienceSiteAssessmentInfo[] {
     Logger.logVerbose('Started reading the files');
     const directoryMap: Map<string, File[]> = FileUtil.getAllFilesInsideDirectory(dir);
 
@@ -81,16 +91,18 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     return experienceSitesAssessmentInfo;
   }
 
-  public processExperienceSite(file: File, type = 'migration'): ExperienceSiteAssessmentInfo {
+  public processExperienceSite(file: File, type: string): ExperienceSiteAssessmentInfo {
     Logger.logVerbose('Processing for file ' + file.name);
 
     const experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo = {
       name: file.name,
       warnings: [],
+      errors: [],
       infos: [],
       path: file.location,
       diff: JSON.stringify([]),
       hasOmnistudioContent: false,
+      status: 'Can be Automated',
     };
 
     const lookupComponentName = `${this.namespace}:vlocityLWCOmniWrapper`;
@@ -152,7 +164,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
 
     Logger.logVerbose('Printing the difference' + JSON.stringify(difference));
 
-    if (normalizedOriginalFileContent !== noarmalizeUpdatedFileContent) {
+    if (type === this.MIGRATE && normalizedOriginalFileContent !== noarmalizeUpdatedFileContent) {
       Logger.logVerbose('Updating the file content');
       fs.writeFileSync(file.location, noarmalizeUpdatedFileContent, 'utf8');
     }

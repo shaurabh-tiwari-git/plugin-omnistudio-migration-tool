@@ -84,6 +84,7 @@ export interface AssessmentInfo {
   omniAssessmentInfo: OmniAssessmentInfo; // Corrected to an array
   flexCardAssessmentInfos: FlexCardAssessmentInfo[];
   dataRaptorAssessmentInfos: DataRaptorAssessmentInfo[];
+  experienceSiteAssessmentInfos: ExperienceSiteAssessmentInfo[];
   flexipageAssessmentInfos: FlexiPageAssessmentInfo[];
   globalAutoNumberAssessmentInfos: GlobalAutoNumberAssessmentInfo[];
 }
@@ -151,6 +152,8 @@ export interface ExperienceSiteAssessmentInfo extends FileChangeInfo {
   warnings: string[];
   infos: string[];
   hasOmnistudioContent: boolean;
+  errors: string[];
+  status: 'Can be Automated' | 'Errors' | 'No Changes' | 'Complete' | 'Failed';
 }
 
 export interface FileProcessor {
