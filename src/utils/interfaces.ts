@@ -84,11 +84,15 @@ export interface AssessmentInfo {
   omniAssessmentInfo: OmniAssessmentInfo; // Corrected to an array
   flexCardAssessmentInfos: FlexCardAssessmentInfo[];
   dataRaptorAssessmentInfos: DataRaptorAssessmentInfo[];
+  flexipageAssessmentInfos: FlexiPageAssessmentInfo[];
+  globalAutoNumberAssessmentInfos: GlobalAutoNumberAssessmentInfo[];
 }
 
 export interface RelatedObjectAssesmentInfo {
   apexAssessmentInfos: ApexAssessmentInfo[];
   lwcAssessmentInfos: LWCAssessmentInfo[];
+  flexipageAssessmentInfos: FlexiPageAssessmentInfo[];
+  experienceSiteAssessmentInfos: ExperienceSiteAssessmentInfo[];
 }
 export interface FlexCardAssessmentInfo {
   name: string;
@@ -114,6 +118,15 @@ export interface DataRaptorAssessmentInfo {
   apexDependencies: string[];
 }
 
+export interface GlobalAutoNumberAssessmentInfo {
+  oldName: string;
+  name: string;
+  id: string;
+  infos: string[];
+  warnings: string[];
+  errors: string[];
+}
+
 export interface OmniAssessmentInfo {
   osAssessmentInfos: OSAssessmentInfo[];
   ipAssessmentInfos: IPAssessmentInfo[];
@@ -132,6 +145,12 @@ export interface ApexAssessmentInfo extends FileChangeInfo {
 export interface FileParser {
   parse(filePath: string, namespace: string): Map<string, string>;
   // saveToFile(filePath: string, content: string | undefined): void;
+}
+
+export interface ExperienceSiteAssessmentInfo extends FileChangeInfo {
+  warnings: string[];
+  infos: string[];
+  hasOmnistudioContent: boolean;
 }
 
 export interface FileProcessor {
@@ -153,6 +172,29 @@ export interface OmniStudioSettingsMetadata {
   disableRollbackFlagsPref: boolean;
 }
 
+export interface MetadataInfo {
+  fullName: string;
+  disableRollbackFlagsPref?: boolean;
+  enableOmniGlobalAutoNumberPref?: string;
+  enableOaEventInternalWrites?: string;
+  enableOaEventNotifications?: string;
+  enableOaForCore?: string;
+  enableOmniStudioContentTest?: string;
+  enableOmniStudioDrVersion?: string;
+  enableOmniStudioMetadata?: string;
+  enableStandardOmniStudioRuntime?: string;
+}
+
+export interface ExperienceBundleSettingsMetadata {
+  fullName: string;
+  enableExperienceBundleMetadata: boolean;
+}
+
+export interface ExperienceBundleSettingsReadMetadata {
+  fullName: string;
+  enableExperienceBundleMetadata: string;
+}
+
 export interface QueryResult {
   DeveloperName: string;
   Value: string;
@@ -166,4 +208,9 @@ export interface QueryResult {
     DeveloperName: string;
     Value: string;
   }>;
+}
+
+export interface FlexiPageAssessmentInfo extends FileChangeInfo {
+  errors: string[];
+  status: 'Can be Automated' | 'Errors' | 'No Changes' | 'Complete' | 'Failed';
 }
