@@ -113,6 +113,9 @@
   "errorGeneratingHTML": "Error while generating HTML from template for %s with properties %s",
   "errorEvaluatingExpression": "Error evaluating expression: %s, %s",
   "manuallySwitchDesignerToStandardDataModel": "To complete the setup, please manually run the required Apex code to configure OmniStudio Designers to use the Standard Data Model <br> https://help.salesforce.com/s/articleView?id=xcloud.os_migrate_change_the_sobject_data_model_after_migration.htm&type=5",
+  "labelStatusSkipped": "Skipped",
+  "labelStatusFailed": "Failed",
+  "labelStatusComplete": "Complete",
   "retrievingFlexiPages": "Retrieving FlexiPages",
   "successfullyRetrievedFlexiPages": "Successfully retrieved %s FlexiPages",
   "migratingFlexiPages": "Migrating FlexiPages",
@@ -145,8 +148,5 @@
   "foundGlobalAutoNumbersToAssess": "Found %s Global Auto Numbers to assess",
   "unexpectedError": "An unexpected error occurred during processing",
   "migrationValidationFailed": "Post Migration validation failed.",
-  "incompleteMigrationDetected": "Incomplete migration detected. Source objects: %s, Target objects: %s.",
-  "labelStatusSkipped": "Skipped",
-  "labelStatusFailed": "Failed",
-  "labelStatusComplete": "Complete"
+  "incompleteMigrationDetected": "Incomplete migration detected. Source objects: %s, Target objects: %s."
 }

@@ -282,6 +282,7 @@ html {
   align-items: center;
   justify-content: center;
   z-index: 1050;
+  border-radius: 3px;
   padding-right: 0;
 }
 
