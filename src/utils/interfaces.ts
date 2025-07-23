@@ -126,12 +126,6 @@ export interface OmniAssessmentInfo {
   ipAssessmentInfos: IPAssessmentInfo[];
 }
 
-export interface SitesAssessmentInfo {
-  name: string;
-  changeInfos: FileChangeInfo[];
-  errors: string[];
-}
-
 export interface FileChangeInfo {
   path: string;
   name: string;
