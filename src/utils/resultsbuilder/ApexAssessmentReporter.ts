@@ -47,6 +47,11 @@ export class ApexAssessmentReporter {
         count: apexAssessmentInfos.filter((info) => info.warnings && info.warnings.length > 0).length,
         cssClass: 'text-warning',
       },
+      {
+        name: 'Has Errrors',
+        count: apexAssessmentInfos.filter((info) => info.errors && info.errors.length > 0).length,
+        cssClass: 'text-error',
+      },
     ];
   }
 

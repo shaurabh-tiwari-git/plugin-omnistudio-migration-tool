@@ -52,7 +52,7 @@ export class OSAssessmentReporter {
         cssClass: 'text-warning',
       },
       {
-        name: 'Error',
+        name: 'Has Errors',
         count: osAssessmentInfos.filter(
           (osAssessmentInfo) =>
             osAssessmentInfo.migrationStatus !== 'Can be Automated' &&

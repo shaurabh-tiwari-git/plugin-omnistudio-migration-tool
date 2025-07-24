@@ -243,7 +243,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
             infos: [],
             warnings: [],
             errors: [this.messages.getMessage('unexpectedError')],
-            migrationStatus: 'Can be Automated',
+            migrationStatus: 'Failed',
             type: 'OmniScript',
             missingIP: [],
             missingDR: [],
@@ -262,6 +262,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
             warnings: [],
             errors: [this.messages.getMessage('unexpectedError')],
             path: '',
+            migrationStatus: 'Failed',
           });
         }
         const error = e as Error;
@@ -305,6 +306,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           dependenciesRemoteAction: omniAssessmentInfo.dependenciesRemoteAction,
           infos: [],
           warnings: omniAssessmentInfo.warnings,
+          migrationStatus: omniAssessmentInfo.migrationStatus,
           errors: [],
           path: '',
         };
@@ -414,6 +416,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     const existingSubTypeVal = new StringVal(existingSubType, 'sub type');
     const omniScriptName = omniscript[this.namespacePrefix + 'Name'];
     const existingOmniScriptNameVal = new StringVal(omniScriptName, 'name');
+    let assessmentStatus = 'Can be Automated';
 
     const warnings: string[] = [];
 
@@ -437,6 +440,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           existingTypeVal.cleanName(),
         ])
       );
+      assessmentStatus = 'Has Warnings';
     }
     if (!existingSubTypeVal.isNameCleaned()) {
       warnings.push(
@@ -446,6 +450,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           existingSubTypeVal.cleanName(),
         ])
       );
+      assessmentStatus = 'Has Warnings';
     }
     if (!existingOmniScriptNameVal.isNameCleaned()) {
       warnings.push(
@@ -455,9 +460,11 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           existingOmniScriptNameVal.cleanName(),
         ])
       );
+      assessmentStatus = 'Has Warnings';
     }
     if (existingOmniscriptNames.has(recordName)) {
       warnings.push(this.messages.getMessage('duplicatedName') + '  ' + recordName);
+      assessmentStatus = 'Has Warnings';
     } else {
       existingOmniscriptNames.add(recordName);
     }
@@ -474,7 +481,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       infos: [],
       warnings: warnings,
       errors: [],
-      migrationStatus: 'Can be Automated',
+      migrationStatus: assessmentStatus,
       type: omniProcessType,
       missingDR: missingDR,
       missingIP: missingIP,
