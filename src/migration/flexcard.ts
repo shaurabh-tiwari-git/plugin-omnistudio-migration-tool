@@ -607,9 +607,6 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         let oldrecord = originalRecords.get(key);
         let newrecord = cardsUploadInfo.get(key);
 
-        Logger.logVerbose('Oldrecord - ' + JSON.stringify(oldrecord));
-        Logger.logVerbose('Newrecord - ' + JSON.stringify(newrecord));
-
         let value: FlexcardStorage = {
           name: newrecord['newName'],
           isDuplicate: false,

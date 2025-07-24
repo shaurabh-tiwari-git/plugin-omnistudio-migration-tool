@@ -269,8 +269,8 @@ export class AssessmentReporter {
     omnistudioOrgDetails: OmnistudioOrgDetails
   ): DashboardParam {
     return {
-      title: 'Assessment Reports',
-      heading: 'Assessment Reports',
+      title: 'Omnistudio Assessment Report Dashboard',
+      heading: 'Omnistudio Assessment Report Dashboard',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
       assessmentDate: new Date().toISOString(),
       summaryItems: [
