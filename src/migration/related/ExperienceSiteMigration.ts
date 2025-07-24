@@ -63,17 +63,21 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
 
   public processExperienceSites(dir: string, type: string): ExperienceSiteAssessmentInfo[] {
     Logger.logVerbose('Started reading the files');
-    const directoryMap: Map<string, File[]> = FileUtil.getAllFilesInsideDirectory(dir);
+    const count = { total: 0 };
+    const directoryMap: Map<string, File[]> = FileUtil.getAllFilesInsideDirectory(dir, count, '.json');
+    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+    Logger.logVerbose('The total count is ' + count.total);
 
     // TODO - IF directory is empty
     let progressCounter = 0;
     const progressBar = createProgressBar(type, 'ExperienceSites');
-    progressBar.start(100, progressCounter);
+    progressBar.start(count.total, progressCounter);
 
     const experienceSitesAssessmentInfo: ExperienceSiteAssessmentInfo[] = [];
     for (const directory of directoryMap.keys()) {
       const fileArray = directoryMap.get(directory);
       for (const file of fileArray) {
+        progressBar.update(++progressCounter);
         if (file.ext !== '.json') {
           Logger.logVerbose('Skipping non-JSON file - ' + file.name);
           continue;
@@ -90,10 +94,10 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
           Logger.error('Error processing experience site file' + file.name);
           Logger.error(JSON.stringify(err));
         }
-        progressBar.update(++progressCounter);
       }
     }
 
+    Logger.logVerbose('Only the files in which have omnistudio wrapper will be shown in the assessment report');
     progressBar.stop();
     return experienceSitesAssessmentInfo;
   }
@@ -274,6 +278,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
 
   private getWarningMessage(oldTypeSubtypeLanguage: string, targetDataFromStorage: Storage): string {
     if (targetDataFromStorage === undefined) {
+      // Add log verbose
       return `${oldTypeSubtypeLanguage} needs manual intervention as the migrated key does not exist`;
     } else if (targetDataFromStorage.migrationSuccess === false) {
       return `${oldTypeSubtypeLanguage} needs manual intervention as migration failed`;

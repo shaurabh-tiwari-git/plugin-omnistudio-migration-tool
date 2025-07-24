@@ -30,6 +30,7 @@ export interface DashboardParam {
   org: OrgParam;
   assessmentDate: string;
   summaryItems: SummaryItemParam[];
+  actionItems: string[];
 }
 
 export interface ReportDataParam {

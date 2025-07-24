@@ -204,8 +204,12 @@ export default class Migrate extends OmniStudioBaseCommand {
       objectsToProcess
     );
 
-    actionItems = await postMigrate.setDesignersToUseStandardDataModel(namespace);
-    await postMigrate.restoreExperienceAPIMetadataSettings(isExperienceBundleMetadataAPIProgramaticallyEnabled);
+    await postMigrate.setDesignersToUseStandardDataModel(namespace, actionItems);
+    // From here also actionItems need to be collected
+    await postMigrate.restoreExperienceAPIMetadataSettings(
+      isExperienceBundleMetadataAPIProgramaticallyEnabled,
+      actionItems
+    );
     const migrationActionItems = this.collectActionItems(objectMigrationResults);
     actionItems = [...actionItems, ...migrationActionItems];
 

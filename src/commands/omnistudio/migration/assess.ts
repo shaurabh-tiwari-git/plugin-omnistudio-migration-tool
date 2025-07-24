@@ -174,9 +174,21 @@ export default class Assess extends OmniStudioBaseCommand {
       objectsToProcess
     );
 
-    await postMigrate.restoreExperienceAPIMetadataSettings(isExperienceBundleMetadataAPIProgramaticallyEnabled);
+    const userActionMessages: string[] = [];
+    await postMigrate.restoreExperienceAPIMetadataSettings(
+      isExperienceBundleMetadataAPIProgramaticallyEnabled,
+      userActionMessages
+    );
 
-    await AssessmentReporter.generate(assesmentInfo, conn.instanceUrl, orgs, assessOnly, objectsToProcess, messages);
+    await AssessmentReporter.generate(
+      assesmentInfo,
+      conn.instanceUrl,
+      orgs,
+      assessOnly,
+      objectsToProcess,
+      messages,
+      userActionMessages
+    );
     return assesmentInfo;
   }
 

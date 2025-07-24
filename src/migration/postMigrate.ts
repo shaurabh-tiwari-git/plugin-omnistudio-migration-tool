@@ -28,8 +28,10 @@ export class PostMigrate extends BaseMigrationTool {
     this.relatedObjectsToProcess = relatedObjectsToProcess;
   }
 
-  public async setDesignersToUseStandardDataModel(namespaceToModify: string): Promise<string[]> {
-    const userActionMessage: string[] = [];
+  public async setDesignersToUseStandardDataModel(
+    namespaceToModify: string,
+    userActionMessage: string[]
+  ): Promise<string[]> {
     try {
       Logger.logVerbose('Setting designers to use the standard data model');
       const apexCode = `
@@ -53,15 +55,22 @@ export class PostMigrate extends BaseMigrationTool {
   }
 
   // If we processed exp sites and switched metadata api from off->on then only we revert it
-  public async restoreExperienceAPIMetadataSettings(isExperienceBundleMetadataAPIProgramaticallyEnabled: {
-    value: boolean;
-  }): Promise<void> {
+  public async restoreExperienceAPIMetadataSettings(
+    isExperienceBundleMetadataAPIProgramaticallyEnabled: {
+      value: boolean;
+    },
+    userActionMessage: string[]
+  ): Promise<void> {
     if (
       this.relatedObjectsToProcess.includes(Constants.ExpSites) &&
       isExperienceBundleMetadataAPIProgramaticallyEnabled.value === true
     ) {
       Logger.logVerbose('Since ExperienceSiteMetadata API was programatically enabled, turing it off');
-      await OrgPreferences.setExperienceBundleMetadataAPI(this.connection, false);
+      try {
+        await OrgPreferences.toggleExperienceBundleMetadataAPI(this.connection, false);
+      } catch (error) {
+        userActionMessage.push('Exception occurred while reverting metadata API. Please do that manually');
+      }
     }
   }
 }

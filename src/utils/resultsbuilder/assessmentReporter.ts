@@ -43,7 +43,8 @@ export class AssessmentReporter {
     omnistudioOrgDetails: OmnistudioOrgDetails,
     assessOnly: string,
     relatedObjects: string[],
-    messages: Messages
+    messages: Messages,
+    userActionMessages: string[]
   ): Promise<void> {
     fs.mkdirSync(this.basePath, { recursive: true });
 
@@ -263,7 +264,7 @@ export class AssessmentReporter {
     // }
 
     // await this.createMasterDocument(nameUrls, basePath);
-    this.createDashboard(this.basePath, result, omnistudioOrgDetails, messages);
+    this.createDashboard(this.basePath, result, omnistudioOrgDetails, messages, userActionMessages);
     pushAssestUtilites('javascripts', this.basePath);
     pushAssestUtilites('styles', this.basePath);
     await open(path.join(this.basePath, this.dashboardFileName));
@@ -273,17 +274,23 @@ export class AssessmentReporter {
     basePath: string,
     result: AssessmentInfo,
     omnistudioOrgDetails: OmnistudioOrgDetails,
-    messages: Messages
+    messages: Messages,
+    userActionMessages: string[]
   ): void {
     const dashboardTemplate = fs.readFileSync(this.dashboardTemplate, 'utf8');
     this.createDocument(
       path.join(basePath, this.dashboardFileName),
-      TemplateParser.generate(dashboardTemplate, this.createDashboardParam(result, omnistudioOrgDetails), messages)
+      TemplateParser.generate(
+        dashboardTemplate,
+        this.createDashboardParam(result, omnistudioOrgDetails, userActionMessages),
+        messages
+      )
     );
   }
   private static createDashboardParam(
     result: AssessmentInfo,
-    omnistudioOrgDetails: OmnistudioOrgDetails
+    omnistudioOrgDetails: OmnistudioOrgDetails,
+    userActionMessages: string[]
   ): DashboardParam {
     return {
       title: 'Assessment Reports',
@@ -340,6 +347,7 @@ export class AssessmentReporter {
           file: this.experienceSiteAssessmentFileName,
         },
       ],
+      actionItems: userActionMessages,
     };
   }
 

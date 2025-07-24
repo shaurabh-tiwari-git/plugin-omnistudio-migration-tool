@@ -85,7 +85,8 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     }
 
     if (relatedObjects.includes(Constants.ExpSites)) {
-      sfProject.retrieve(EXPERIENCEBUNDLE, this.org.getUsername());
+      Logger.logVerbose(EXPERIENCEBUNDLE);
+      // sfProject.retrieve(EXPERIENCEBUNDLE, this.org.getUsername());
     }
 
     shell.cd(pwd);
