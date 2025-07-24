@@ -18,6 +18,7 @@ import {
 import { FileDiffUtil } from '../../utils/lwcparser/fileutils/FileDiffUtil';
 import { ExperienceSiteAssessmentInfo } from '../../utils';
 import { StorageUtil } from '../../utils/storageUtil';
+import { createProgressBar } from '../base';
 import { BaseRelatedObjectMigration } from './BaseRealtedObjectMigration';
 
 Messages.importMessagesDirectory(__dirname);
@@ -40,11 +41,11 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
   }
 
   public assess(): ExperienceSiteAssessmentInfo[] {
-    return this.process(this.MIGRATE);
+    return this.process(this.ASSESS);
   }
 
   public migrate(): ExperienceSiteAssessmentInfo[] {
-    return this.process(this.ASSESS);
+    return this.process(this.MIGRATE);
   }
 
   public process(type: string): ExperienceSiteAssessmentInfo[] {
@@ -65,6 +66,9 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     const directoryMap: Map<string, File[]> = FileUtil.getAllFilesInsideDirectory(dir);
 
     // TODO - IF directory is empty
+    let progressCounter = 0;
+    const progressBar = createProgressBar(type, 'ExperienceSites');
+    progressBar.start(100, progressCounter);
 
     const experienceSitesAssessmentInfo: ExperienceSiteAssessmentInfo[] = [];
     for (const directory of directoryMap.keys()) {
@@ -86,8 +90,11 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
           Logger.error('Error processing experience site file' + file.name);
           Logger.error(JSON.stringify(err));
         }
+        progressBar.update(++progressCounter);
       }
     }
+
+    progressBar.stop();
     return experienceSitesAssessmentInfo;
   }
 
