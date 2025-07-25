@@ -4,7 +4,13 @@ import CardMappings from '../mappings/VlocityCard';
 import { DebugTimer, QueryTools, SortDirection } from '../utils';
 import { NetUtils } from '../utils/net';
 import { BaseMigrationTool } from './base';
-import { MigrationResult, MigrationTool, ObjectMapping, UploadRecordResult } from './interfaces';
+import {
+  InvalidEntityTypeError,
+  MigrationResult,
+  MigrationTool,
+  ObjectMapping,
+  UploadRecordResult,
+} from './interfaces';
 import { Connection, Messages } from '@salesforce/core';
 import { UX } from '@salesforce/command';
 import { FlexCardAssessmentInfo } from '../../src/utils';
@@ -15,6 +21,7 @@ import { Constants } from '../utils/constants/stringContants';
 export class CardMigrationTool extends BaseMigrationTool implements MigrationTool {
   static readonly VLOCITYCARD_NAME = 'VlocityCard__c';
   static readonly OMNIUICARD_NAME = 'OmniUiCard';
+  static readonly VERSION_PROP = 'Version__c';
   private readonly allVersions: boolean;
 
   constructor(
@@ -34,7 +41,9 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   }
 
   getRecordName(record: string) {
-    return record['Name'];
+    return this.allVersions
+      ? `${record['Name']}_${record[this.namespacePrefix + CardMigrationTool.VERSION_PROP]}`
+      : record['Name'];
   }
 
   getMappings(): ObjectMapping[] {
@@ -104,6 +113,9 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       const flexCardsAssessmentInfos = this.processCardComponents(flexCards);
       return flexCardsAssessmentInfos;
     } catch (err) {
+      if (err instanceof InvalidEntityTypeError) {
+        throw err;
+      }
       Logger.error(this.messages.getMessage('errorDuringFlexCardAssessment'), err);
     }
   }
@@ -148,9 +160,10 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   private async processFlexCard(flexCard: AnyJson, uniqueNames: Set<string>): Promise<FlexCardAssessmentInfo> {
     const flexCardName = flexCard['Name'];
     Logger.info(this.messages.getMessage('processingFlexCard', [flexCardName]));
+    const version = flexCard[this.namespacePrefix + CardMigrationTool.VERSION_PROP];
     const flexCardAssessmentInfo: FlexCardAssessmentInfo = {
-      name: flexCardName,
-      oldName: flexCardName,
+      name: this.allVersions ? `${flexCardName}_${version}` : flexCardName,
+      oldName: this.allVersions ? `${flexCardName}_${version}` : flexCardName,
       id: flexCard['Id'],
       dependenciesIP: [],
       dependenciesDR: [],
@@ -168,7 +181,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     const originalName: string = flexCardName;
     const cleanedName: string = this.cleanName(originalName);
     let assessmentStatus = 'Can be Automated';
-    flexCardAssessmentInfo.name = cleanedName;
+    flexCardAssessmentInfo.name = this.allVersions ? `${cleanedName}_${version}` : cleanedName;
     if (cleanedName !== originalName) {
       flexCardAssessmentInfo.warnings.push(
         this.messages.getMessage('cardNameChangeMessage', [originalName, cleanedName])
@@ -431,7 +444,14 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         this.getCardFields(),
         filters,
         sortFields
-      );
+      ).catch((err) => {
+        if (err.errorCode === 'INVALID_TYPE') {
+          throw new InvalidEntityTypeError(
+            `${CardMigrationTool.VLOCITYCARD_NAME} type is not found under this namespace`
+          );
+        }
+        throw err;
+      });
     } else {
       filters.set(this.namespacePrefix + 'Active__c', true);
       return await QueryTools.queryWithFilter(
@@ -440,7 +460,14 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         CardMigrationTool.VLOCITYCARD_NAME,
         this.getCardFields(),
         filters
-      );
+      ).catch((err) => {
+        if (err.errorCode === 'INVALID_TYPE') {
+          throw new InvalidEntityTypeError(
+            `${CardMigrationTool.VLOCITYCARD_NAME} type is not found under this namespace`
+          );
+        }
+        throw err;
+      });
     }
   }
 
@@ -506,14 +533,14 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       }
       const transformedCardAuthorName = transformedCard['AuthorName'];
 
-      if (uniqueNames.has(transformedCardName)) {
+      if (uniqueNames.has(transformedCard['Name'])) {
         this.setRecordErrors(card, this.messages.getMessage('duplicatedCardName'));
         originalRecords.set(recordId, card);
         return;
       }
 
       // Save the name for duplicated names check
-      uniqueNames.add(transformedCardName);
+      uniqueNames.add(transformedCard['Name']);
 
       // Create a map of the original records
       originalRecords.set(recordId, card);
@@ -540,7 +567,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
             this.messages.getMessage('cardAuthorNameChangeMessage', [transformedCardAuthorName])
           );
         }
-        if (transformedCardName !== card['Name']) {
+        if (transformedCard['Name'] !== card['Name']) {
           uploadResult.newName = transformedCardName;
           uploadResult.warnings.unshift(this.messages.getMessage('cardNameChangeMessage', [transformedCardName]));
         }

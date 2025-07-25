@@ -14,7 +14,7 @@ import { ExecuteAnonymousResult } from 'jsforce';
 import OmniStudioBaseCommand from '../../basecommand';
 import { DataRaptorMigrationTool } from '../../../migration/dataraptor';
 import { DebugTimer, MigratedObject, MigratedRecordInfo } from '../../../utils';
-import { MigrationResult, MigrationTool } from '../../../migration/interfaces';
+import { InvalidEntityTypeError, MigrationResult, MigrationTool } from '../../../migration/interfaces';
 import { ResultsBuilder } from '../../../utils/resultsbuilder';
 import { CardMigrationTool } from '../../../migration/flexcard';
 import { OmniScriptExportType, OmniScriptMigrationTool } from '../../../migration/omniscript';
@@ -117,6 +117,13 @@ export default class Migrate extends OmniStudioBaseCommand {
       Logger.log(`Could not enable Omni preferences: ${errMsg}`);
     }
 
+    // check for confirmation over assessed action items
+    const migrationConsent = await this.getMigrationConsent();
+    if (!migrationConsent) {
+      Logger.log(messages.getMessage('migrationConsentNotGiven'));
+      return;
+    }
+
     const namespace = orgs.packageDetails.namespace;
     // Let's time every step
     DebugTimer.getInstance().start();
@@ -178,7 +185,9 @@ export default class Migrate extends OmniStudioBaseCommand {
     );
 
     let actionItems = [];
-    actionItems = await this.setDesignersToUseStandardDataModel(namespace);
+    if (!migrateOnly) {
+      actionItems = await this.setDesignersToUseStandardDataModel(namespace);
+    }
 
     await ResultsBuilder.generateReport(
       objectMigrationResults,
@@ -192,6 +201,38 @@ export default class Migrate extends OmniStudioBaseCommand {
 
     // Return results needed for --json flag
     return { objectMigrationResults };
+  }
+
+  private async getMigrationConsent(): Promise<boolean> {
+    const TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes timeout
+
+    let consent: boolean | null = null;
+    let timeoutHandle: NodeJS.Timeout;
+
+    const timeoutPromise = new Promise<boolean>((_, reject) => {
+      timeoutHandle = setTimeout(() => {
+        reject(new Error(messages.getMessage('requestTimedOut')));
+      }, TIMEOUT_MS);
+    });
+
+    while (consent === null) {
+      try {
+        // Race between the confirmation prompt and the timeout
+        consent = await Promise.race([Logger.confirm(messages.getMessage('migrationConsentMessage')), timeoutPromise]);
+        clearTimeout(timeoutHandle);
+      } catch (error) {
+        clearTimeout(timeoutHandle);
+        if (error instanceof Error && error.message === messages.getMessage('requestTimedOut')) {
+          Logger.log(messages.getMessage('requestTimedOut'));
+          return false; // Return false on timeout
+        } else {
+          Logger.log(messages.getMessage('invalidYesNoResponse'));
+          consent = null;
+        }
+      }
+    }
+
+    return consent;
   }
 
   private async setDesignersToUseStandardDataModel(namespace: string): Promise<string[]> {
@@ -252,6 +293,10 @@ export default class Migrate extends OmniStudioBaseCommand {
           })
         );
       } catch (ex: any) {
+        if (ex instanceof InvalidEntityTypeError) {
+          Logger.error(ex.message);
+          process.exit(1);
+        }
         Logger.error('Error migrating object', ex);
         objectMigrationResults.push({
           name: cls.getName(),
@@ -370,10 +415,11 @@ export default class Migrate extends OmniStudioBaseCommand {
         let errors: any[] = obj.errors || [];
         errors = errors.concat(recordResults.errors || []);
 
-        obj.status =
-          !recordResults || recordResults.hasErrors
-            ? messages.getMessage('labelStatusFailed')
-            : messages.getMessage('labelStatusComplete');
+        obj.status = recordResults.skipped
+          ? messages.getMessage('labelStatusSkipped')
+          : !recordResults || recordResults.hasErrors
+          ? messages.getMessage('labelStatusFailed')
+          : messages.getMessage('labelStatusComplete');
         obj.errors = errors;
         obj.migratedId = recordResults.id;
         obj.warnings = recordResults.warnings;

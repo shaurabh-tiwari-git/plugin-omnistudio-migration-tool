@@ -291,7 +291,7 @@ export class AssessmentReporter {
       title: 'Assessment Reports',
       heading: 'Assessment Reports',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
-      assessmentDate: new Date().toISOString(),
+      assessmentDate: new Date().toLocaleString(),
       summaryItems,
       mode: 'assess',
     };

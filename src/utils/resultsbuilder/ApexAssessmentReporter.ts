@@ -24,7 +24,7 @@ export class ApexAssessmentReporter {
       title: 'Apex File Assessment Report',
       heading: 'Apex File Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
-      assessmentDate: new Date().toString(),
+      assessmentDate: new Date().toLocaleString(),
       total: apexAssessmentInfos?.length || 0,
       filterGroups: this.getFilterGroupsForReport(apexAssessmentInfos),
       headerGroups: this.getHeaderGroupsForReport(),

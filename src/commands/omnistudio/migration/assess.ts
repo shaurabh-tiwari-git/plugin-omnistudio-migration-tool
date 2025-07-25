@@ -112,8 +112,14 @@ export default class Assess extends OmniStudioBaseCommand {
     Logger.logVerbose(messages.getMessage('assessmentTargets', [String(this.flags.only || 'all')]));
     Logger.logVerbose(messages.getMessage('relatedObjectsInfo', [relatedObjects || 'none']));
     Logger.logVerbose(messages.getMessage('allVersionsFlagInfo', [String(allVersions)]));
-    // Assess OmniStudio components
-    await this.assessOmniStudioComponents(assesmentInfo, assessOnly, namespace, conn, allVersions);
+
+    try {
+      // Assess OmniStudio components
+      await this.assessOmniStudioComponents(assesmentInfo, assessOnly, namespace, conn, allVersions);
+    } catch (error) {
+      Logger.error(`Cannot assess OmniStudio components within ${namespace}`);
+      process.exit(1);
+    }
 
     let objectsToProcess: string[];
     // Assess related objects if specified

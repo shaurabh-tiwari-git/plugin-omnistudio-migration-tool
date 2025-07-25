@@ -24,7 +24,7 @@ export class IPAssessmentReporter {
       title: 'Integration Procedure Assessment Report',
       heading: 'Integration Procedure Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
-      assessmentDate: new Date().toString(),
+      assessmentDate: new Date().toLocaleString(),
       total: ipAssessmentInfos?.length || 0,
       filterGroups: this.getFilterGroupsForReport(ipAssessmentInfos),
       headerGroups: this.getHeaderGroupsForReport(),
