@@ -174,12 +174,13 @@ export default class Assess extends OmniStudioBaseCommand {
       objectsToProcess
     );
 
-    const userActionMessages: string[] = [];
+    const userActionMessages: string[] = ['abcd'];
     await postMigrate.restoreExperienceAPIMetadataSettings(
       isExperienceBundleMetadataAPIProgramaticallyEnabled,
       userActionMessages
     );
 
+    Logger.logVerbose('Reached assessment report generation');
     await AssessmentReporter.generate(
       assesmentInfo,
       conn.instanceUrl,

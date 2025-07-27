@@ -130,7 +130,13 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       return experienceSiteAssessmentInfo;
     }
 
-    const storage: MigrationStorage = StorageUtil.getOmnistudioMigrationStorage();
+    let storage: MigrationStorage;
+
+    if (type === this.MIGRATE) {
+      storage = StorageUtil.getOmnistudioMigrationStorage();
+    } else {
+      storage = StorageUtil.getOmnistudioAssessmentStorage();
+    }
 
     for (const region of regions) {
       Logger.logVerbose('The current region being processed is' + JSON.stringify(region));

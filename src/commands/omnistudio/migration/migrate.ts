@@ -186,11 +186,6 @@ export default class Migrate extends OmniStudioBaseCommand {
       targetApexNamespace
     );
     const relatedObjectMigrationResult = omnistudioRelatedObjectsMigration.migrateAll(objectsToProcess);
-    generatePackageXml.createChangeList(
-      relatedObjectMigrationResult.apexAssessmentInfos,
-      relatedObjectMigrationResult.lwcAssessmentInfos,
-      relatedObjectMigrationResult.flexipageAssessmentInfos
-    );
 
     // POST MIGRATION
     let actionItems = [];
@@ -212,6 +207,13 @@ export default class Migrate extends OmniStudioBaseCommand {
     );
     const migrationActionItems = this.collectActionItems(objectMigrationResults);
     actionItems = [...actionItems, ...migrationActionItems];
+
+    generatePackageXml.createChangeList(
+      relatedObjectMigrationResult.apexAssessmentInfos,
+      relatedObjectMigrationResult.lwcAssessmentInfos,
+      relatedObjectMigrationResult.experienceSiteAssessmentInfos,
+      relatedObjectMigrationResult.flexipageAssessmentInfos
+    );
 
     await ResultsBuilder.generateReport(
       objectMigrationResults,

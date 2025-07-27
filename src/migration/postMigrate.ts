@@ -61,6 +61,10 @@ export class PostMigrate extends BaseMigrationTool {
     },
     userActionMessage: string[]
   ): Promise<void> {
+    if (this.relatedObjectsToProcess === undefined || this.relatedObjectsToProcess === null) {
+      Logger.logVerbose('Please check related objects to process as it is coming as null');
+      return;
+    }
     if (
       this.relatedObjectsToProcess.includes(Constants.ExpSites) &&
       isExperienceBundleMetadataAPIProgramaticallyEnabled.value === true

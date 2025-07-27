@@ -6,6 +6,7 @@ import { Logger } from '../utils/logger';
 import { Constants } from '../utils/constants/stringContants';
 import { OrgPreferences } from '../utils/orgPreferences';
 import { BaseMigrationTool } from './base';
+import { askStringWithTimeout } from '../utils/promptUtil';
 
 export class PreMigrate extends BaseMigrationTool {
   private readonly org: Org;
@@ -61,21 +62,39 @@ export class PreMigrate extends BaseMigrationTool {
     }
   }
 
+  // This needs to be behind timeout
   private async getExpSiteMetadataEnableConsent(): Promise<boolean> {
-    let consent: boolean | null = null;
+    const question =
+      'By proceeding further, you hereby consent to enable digital experience metadata api(y/n). If y sites will be processed, if n expsites will not be processed';
 
-    while (consent === null) {
+    while (true) {
       try {
-        consent = await Logger.confirm(
-          'By proceeding further, you hereby consent to enable digital experience metadata api(y/n). If y sites will be processed, if n expsites will not be processed'
+        // Get string input from user with timeout
+        const userInput = await askStringWithTimeout(
+          Logger.prompt.bind(Logger),
+          question,
+          this.messages.getMessage('requestTimedOut'),
+          1000
         );
+
+        // Validate and convert the input
+        const normalizedInput = userInput.trim().toLowerCase();
+
+        if (normalizedInput === 'y' || normalizedInput === 'yes') {
+          return true;
+        } else if (normalizedInput === 'n' || normalizedInput === 'no') {
+          return false;
+        } else {
+          // Invalid input - show error and continue loop to re-prompt
+          Logger.error(this.messages.getMessage('invalidYesNoResponse'));
+          Logger.log('Please enter "y" or "yes" to consent, "n" or "no" to decline.');
+        }
       } catch (error) {
-        Logger.log(this.messages.getMessage('invalidYesNoResponse'));
-        consent = null;
+        // Handle timeout or other errors
+        Logger.error(`Failed to get user consent: ${error.message}`);
+        throw error; // Re-throw to let caller handle timeout
       }
     }
-
-    return consent;
   }
 
   private removeKeyFromRelatedObjectsToProcess(keyToRemove: string, relatedObjects: string[]): void {

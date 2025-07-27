@@ -9,6 +9,7 @@ import {
   DebugTimer,
   FlexCardAssessmentInfo,
   nameLocation,
+  OmniscriptNameMapping,
   QueryTools,
   SortDirection,
 } from '../utils';
@@ -40,6 +41,9 @@ import { StorageUtil } from '../utils/storageUtil';
 export class OmniScriptMigrationTool extends BaseMigrationTool implements MigrationTool {
   private readonly exportType: OmniScriptExportType;
   private readonly allVersions: boolean;
+
+  // constants
+  private readonly OMNISCRIPT = 'OmniScript';
 
   // Source Custom Object Names
   static readonly OMNISCRIPT_NAME = 'OmniScript__c';
@@ -207,6 +211,9 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         dataRaptorAssessmentInfos,
         flexCardAssessmentInfos
       );
+
+      await this.updateStorageForOmniscriptAssessment(omniAssessmentInfos?.osAssessmentInfos);
+
       return omniAssessmentInfos;
     } catch (err) {
       Logger.error(this.messages.getMessage('errorDuringOmniScriptAssessment'));
@@ -289,10 +296,6 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       if (omniAssessmentInfo.type === 'OmniScript') {
         const type = omniscript[this.namespacePrefix + 'IsLwcEnabled__c'] ? 'LWC' : 'Angular';
         let migrationStatus = 'Can be Automated';
-        if (type === 'Angular') {
-          omniAssessmentInfo.warnings.unshift(this.messages.getMessage('angularOSWarning'));
-          migrationStatus = 'Need Manual Intervention';
-        }
         const osAssessmentInfo: OSAssessmentInfo = {
           name: omniAssessmentInfo.name,
           type: type,
@@ -356,6 +359,8 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     const missingOS: string[] = [];
     const dependenciesRA: nameLocation[] = [];
     const dependenciesLWC: nameLocation[] = [];
+    let migrationStatus = 'Can be Automated';
+
     //const missingRA: string[] = [];
 
     for (const elem of elements) {
@@ -435,18 +440,16 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
     const warnings: string[] = [];
 
-    if (omniProcessType === 'OmniScript') {
-      this.addToAssessmentStorage(
-        existingTypeVal,
-        existingSubTypeVal,
-        omniscript[this.namespacePrefix + 'Language__c']
-      );
-    }
+    // This we need broken down, better create an object and propagate it
+    // Here break it and then combine it
+    const newType = existingTypeVal.cleanName();
+    const newSubType = existingSubTypeVal.cleanName();
+    const newLanguage = omniscript[this.namespacePrefix + 'Language__c']
+      ? `_${omniscript[this.namespacePrefix + 'Language__c']}`
+      : '';
+
     const recordName =
-      `${existingTypeVal.cleanName()}_` +
-      `${existingSubTypeVal.cleanName()}` +
-      (omniscript[this.namespacePrefix + 'Language__c'] ? `_${omniscript[this.namespacePrefix + 'Language__c']}` : '') +
-      `_${omniscript[this.namespacePrefix + 'Version__c']}`;
+      `${newType}_` + `${newSubType}` + `${newLanguage}` + `_${omniscript[this.namespacePrefix + 'Version__c']}`;
 
     const oldName =
       `${existingTypeVal.val}_` +
@@ -487,7 +490,15 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       existingOmniscriptNames.add(recordName);
     }
 
-    return {
+    if (omniProcessType === this.OMNISCRIPT) {
+      const type = omniscript[this.namespacePrefix + 'IsLwcEnabled__c'] ? 'LWC' : 'Angular';
+      if (type === 'Angular') {
+        warnings.unshift(this.messages.getMessage('angularOSWarning'));
+        migrationStatus = 'Need Manual Intervention';
+      }
+    }
+
+    const result: OSAssessmentInfo = {
       name: recordName,
       id: omniscript['Id'],
       oldName: oldName,
@@ -499,12 +510,74 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       infos: [],
       warnings: warnings,
       errors: [],
-      migrationStatus: 'Can be Automated',
+      migrationStatus: migrationStatus,
       type: omniProcessType,
       missingDR: missingDR,
       missingIP: missingIP,
       missingOS: missingOS,
     };
+
+    if (omniProcessType === this.OMNISCRIPT) {
+      const nameMapping: OmniscriptNameMapping = {
+        oldType: existingType,
+        oldSubtype: existingSubType,
+        oldLanguage: omniscript[this.namespacePrefix + 'Language__c'],
+        newType: '',
+        newSubType: '',
+        newLanguage: '',
+      };
+      result.nameMapping = nameMapping;
+    }
+
+    return result;
+  }
+
+  private updateStorageForOmniscriptAssessment(osAssessmentInfo: OSAssessmentInfo[]): void {
+    if (osAssessmentInfo === undefined || osAssessmentInfo === null) {
+      return;
+    }
+
+    let storage: MigrationStorage = StorageUtil.getOmnistudioAssessmentStorage();
+    Logger.logVerbose('Started updating assessment storage for omniscript');
+
+    for (let currentOsRecordInfo of osAssessmentInfo) {
+      try {
+        let nameMapping = currentOsRecordInfo.nameMapping as OmniscriptNameMapping;
+
+        if (nameMapping === undefined) {
+          continue;
+        }
+
+        let value: OmniScriptStorage = {
+          type: nameMapping.oldType,
+          subtype: nameMapping.oldSubtype,
+          language: nameMapping.oldLanguage,
+          isDuplicate: false,
+        };
+        if (currentOsRecordInfo.errors) {
+          value.error = currentOsRecordInfo.errors;
+          value.migrationSuccess = false;
+        } else {
+          value.migrationSuccess = true;
+        }
+
+        let finalKey = `${nameMapping.oldType}${nameMapping.oldSubtype}${nameMapping.newLanguage}`;
+
+        if (storage.osStorage.has(finalKey)) {
+          // Key already exists - handle accordingly
+          Logger.logVerbose(`Key ${finalKey} already exists in storage`);
+          value.isDuplicate = true;
+          storage.osStorage.set(finalKey, value);
+        } else {
+          // Key doesn't exist - safe to set
+          storage.osStorage.set(finalKey, value);
+        }
+      } catch (error) {
+        Logger.logVerbose(error);
+      }
+    }
+
+    StorageUtil.printMigrationStorage();
   }
 
   async migrate(): Promise<MigrationResult[]> {
@@ -792,21 +865,6 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       records: recordMap,
       results: resultMap,
     };
-  }
-
-  private addToAssessmentStorage(type: StringVal, subtype: StringVal, language: string) {
-    let storage: MigrationStorage = StorageUtil.getOmnistudioAssessmentStorage();
-    const key = `${type.val}${subtype.val}${language}`;
-    if (storage.osStorage.has(key)) {
-      storage.osStorage.get(key).isDuplicate = true;
-    } else {
-      storage.osStorage.set(key, {
-        type: type.cleanName(),
-        subtype: subtype.cleanName(),
-        language: language || 'English',
-        isDuplicate: false,
-      });
-    }
   }
 
   private updateStorageForOmniscript(

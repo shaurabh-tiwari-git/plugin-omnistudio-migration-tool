@@ -82,7 +82,12 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   // Perform Records Migration from VlocityCard__c to OmniUiCard
   async migrate(): Promise<MigrationResult[]> {
     // Get All the Active VlocityCard__c records
-    const cards = await this.getAllActiveCards();
+    // const cards = await this.getAllActiveCards();
+    let cards = await this.getAllActiveCards();
+    let filteredCards = cards.filter(
+      (card: any) => typeof card === 'object' && 'Name' in card && card.Name.includes('ABCChild')
+    );
+    cards = filteredCards;
 
     Logger.log(this.messages.getMessage('foundFlexCardsToMigrate', [cards.length]));
 
@@ -107,7 +112,12 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   public async assess(): Promise<FlexCardAssessmentInfo[]> {
     try {
       Logger.log(this.messages.getMessage('startingFlexCardAssessment'));
-      const flexCards = await this.getAllActiveCards();
+      // const flexCards = await this.getAllActiveCards();
+      let flexCards = await this.getAllActiveCards();
+      let filteredCards = flexCards.filter(
+        (flexCard: any) => typeof flexCard === 'object' && 'Name' in flexCard && flexCard.Name.includes('ABCChild')
+      );
+      flexCards = filteredCards;
       Logger.log(this.messages.getMessage('foundFlexCardsToAssess', [flexCards.length]));
 
       const flexCardsAssessmentInfos = this.processCardComponents(flexCards);
@@ -131,6 +141,9 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       try {
         const flexCardAssessmentInfo = await this.processFlexCard(flexCard, uniqueNames);
         flexCardAssessmentInfos.push(flexCardAssessmentInfo);
+
+        // Prepare assessment storage for flexcards
+        this.prepareAssessmentStorageForFlexcards(flexCardAssessmentInfos);
       } catch (e) {
         flexCardAssessmentInfos.push({
           name: flexCard['Name'],
@@ -185,8 +198,6 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     }
     uniqueNames.add(cleanedName);
 
-    this.addToAssessmentStorage(originalName, cleanedName);
-
     // Check for author name changes
     const originalAuthor = flexCard[this.namespacePrefix + 'Author__c'];
     if (originalAuthor) {
@@ -197,6 +208,11 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         );
       }
     }
+
+    flexCardAssessmentInfo.nameMapping = {
+      oldName: flexCardName,
+      newName: cleanedName,
+    };
 
     this.updateDependencies(flexCard, flexCardAssessmentInfo);
 
@@ -586,15 +602,49 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     }
   }
 
-  private addToAssessmentStorage(originalName: string, cleanedName: string) {
+  private prepareAssessmentStorageForFlexcards(flexcardAssessmentInfos: FlexCardAssessmentInfo[]) {
+    Logger.logVerbose('Started preparing storage for flexcards');
     let storage: MigrationStorage = StorageUtil.getOmnistudioAssessmentStorage();
-    if (storage.fcStorage.has(originalName)) {
-      storage.fcStorage.get(originalName).isDuplicate = true;
-    } else {
-      storage.fcStorage.set(originalName, {
-        name: cleanedName,
-        isDuplicate: false,
-      });
+
+    for (let flexCardAssessmentInfo of flexcardAssessmentInfos) {
+      try {
+        if (
+          flexCardAssessmentInfo === undefined ||
+          flexCardAssessmentInfo === null ||
+          flexCardAssessmentInfo.nameMapping === undefined ||
+          flexCardAssessmentInfo.nameMapping === null
+        ) {
+          Logger.logVerbose('Info is missing');
+          return;
+        }
+
+        let value: FlexcardStorage = {
+          name: flexCardAssessmentInfo.nameMapping.newName,
+          isDuplicate: false,
+        };
+
+        if (flexCardAssessmentInfo.warnings) {
+          value.error = flexCardAssessmentInfo.warnings;
+          value.migrationSuccess = false;
+        } else {
+          value.migrationSuccess = true;
+        }
+        let finalKey = `${flexCardAssessmentInfo.nameMapping.oldName}`;
+        if (storage.fcStorage.has(finalKey)) {
+          // Key already exists - handle accordingly
+          Logger.logVerbose(`Key ${finalKey} already exists in flexcard storage`);
+          value.isDuplicate = true;
+          storage.fcStorage.set(finalKey, value);
+        } else {
+          // Key doesn't exist - safe to set
+          storage.fcStorage.set(finalKey, value);
+        }
+      } catch (error) {
+        Logger.logVerbose('Error occurred while processing key for flexcard storage');
+        Logger.error(error);
+      }
+
+      StorageUtil.printMigrationStorage();
     }
   }
 
@@ -614,9 +664,13 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         Logger.logVerbose('Newrecord - ' + JSON.stringify(newrecord));
 
         let value: FlexcardStorage = {
-          name: newrecord['newName'],
+          name: newrecord?.newName,
           isDuplicate: false,
         };
+
+        if (newrecord === undefined) {
+          value.error = ['Migration Failed'];
+        }
 
         if (newrecord.hasErrors) {
           value.error = newrecord.errors;

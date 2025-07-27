@@ -5,6 +5,7 @@
  * For full license text, see LICENSE.txt file in the repo root or https://opensource.org/licenses/BSD-3-Clause
  */
 import { ExperienceSiteAssessmentInfo } from '../interfaces';
+import { Logger } from '../logger';
 import { FileDiffUtil } from '../lwcparser/fileutils/FileDiffUtil';
 import { OmnistudioOrgDetails } from '../orgUtils';
 import {
@@ -57,24 +58,31 @@ export class ExperienceSiteAssessmentReporter {
     if (!experienceSiteAssessmentInfos || experienceSiteAssessmentInfos.length === 0) {
       return [];
     }
+    experienceSiteAssessmentInfos.forEach((apexAssessmentInfo) => {
+      Logger.logVerbose('ALPHA printing the apexAssessmentInfoDiff');
+      Logger.logVerbose('The diff of apex assessment info is ' + JSON.stringify(apexAssessmentInfo.diff));
+      Logger.logVerbose('ALPHA printing the diff');
+      const diffString = FileDiffUtil.getDiffHTML(apexAssessmentInfo.diff, apexAssessmentInfo.name);
+      Logger.logVerbose('The diff is' + JSON.stringify(diffString));
+    });
+
     return experienceSiteAssessmentInfos.map((experienceSiteAssessmentInfo) => ({
       data: [
         createRowDataParam('name', experienceSiteAssessmentInfo.name, true, 1, 1, false),
         createRowDataParam('path', experienceSiteAssessmentInfo.path, true, 1, 1, false),
         createRowDataParam(
           'status',
-          experienceSiteAssessmentInfo.status,
+          experienceSiteAssessmentInfo.warnings ? 'Errors' : 'Can be Automated',
           false,
           1,
           1,
           false,
           undefined,
-          undefined,
-          experienceSiteAssessmentInfo.status === 'Errors' ? 'text-error' : 'text-success'
+          experienceSiteAssessmentInfo.warnings ? 'Errors' : 'Can be Automated'
         ),
         createRowDataParam(
           'diff',
-          '',
+          'ABCD',
           false,
           1,
           1,
@@ -83,14 +91,14 @@ export class ExperienceSiteAssessmentReporter {
           FileDiffUtil.getDiffHTML(experienceSiteAssessmentInfo.diff, experienceSiteAssessmentInfo.name)
         ),
         createRowDataParam(
-          'errors',
-          experienceSiteAssessmentInfo.errors?.length > 0 ? 'Has Errors' : 'Has No Errors',
+          'summary',
+          experienceSiteAssessmentInfo.warnings ? 'Has Errors' : 'Has No Errors',
           false,
           1,
           1,
           false,
           undefined,
-          experienceSiteAssessmentInfo.errors,
+          experienceSiteAssessmentInfo.warnings,
           'text-error'
         ),
       ],
@@ -103,7 +111,7 @@ export class ExperienceSiteAssessmentReporter {
       {
         header: [
           {
-            name: 'Page Name',
+            name: 'ExperienceSite Name',
             colspan: 1,
             rowspan: 1,
           },
@@ -113,7 +121,7 @@ export class ExperienceSiteAssessmentReporter {
             rowspan: 1,
           },
           {
-            name: 'Assessment Status',
+            name: 'Status',
             colspan: 1,
             rowspan: 1,
           },
@@ -133,9 +141,6 @@ export class ExperienceSiteAssessmentReporter {
   }
 
   private static getFilterGroupsForReport(): FilterGroupParam[] {
-    return [
-      createFilterGroupParam('Filter by Errors', 'errors', ['Has Errors', 'Has No Errors']),
-      createFilterGroupParam('Filter by Status', 'status', ['Can be Automated', 'Errors']),
-    ];
+    return [createFilterGroupParam('Filter by Status', 'status', ['Can be Automated', 'Errors'])];
   }
 }

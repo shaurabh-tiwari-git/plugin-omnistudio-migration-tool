@@ -28,9 +28,9 @@ export interface LWCAssessmentInfo {
 }
 
 export interface OSAssessmentInfo {
-  name: string;
+  name: string; // Need to understand this as well
   id: string;
-  oldName: string;
+  oldName: string; // Need to understand what is going in this and what we need
   dependenciesIP: nameLocation[];
   missingIP: string[];
   dependenciesDR: nameLocation[];
@@ -44,6 +44,21 @@ export interface OSAssessmentInfo {
   infos: string[];
   warnings: string[];
   errors: string[];
+  nameMapping?: OmniscriptNameMapping;
+}
+
+export interface FlexcardNameMapping {
+  oldName: string;
+  newName: string;
+}
+
+export interface OmniscriptNameMapping {
+  oldType: string;
+  oldSubtype: string;
+  newType: string;
+  newSubType: string;
+  oldLanguage: string;
+  newLanguage: string;
 }
 
 export interface IPAssessmentInfo {
@@ -106,6 +121,12 @@ export interface FlexCardAssessmentInfo {
   dependenciesApexRemoteAction: string[];
   infos: string[];
   warnings: string[];
+  nameMapping?: FlexcardNameMapping;
+}
+
+export interface FlexcardNameMapping {
+  oldName: string;
+  newName: string;
 }
 
 export interface DataRaptorAssessmentInfo {
