@@ -24,7 +24,7 @@ export class DRAssessmentReporter {
       title: 'Data Mapper Assessment Report',
       heading: 'Data Mapper Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
-      assessmentDate: new Date().toString(),
+      assessmentDate: new Date().toLocaleString(),
       total: dataRaptorAssessmentInfos?.length || 0,
       filterGroups: this.getFilterGroupsForReport(dataRaptorAssessmentInfos),
       headerGroups: this.getHeaderGroupsForReport(),

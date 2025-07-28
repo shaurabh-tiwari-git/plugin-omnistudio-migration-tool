@@ -89,7 +89,7 @@ export default class Org extends SfdxCommand {
 
     let outputString = '';
     if (trialExpirationDate) {
-      const date = new Date(trialExpirationDate).toDateString();
+      const date = new Date(trialExpirationDate).toLocaleString();
       outputString = messages.getMessage('greetingOrgInfoWithDate', [name, orgName, date]);
     } else {
       outputString = messages.getMessage('greetingOrgInfo', [name, orgName]);

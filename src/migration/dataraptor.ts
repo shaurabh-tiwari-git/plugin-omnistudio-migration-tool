@@ -5,7 +5,14 @@ import DRMapItemMappings from '../mappings/DRMapItem';
 import { DebugTimer, oldNew, QueryTools } from '../utils';
 import { NetUtils } from '../utils/net';
 import { BaseMigrationTool } from './base';
-import { MigrationResult, MigrationTool, ObjectMapping, TransformData, UploadRecordResult } from './interfaces';
+import {
+  InvalidEntityTypeError,
+  MigrationResult,
+  MigrationTool,
+  ObjectMapping,
+  TransformData,
+  UploadRecordResult,
+} from './interfaces';
 import { DataRaptorAssessmentInfo } from '../../src/utils';
 
 import {
@@ -215,6 +222,9 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
       const dataRaptorAssessmentInfos = this.processDRComponents(dataRaptors);
       return dataRaptorAssessmentInfos;
     } catch (err) {
+      if (err instanceof InvalidEntityTypeError) {
+        throw err;
+      }
       Logger.error('Error assessing data mapper', err);
     }
   }
@@ -349,7 +359,14 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
       this.namespace,
       DataRaptorMigrationTool.DRBUNDLE_NAME,
       this.getDRBundleFields()
-    );
+    ).catch((err) => {
+      if (err.errorCode === 'INVALID_TYPE') {
+        throw new InvalidEntityTypeError(
+          `${DataRaptorMigrationTool.DRBUNDLE_NAME} type is not found under this namespace`
+        );
+      }
+      throw err;
+    });
   }
 
   // Get All Items
@@ -360,7 +377,10 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
       this.namespace,
       DataRaptorMigrationTool.DRMAPITEM_NAME,
       this.getDRMapItemFields()
-    );
+    ).catch((err) => {
+      Logger.error('Error querying data raptor items', err);
+      return [];
+    });
   }
 
   /*

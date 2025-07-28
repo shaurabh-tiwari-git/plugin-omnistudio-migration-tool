@@ -24,7 +24,7 @@ export class FlexcardAssessmentReporter {
       title: 'Flexcard Assessment Report',
       heading: 'Flexcard Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
-      assessmentDate: new Date().toString(),
+      assessmentDate: new Date().toLocaleString(),
       total: flexCardAssessmentInfos?.length || 0,
       filterGroups: this.getFilterGroupsForReport(flexCardAssessmentInfos),
       headerGroups: this.getHeaderGroupsForReport(),

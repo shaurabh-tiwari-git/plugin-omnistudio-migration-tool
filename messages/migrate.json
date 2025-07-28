@@ -112,5 +112,7 @@
   "manuallySwitchDesignerToStandardDataModel": "To complete the setup, please manually run the required Apex code to configure OmniStudio Designers to use the Standard Data Model <br> https://help.salesforce.com/s/articleView?id=xcloud.os_migrate_change_the_sobject_data_model_after_migration.htm&type=5",
   "labelStatusSkipped": "Skipped",
   "labelStatusFailed": "Failed",
-  "labelStatusComplete": "Complete"
+  "labelStatusComplete": "Complete",
+  "migrationConsentNotGiven": "Couldn't confirm whether assessment errors are resolved",
+  "migrationConsentMessage": "Ensure that all items in the assessment report are marked as Green before proceeding with the migration. Do you want to proceed?"
 }

@@ -14,7 +14,7 @@ import { ExecuteAnonymousResult } from 'jsforce';
 import OmniStudioBaseCommand from '../../basecommand';
 import { DataRaptorMigrationTool } from '../../../migration/dataraptor';
 import { DebugTimer, MigratedObject, MigratedRecordInfo } from '../../../utils';
-import { MigrationResult, MigrationTool } from '../../../migration/interfaces';
+import { InvalidEntityTypeError, MigrationResult, MigrationTool } from '../../../migration/interfaces';
 import { ResultsBuilder } from '../../../utils/resultsbuilder';
 import { CardMigrationTool } from '../../../migration/flexcard';
 import { OmniScriptExportType, OmniScriptMigrationTool } from '../../../migration/omniscript';
@@ -26,6 +26,8 @@ import { Constants } from '../../../utils/constants/stringContants';
 import { OrgPreferences } from '../../../utils/orgPreferences';
 import { AnonymousApexRunner } from '../../../utils/apex/executor/AnonymousApexRunner';
 import { ProjectPathUtil } from '../../../utils/projectPathUtil';
+import { PromptUtil } from '../../../utils/promptUtil';
+import { YES_SHORT, YES_LONG, NO_SHORT, NO_LONG } from '../../../utils/projectPathUtil';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -117,6 +119,13 @@ export default class Migrate extends OmniStudioBaseCommand {
       Logger.log(`Could not enable Omni preferences: ${errMsg}`);
     }
 
+    // check for confirmation over assessed action items
+    const migrationConsent = await this.getMigrationConsent();
+    if (!migrationConsent) {
+      Logger.log(messages.getMessage('migrationConsentNotGiven'));
+      return;
+    }
+
     const namespace = orgs.packageDetails.namespace;
     // Let's time every step
     DebugTimer.getInstance().start();
@@ -178,7 +187,9 @@ export default class Migrate extends OmniStudioBaseCommand {
     );
 
     let actionItems = [];
-    actionItems = await this.setDesignersToUseStandardDataModel(namespace);
+    if (!migrateOnly) {
+      actionItems = await this.setDesignersToUseStandardDataModel(namespace);
+    }
 
     await ResultsBuilder.generateReport(
       objectMigrationResults,
@@ -192,6 +203,34 @@ export default class Migrate extends OmniStudioBaseCommand {
 
     // Return results needed for --json flag
     return { objectMigrationResults };
+  }
+
+  private async getMigrationConsent(): Promise<boolean> {
+    const askWithTimeOut = PromptUtil.askWithTimeOut(messages);
+    let validResponse = false;
+    let consent = false;
+
+    while (!validResponse) {
+      try {
+        const resp = await askWithTimeOut(Logger.prompt.bind(Logger), messages.getMessage('migrationConsentMessage'));
+        const response = typeof resp === 'string' ? resp.trim().toLowerCase() : '';
+
+        if (response === YES_SHORT || response === YES_LONG) {
+          consent = true;
+          validResponse = true;
+        } else if (response === NO_SHORT || response === NO_LONG) {
+          consent = false;
+          validResponse = true;
+        } else {
+          Logger.error(messages.getMessage('invalidYesNoResponse'));
+        }
+      } catch (err) {
+        Logger.error(messages.getMessage('requestTimedOut'));
+        process.exit(1);
+      }
+    }
+
+    return consent;
   }
 
   private async setDesignersToUseStandardDataModel(namespace: string): Promise<string[]> {
@@ -252,6 +291,10 @@ export default class Migrate extends OmniStudioBaseCommand {
           })
         );
       } catch (ex: any) {
+        if (ex instanceof InvalidEntityTypeError) {
+          Logger.error(ex.message);
+          process.exit(1);
+        }
         Logger.error('Error migrating object', ex);
         objectMigrationResults.push({
           name: cls.getName(),
@@ -370,10 +413,11 @@ export default class Migrate extends OmniStudioBaseCommand {
         let errors: any[] = obj.errors || [];
         errors = errors.concat(recordResults.errors || []);
 
-        obj.status =
-          !recordResults || recordResults.hasErrors
-            ? messages.getMessage('labelStatusFailed')
-            : messages.getMessage('labelStatusComplete');
+        obj.status = recordResults?.skipped
+          ? messages.getMessage('labelStatusSkipped')
+          : !recordResults || recordResults.hasErrors
+          ? messages.getMessage('labelStatusFailed')
+          : messages.getMessage('labelStatusComplete');
         obj.errors = errors;
         obj.migratedId = recordResults.id;
         obj.warnings = recordResults.warnings;

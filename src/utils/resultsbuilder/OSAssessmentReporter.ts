@@ -24,7 +24,7 @@ export class OSAssessmentReporter {
       title: 'OmniScript Assessment Report',
       heading: 'OmniScript Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
-      assessmentDate: new Date().toString(),
+      assessmentDate: new Date().toLocaleString(),
       total: OSAssessmentInfos?.length || 0,
       filterGroups: this.getFilterGroupsForReport(OSAssessmentInfos),
       headerGroups: this.getHeaderGroupsForReport(),

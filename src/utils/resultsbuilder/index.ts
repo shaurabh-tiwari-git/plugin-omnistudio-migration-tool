@@ -90,7 +90,7 @@ export class ResultsBuilder {
         namespace: orgDetails.packageDetails.namespace,
         dataModel: orgDetails.dataModel,
       },
-      assessmentDate: new Date().toString(),
+      assessmentDate: new Date().toLocaleString(),
       total: result.data?.length || 0,
       filterGroups: [
         createFilterGroupParam('Filter By Status', 'status', ['Successfully Completed', 'Failed', 'Skipped']),
@@ -119,7 +119,7 @@ export class ResultsBuilder {
               rowspan: 2,
             },
             {
-              name: 'Warnings',
+              name: 'Summary',
               colspan: 1,
               rowspan: 2,
             },
@@ -179,7 +179,7 @@ export class ResultsBuilder {
               item.errors ? reportingHelper.decorateErrors(item.errors) : []
             ),
             createRowDataParam(
-              'warnings',
+              'summary',
               item.warnings ? 'Has Warnings' : 'Has No Warnings',
               false,
               1,
@@ -227,7 +227,7 @@ export class ResultsBuilder {
         namespace: orgDetails.packageDetails.namespace,
         dataModel: orgDetails.dataModel,
       },
-      assessmentDate: new Date().toString(),
+      assessmentDate: new Date().toLocaleString(),
       total: result.length,
       filterGroups: [createFilterGroupParam('Filter by Errors', 'warnings', ['Has Errors', 'Has No Errors'])],
       headerGroups: [
@@ -337,7 +337,7 @@ export class ResultsBuilder {
         namespace: orgDetails.packageDetails.namespace,
         dataModel: orgDetails.dataModel,
       },
-      assessmentDate: new Date().toString(),
+      assessmentDate: new Date().toLocaleString(),
       summaryItems: [
         ...results.map((result) => ({
           name: `${getMigrationHeading(result.name)} Migration`,
