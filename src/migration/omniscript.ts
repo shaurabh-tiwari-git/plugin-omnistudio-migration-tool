@@ -534,12 +534,12 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       if (omniProcessType === 'OmniScript') {
         const type = omniscript[this.namespacePrefix + 'IsLwcEnabled__c'] ? 'LWC' : 'Angular';
         if (type === 'Angular') {
-          // Skip Angular OmniScripts and add a warning record this
+          // Skip Angular OmniScripts and add a warning record
 
           const skippedResponse: UploadRecordResult = {
             referenceId: recordId,
             id: '',
-            success: true,
+            success: false,
             hasErrors: false,
             errors: [],
             warnings: [angularWarningMessage],

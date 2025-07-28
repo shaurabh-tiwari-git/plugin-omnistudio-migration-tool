@@ -26,6 +26,8 @@ import { Constants } from '../../../utils/constants/stringContants';
 import { OrgPreferences } from '../../../utils/orgPreferences';
 import { AnonymousApexRunner } from '../../../utils/apex/executor/AnonymousApexRunner';
 import { ProjectPathUtil } from '../../../utils/projectPathUtil';
+import { PromptUtil } from '../../../utils/promptUtil';
+import { YES_SHORT, YES_LONG, NO_SHORT, NO_LONG } from '../../../utils/projectPathUtil';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -204,31 +206,27 @@ export default class Migrate extends OmniStudioBaseCommand {
   }
 
   private async getMigrationConsent(): Promise<boolean> {
-    const TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes timeout
+    const askWithTimeOut = PromptUtil.askWithTimeOut(messages);
+    let validResponse = false;
+    let consent = false;
 
-    let consent: boolean | null = null;
-    let timeoutHandle: NodeJS.Timeout;
-
-    const timeoutPromise = new Promise<boolean>((_, reject) => {
-      timeoutHandle = setTimeout(() => {
-        reject(new Error(messages.getMessage('requestTimedOut')));
-      }, TIMEOUT_MS);
-    });
-
-    while (consent === null) {
+    while (!validResponse) {
       try {
-        // Race between the confirmation prompt and the timeout
-        consent = await Promise.race([Logger.confirm(messages.getMessage('migrationConsentMessage')), timeoutPromise]);
-        clearTimeout(timeoutHandle);
-      } catch (error) {
-        clearTimeout(timeoutHandle);
-        if (error instanceof Error && error.message === messages.getMessage('requestTimedOut')) {
-          Logger.log(messages.getMessage('requestTimedOut'));
-          return false; // Return false on timeout
+        const resp = await askWithTimeOut(Logger.prompt.bind(Logger), messages.getMessage('migrationConsentMessage'));
+        const response = typeof resp === 'string' ? resp.trim().toLowerCase() : '';
+
+        if (response === YES_SHORT || response === YES_LONG) {
+          consent = true;
+          validResponse = true;
+        } else if (response === NO_SHORT || response === NO_LONG) {
+          consent = false;
+          validResponse = true;
         } else {
-          Logger.log(messages.getMessage('invalidYesNoResponse'));
-          consent = null;
+          Logger.error(messages.getMessage('invalidYesNoResponse'));
         }
+      } catch (err) {
+        Logger.error(messages.getMessage('requestTimedOut'));
+        process.exit(1);
       }
     }
 
@@ -415,7 +413,7 @@ export default class Migrate extends OmniStudioBaseCommand {
         let errors: any[] = obj.errors || [];
         errors = errors.concat(recordResults.errors || []);
 
-        obj.status = recordResults.skipped
+        obj.status = recordResults?.skipped
           ? messages.getMessage('labelStatusSkipped')
           : !recordResults || recordResults.hasErrors
           ? messages.getMessage('labelStatusFailed')
