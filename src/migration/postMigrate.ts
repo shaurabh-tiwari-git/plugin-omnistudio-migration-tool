@@ -33,7 +33,7 @@ export class PostMigrate extends BaseMigrationTool {
     userActionMessage: string[]
   ): Promise<string[]> {
     try {
-      Logger.logVerbose('Setting designers to use the standard data model');
+      Logger.logVerbose(this.messages.getMessage('settingDesignersToStandardModel'));
       const apexCode = `
           ${namespaceToModify}.OmniStudioPostInstallClass.useStandardDataModel();
         `;
@@ -42,13 +42,13 @@ export class PostMigrate extends BaseMigrationTool {
 
       if (result?.success === false) {
         const message = result?.exceptionStackTrace;
-        Logger.error(`Error occurred while setting designers to use the standard data model ${message}`);
+        Logger.error(this.messages.getMessage('errorSettingDesignersToStandardModel', [message]));
         userActionMessage.push(this.messages.getMessage('manuallySwitchDesignerToStandardDataModel'));
       } else if (result?.success === true) {
-        Logger.logVerbose('Successfully executed setDesignersToUseStandardDataModel');
+        Logger.logVerbose(this.messages.getMessage('designersSetToStandardModel'));
       }
     } catch (ex) {
-      Logger.error(`Exception occurred while setting designers to use the standard data model ${JSON.stringify(ex)}`);
+      Logger.error(this.messages.getMessage('exceptionSettingDesignersToStandardModel', [JSON.stringify(ex)]));
       userActionMessage.push(this.messages.getMessage('manuallySwitchDesignerToStandardDataModel'));
     }
     return userActionMessage;
@@ -62,18 +62,18 @@ export class PostMigrate extends BaseMigrationTool {
     userActionMessage: string[]
   ): Promise<void> {
     if (this.relatedObjectsToProcess === undefined || this.relatedObjectsToProcess === null) {
-      Logger.logVerbose('Please check related objects to process as it is coming as null');
+      Logger.logVerbose(this.messages.getMessage('noRelatedObjects'));
       return;
     }
     if (
       this.relatedObjectsToProcess.includes(Constants.ExpSites) &&
       isExperienceBundleMetadataAPIProgramaticallyEnabled.value === true
     ) {
-      Logger.logVerbose('Since ExperienceSiteMetadata API was programatically enabled, turing it off');
+      Logger.logVerbose(this.messages.getMessage('turnOffExperienceBundleAPI'));
       try {
         await OrgPreferences.toggleExperienceBundleMetadataAPI(this.connection, false);
       } catch (error) {
-        userActionMessage.push('Exception occurred while reverting metadata API. Please do that manually');
+        userActionMessage.push('errorRevertingExperienceBundleMetadataAPI');
       }
     }
   }

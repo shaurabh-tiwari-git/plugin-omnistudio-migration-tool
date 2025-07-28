@@ -33,39 +33,42 @@ export class PreMigrate extends BaseMigrationTool {
   ): Promise<void> {
     if (objectsToProcess.includes(Constants.ExpSites)) {
       const expMetadataApiConsent = await this.getExpSiteMetadataEnableConsent();
-      Logger.logVerbose(`The consent for exp site is  ${expMetadataApiConsent}`);
+      Logger.logVerbose(this.messages.getMessage('experienceSiteMetadataConsent', [expMetadataApiConsent]));
 
       if (expMetadataApiConsent === false) {
-        Logger.warn('Consent for experience sites is not provided. Experience sites will not be processed');
+        Logger.warn(this.messages.getMessage('experienceSiteConsentNotProvidedWarning'));
         this.removeKeyFromRelatedObjectsToProcess(Constants.ExpSites, objectsToProcess);
-        Logger.logVerbose(`Objects to process after removing expsite are ${JSON.stringify(objectsToProcess)}`);
+        Logger.logVerbose(
+          this.messages.getMessage(this.messages.getMessage('relatedObjectsToProcessAfterExpSitesRemoval'), [
+            JSON.stringify(objectsToProcess),
+          ])
+        );
         return;
       }
 
       const isMetadataAPIPreEnabled = await OrgPreferences.isExperienceBundleMetadataAPIEnabled(conn);
       if (isMetadataAPIPreEnabled === true) {
-        Logger.logVerbose('ExperienceBundle metadata api is already enabled');
+        Logger.logVerbose(this.messages.getMessage('experienceBundleMetadataAPIAlreadyEnabled'));
         return;
       }
 
-      Logger.logVerbose('ExperienceBundle metadata api needs to be programatically enabled');
+      Logger.logVerbose(this.messages.getMessage('enableExperienceBundleMetadataAPIProgramatically'));
       isExperienceBundleMetadataAPIProgramaticallyEnabled.value = await OrgPreferences.setExperienceBundleMetadataAPI(
         conn,
         true
       );
       if (isExperienceBundleMetadataAPIProgramaticallyEnabled.value === false) {
         this.removeKeyFromRelatedObjectsToProcess(Constants.ExpSites, objectsToProcess);
-        Logger.warn('Since the api could not able enabled the experience sites would not be processed');
+        Logger.warn(this.messages.getMessage('unableToEnableExperienceBundleMetadataAPI'));
       }
 
-      Logger.logVerbose(`Objects to process are ${JSON.stringify(objectsToProcess)}`);
+      Logger.logVerbose(this.messages.getMessage('relatedObjectsToProcess', [JSON.stringify(objectsToProcess)]));
     }
   }
 
   // This needs to be behind timeout
   private async getExpSiteMetadataEnableConsent(): Promise<boolean> {
-    const question =
-      'By proceeding further, you hereby consent to enable digital experience metadata api(y/n). If y sites will be processed, if n expsites will not be processed';
+    const question = this.messages.getMessage('consentForExperienceSites');
 
     while (true) {
       try {
@@ -91,7 +94,7 @@ export class PreMigrate extends BaseMigrationTool {
         }
       } catch (error) {
         // Handle timeout or other errors
-        Logger.error(`Failed to get user consent: ${error.message}`);
+        Logger.error(this.messages.getMessage('failedToGetConsentError', [error.message]));
         throw error; // Re-throw to let caller handle timeout
       }
     }

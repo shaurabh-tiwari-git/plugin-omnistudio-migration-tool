@@ -614,7 +614,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           flexCardAssessmentInfo.nameMapping === undefined ||
           flexCardAssessmentInfo.nameMapping === null
         ) {
-          Logger.logVerbose('Info is missing');
+          Logger.logVerbose(this.messages.getMessage('missingInfo'));
           return;
         }
 
@@ -632,7 +632,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         let finalKey = `${flexCardAssessmentInfo.nameMapping.oldName}`;
         if (storage.fcStorage.has(finalKey)) {
           // Key already exists - handle accordingly
-          Logger.logVerbose(`Key ${finalKey} already exists in flexcard storage`);
+          Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', [finalKey]));
           value.isDuplicate = true;
           storage.fcStorage.set(finalKey, value);
         } else {
@@ -640,7 +640,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           storage.fcStorage.set(finalKey, value);
         }
       } catch (error) {
-        Logger.logVerbose('Error occurred while processing key for flexcard storage');
+        Logger.logVerbose(this.messages.getMessage('errorWhileProcessingFlexcardStorage'));
         Logger.error(error);
       }
 
@@ -652,7 +652,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     cardsUploadInfo: Map<string, UploadRecordResult>,
     originalRecords: Map<string, any>
   ) {
-    Logger.logVerbose('Started preparing storage for flexcards');
+    Logger.logVerbose(this.messages.getMessage('flexcardStorageProcessingStarted'));
     let storage: MigrationStorage = StorageUtil.getOmnistudioMigrationStorage();
 
     for (let key of Array.from(originalRecords.keys())) {
@@ -682,7 +682,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         let finalKey = `${oldrecord['Name']}`;
         if (storage.fcStorage.has(finalKey)) {
           // Key already exists - handle accordingly
-          Logger.logVerbose(`Key ${finalKey} already exists in flexcard storage`);
+          Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', [finalKey]));
           value.isDuplicate = true;
           storage.fcStorage.set(finalKey, value);
         } else {
@@ -690,7 +690,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           storage.fcStorage.set(finalKey, value);
         }
       } catch (error) {
-        Logger.logVerbose('Error occurred while processing key for flexcard storage');
+        Logger.logVerbose(this.messages.getMessage('errorWhileProcessingFlexcardStorage'));
         Logger.error(error);
       }
 

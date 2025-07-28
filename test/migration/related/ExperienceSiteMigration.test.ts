@@ -13,6 +13,8 @@ import {
   ExpSiteComponent,
 } from '../../../src/migration/interfaces';
 
+const Migrate = 'Migrate';
+
 describe('ExperienceSiteMigration', () => {
   let org: Org;
   let experienceSiteMigration: ExperienceSiteMigration;
@@ -124,6 +126,8 @@ describe('ExperienceSiteMigration', () => {
         infos: [],
         path: '/test/path/site1.json',
         diff: '[]',
+        errors: [],
+        status: 'Can be Automated',
       });
       processFileStub.onCall(1).returns({
         name: 'site3.json',
@@ -132,10 +136,12 @@ describe('ExperienceSiteMigration', () => {
         infos: [],
         path: '/test/path/site3.json',
         diff: '[]',
+        errors: [],
+        status: 'Can be Automated',
       });
 
       // Act
-      const result = experienceSiteMigration.processExperienceSites('/test/project');
+      const result = experienceSiteMigration.processExperienceSites('/test/project', Migrate);
 
       // Assert
       expect(fileUtilStub.calledOnce).to.be.true;
@@ -154,7 +160,7 @@ describe('ExperienceSiteMigration', () => {
       sinon.stub(experienceSiteMigration, 'processExperienceSite').throws(new Error('Processing failed'));
 
       // Act
-      const result = experienceSiteMigration.processExperienceSites('/test/project');
+      const result = experienceSiteMigration.processExperienceSites('/test/project', Migrate);
 
       // Assert
       expect(result).to.be.an('array').that.is.empty;
@@ -207,7 +213,7 @@ describe('ExperienceSiteMigration', () => {
       fsReadStub.returns(JSON.stringify(sampleExperienceSiteJson));
 
       // Act
-      const result = experienceSiteMigration.processExperienceSite(mockFile);
+      const result = experienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
       expect(result.hasOmnistudioContent).to.be.true;
@@ -232,7 +238,7 @@ describe('ExperienceSiteMigration', () => {
       fsReadStub.returns(JSON.stringify(sampleExperienceSiteJsonWithoutWrapper));
 
       // Act
-      const result = experienceSiteMigration.processExperienceSite(mockFile);
+      const result = experienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
       expect(result.hasOmnistudioContent).to.be.false;
@@ -245,7 +251,7 @@ describe('ExperienceSiteMigration', () => {
       fsReadStub.returns(JSON.stringify(siteWithoutRegions));
 
       // Act
-      const result = experienceSiteMigration.processExperienceSite(mockFile);
+      const result = experienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
       expect(result.hasOmnistudioContent).to.be.false;
@@ -262,7 +268,7 @@ describe('ExperienceSiteMigration', () => {
       fsReadStub.returns(JSON.stringify(sampleExperienceSiteJson));
 
       // Act
-      const result = experienceSiteMigration.processExperienceSite(mockFile);
+      const result = experienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
       expect(result.hasOmnistudioContent).to.be.true;
@@ -290,7 +296,7 @@ describe('ExperienceSiteMigration', () => {
       fsReadStub.returns(JSON.stringify(sampleExperienceSiteJson));
 
       // Act
-      const result = experienceSiteMigration.processExperienceSite(mockFile);
+      const result = experienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
       expect(result.hasOmnistudioContent).to.be.true;
@@ -318,7 +324,7 @@ describe('ExperienceSiteMigration', () => {
       fsReadStub.returns(JSON.stringify(sampleExperienceSiteJson));
 
       // Act
-      const result = experienceSiteMigration.processExperienceSite(mockFile);
+      const result = experienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
       expect(result.hasOmnistudioContent).to.be.true;
@@ -339,7 +345,7 @@ describe('ExperienceSiteMigration', () => {
       fsReadStub.returns(JSON.stringify(siteWithEmptyTarget));
 
       // Act
-      const result = experienceSiteMigration.processExperienceSite(mockFile);
+      const result = experienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
       expect(result.hasOmnistudioContent).to.be.true;
@@ -361,7 +367,7 @@ describe('ExperienceSiteMigration', () => {
       fsReadStub.returns(JSON.stringify(siteWithUndefinedComponent));
 
       // Act
-      const result = experienceSiteMigration.processExperienceSite(mockFile);
+      const result = experienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
       expect(result.hasOmnistudioContent).to.be.true;
@@ -391,7 +397,7 @@ describe('ExperienceSiteMigration', () => {
       fsReadStub.returns(JSON.stringify(siteWithCustomLayout));
 
       // Act
-      experienceSiteMigration.processExperienceSite(mockFile);
+      experienceSiteMigration.processExperienceSite(mockFile, 'Migrate');
 
       // Assert
       const writtenContent = fsWriteStub.firstCall.args[1];

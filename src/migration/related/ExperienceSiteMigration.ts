@@ -31,9 +31,11 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
   private EXPERIENCE_SITES_PATH: string;
   private MIGRATE = 'Migrate';
   private ASSESS = 'Assess';
+  private messages: Messages;
 
-  public constructor(projectPath: string, namespace: string, org: Org) {
+  public constructor(projectPath: string, namespace: string, org: Org, messages: Messages) {
     super(projectPath, namespace, org);
+    this.messages = messages;
   }
 
   public processObjectType(): string {
@@ -49,24 +51,24 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
   }
 
   public process(type: string): ExperienceSiteAssessmentInfo[] {
-    Logger.logVerbose(`Starting experience sites processing for ${type}`);
+    Logger.logVerbose(this.messages.getMessage('processingExperienceSites', [type]));
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
     this.EXPERIENCE_SITES_PATH = path.join(this.projectPath, 'force-app', 'main', 'default', 'experiences');
 
-    Logger.logVerbose('Started processing the experience sites');
+    Logger.logVerbose(this.messages.getMessage('experienceSitesProcessingStarted'));
     const experienceSiteInfo = this.processExperienceSites(this.EXPERIENCE_SITES_PATH, type);
-    Logger.info(`Successfully processed experience sites for ${type}`);
+    Logger.info(this.messages.getMessage('experienceSiteSuccessfullyProcessed', [type]));
     shell.cd(pwd);
     return experienceSiteInfo;
   }
 
   public processExperienceSites(dir: string, type: string): ExperienceSiteAssessmentInfo[] {
-    Logger.logVerbose('Started reading the files');
+    Logger.logVerbose(this.messages.getMessage('readingFile'));
     const count = { total: 0 };
     const directoryMap: Map<string, File[]> = FileUtil.getAllFilesInsideDirectory(dir, count, '.json');
     // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-    Logger.logVerbose('The total count is ' + count.total);
+    Logger.logVerbose(this.messages.getMessage('totalFileCount', [count.total]));
 
     // TODO - IF directory is empty
     let progressCounter = 0;
@@ -79,31 +81,31 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       for (const file of fileArray) {
         progressBar.update(++progressCounter);
         if (file.ext !== '.json') {
-          Logger.logVerbose('Skipping non-JSON file - ' + file.name);
+          Logger.logVerbose(this.messages.getMessage('skipNonJsonFile ', [file.name]));
           continue;
         }
         try {
           const experienceSiteInfo = this.processExperienceSite(file, type);
           if (experienceSiteInfo?.hasOmnistudioContent === true) {
-            Logger.logVerbose('Successfully processed experience site file having vlocity wrapper');
+            Logger.logVerbose(this.messages.getMessage('experienceSiteWithOmniWrapperSuccessfullyProcessed'));
             experienceSitesAssessmentInfo.push(experienceSiteInfo);
           } else {
-            Logger.logVerbose('File does not contain omnistudio wrapper');
+            Logger.logVerbose(this.messages.getMessage('fileNotHavingWrapper'));
           }
         } catch (err) {
-          Logger.error('Error processing experience site file' + file.name);
+          Logger.error(this.messages.getMessage('errorProcessingExperienceSite', [file.name]));
           Logger.error(JSON.stringify(err));
         }
       }
     }
 
-    Logger.logVerbose('Only the files in which have omnistudio wrapper will be shown in the assessment report');
+    Logger.logVerbose(this.messages.getMessage('experienceSiteReportingDetails'));
     progressBar.stop();
     return experienceSitesAssessmentInfo;
   }
 
   public processExperienceSite(file: File, type: string): ExperienceSiteAssessmentInfo {
-    Logger.logVerbose('Processing for file ' + file.name);
+    Logger.logVerbose(this.messages.getMessage('processingFile', [file.name]));
 
     const experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo = {
       name: file.name,
@@ -139,7 +141,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     }
 
     for (const region of regions) {
-      Logger.logVerbose('The current region being processed is' + JSON.stringify(region));
+      Logger.logVerbose(this.messages.getMessage('currentRegionOfExperienceSite', [JSON.stringify(region)]));
 
       const regionComponents: ExpSiteComponent[] = region['components'];
 
@@ -153,10 +155,10 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
             continue;
           }
 
-          Logger.logVerbose('The current component being processed is ' + JSON.stringify(component));
+          Logger.logVerbose(this.messages.getMessage('currentComponentOfExperienceSite', [JSON.stringify(component)]));
 
           if (component.componentName === lookupComponentName) {
-            Logger.logVerbose('Omnistudio wrapper component found');
+            Logger.logVerbose(this.messages.getMessage('omniWrapperFound'));
             experienceSiteAssessmentInfo.hasOmnistudioContent = true;
 
             this.updateComponentAndItsAttributes(
@@ -170,7 +172,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       }
     }
 
-    Logger.logVerbose('Now printing the updated object' + JSON.stringify(experienceSiteParsedJSON));
+    Logger.logVerbose(this.messages.getMessage('printUpdatedObject', [JSON.stringify(experienceSiteParsedJSON)]));
 
     const noarmalizeUpdatedFileContent = JSON.stringify(experienceSiteParsedJSON, null, 2); // Pretty-print with 2 spaces
     const difference = new FileDiffUtil().getFileDiff(
@@ -179,10 +181,10 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       noarmalizeUpdatedFileContent
     );
 
-    Logger.logVerbose('Printing the difference' + JSON.stringify(difference));
+    Logger.logVerbose(this.messages.getMessage('printDifference', [JSON.stringify(difference)]));
 
     if (type === this.MIGRATE && normalizedOriginalFileContent !== noarmalizeUpdatedFileContent) {
-      Logger.logVerbose('Updating the file content');
+      Logger.logVerbose(this.messages.getMessage('updatingFile'));
       fs.writeFileSync(file.location, noarmalizeUpdatedFileContent, 'utf8');
     }
 
@@ -224,11 +226,11 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo,
     storage: MigrationStorage
   ): void {
-    Logger.logVerbose(`Started processing FC component + ${JSON.stringify(component)} `);
+    Logger.logVerbose(this.messages.getMessage('processingFlexcardComponent', [JSON.stringify(component)]));
     const flexcardName = targetName.substring(2); // cfCardName -> CardName
     const targetDataFromStorageFC: FlexcardStorage = storage.fcStorage.get(flexcardName);
 
-    Logger.logVerbose('The target data is ' + JSON.stringify(targetDataFromStorageFC));
+    Logger.logVerbose(this.messages.getMessage('targetData', [JSON.stringify(targetDataFromStorageFC)]));
 
     // Remove later
     if (this.shouldAddWarning(targetDataFromStorageFC)) {
@@ -249,10 +251,10 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo,
     storage: MigrationStorage
   ): void {
-    Logger.logVerbose(`Started processing OS component + ${JSON.stringify(component)} `);
+    Logger.logVerbose(this.messages.getMessage('processingOmniscriptComponent', [JSON.stringify(component)]));
     // Use storage to find the updated properties
     const targetDataFromStorage: OmniScriptStorage = storage.osStorage.get(targetName);
-    Logger.logVerbose('The target data is ' + JSON.stringify(targetDataFromStorage));
+    Logger.logVerbose(this.messages.getMessage('targetData', [JSON.stringify(targetDataFromStorage)]));
 
     if (this.shouldAddWarning(targetDataFromStorage)) {
       const warningMsg: string = this.getWarningMessage(targetName, targetDataFromStorage);
@@ -285,11 +287,11 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
   private getWarningMessage(oldTypeSubtypeLanguage: string, targetDataFromStorage: Storage): string {
     if (targetDataFromStorage === undefined) {
       // Add log verbose
-      return `${oldTypeSubtypeLanguage} needs manual intervention as the migrated key does not exist`;
+      return this.messages.getMessage('manualInterventionForExperienceSite', [oldTypeSubtypeLanguage]);
     } else if (targetDataFromStorage.migrationSuccess === false) {
-      return `${oldTypeSubtypeLanguage} needs manual intervention as migration failed`;
+      return this.messages.getMessage('manualInterventionForExperienceSiteAsFailure', [oldTypeSubtypeLanguage]);
     } else {
-      return `${oldTypeSubtypeLanguage} needs manual intervention as duplicated key found in storage`;
+      return this.messages.getMessage('manualInterventionForExperienceSiteAsDuplicateKey', [oldTypeSubtypeLanguage]);
     }
   }
 }

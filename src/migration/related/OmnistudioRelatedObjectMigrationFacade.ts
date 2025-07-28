@@ -65,7 +65,12 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     // TODO: Uncomment code once MVP for migration is completed
     // this.lwcMigration = new LwcMigration(this.projectPath, this.namespace, this.org);
 
-    this.experienceSiteMigration = new ExperienceSiteMigration(this.projectPath, this.namespace, this.org);
+    this.experienceSiteMigration = new ExperienceSiteMigration(
+      this.projectPath,
+      this.namespace,
+      this.org,
+      migrateMessages
+    );
   }
 
   private createProject(): string {

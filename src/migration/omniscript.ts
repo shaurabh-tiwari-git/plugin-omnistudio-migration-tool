@@ -538,7 +538,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     }
 
     let storage: MigrationStorage = StorageUtil.getOmnistudioAssessmentStorage();
-    Logger.logVerbose('Started updating assessment storage for omniscript');
+    Logger.logVerbose(this.messages.getMessage('updatingStorageForOmniscipt', ['Assessment']));
 
     for (let currentOsRecordInfo of osAssessmentInfo) {
       try {
@@ -565,7 +565,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
         if (storage.osStorage.has(finalKey)) {
           // Key already exists - handle accordingly
-          Logger.logVerbose(`Key ${finalKey} already exists in storage`);
+          Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', [finalKey]));
           value.isDuplicate = true;
           storage.osStorage.set(finalKey, value);
         } else {
@@ -872,7 +872,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     originalOsRecords: Map<string, any>
   ) {
     let storage: MigrationStorage = StorageUtil.getOmnistudioMigrationStorage();
-    Logger.logVerbose('Started updating migration storage for omniscript');
+    Logger.logVerbose(this.messages.getMessage('updatingStorageForOmniscipt', ['Migration']));
     for (let key of Array.from(originalOsRecords.keys())) {
       try {
         let oldrecord = originalOsRecords.get(key);
@@ -899,7 +899,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
           if (storage.osStorage.has(finalKey)) {
             // Key already exists - handle accordingly
-            Logger.logVerbose(`Key ${finalKey} already exists in storage`);
+            Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', [finalKey]));
             value.isDuplicate = true;
             storage.osStorage.set(finalKey, value);
           } else {

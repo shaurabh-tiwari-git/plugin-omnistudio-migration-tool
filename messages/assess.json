@@ -137,5 +137,6 @@
   "generatedDiffForFile": "Generated diff for file: %s",
   "errorProcessingFlexiPage": "Error processing flexipage file: %s, %s",
   "flexipagesWithChanges": "Found %s flexipage files with changes",
-  "migratingFlexiPages": "Migrating FlexiPages"
+  "migratingFlexiPages": "Migrating FlexiPages",
+  "experienceSiteMetadataConsent": "The consent for exp site is %s"
 }
