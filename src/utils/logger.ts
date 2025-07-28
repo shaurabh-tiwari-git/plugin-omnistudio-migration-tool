@@ -64,9 +64,7 @@ export class Logger {
         Logger.sfUX.error(`\x1b[31m${message.message}\n${message.stack}\x1b[0m`);
       } else {
         if (error) {
-          Logger.sfUX.error(`\x1b[31m${message}\n${error.message}\n${error.stack}\x1b[0m`);
-        } else {
-          Logger.sfUX.error(`\x1b[31m${message}\x1b[0m`);
+          Logger.sfUX.error(`\x1b[31m${error.message}\n${error.stack}\x1b[0m`);
         }
       }
     }
