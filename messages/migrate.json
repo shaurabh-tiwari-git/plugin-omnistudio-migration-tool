@@ -117,6 +117,8 @@
   "labelStatusSkipped": "Skipped",
   "labelStatusFailed": "Failed",
   "labelStatusComplete": "Complete",
+  "migrationConsentNotGiven": "Couldn't confirm whether assessment errors are resolved",
+  "migrationConsentMessage": "Ensure that all items in the assessment report are marked as Green before proceeding with the migration. Do you want to proceed?",
   "retrievingFlexiPages": "Retrieving FlexiPages",
   "successfullyRetrievedFlexiPages": "Successfully retrieved %s FlexiPages",
   "migratingFlexiPages": "Migrating FlexiPages",

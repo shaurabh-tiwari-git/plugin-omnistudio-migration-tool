@@ -24,7 +24,7 @@ export class DRAssessmentReporter {
       title: 'Data Mapper Assessment Report',
       heading: 'Data Mapper Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
-      assessmentDate: new Date().toString(),
+      assessmentDate: new Date().toLocaleString(),
       total: dataRaptorAssessmentInfos?.length || 0,
       filterGroups: this.getFilterGroupsForReport(dataRaptorAssessmentInfos),
       headerGroups: this.getHeaderGroupsForReport(),
@@ -54,6 +54,13 @@ export class DRAssessmentReporter {
         ).length,
         cssClass: 'text-warning',
       },
+      {
+        name: 'Has Errors',
+        count: dataRaptorAssessmentInfos.filter(
+          (dataRaptorAssessmentInfo) => dataRaptorAssessmentInfo.errors && dataRaptorAssessmentInfo.errors.length > 0
+        ).length,
+        cssClass: 'text-error',
+      },
     ];
   }
 
@@ -63,10 +70,18 @@ export class DRAssessmentReporter {
     }
 
     const distinctTypes = [...new Set(dataRaptorAssessmentInfos.map((info) => info.type))];
+    let typeFilterGroupParam: FilterGroupParam[] = [];
     if (distinctTypes.length > 0 && distinctTypes.filter((type) => type).length > 0) {
-      return [createFilterGroupParam('Filter By Type', 'type', distinctTypes)];
+      typeFilterGroupParam = [createFilterGroupParam('Filter By Type', 'type', distinctTypes)];
     }
-    return [];
+
+    const distinctStatuses = [...new Set(dataRaptorAssessmentInfos.map((info) => info.migrationStatus))];
+    const statusFilterGroupParam: FilterGroupParam[] =
+      distinctStatuses.length > 0 && distinctStatuses.filter((status) => status).length > 0
+        ? [createFilterGroupParam('Filter By Assessment Status', 'status', distinctStatuses)]
+        : [];
+
+    return [...typeFilterGroupParam, ...statusFilterGroupParam];
   }
 
   private static getHeaderGroupsForReport(): ReportHeaderGroupParam[] {
@@ -85,6 +100,11 @@ export class DRAssessmentReporter {
           },
           {
             name: 'Type',
+            colspan: 1,
+            rowspan: 2,
+          },
+          {
+            name: 'Assessment Status',
             colspan: 1,
             rowspan: 2,
           },
@@ -146,6 +166,17 @@ export class DRAssessmentReporter {
         ),
         createRowDataParam('newName', dataRaptorAssessmentInfo.name, false, 1, 1, false),
         createRowDataParam('type', dataRaptorAssessmentInfo.type, false, 1, 1, false),
+        createRowDataParam(
+          'status',
+          dataRaptorAssessmentInfo.migrationStatus,
+          false,
+          1,
+          1,
+          false,
+          undefined,
+          undefined,
+          dataRaptorAssessmentInfo.migrationStatus === 'Can be Automated' ? 'text-success' : 'text-error'
+        ),
         createRowDataParam(
           'summary',
           dataRaptorAssessmentInfo.warnings ? dataRaptorAssessmentInfo.warnings.join(', ') : '',

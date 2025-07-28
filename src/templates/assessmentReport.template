@@ -26,7 +26,7 @@
               <button class="cta-panel-close" onclick="closeCtaPanel()">&times;</button>
             </div>
             <div class="cta-panel-content">
-              <ul>
+              <ul class="slds-list_dotted">
                 <c:for items=(callToAction) var="cta">
                   <li> {{cta.message}}: &nbsp <a href="(cta.link)" target="_blank">See More</a></li>
                 </c:for>
@@ -154,7 +154,7 @@
                           <td class="(cell.customClass)" data-name="(cell.value)" rowspan="(cell.rowspan)"
                             colspan="(cell.colspan)" key="(cell.key)" value="(cell.value)">
                             <c:if exp={Array.isArray($cell.title)}>
-                              <ul>
+                              <ul class="slds-list_dotted">
                                 <c:for items=(cell.title) var="value">
                                   <li>{{value}}</li>
                                 </c:for>
@@ -167,7 +167,7 @@
                           <td rowspan="(cell.rowspan)" colspan="(cell.colspan)" class="(cell.customClass)"
                             key="(cell.key)" value="(cell.value)">
                             <c:if exp={Array.isArray($cell.title)}>
-                              <ul>
+                              <ul class="slds-list_dotted">
                                 <c:for items=(cell.title) var="value">
                                   <li>{{value}}</li>
                                 </c:for>
@@ -182,7 +182,7 @@
                           <td data-name="(cell.value)" rowspan="(cell.rowspan)" colspan="(cell.colspan)"
                             class="(cell.customClass)" key="(cell.key)" value="(cell.value)">
                             <c:if exp={Array.isArray($cell.title)}>
-                              <ul>
+                              <ul class="slds-list_dotted">
                                 <c:for items=(cell.title) var="value">
                                   <li><a href="(cell.uri)" target="_blank">{{value}}</a></li>
                                 </c:for>
@@ -197,7 +197,7 @@
                           <td rowspan="(cell.rowspan)" colspan="(cell.colspan)" class="(cell.customClass)"
                             key="(cell.key)" value="(cell.value)">
                             <c:if exp={Array.isArray($cell.title)}>
-                              <ul>
+                              <ul class="slds-list_dotted">
                                 <c:for items=(cell.title) var="value">
                                   <li><a href="(cell.uri)">{{value}}</a></li>
                                 </c:for>

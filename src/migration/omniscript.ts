@@ -14,6 +14,7 @@ import {
 } from '../utils';
 import { BaseMigrationTool } from './base';
 import {
+  InvalidEntityTypeError,
   MigrationResult,
   MigrationStorage,
   MigrationTool,
@@ -202,6 +203,9 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       );
       return omniAssessmentInfos;
     } catch (err) {
+      if (err instanceof InvalidEntityTypeError) {
+        throw err;
+      }
       Logger.error(this.messages.getMessage('errorDuringOmniScriptAssessment'), err);
     }
   }
@@ -251,7 +255,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
             infos: [],
             warnings: [],
             errors: [this.messages.getMessage('unexpectedError')],
-            migrationStatus: 'Can be Automated',
+            migrationStatus: 'Failed',
             type: 'OmniScript',
             missingIP: [],
             missingDR: [],
@@ -270,6 +274,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
             warnings: [],
             errors: [this.messages.getMessage('unexpectedError')],
             path: '',
+            migrationStatus: 'Failed',
           });
         }
         const error = e as Error;
@@ -313,6 +318,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           dependenciesRemoteAction: omniAssessmentInfo.dependenciesRemoteAction,
           infos: [],
           warnings: omniAssessmentInfo.warnings,
+          migrationStatus: omniAssessmentInfo.migrationStatus,
           errors: [],
           path: '',
         };
@@ -422,6 +428,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     const existingSubTypeVal = new StringVal(existingSubType, 'sub type');
     const omniScriptName = omniscript[this.namespacePrefix + 'Name'];
     const existingOmniScriptNameVal = new StringVal(omniScriptName, 'name');
+    let assessmentStatus = 'Can be Automated';
 
     const warnings: string[] = [];
 
@@ -452,6 +459,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           existingTypeVal.cleanName(),
         ])
       );
+      assessmentStatus = 'Has Warnings';
     }
     if (!existingSubTypeVal.isNameCleaned()) {
       warnings.push(
@@ -461,6 +469,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           existingSubTypeVal.cleanName(),
         ])
       );
+      assessmentStatus = 'Has Warnings';
     }
     if (!existingOmniScriptNameVal.isNameCleaned()) {
       warnings.push(
@@ -470,9 +479,11 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           existingOmniScriptNameVal.cleanName(),
         ])
       );
+      assessmentStatus = 'Has Warnings';
     }
     if (existingOmniscriptNames.has(recordName)) {
       warnings.push(this.messages.getMessage('duplicatedName') + '  ' + recordName);
+      assessmentStatus = 'Has Warnings';
     } else {
       existingOmniscriptNames.add(recordName);
     }
@@ -489,7 +500,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       infos: [],
       warnings: warnings,
       errors: [],
-      migrationStatus: 'Can be Automated',
+      migrationStatus: assessmentStatus,
       type: omniProcessType,
       missingDR: missingDR,
       missingIP: missingIP,
@@ -514,6 +525,8 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     let progressCounter = 0;
     progressBar.start(omniscripts.length, progressCounter);
 
+    let foundAngularBasedOmniScripts = false;
+    const angularWarningMessage = this.messages.getMessage('angularOmniscriptWarningMessage');
     for (let omniscript of omniscripts) {
       const mappedRecords = [];
       // const originalRecords = new Map<string, AnyJson>();
@@ -533,20 +546,19 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         const type = omniscript[this.namespacePrefix + 'IsLwcEnabled__c'] ? 'LWC' : 'Angular';
         if (type === 'Angular') {
           // Skip Angular OmniScripts and add a warning record
-          const warningMessage = this.messages.getMessage('angularOmniscriptWarningMessage');
+
           const skippedResponse: UploadRecordResult = {
             referenceId: recordId,
             id: '',
             success: false,
-            hasErrors: true,
-            errors: [warningMessage],
-            warnings: [],
+            hasErrors: false,
+            errors: [],
+            warnings: [angularWarningMessage],
             newName: '',
+            skipped: true,
           };
           osUploadInfo.set(recordId, skippedResponse);
-          progressBar.stop();
-          Logger.warn(warningMessage);
-          progressBar.start(omniscripts.length, progressCounter);
+          foundAngularBasedOmniScripts = true;
           continue;
         }
       }
@@ -653,14 +665,30 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         osUploadResponse.subtype = mappedOmniScript[OmniScriptMappings.SubType__c];
         osUploadResponse.language = mappedOmniScript[OmniScriptMappings.Language__c];
 
-        const originalOsName =
-          omniscript[this.namespacePrefix + 'Type__c'] +
-          '_' +
-          omniscript[this.namespacePrefix + 'SubType__c'] +
-          '_' +
-          omniscript[this.namespacePrefix + 'Language__c'];
+        let originalOsName: string;
+        if (this.allVersions) {
+          originalOsName =
+            omniscript[this.namespacePrefix + 'Type__c'] +
+            '_' +
+            omniscript[this.namespacePrefix + 'SubType__c'] +
+            '_' +
+            omniscript[this.namespacePrefix + 'Language__c'] +
+            '_' +
+            (omniscript[this.namespacePrefix + 'Version__c'] || '1');
+        } else {
+          originalOsName =
+            omniscript[this.namespacePrefix + 'Type__c'] +
+            '_' +
+            omniscript[this.namespacePrefix + 'SubType__c'] +
+            '_' +
+            omniscript[this.namespacePrefix + 'Language__c'] +
+            '_1';
+        }
+        // Always set the new name to show the migrated name
+        osUploadResponse.newName = mappedOsName;
+
+        // Only add warning if the name was actually modified
         if (originalOsName !== mappedOsName) {
-          osUploadResponse.newName = mappedOsName;
           osUploadResponse.warnings.unshift(
             'WARNING: OmniScript name has been modified to fit naming rules: ' + mappedOsName
           );
@@ -733,6 +761,9 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     }
     progressBar.stop();
 
+    if (foundAngularBasedOmniScripts) {
+      Logger.warn(angularWarningMessage);
+    }
     this.updateStorageForOmniscript(osUploadInfo, originalOsRecords);
 
     const objectMigrationResults: MigrationResult[] = [];
@@ -864,7 +895,14 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         this.getOmniScriptFields(),
         filters,
         sortFields
-      );
+      ).catch((err) => {
+        if (err.errorCode === 'INVALID_TYPE') {
+          throw new InvalidEntityTypeError(
+            `${OmniScriptMigrationTool.OMNISCRIPT_NAME} type is not found under this namespace`
+          );
+        }
+        throw err;
+      });
     } else {
       filters.set(this.namespacePrefix + 'IsActive__c', true);
       return await QueryTools.queryWithFilter(
@@ -873,7 +911,14 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         OmniScriptMigrationTool.OMNISCRIPT_NAME,
         this.getOmniScriptFields(),
         filters
-      );
+      ).catch((err) => {
+        if (err.errorCode === 'INVALID_TYPE') {
+          throw new InvalidEntityTypeError(
+            `${OmniScriptMigrationTool.OMNISCRIPT_NAME} type is not found under this namespace`
+          );
+        }
+        throw err;
+      });
     }
   }
 

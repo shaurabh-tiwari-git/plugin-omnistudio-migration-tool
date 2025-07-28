@@ -24,7 +24,7 @@ export class ApexAssessmentReporter {
       title: 'Apex File Assessment Report',
       heading: 'Apex File Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
-      assessmentDate: new Date().toString(),
+      assessmentDate: new Date().toLocaleString(),
       total: apexAssessmentInfos?.length || 0,
       filterGroups: this.getFilterGroupsForReport(apexAssessmentInfos),
       headerGroups: this.getHeaderGroupsForReport(),
@@ -46,6 +46,11 @@ export class ApexAssessmentReporter {
         name: 'Has Warnings',
         count: apexAssessmentInfos.filter((info) => info.warnings && info.warnings.length > 0).length,
         cssClass: 'text-warning',
+      },
+      {
+        name: 'Has Errrors',
+        count: apexAssessmentInfos.filter((info) => info.errors && info.errors.length > 0).length,
+        cssClass: 'text-error',
       },
     ];
   }

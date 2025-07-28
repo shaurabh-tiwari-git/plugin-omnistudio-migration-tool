@@ -539,10 +539,6 @@ td {
   visibility: visible;
 }
 
-ul {
-  list-style: inside !important;
-}
-
 .invalid-icon {
   position: relative;
   padding-left: 24px; /* space for icon */

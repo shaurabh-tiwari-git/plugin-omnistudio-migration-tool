@@ -110,6 +110,7 @@ export class LwcMigration extends BaseRelatedObjectMigration {
             name,
             changeInfos,
             errors,
+            warnings: [],
           };
           if (changeInfos && changeInfos.length > 0) {
             jsonData.push(assesmentInfo);

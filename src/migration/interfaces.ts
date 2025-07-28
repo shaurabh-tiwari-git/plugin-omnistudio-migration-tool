@@ -46,6 +46,7 @@ export interface UploadRecordResult {
   type?: string;
   subtype?: string;
   language?: string;
+  skipped?: boolean;
 }
 
 export interface MigrationResult {
@@ -192,4 +193,10 @@ export interface OmniScriptStorage extends Storage {
 
 export interface FlexcardStorage extends Storage {
   name: string;
+}
+
+export class InvalidEntityTypeError extends Error {
+  public constructor(message: string) {
+    super(message);
+  }
 }

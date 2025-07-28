@@ -159,6 +159,7 @@ export class ApexMigration extends BaseRelatedObjectMigration {
     const warningMessage: string[] = this.processNonReplacableMethodCalls(file, parser);
     return {
       name: file.name,
+      errors: [],
       warnings: warningMessage,
       infos: updateMessages,
       path: file.location,
