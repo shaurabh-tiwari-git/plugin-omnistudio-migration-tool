@@ -165,6 +165,9 @@ export default class Migrate extends OmniStudioBaseCommand {
     const debugTimer = DebugTimer.getInstance();
     // We need to truncate the standard objects first
     let objectMigrationResults = await this.truncateObjects(migrationObjects, debugTimer);
+    objectMigrationResults = objectMigrationResults.filter(
+      (result) => result.name !== Constants.GlobalAutoNumberComponentName
+    );
     const allTruncateComplete = objectMigrationResults.length === 0;
 
     if (allTruncateComplete) {
@@ -285,6 +288,7 @@ export default class Migrate extends OmniStudioBaseCommand {
           data: [],
           errors: [ex.message],
         });
+        Logger.logVerbose(ex.stack);
         Logger.error(messages.getMessage('cleaningFailed', [cls.getName()]));
       }
     }
@@ -298,7 +302,11 @@ export default class Migrate extends OmniStudioBaseCommand {
         Logger.log(messages.getMessage('migratingComponent', [cls.getName()]));
         debugTimer.lap('Migrating: ' + cls.getName());
         const results = await cls.migrate();
-        Logger.log(messages.getMessage('migrationCompleted', [cls.getName()]));
+        if (results.some((result) => result?.errors?.length > 0)) {
+          Logger.error(messages.getMessage('migrationFailed', [cls.getName()]));
+        } else {
+          Logger.log(messages.getMessage('migrationCompleted', [cls.getName()]));
+        }
         objectMigrationResults = objectMigrationResults.concat(
           results.map((r) => {
             return {
@@ -308,12 +316,14 @@ export default class Migrate extends OmniStudioBaseCommand {
             };
           })
         );
-      } catch (ex: any) {
-        Logger.error('Error migrating object', ex);
+      } catch (error: any) {
+        const errMsg = error instanceof Error ? error.message : String(error);
+        Logger.error(messages.getMessage('errorMigrationMessage', [errMsg]));
+        Logger.logVerbose(error);
         objectMigrationResults.push({
           name: cls.getName(),
           data: [],
-          errors: [ex.message],
+          errors: [errMsg],
         });
       }
     }
