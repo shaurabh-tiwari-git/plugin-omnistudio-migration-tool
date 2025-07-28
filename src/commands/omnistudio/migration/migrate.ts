@@ -361,9 +361,9 @@ export default class Migrate extends OmniStudioBaseCommand {
           Logger.error(ex.message);
           process.exit(1);
         }
-        const errMsg = error instanceof Error ? error.message : String(error);
+        const errMsg = ex instanceof Error ? ex.message : String(ex);
         Logger.error(messages.getMessage('errorMigrationMessage', [errMsg]));
-        Logger.logVerbose(error);
+        Logger.logVerbose(ex);
         objectMigrationResults.push({
           name: cls.getName(),
           data: [],
