@@ -17,7 +17,6 @@ import { InvalidEntityTypeError, MigrationResult, MigrationTool } from '../../..
 import { ResultsBuilder } from '../../../utils/resultsbuilder';
 import { CardMigrationTool } from '../../../migration/flexcard';
 import { OmniScriptExportType, OmniScriptMigrationTool } from '../../../migration/omniscript';
-import { GlobalAutoNumberMigrationTool } from '../../../migration/globalautonumber';
 import { Logger } from '../../../utils/logger';
 import OmnistudioRelatedObjectMigrationFacade from '../../../migration/related/OmnistudioRelatedObjectMigrationFacade';
 import { generatePackageXml } from '../../../utils/generatePackageXml';
@@ -25,9 +24,10 @@ import { OmnistudioOrgDetails, OrgUtils } from '../../../utils/orgUtils';
 import { Constants } from '../../../utils/constants/stringContants';
 import { OrgPreferences } from '../../../utils/orgPreferences';
 import { ProjectPathUtil } from '../../../utils/projectPathUtil';
-import { PostMigrate } from '../../../migration/postMigrate';
 import { PromptUtil } from '../../../utils/promptUtil';
 import { YES_SHORT, YES_LONG, NO_SHORT, NO_LONG } from '../../../utils/projectPathUtil';
+import { PostMigrate } from '../../../migration/postMigrate';
+import { GlobalAutoNumberMigrationTool } from '../../../migration/globalautonumber';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -198,21 +198,21 @@ export default class Migrate extends OmniStudioBaseCommand {
     // POST MIGRATION
     let actionItems = [];
     const postMigrate: PostMigrate = new PostMigrate(
-    this.org,
-    namespace,
-    conn,
-    this.logger,
-    messages,
-    this.ux,
-    objectsToProcess
-  );
-    if (!migrateOnly) {
+      this.org,
+      namespace,
+      conn,
+      this.logger,
+      messages,
+      this.ux,
+      objectsToProcess
+    );
 
-    actionItems = await postMigrate.setDesignersToUseStandardDataModel(namespace);
-  }
-  await postMigrate.restoreExperienceAPIMetadataSettings(isExperienceBundleMetadataAPIProgramaticallyEnabled);
-  const migrationActionItems = this.collectActionItems(objectMigrationResults);
-  actionItems = [...actionItems, ...migrationActionItems];
+    if (!migrateOnly) {
+      actionItems = await postMigrate.setDesignersToUseStandardDataModel(namespace);
+    }
+    await postMigrate.restoreExperienceAPIMetadataSettings(isExperienceBundleMetadataAPIProgramaticallyEnabled);
+    const migrationActionItems = this.collectActionItems(objectMigrationResults);
+    actionItems = [...actionItems, ...migrationActionItems];
 
     await ResultsBuilder.generateReport(
       objectMigrationResults,
@@ -228,27 +228,87 @@ export default class Migrate extends OmniStudioBaseCommand {
     return { objectMigrationResults };
   }
 
-  private async setDesignersToUseStandardDataModel(namespace: string): Promise<string[]> {
-    const userActionMessage: string[] = [];
-    try {
-      Logger.logVerbose('Setting designers to use the standard data model');
-      const apexCode = `
-          ${namespace}.OmniStudioPostInstallClass.useStandardDataModel();
-        `;
+  private async getMigrationConsent(): Promise<boolean> {
+    const askWithTimeOut = PromptUtil.askWithTimeOut(messages);
+    let validResponse = false;
+    let consent = false;
 
-      const result: ExecuteAnonymousResult = await AnonymousApexRunner.run(this.org, apexCode);
-      if (result?.success === false) {
-        const message = result?.exceptionStackTrace;
-        Logger.error(`Error occurred while setting designers to use the standard data model ${message}`);
-        userActionMessage.push(messages.getMessage('manuallySwitchDesignerToStandardDataModel'));
-      } else if (result?.success === true) {
-        Logger.logVerbose('Successfully executed setDesignersToUseStandardDataModel');
+    while (!validResponse) {
+      try {
+        const resp = await askWithTimeOut(Logger.prompt.bind(Logger), messages.getMessage('migrationConsentMessage'));
+        const response = typeof resp === 'string' ? resp.trim().toLowerCase() : '';
+
+        if (response === YES_SHORT || response === YES_LONG) {
+          consent = true;
+          validResponse = true;
+        } else if (response === NO_SHORT || response === NO_LONG) {
+          consent = false;
+          validResponse = true;
+        } else {
+          Logger.error(messages.getMessage('invalidYesNoResponse'));
+        }
+      } catch (err) {
+        Logger.error(messages.getMessage('requestTimedOut'));
+        process.exit(1);
       }
-    } catch (ex) {
-      Logger.error(`Exception occurred while setting designers to use the standard data model ${JSON.stringify(ex)}`);
-      userActionMessage.push(messages.getMessage('manuallySwitchDesignerToStandardDataModel'));
     }
-    return userActionMessage;
+
+    return consent;
+  }
+
+  private async handleExperienceSitePrerequisites(
+    objectsToProcess: string[],
+    conn: Connection,
+    isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean }
+  ): Promise<void> {
+    if (objectsToProcess.includes(Constants.ExpSites)) {
+      const expMetadataApiConsent = await this.getExpSiteMetadataEnableConsent();
+      Logger.logVerbose(`The consent for exp site is  ${expMetadataApiConsent}`);
+
+      if (expMetadataApiConsent === false) {
+        Logger.warn('Consent for experience sites is not provided. Experience sites will not be processed');
+        this.removeKeyFromRelatedObjectsToProcess(Constants.ExpSites, objectsToProcess);
+        Logger.logVerbose(`Objects to process after removing expsite are ${JSON.stringify(objectsToProcess)}`);
+        return;
+      }
+
+      const isMetadataAPIPreEnabled = await OrgPreferences.isExperienceBundleMetadataAPIEnabled(conn);
+      if (isMetadataAPIPreEnabled === true) {
+        Logger.logVerbose('ExperienceBundle metadata api is already enabled');
+        return;
+      }
+
+      Logger.logVerbose('ExperienceBundle metadata api needs to be programatically enabled');
+      isExperienceBundleMetadataAPIProgramaticallyEnabled.value = await OrgPreferences.setExperienceBundleMetadataAPI(
+        conn,
+        true
+      );
+      if (isExperienceBundleMetadataAPIProgramaticallyEnabled.value === false) {
+        this.removeKeyFromRelatedObjectsToProcess(Constants.ExpSites, objectsToProcess);
+        Logger.warn('Since the api could not able enabled the experience sites would not be processed');
+      }
+
+      Logger.logVerbose(`Objects to process are ${JSON.stringify(objectsToProcess)}`);
+    }
+  }
+
+  private collectActionItems(objectMigrationResults: MigratedObject[]): string[] {
+    const actionItems: string[] = [];
+    // Collect errors from migration results and add them to action items
+    for (const result of objectMigrationResults) {
+      if (result.errors && result.errors.length > 0) {
+        actionItems.push(...result.errors);
+      }
+    }
+
+    return actionItems;
+  }
+
+  private removeKeyFromRelatedObjectsToProcess(keyToRemove: string, relatedObjects: string[]): void {
+    const index = relatedObjects.indexOf(Constants.ExpSites);
+    if (index > -1) {
+      relatedObjects.splice(index, 1);
+    }
   }
 
   private async truncateObjects(migrationObjects: MigrationTool[], debugTimer: DebugTimer): Promise<MigratedObject[]> {
