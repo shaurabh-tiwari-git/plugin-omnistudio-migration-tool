@@ -1,5 +1,5 @@
 import { expect } from '@salesforce/command/lib/test';
-import { Org } from '@salesforce/core';
+import { Messages, Org } from '@salesforce/core';
 import sinon = require('sinon');
 import { ExperienceSiteMigration } from '../../../src/migration/related/ExperienceSiteMigration';
 import { FileUtil, File } from '../../../src/utils/file/fileUtil';
@@ -17,6 +17,7 @@ const Migrate = 'Migrate';
 
 describe('ExperienceSiteMigration', () => {
   let org: Org;
+  let mockMessages: Messages;
   let experienceSiteMigration: ExperienceSiteMigration;
   const testProjectPath = '/test/project/path';
   const testNamespace = 'vlocity_ins';
@@ -81,7 +82,7 @@ describe('ExperienceSiteMigration', () => {
 
   beforeEach(() => {
     org = {} as unknown as Org;
-    experienceSiteMigration = new ExperienceSiteMigration(testProjectPath, testNamespace, org);
+    experienceSiteMigration = new ExperienceSiteMigration(testProjectPath, testNamespace, org, mockMessages);
 
     // Mock Logger
     sinon.stub(Logger, 'logVerbose');
