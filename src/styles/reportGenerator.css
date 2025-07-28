@@ -265,6 +265,8 @@ html {
   position: relative;
   overflow-y: auto;
   overflow-x: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .closeButton {
@@ -280,6 +282,8 @@ html {
   align-items: center;
   justify-content: center;
   z-index: 1050;
+  border-radius: 3px;
+  padding-right: 0;
 }
 
 .modalHeader {
@@ -291,6 +295,11 @@ html {
 }
 
 .modalContent {
+  overflow: auto;
+}
+
+.modalContent p {
+  margin: 0;
   margin-top: 20px;
 }
 

@@ -16,6 +16,8 @@ import { ApexAssessmentReporter } from './ApexAssessmentReporter';
 import { IPAssessmentReporter } from './IPAssessmentReporter';
 import { DRAssessmentReporter } from './DRAssessmentReporter';
 import { FlexcardAssessmentReporter } from './FlexcardAssessmentReporter';
+import { GlobalAutoNumberAssessmentReporter } from './GlobalAutoNumberAssessmentReporter';
+import { FlexipageAssessmentReporter } from './FlexipageAssessmentReporter';
 
 export class AssessmentReporter {
   private static basePath = path.join(process.cwd(), 'assessment_reports');
@@ -23,10 +25,12 @@ export class AssessmentReporter {
   private static flexcardAssessmentFileName = 'flexcard_assessment.html';
   private static integrationProcedureAssessmentFileName = 'integration_procedure_assessment.html';
   private static dataMapperAssessmentFileName = 'datamapper_assessment.html';
+  private static globalAutoNumberAssessmentFileName = 'globalautonumber_assessment.html';
   private static apexAssessmentFileName = 'apex_assessment.html';
   // private static lwcAssessmentFileName = 'lwc_assessment.html';
   private static dashboardFileName = 'dashboard.html';
   private static templateDir = 'templates';
+  private static flexipageAssessmentFileName = 'flexipage_assessment.html';
   private static dashboardTemplateName = 'dashboard.template';
   private static reportTemplateName = 'assessmentReport.template';
   private static dashboardTemplate = path.join(__dirname, '..', '..', this.templateDir, this.dashboardTemplateName);
@@ -82,6 +86,15 @@ export class AssessmentReporter {
         )
       );
 
+      this.createDocument(
+        path.join(this.basePath, this.flexipageAssessmentFileName),
+        TemplateParser.generate(
+          assessmentReportTemplate,
+          FlexipageAssessmentReporter.getFlexipageAssessmentData(result.flexipageAssessmentInfos, omnistudioOrgDetails),
+          messages
+        )
+      );
+
       // this.createDocument(
       //   path.join(this.basePath, this.lwcAssessmentFileName),
       //   TemplateParser.generate(
@@ -110,6 +123,19 @@ export class AssessmentReporter {
           assessmentReportTemplate,
           DRAssessmentReporter.getDatamapperAssessmentData(
             result.dataRaptorAssessmentInfos,
+            instanceUrl,
+            omnistudioOrgDetails
+          ),
+          messages
+        )
+      );
+
+      this.createDocument(
+        path.join(this.basePath, this.globalAutoNumberAssessmentFileName),
+        TemplateParser.generate(
+          assessmentReportTemplate,
+          GlobalAutoNumberAssessmentReporter.getGlobalAutoNumberAssessmentData(
+            result.globalAutoNumberAssessmentInfos,
             instanceUrl,
             omnistudioOrgDetails
           ),
@@ -182,6 +208,22 @@ export class AssessmentReporter {
           );
           break;
 
+        case Constants.GlobalAutoNumber:
+          reports.push(Constants.GlobalAutoNumber);
+          this.createDocument(
+            path.join(this.basePath, this.globalAutoNumberAssessmentFileName),
+            TemplateParser.generate(
+              assessmentReportTemplate,
+              GlobalAutoNumberAssessmentReporter.getGlobalAutoNumberAssessmentData(
+                result.globalAutoNumberAssessmentInfos,
+                instanceUrl,
+                omnistudioOrgDetails
+              ),
+              messages
+            )
+          );
+          break;
+
         default:
       }
     }
@@ -198,6 +240,18 @@ export class AssessmentReporter {
       );
     }
 
+    if (relatedObjects && relatedObjects.includes(Constants.FlexiPage)) {
+      reports.push(Constants.FlexiPage);
+      this.createDocument(
+        path.join(this.basePath, this.flexipageAssessmentFileName),
+        TemplateParser.generate(
+          assessmentReportTemplate,
+          FlexipageAssessmentReporter.getFlexipageAssessmentData(result.flexipageAssessmentInfos, omnistudioOrgDetails),
+          messages
+        )
+      );
+    }
+    // TODO: Uncomment code once MVP for migration is completed
     // if (relatedObjects && relatedObjects.includes(Constants.LWC)) {
     //   reports.push(Constants.LWC);
     //   this.createDocument(
@@ -271,6 +325,14 @@ export class AssessmentReporter {
         file: this.flexcardAssessmentFileName,
       });
     }
+    if (reports.includes(Constants.GlobalAutoNumber)) {
+      summaryItems.push({
+        name: 'Global Auto Number',
+        total: result.globalAutoNumberAssessmentInfos.length,
+        data: GlobalAutoNumberAssessmentReporter.getSummaryData(result.globalAutoNumberAssessmentInfos),
+        file: this.globalAutoNumberAssessmentFileName,
+      });
+    }
     if (reports.includes(Constants.Apex)) {
       summaryItems.push({
         name: 'Apex',
@@ -279,6 +341,15 @@ export class AssessmentReporter {
         file: this.apexAssessmentFileName,
       });
     }
+    if (reports.includes(Constants.FlexiPage)) {
+      summaryItems.push({
+        name: 'FlexiPage',
+        total: result.flexipageAssessmentInfos.length,
+        data: FlexipageAssessmentReporter.getSummaryData(result.flexipageAssessmentInfos),
+        file: this.flexipageAssessmentFileName,
+      });
+    }
+
     // if (reports.includes(Constants.LWC)) {
     //   summaryItems.push({
     //     name: 'Lightning Web Components',
@@ -288,8 +359,8 @@ export class AssessmentReporter {
     //   });
     // }
     return {
-      title: 'Assessment Reports',
-      heading: 'Assessment Reports',
+      title: 'Omnistudio Assessment Report Dashboard',
+      heading: 'Omnistudio Assessment Report Dashboard',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
       assessmentDate: new Date().toLocaleString(),
       summaryItems,

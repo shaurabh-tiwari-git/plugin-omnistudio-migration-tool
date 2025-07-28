@@ -7,6 +7,7 @@ import { AssessmentReporter } from '../../../utils/resultsbuilder/assessmentRepo
 import { OmniScriptExportType, OmniScriptMigrationTool } from '../../../migration/omniscript';
 import { CardMigrationTool } from '../../../migration/flexcard';
 import { DataRaptorMigrationTool } from '../../../migration/dataraptor';
+import { GlobalAutoNumberMigrationTool } from '../../../migration/globalautonumber';
 import { DebugTimer } from '../../../utils';
 import { Logger } from '../../../utils/logger';
 import OmnistudioRelatedObjectMigrationFacade from '../../../migration/related/OmnistudioRelatedObjectMigrationFacade';
@@ -41,7 +42,7 @@ export default class Assess extends OmniStudioBaseCommand {
     }),
     relatedobjects: flags.string({
       char: 'r',
-      description: messages.getMessage('apexLwc'),
+      description: messages.getMessage('relatedObjectGA'),
     }),
     verbose: flags.builtin({
       type: 'builtin',
@@ -101,10 +102,12 @@ export default class Assess extends OmniStudioBaseCommand {
       apexAssessmentInfos: [],
       dataRaptorAssessmentInfos: [],
       flexCardAssessmentInfos: [],
+      globalAutoNumberAssessmentInfos: [],
       omniAssessmentInfo: {
         osAssessmentInfos: [],
         ipAssessmentInfos: [],
       },
+      flexipageAssessmentInfos: [],
     };
 
     Logger.log(messages.getMessage('assessmentInitialization', [String(namespace)]));
@@ -125,7 +128,7 @@ export default class Assess extends OmniStudioBaseCommand {
     // Assess related objects if specified
     if (relatedObjects) {
       // To-Do: Add LWC to valid options when GA is released
-      const validOptions = [Constants.Apex];
+      const validOptions = [Constants.Apex, Constants.FlexiPage];
       objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
 
       // Validate input
@@ -146,6 +149,7 @@ export default class Assess extends OmniStudioBaseCommand {
       const relatedObjectAssessmentResult = omnistudioRelatedObjectsMigration.assessAll(objectsToProcess);
       assesmentInfo.lwcAssessmentInfos = relatedObjectAssessmentResult.lwcAssessmentInfos;
       assesmentInfo.apexAssessmentInfos = relatedObjectAssessmentResult.apexAssessmentInfos;
+      assesmentInfo.flexipageAssessmentInfos = relatedObjectAssessmentResult.flexipageAssessmentInfos;
     }
     try {
       orgs.rollbackFlags = await OrgPreferences.checkRollbackFlags(conn);
@@ -169,6 +173,7 @@ export default class Assess extends OmniStudioBaseCommand {
       await this.assessDataRaptors(assesmentInfo, namespace, conn);
       await this.assessFlexCards(assesmentInfo, namespace, conn, allVersions);
       await this.assessOmniScripts(assesmentInfo, namespace, conn, allVersions, OmniScriptExportType.All);
+      await this.assessGlobalAutoNumbers(assesmentInfo, namespace, conn);
       return;
     }
 
@@ -184,6 +189,9 @@ export default class Assess extends OmniStudioBaseCommand {
         break;
       case Constants.IntegrationProcedure:
         await this.assessOmniScripts(assesmentInfo, namespace, conn, allVersions, OmniScriptExportType.IP);
+        break;
+      case Constants.GlobalAutoNumber:
+        await this.assessGlobalAutoNumbers(assesmentInfo, namespace, conn);
         break;
       default:
         throw new Error(messages.getMessage('invalidOnlyFlag'));
@@ -234,5 +242,19 @@ export default class Assess extends OmniStudioBaseCommand {
       ])
     );
     Logger.log(messages.getMessage('omniScriptAssessmentCompleted'));
+  }
+
+  private async assessGlobalAutoNumbers(
+    assesmentInfo: AssessmentInfo,
+    namespace: string,
+    conn: Connection
+  ): Promise<void> {
+    Logger.logVerbose(messages.getMessage('startingGlobalAutoNumberAssessment'));
+    const globalAutoNumberMigrationTool = new GlobalAutoNumberMigrationTool(namespace, conn, Logger, messages, this.ux);
+    assesmentInfo.globalAutoNumberAssessmentInfos = await globalAutoNumberMigrationTool.assess();
+    Logger.logVerbose(
+      messages.getMessage('assessedGlobalAutoNumbersCount', [assesmentInfo.globalAutoNumberAssessmentInfos.length])
+    );
+    Logger.log(messages.getMessage('globalAutoNumberAssessmentCompleted'));
   }
 }

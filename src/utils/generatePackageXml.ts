@@ -1,17 +1,23 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { ApexAssessmentInfo, LWCAssessmentInfo } from './interfaces';
+import { ApexAssessmentInfo, FlexiPageAssessmentInfo, LWCAssessmentInfo } from './interfaces';
 
 export class generatePackageXml {
   // Method to generate package.xml with additional types
   public static createChangeList(
     apexAssementInfos: ApexAssessmentInfo[],
-    lwcAssessmentInfos: LWCAssessmentInfo[]
+    lwcAssessmentInfos: LWCAssessmentInfo[],
+    flexipageAssessmentInfos: FlexiPageAssessmentInfo[]
   ): void {
     const apexXml = generatePackageXml.getXmlElementforMembers(this.getApexclasses(apexAssementInfos), 'ApexClass');
     const lwcXml = generatePackageXml.getXmlElementforMembers(
       this.getLwcs(lwcAssessmentInfos),
       'LightningComponentBundle'
+    );
+
+    const flexipageXml = generatePackageXml.getXmlElementforMembers(
+      this.getFlexipageXml(flexipageAssessmentInfos),
+      'FlexiPage'
     );
 
     const additionalTypes = `
@@ -38,6 +44,7 @@ export class generatePackageXml {
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
       ${apexXml}
       ${lwcXml}
+      ${flexipageXml}
       ${additionalTypes}
     <version>57.0</version>
 </Package>
@@ -73,6 +80,15 @@ export class generatePackageXml {
         ${membersTag}
         <name>${type}</name>
     </types> `;
+  }
+
+  private static getFlexipageXml(flexipageAssessmentInfos: FlexiPageAssessmentInfo[]): string[] {
+    if (!flexipageAssessmentInfos || flexipageAssessmentInfos.length === 0) return [];
+    return flexipageAssessmentInfos
+      .filter((flexipageAssessmentInfo) => flexipageAssessmentInfo.status === 'Complete')
+      .map((flexipageAssessmentInfo) => {
+        return flexipageAssessmentInfo.name.replace('.flexipage-meta.xml', '');
+      });
   }
 
   private static getApexclasses(apexAssessmentInfos: ApexAssessmentInfo[]): string[] {

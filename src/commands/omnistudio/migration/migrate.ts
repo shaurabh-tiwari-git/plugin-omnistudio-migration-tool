@@ -9,8 +9,7 @@
  */
 import * as os from 'os';
 import { flags } from '@salesforce/command';
-import { Messages } from '@salesforce/core';
-import { ExecuteAnonymousResult } from 'jsforce';
+import { Connection, Messages } from '@salesforce/core';
 import OmniStudioBaseCommand from '../../basecommand';
 import { DataRaptorMigrationTool } from '../../../migration/dataraptor';
 import { DebugTimer, MigratedObject, MigratedRecordInfo } from '../../../utils';
@@ -18,14 +17,15 @@ import { InvalidEntityTypeError, MigrationResult, MigrationTool } from '../../..
 import { ResultsBuilder } from '../../../utils/resultsbuilder';
 import { CardMigrationTool } from '../../../migration/flexcard';
 import { OmniScriptExportType, OmniScriptMigrationTool } from '../../../migration/omniscript';
+import { GlobalAutoNumberMigrationTool } from '../../../migration/globalautonumber';
 import { Logger } from '../../../utils/logger';
 import OmnistudioRelatedObjectMigrationFacade from '../../../migration/related/OmnistudioRelatedObjectMigrationFacade';
 import { generatePackageXml } from '../../../utils/generatePackageXml';
 import { OmnistudioOrgDetails, OrgUtils } from '../../../utils/orgUtils';
 import { Constants } from '../../../utils/constants/stringContants';
 import { OrgPreferences } from '../../../utils/orgPreferences';
-import { AnonymousApexRunner } from '../../../utils/apex/executor/AnonymousApexRunner';
 import { ProjectPathUtil } from '../../../utils/projectPathUtil';
+import { PostMigrate } from '../../../migration/postMigrate';
 import { PromptUtil } from '../../../utils/promptUtil';
 import { YES_SHORT, YES_LONG, NO_SHORT, NO_LONG } from '../../../utils/projectPathUtil';
 
@@ -59,7 +59,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     }),
     relatedobjects: flags.string({
       char: 'r',
-      description: messages.getMessage('apexLwc'),
+      description: messages.getMessage('relatedObjectGA'),
     }),
     verbose: flags.builtin({
       type: 'builtin',
@@ -86,7 +86,6 @@ export default class Migrate extends OmniStudioBaseCommand {
     const migrateOnly = (this.flags.only || '') as string;
     const allVersions = this.flags.allversions || (false as boolean);
     const relatedObjects = (this.flags.relatedobjects || '') as string;
-
     // this.org is guaranteed because requiresUsername=true, as opposed to supportsUsername
     const conn = this.org.getConnection();
     if (apiVersion) {
@@ -132,9 +131,10 @@ export default class Migrate extends OmniStudioBaseCommand {
     let projectPath: string;
     let objectsToProcess: string[] = [];
     let targetApexNamespace: string;
+    const isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean } = { value: false };
     if (relatedObjects) {
       // To-Do: Add LWC to valid options when GA is released
-      const validOptions = [Constants.Apex];
+      const validOptions = [Constants.Apex, Constants.ExpSites, Constants.FlexiPage];
       objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
       // Validate input
       for (const obj of objectsToProcess) {
@@ -149,7 +149,15 @@ export default class Migrate extends OmniStudioBaseCommand {
         // Use ProjectPathUtil for APEX project folder selection (matches assess.ts logic)
         projectPath = await ProjectPathUtil.getProjectPath(messages, true);
         targetApexNamespace = await this.getTargetApexNamespace(objectsToProcess, targetApexNamespace);
-      }
+        await this.handleExperienceSitePrerequisites(
+          objectsToProcess,
+          conn,
+          isExperienceBundleMetadataAPIProgramaticallyEnabled
+        );
+        Logger.logVerbose(
+          'The objects to process after handleExpSitePrerequisite are ' + JSON.stringify(objectsToProcess)
+        );
+      } // TODO - What if general consent is no
     }
 
     Logger.log(messages.getMessage('migrationInitialization', [String(namespace)]));
@@ -183,13 +191,28 @@ export default class Migrate extends OmniStudioBaseCommand {
     const relatedObjectMigrationResult = omnistudioRelatedObjectsMigration.migrateAll(objectsToProcess);
     generatePackageXml.createChangeList(
       relatedObjectMigrationResult.apexAssessmentInfos,
-      relatedObjectMigrationResult.lwcAssessmentInfos
+      relatedObjectMigrationResult.lwcAssessmentInfos,
+      relatedObjectMigrationResult.flexipageAssessmentInfos
     );
 
+    // POST MIGRATION
     let actionItems = [];
+    const postMigrate: PostMigrate = new PostMigrate(
+    this.org,
+    namespace,
+    conn,
+    this.logger,
+    messages,
+    this.ux,
+    objectsToProcess
+  );
     if (!migrateOnly) {
-      actionItems = await this.setDesignersToUseStandardDataModel(namespace);
-    }
+
+    actionItems = await postMigrate.setDesignersToUseStandardDataModel(namespace);
+  }
+  await postMigrate.restoreExperienceAPIMetadataSettings(isExperienceBundleMetadataAPIProgramaticallyEnabled);
+  const migrationActionItems = this.collectActionItems(objectMigrationResults);
+  actionItems = [...actionItems, ...migrationActionItems];
 
     await ResultsBuilder.generateReport(
       objectMigrationResults,
@@ -203,34 +226,6 @@ export default class Migrate extends OmniStudioBaseCommand {
 
     // Return results needed for --json flag
     return { objectMigrationResults };
-  }
-
-  private async getMigrationConsent(): Promise<boolean> {
-    const askWithTimeOut = PromptUtil.askWithTimeOut(messages);
-    let validResponse = false;
-    let consent = false;
-
-    while (!validResponse) {
-      try {
-        const resp = await askWithTimeOut(Logger.prompt.bind(Logger), messages.getMessage('migrationConsentMessage'));
-        const response = typeof resp === 'string' ? resp.trim().toLowerCase() : '';
-
-        if (response === YES_SHORT || response === YES_LONG) {
-          consent = true;
-          validResponse = true;
-        } else if (response === NO_SHORT || response === NO_LONG) {
-          consent = false;
-          validResponse = true;
-        } else {
-          Logger.error(messages.getMessage('invalidYesNoResponse'));
-        }
-      } catch (err) {
-        Logger.error(messages.getMessage('requestTimedOut'));
-        process.exit(1);
-      }
-    }
-
-    return consent;
   }
 
   private async setDesignersToUseStandardDataModel(namespace: string): Promise<string[]> {
@@ -267,8 +262,10 @@ export default class Migrate extends OmniStudioBaseCommand {
       } catch (ex: any) {
         objectMigrationResults.push({
           name: cls.getName(),
+          data: [],
           errors: [ex.message],
         });
+        Logger.error(messages.getMessage('cleaningFailed', [cls.getName()]));
       }
     }
     return objectMigrationResults;
@@ -287,6 +284,7 @@ export default class Migrate extends OmniStudioBaseCommand {
             return {
               name: r.name,
               data: this.mergeRecordAndUploadResults(r, cls),
+              errors: r.errors,
             };
           })
         );
@@ -298,6 +296,7 @@ export default class Migrate extends OmniStudioBaseCommand {
         Logger.error('Error migrating object', ex);
         objectMigrationResults.push({
           name: cls.getName(),
+          data: [],
           errors: [ex.message],
         });
       }
@@ -325,6 +324,7 @@ export default class Migrate extends OmniStudioBaseCommand {
           allVersions
         ),
         new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions),
+        new GlobalAutoNumberMigrationTool(namespace, conn, this.logger, messages, this.ux),
       ];
     } else {
       switch (migrateOnly) {
@@ -360,6 +360,9 @@ export default class Migrate extends OmniStudioBaseCommand {
         case Constants.DataMapper:
           migrationObjects.push(new DataRaptorMigrationTool(namespace, conn, this.logger, messages, this.ux));
           break;
+        case Constants.GlobalAutoNumber:
+          migrationObjects.push(new GlobalAutoNumberMigrationTool(namespace, conn, this.logger, messages, this.ux));
+          break;
         default:
           throw new Error(messages.getMessage('invalidOnlyFlag'));
       }
@@ -381,6 +384,23 @@ export default class Migrate extends OmniStudioBaseCommand {
     while (consent === null) {
       try {
         consent = await Logger.confirm(messages.getMessage('userConsentMessage'));
+      } catch (error) {
+        Logger.log(messages.getMessage('invalidYesNoResponse'));
+        consent = null;
+      }
+    }
+
+    return consent;
+  }
+
+  private async getExpSiteMetadataEnableConsent(): Promise<boolean> {
+    let consent: boolean | null = null;
+
+    while (consent === null) {
+      try {
+        consent = await Logger.confirm(
+          'By proceeding further, you hereby consent to enable digital experience metadata api(y/n). If y sites will be processed, if n expsites will not be processed'
+        );
       } catch (error) {
         Logger.log(messages.getMessage('invalidYesNoResponse'));
         consent = null;

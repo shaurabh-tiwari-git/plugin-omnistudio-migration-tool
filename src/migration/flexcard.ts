@@ -10,6 +10,8 @@ import {
   MigrationTool,
   ObjectMapping,
   UploadRecordResult,
+  MigrationStorage,
+  FlexcardStorage,
 } from './interfaces';
 import { Connection, Messages } from '@salesforce/core';
 import { UX } from '@salesforce/command';
@@ -17,6 +19,7 @@ import { FlexCardAssessmentInfo } from '../../src/utils';
 import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
 import { Constants } from '../utils/constants/stringContants';
+import { StorageUtil } from '../utils/storageUtil';
 
 export class CardMigrationTool extends BaseMigrationTool implements MigrationTool {
   static readonly VLOCITYCARD_NAME = 'VlocityCard__c';
@@ -84,6 +87,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   async migrate(): Promise<MigrationResult[]> {
     // Get All the Active VlocityCard__c records
     const cards = await this.getAllActiveCards();
+
     Logger.log(this.messages.getMessage('foundFlexCardsToMigrate', [cards.length]));
 
     const progressBar = createProgressBar('Migrating', 'Flexcard');
@@ -195,6 +199,8 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       assessmentStatus = 'Need Manual Intervention';
     }
     uniqueNames.add(cleanedName);
+
+    this.addToAssessmentStorage(originalName, cleanedName);
 
     // Check for author name changes
     const originalAuthor = flexCard[this.namespacePrefix + 'Author__c'];
@@ -486,6 +492,9 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       await this.uploadCard(cards, card, cardsUploadInfo, originalRecords, uniqueNames);
       progressBar.update(++progressCounter);
     }
+
+    this.prepareStorageForFlexcards(cardsUploadInfo, originalRecords);
+
     progressBar.stop();
 
     return cardsUploadInfo;
@@ -567,8 +576,9 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
             this.messages.getMessage('cardAuthorNameChangeMessage', [transformedCardAuthorName])
           );
         }
+
+        uploadResult.newName = transformedCardName;
         if (transformedCard['Name'] !== card['Name']) {
-          uploadResult.newName = transformedCardName;
           uploadResult.warnings.unshift(this.messages.getMessage('cardNameChangeMessage', [transformedCardName]));
         }
 
@@ -609,6 +619,61 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         errors: err,
         warnings: [],
       });
+    }
+  }
+
+  private addToAssessmentStorage(originalName: string, cleanedName: string) {
+    let storage: MigrationStorage = StorageUtil.getOmnistudioAssessmentStorage();
+    if (storage.fcStorage.has(originalName)) {
+      storage.fcStorage.get(originalName).isDuplicate = true;
+    } else {
+      storage.fcStorage.set(originalName, {
+        name: cleanedName,
+        isDuplicate: false,
+      });
+    }
+  }
+
+  private prepareStorageForFlexcards(
+    cardsUploadInfo: Map<string, UploadRecordResult>,
+    originalRecords: Map<string, any>
+  ) {
+    Logger.logVerbose('Started preparing storage for flexcards');
+    let storage: MigrationStorage = StorageUtil.getOmnistudioMigrationStorage();
+
+    for (let key of Array.from(originalRecords.keys())) {
+      try {
+        let oldrecord = originalRecords.get(key);
+        let newrecord = cardsUploadInfo.get(key);
+
+        let value: FlexcardStorage = {
+          name: newrecord['newName'],
+          isDuplicate: false,
+        };
+
+        if (newrecord.hasErrors) {
+          value.error = newrecord.errors;
+          value.migrationSuccess = false;
+        } else {
+          value.migrationSuccess = true;
+        }
+
+        let finalKey = `${oldrecord['Name']}`;
+        if (storage.fcStorage.has(finalKey)) {
+          // Key already exists - handle accordingly
+          Logger.logVerbose(`Key ${finalKey} already exists in flexcard storage`);
+          value.isDuplicate = true;
+          storage.fcStorage.set(finalKey, value);
+        } else {
+          // Key doesn't exist - safe to set
+          storage.fcStorage.set(finalKey, value);
+        }
+      } catch (error) {
+        Logger.logVerbose('Error occurred while processing key for flexcard storage');
+        Logger.error(error);
+      }
+
+      StorageUtil.printMigrationStorage();
     }
   }
 
