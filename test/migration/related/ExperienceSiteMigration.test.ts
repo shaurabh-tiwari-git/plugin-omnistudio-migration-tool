@@ -82,6 +82,30 @@ describe('ExperienceSiteMigration', () => {
 
   beforeEach(() => {
     org = {} as unknown as Org;
+
+    // Mock Messages
+    const getMessageStub = sinon.stub();
+    getMessageStub
+      .withArgs('manualInterventionForExperienceSite', sinon.match.any)
+      .callsFake((key: string, args: string[]) => {
+        return `${args[0]} needs manual intervention`;
+      });
+    getMessageStub
+      .withArgs('manualInterventionForExperienceSiteAsFailure', sinon.match.any)
+      .callsFake((key: string, args: string[]) => {
+        return `${args[0]} needs manual intervention as migration failed`;
+      });
+    getMessageStub
+      .withArgs('manualInterventionForExperienceSiteAsDuplicateKey', sinon.match.any)
+      .callsFake((key: string, args: string[]) => {
+        return `${args[0]} needs manual intervention as duplicated key found`;
+      });
+    getMessageStub.returns('Mock message'); // fallback for any other message keys
+
+    mockMessages = {
+      getMessage: getMessageStub,
+    } as unknown as Messages;
+
     experienceSiteMigration = new ExperienceSiteMigration(testProjectPath, testNamespace, org, mockMessages);
 
     // Mock Logger
