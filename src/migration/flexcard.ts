@@ -5,6 +5,7 @@ import { DebugTimer, QueryTools, SortDirection } from '../utils';
 import { NetUtils } from '../utils/net';
 import { BaseMigrationTool } from './base';
 import {
+  InvalidEntityTypeError,
   MigrationResult,
   MigrationTool,
   ObjectMapping,
@@ -23,6 +24,7 @@ import { StorageUtil } from '../utils/storageUtil';
 export class CardMigrationTool extends BaseMigrationTool implements MigrationTool {
   static readonly VLOCITYCARD_NAME = 'VlocityCard__c';
   static readonly OMNIUICARD_NAME = 'OmniUiCard';
+  static readonly VERSION_PROP = 'Version__c';
   private readonly allVersions: boolean;
 
   constructor(
@@ -42,7 +44,9 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   }
 
   getRecordName(record: string) {
-    return record['Name'];
+    return this.allVersions
+      ? `${record['Name']}_${record[this.namespacePrefix + CardMigrationTool.VERSION_PROP]}`
+      : record['Name'];
   }
 
   getMappings(): ObjectMapping[] {
@@ -123,9 +127,10 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       const flexCardsAssessmentInfos = this.processCardComponents(flexCards);
       return flexCardsAssessmentInfos;
     } catch (err) {
-      Logger.error(this.messages.getMessage('errorDuringFlexCardAssessment'));
-      Logger.error(JSON.stringify(err));
-      Logger.error(err.stack);
+      if (err instanceof InvalidEntityTypeError) {
+        throw err;
+      }
+      Logger.error(this.messages.getMessage('errorDuringFlexCardAssessment'), err);
     }
   }
 
@@ -147,6 +152,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       } catch (e) {
         flexCardAssessmentInfos.push({
           name: flexCard['Name'],
+          oldName: flexCard['Name'],
           id: flexCard['Id'],
           dependenciesIP: [],
           dependenciesDR: [],
@@ -155,11 +161,12 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           dependenciesLWC: [],
           dependenciesApexRemoteAction: [],
           infos: [],
-          warnings: [this.messages.getMessage('unexpectedError')],
+          warnings: [],
+          errors: [this.messages.getMessage('unexpectedError')],
+          migrationStatus: 'Failed',
         });
         const error = e as Error;
-        Logger.error(JSON.stringify(error));
-        Logger.error(error.stack);
+        Logger.error('Error processing flex card', error);
       }
       progressBar.update(++progressCounter);
     }
@@ -170,8 +177,10 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   private async processFlexCard(flexCard: AnyJson, uniqueNames: Set<string>): Promise<FlexCardAssessmentInfo> {
     const flexCardName = flexCard['Name'];
     Logger.info(this.messages.getMessage('processingFlexCard', [flexCardName]));
+    const version = flexCard[this.namespacePrefix + CardMigrationTool.VERSION_PROP];
     const flexCardAssessmentInfo: FlexCardAssessmentInfo = {
-      name: flexCardName,
+      name: this.allVersions ? `${flexCardName}_${version}` : flexCardName,
+      oldName: this.allVersions ? `${flexCardName}_${version}` : flexCardName,
       id: flexCard['Id'],
       dependenciesIP: [],
       dependenciesDR: [],
@@ -181,20 +190,26 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       dependenciesApexRemoteAction: [],
       infos: [],
       warnings: [],
+      errors: [],
+      migrationStatus: '',
     };
 
     // Check for name changes due to API naming requirements
     const originalName: string = flexCardName;
     const cleanedName: string = this.cleanName(originalName);
+    let assessmentStatus = 'Can be Automated';
+    flexCardAssessmentInfo.name = this.allVersions ? `${cleanedName}_${version}` : cleanedName;
     if (cleanedName !== originalName) {
       flexCardAssessmentInfo.warnings.push(
         this.messages.getMessage('cardNameChangeMessage', [originalName, cleanedName])
       );
+      assessmentStatus = 'Has Warnings';
     }
 
     // Check for duplicate names
     if (uniqueNames.has(cleanedName)) {
       flexCardAssessmentInfo.warnings.push(this.messages.getMessage('duplicateCardNameMessage', [cleanedName]));
+      assessmentStatus = 'Need Manual Intervention';
     }
     uniqueNames.add(cleanedName);
 
@@ -206,6 +221,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         flexCardAssessmentInfo.warnings.push(
           this.messages.getMessage('authordNameChangeMessage', [originalAuthor, cleanedAuthor])
         );
+        assessmentStatus = 'Has Warnings';
       }
     }
 
@@ -214,6 +230,8 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       newName: cleanedName,
     };
 
+
+    flexCardAssessmentInfo.migrationStatus = assessmentStatus;
     this.updateDependencies(flexCard, flexCardAssessmentInfo);
 
     return flexCardAssessmentInfo;
@@ -240,6 +258,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           flexCardAssessmentInfo.warnings.push(
             this.messages.getMessage('dataRaptorNameChangeMessage', [originalBundle, cleanedBundle])
           );
+          flexCardAssessmentInfo.migrationStatus = 'Has Warnings';
         }
       }
     } else if (dataSource.type === Constants.IntegrationProcedurePluralName) {
@@ -256,6 +275,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           flexCardAssessmentInfo.warnings.push(
             this.messages.getMessage('integrationProcedureNameChangeMessage', [originalIpMethod, cleanedIpMethod])
           );
+          flexCardAssessmentInfo.migrationStatus = 'Has Warnings';
         }
 
         // Add warning for IP references with more than 2 parts (which potentially need manual updates)
@@ -263,6 +283,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           flexCardAssessmentInfo.warnings.push(
             this.messages.getMessage('integrationProcedureManualUpdateMessage', [originalIpMethod])
           );
+          flexCardAssessmentInfo.migrationStatus = 'Need Manual Intervention';
         }
       }
     } else if (dataSource.type === Constants.ApexRemoteComponentName) {
@@ -349,6 +370,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
                     flexCardAssessmentInfo.warnings.push(
                       this.messages.getMessage('omniScriptNameChangeMessage', [parts[i], cleanedParts[i]])
                     );
+                    flexCardAssessmentInfo.migrationStatus = 'Has Warnings';
                   }
                 }
               }
@@ -379,6 +401,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
                     flexCardAssessmentInfo.warnings.push(
                       this.messages.getMessage('omniScriptNameChangeMessage', [parts[i], cleanedParts[i]])
                     );
+                    flexCardAssessmentInfo.migrationStatus = 'Has Warnings';
                   }
                 }
               }
@@ -444,7 +467,14 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         this.getCardFields(),
         filters,
         sortFields
-      );
+      ).catch((err) => {
+        if (err.errorCode === 'INVALID_TYPE') {
+          throw new InvalidEntityTypeError(
+            `${CardMigrationTool.VLOCITYCARD_NAME} type is not found under this namespace`
+          );
+        }
+        throw err;
+      });
     } else {
       filters.set(this.namespacePrefix + 'Active__c', true);
       return await QueryTools.queryWithFilter(
@@ -453,7 +483,14 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         CardMigrationTool.VLOCITYCARD_NAME,
         this.getCardFields(),
         filters
-      );
+      ).catch((err) => {
+        if (err.errorCode === 'INVALID_TYPE') {
+          throw new InvalidEntityTypeError(
+            `${CardMigrationTool.VLOCITYCARD_NAME} type is not found under this namespace`
+          );
+        }
+        throw err;
+      });
     }
   }
 
@@ -522,14 +559,14 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       }
       const transformedCardAuthorName = transformedCard['AuthorName'];
 
-      if (uniqueNames.has(transformedCardName)) {
+      if (uniqueNames.has(transformedCard['Name'])) {
         this.setRecordErrors(card, this.messages.getMessage('duplicatedCardName'));
         originalRecords.set(recordId, card);
         return;
       }
 
       // Save the name for duplicated names check
-      uniqueNames.add(transformedCardName);
+      uniqueNames.add(transformedCard['Name']);
 
       // Create a map of the original records
       originalRecords.set(recordId, card);
@@ -558,7 +595,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         }
 
         uploadResult.newName = transformedCardName;
-        if (transformedCardName !== card['Name']) {
+        if (transformedCard['Name'] !== card['Name']) {
           uploadResult.warnings.unshift(this.messages.getMessage('cardNameChangeMessage', [transformedCardName]));
         }
 
@@ -659,9 +696,6 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       try {
         let oldrecord = originalRecords.get(key);
         let newrecord = cardsUploadInfo.get(key);
-
-        Logger.logVerbose('Oldrecord - ' + JSON.stringify(oldrecord));
-        Logger.logVerbose('Newrecord - ' + JSON.stringify(newrecord));
 
         let value: FlexcardStorage = {
           name: newrecord?.newName,

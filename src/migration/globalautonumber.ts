@@ -13,6 +13,7 @@ import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
 import { OrgPreferences } from '../utils/orgPreferences';
 import { OmniGlobalAutoNumberPrefManager } from '../utils/OmniGlobalAutoNumberPrefManager';
+import { Constants } from '../utils/constants/stringContants';
 
 export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements MigrationTool {
   private prefManager: OmniGlobalAutoNumberPrefManager;
@@ -20,7 +21,7 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
 
   constructor(namespace: string, connection: Connection, logger: Logger, messages: Messages, ux: UX) {
     super(namespace, connection, logger, messages, ux);
-    this.prefManager = new OmniGlobalAutoNumberPrefManager(this.connection);
+    this.prefManager = new OmniGlobalAutoNumberPrefManager(this.connection, this.messages);
   }
 
   static readonly GLOBAL_AUTO_NUMBER_SETTING_NAME = 'GlobalAutoNumberSetting__c';
@@ -28,7 +29,7 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
   static readonly ROLLBACK_FLAGS: string[] = ['RollbackIPChanges', 'RollbackDRChanges'];
 
   public getName(): string {
-    return 'GlobalAutoNumber';
+    return Constants.GlobalAutoNumberComponentName;
   }
 
   public getRecordName(record: string) {
@@ -45,12 +46,11 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
   }
 
   public async truncate(): Promise<void> {
-    try {
-      // Perform pre-migration checks before truncation
-      await this.performPreMigrationChecks();
+    // Perform pre-migration checks before truncation
+    await this.performPreMigrationChecks();
+    this.globalAutoNumberSettings = await this.getAllGlobalAutoNumberSettings();
+    if (this.globalAutoNumberSettings.length > 0) {
       await super.truncate(GlobalAutoNumberMigrationTool.OMNI_GLOBAL_AUTO_NUMBER_NAME);
-    } catch (error) {
-      Logger.error(this.messages.getMessage('cleaningFailed', [this.getName()]));
     }
   }
 
@@ -62,7 +62,7 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
     const migrationResult = await this.migrateGlobalAutoNumberData();
 
     // Validate migration success
-    const validationError = await this.validateMigrationSuccess(migrationResult.results);
+    const validationError = await this.validateMigrationSuccess(migrationResult);
 
     const errors = [];
     if (validationError) {
@@ -111,7 +111,14 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
         return errorMessage;
       }
     } catch (error) {
-      Logger.error(this.messages.getMessage('errorDuringPostMigrationCleanup'));
+      Logger.logVerbose(error);
+      const initialCount = this.globalAutoNumberSettings.length;
+      const finalLength = (await this.getAllGlobalAutoNumberSettings()).length;
+      const message =
+        initialCount !== finalLength ? 'errorEnablingOmniGlobalAutoNumberPref' : 'errorDuringPostMigrationCleanup';
+      const errorMessage = this.messages.getMessage(message);
+      Logger.error(errorMessage);
+      return errorMessage;
     }
   }
 
@@ -119,31 +126,26 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
    * Validate that all Global Auto Number objects are successfully migrated
    * before proceeding with source object truncation
    */
-  private async validateMigrationSuccess(uploadInfo: Map<string, UploadRecordResult>): Promise<string> {
+  private async validateMigrationSuccess(migrationResults: MigrationResult): Promise<string> {
+    const { results, records } = migrationResults;
     // Check if all uploaded records have success: true
-    const failedRecords = Array.from(uploadInfo.values()).filter((result) => !result.success);
-    const successfulRecords = Array.from(uploadInfo.values()).filter((result) => result.success);
+    const failedRecords = Array.from(results.values()).filter((result) => !result.success);
+    const successfulRecords = Array.from(results.values()).filter((result) => result.success);
 
     // Get source count
     const sourceCount = this.globalAutoNumberSettings.length;
     const targetCount = successfulRecords.length;
 
     // Check for count difference
-    if (sourceCount !== targetCount) {
-      const errorMessage = this.messages.getMessage('incompleteMigrationDetected', [sourceCount, targetCount]);
-      Logger.error(errorMessage);
-      Logger.error(this.messages.getMessage('migrationValidationFailed'));
-      return errorMessage;
-    }
-
-    // Check for failed records
-    if (failedRecords.length > 0) {
-      const failedCount = failedRecords.length;
-      const totalCount = uploadInfo.size;
-      const errorMessage = this.messages.getMessage('incompleteMigrationDetected', [
-        totalCount,
-        totalCount - failedCount,
-      ]);
+    if (sourceCount !== targetCount || failedRecords.length > 0) {
+      const uniqueErrors = [
+        ...new Set([...results.values(), ...records.values()].filter((r) => r?.errors?.length).map((r) => r.errors[0])),
+      ];
+      let errorMessage = this.messages.getMessage('incompleteMigrationDetected');
+      if (uniqueErrors.length > 0) {
+        const errors = uniqueErrors.length === 1 ? uniqueErrors[0] : uniqueErrors.join(', ');
+        errorMessage += ` because of ${errors}`;
+      }
       Logger.error(errorMessage);
       Logger.error(this.messages.getMessage('migrationValidationFailed'));
       return errorMessage;
@@ -171,7 +173,6 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
     const isEnabled = await this.prefManager.isEnabled();
     if (isEnabled) {
       const errorMessage = this.messages.getMessage('globalAutoNumberPrefEnabledError');
-      Logger.error(errorMessage);
       throw new Error(errorMessage);
     }
     // Check rollback flags using existing utility
@@ -188,7 +189,6 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
       } else if (enabledFlags.includes('RollbackDRChanges')) {
         errorMessage = this.messages.getMessage('rollbackDRFlagEnabledError');
       }
-      Logger.error(errorMessage);
       throw new Error(errorMessage);
     }
   }
@@ -197,10 +197,6 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
     let originalGlobalAutoNumberRecords = new Map<string, any>();
     let globalAutoNumberUploadInfo = new Map<string, UploadRecordResult>();
     const uniqueNames = new Set<string>();
-
-    // Query all GlobalAutoNumber settings
-    DebugTimer.getInstance().lap('Query GlobalAutoNumber settings');
-    this.globalAutoNumberSettings = await this.getAllGlobalAutoNumberSettings();
 
     let progressCounter = 0;
     Logger.logVerbose(
@@ -262,16 +258,17 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
           referenceId: recordId,
           hasErrors: true,
           success: false,
-          errors: err,
+          errors: [err],
           warnings: [],
         });
+        Logger.logVerbose(err.stack);
       }
     }
 
     progressBar.stop();
 
     return {
-      name: 'GlobalAutoNumber',
+      name: Constants.GlobalAutoNumberComponentName,
       results: globalAutoNumberUploadInfo,
       records: originalGlobalAutoNumberRecords,
       errors: [],
@@ -288,6 +285,7 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
       const globalAutoNumberAssessmentInfos = await this.processGlobalAutoNumberComponents(globalAutoNumbers);
       return globalAutoNumberAssessmentInfos;
     } catch (err) {
+      Logger.logVerbose(err.stack);
       return [];
     }
   }
@@ -314,9 +312,8 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
           warnings: [],
           errors: [this.messages.getMessage('unexpectedError')],
         });
-        const error = e as Error;
-        Logger.error(JSON.stringify(error));
-        Logger.error(error.stack);
+        Logger.error(e.message);
+        Logger.logVerbose(e.stack);
       }
       progressBar.update(++progressCounter);
     }

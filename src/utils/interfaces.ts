@@ -25,6 +25,7 @@ export interface LWCAssessmentInfo {
   name: string;
   changeInfos: FileChangeInfo[];
   errors: string[];
+  warnings: string[];
 }
 
 export interface OSAssessmentInfo {
@@ -73,6 +74,7 @@ export interface IPAssessmentInfo {
   warnings: string[];
   errors: string[];
   path: string;
+  migrationStatus: string;
 }
 export interface FileChangeInfo {
   path: string;
@@ -112,6 +114,7 @@ export interface RelatedObjectAssesmentInfo {
 }
 export interface FlexCardAssessmentInfo {
   name: string;
+  oldName: string;
   id: string;
   dependenciesIP: string[];
   dependenciesDR: string[];
@@ -121,6 +124,8 @@ export interface FlexCardAssessmentInfo {
   dependenciesApexRemoteAction: string[];
   infos: string[];
   warnings: string[];
+  errors: string[];
+  migrationStatus: string;
   nameMapping?: FlexcardNameMapping;
 }
 
@@ -137,7 +142,9 @@ export interface DataRaptorAssessmentInfo {
   type: string;
   infos: string[];
   warnings: string[];
+  errors: string[];
   apexDependencies: string[];
+  migrationStatus: string;
 }
 
 export interface GlobalAutoNumberAssessmentInfo {
@@ -162,6 +169,7 @@ export interface FileChangeInfo {
 export interface ApexAssessmentInfo extends FileChangeInfo {
   warnings: string[];
   infos: string[];
+  errors: string[];
 }
 
 export interface FileParser {

@@ -13,11 +13,10 @@ import { Messages } from '@salesforce/core';
 import OmniStudioBaseCommand from '../../basecommand';
 import { DataRaptorMigrationTool } from '../../../migration/dataraptor';
 import { DebugTimer, MigratedObject, MigratedRecordInfo } from '../../../utils';
-import { MigrationResult, MigrationTool } from '../../../migration/interfaces';
+import { InvalidEntityTypeError, MigrationResult, MigrationTool } from '../../../migration/interfaces';
 import { ResultsBuilder } from '../../../utils/resultsbuilder';
 import { CardMigrationTool } from '../../../migration/flexcard';
 import { OmniScriptExportType, OmniScriptMigrationTool } from '../../../migration/omniscript';
-import { GlobalAutoNumberMigrationTool } from '../../../migration/globalautonumber';
 import { Logger } from '../../../utils/logger';
 import OmnistudioRelatedObjectMigrationFacade from '../../../migration/related/OmnistudioRelatedObjectMigrationFacade';
 import { generatePackageXml } from '../../../utils/generatePackageXml';
@@ -25,8 +24,11 @@ import { OmnistudioOrgDetails, OrgUtils } from '../../../utils/orgUtils';
 import { Constants } from '../../../utils/constants/stringContants';
 import { OrgPreferences } from '../../../utils/orgPreferences';
 import { ProjectPathUtil } from '../../../utils/projectPathUtil';
+import { PromptUtil } from '../../../utils/promptUtil';
+import { YES_SHORT, YES_LONG, NO_SHORT, NO_LONG } from '../../../utils/projectPathUtil';
 import { PostMigrate } from '../../../migration/postMigrate';
 import { PreMigrate } from '../../../migration/premigrate';
+import { GlobalAutoNumberMigrationTool } from '../../../migration/globalautonumber';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -74,8 +76,7 @@ export default class Migrate extends OmniStudioBaseCommand {
       return await this.runMigration();
     } catch (e) {
       const error = e as Error;
-      Logger.error(`Error running migrate ${error.message}`);
-      Logger.error(error);
+      Logger.error(messages.getMessage('errorRunningMigrate'), error);
       process.exit(1);
     }
   }
@@ -116,6 +117,13 @@ export default class Migrate extends OmniStudioBaseCommand {
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : String(error);
       Logger.log(`Could not enable Omni preferences: ${errMsg}`);
+    }
+
+    // check for confirmation over assessed action items
+    const migrationConsent = await this.getMigrationConsent();
+    if (!migrationConsent) {
+      Logger.log(messages.getMessage('migrationConsentNotGiven'));
+      return;
     }
 
     const namespace = orgs.packageDetails.namespace;
@@ -168,14 +176,14 @@ export default class Migrate extends OmniStudioBaseCommand {
     const debugTimer = DebugTimer.getInstance();
     // We need to truncate the standard objects first
     let objectMigrationResults = await this.truncateObjects(migrationObjects, debugTimer);
+    objectMigrationResults = objectMigrationResults.filter(
+      (result) => result.name !== Constants.GlobalAutoNumberComponentName
+    );
     const allTruncateComplete = objectMigrationResults.length === 0;
 
     if (allTruncateComplete) {
       objectMigrationResults = await this.migrateObjects(migrationObjects, debugTimer);
     }
-
-    // Stop the debug timer
-    const timer = DebugTimer.getInstance().stop();
 
     const omnistudioRelatedObjectsMigration = new OmnistudioRelatedObjectMigrationFacade(
       namespace,
@@ -199,12 +207,15 @@ export default class Migrate extends OmniStudioBaseCommand {
       objectsToProcess
     );
 
-    await postMigrate.setDesignersToUseStandardDataModel(namespace, actionItems);
+    if (!migrateOnly) {    
+      await postMigrate.setDesignersToUseStandardDataModel(namespace, actionItems);
+    }
     // From here also actionItems need to be collected
     await postMigrate.restoreExperienceAPIMetadataSettings(
       isExperienceBundleMetadataAPIProgramaticallyEnabled,
       actionItems
     );
+
     const migrationActionItems = this.collectActionItems(objectMigrationResults);
     actionItems = [...actionItems, ...migrationActionItems];
 
@@ -221,14 +232,40 @@ export default class Migrate extends OmniStudioBaseCommand {
       conn.instanceUrl,
       orgs,
       messages,
-      actionItems
+      actionItems,
+      objectsToProcess
     );
-
-    // save timer to debug logger
-    Logger.logVerbose(timer.toString());
 
     // Return results needed for --json flag
     return { objectMigrationResults };
+  }
+
+  private async getMigrationConsent(): Promise<boolean> {
+    const askWithTimeOut = PromptUtil.askWithTimeOut(messages);
+    let validResponse = false;
+    let consent = false;
+
+    while (!validResponse) {
+      try {
+        const resp = await askWithTimeOut(Logger.prompt.bind(Logger), messages.getMessage('migrationConsentMessage'));
+        const response = typeof resp === 'string' ? resp.trim().toLowerCase() : '';
+
+        if (response === YES_SHORT || response === YES_LONG) {
+          consent = true;
+          validResponse = true;
+        } else if (response === NO_SHORT || response === NO_LONG) {
+          consent = false;
+          validResponse = true;
+        } else {
+          Logger.error(messages.getMessage('invalidYesNoResponse'));
+        }
+      } catch (err) {
+        Logger.error(messages.getMessage('requestTimedOut'));
+        process.exit(1);
+      }
+    }
+
+    return consent;
   }
 
   private collectActionItems(objectMigrationResults: MigratedObject[]): string[] {
@@ -257,6 +294,7 @@ export default class Migrate extends OmniStudioBaseCommand {
           data: [],
           errors: [ex.message],
         });
+        Logger.logVerbose(ex.stack);
         Logger.error(messages.getMessage('cleaningFailed', [cls.getName()]));
       }
     }
@@ -270,7 +308,11 @@ export default class Migrate extends OmniStudioBaseCommand {
         Logger.log(messages.getMessage('migratingComponent', [cls.getName()]));
         debugTimer.lap('Migrating: ' + cls.getName());
         const results = await cls.migrate();
-        Logger.log(messages.getMessage('migrationCompleted', [cls.getName()]));
+        if (results.some((result) => result?.errors?.length > 0)) {
+          Logger.error(messages.getMessage('migrationFailed', [cls.getName()]));
+        } else {
+          Logger.log(messages.getMessage('migrationCompleted', [cls.getName()]));
+        }
         objectMigrationResults = objectMigrationResults.concat(
           results.map((r) => {
             return {
@@ -281,12 +323,17 @@ export default class Migrate extends OmniStudioBaseCommand {
           })
         );
       } catch (ex: any) {
-        Logger.error(JSON.stringify(ex));
-        Logger.error(ex.stack);
+        if (ex instanceof InvalidEntityTypeError) {
+          Logger.error(ex.message);
+          process.exit(1);
+        }
+        const errMsg = ex instanceof Error ? ex.message : String(ex);
+        Logger.error(messages.getMessage('errorMigrationMessage', [errMsg]));
+        Logger.logVerbose(ex);
         objectMigrationResults.push({
           name: cls.getName(),
           data: [],
-          errors: [ex.message],
+          errors: [errMsg],
         });
       }
     }
@@ -392,7 +439,7 @@ export default class Migrate extends OmniStudioBaseCommand {
       const obj = {
         id: record['Id'],
         name: migrationTool.getRecordName(record),
-        status: 'Skipped',
+        status: messages.getMessage('labelStatusSkipped'),
         errors: record['errors'],
         migratedId: undefined,
         warnings: [],
@@ -405,7 +452,11 @@ export default class Migrate extends OmniStudioBaseCommand {
         let errors: any[] = obj.errors || [];
         errors = errors.concat(recordResults.errors || []);
 
-        obj.status = !recordResults || recordResults.hasErrors ? 'Error' : 'Complete';
+        obj.status = recordResults?.skipped
+          ? messages.getMessage('labelStatusSkipped')
+          : !recordResults || recordResults.hasErrors
+          ? messages.getMessage('labelStatusFailed')
+          : messages.getMessage('labelStatusComplete');
         obj.errors = errors;
         obj.migratedId = recordResults.id;
         obj.warnings = recordResults.warnings;

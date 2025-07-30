@@ -83,7 +83,7 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     shell.cd(this.projectPath);
     // TODO: Uncomment code once MVP for migration is completed
     // if (relatedObjects.includes(Constants.LWC)) {
-    //   sfProject.retrieve(LWCTYPE, this.org.getUsername());
+    //   // sfProject.retrieve(LWCTYPE, this.org.getUsername());
     // }
     if (relatedObjects.includes(Constants.Apex)) {
       sfProject.retrieve(APEXCLASS, this.org.getUsername());
@@ -132,18 +132,17 @@ export default class OmnistudioRelatedObjectMigrationFacade {
       if (relatedObjects.includes(Constants.FlexiPage)) {
         flexipageAssessmentInfos = isMigration ? this.flexipageMigration.migrate() : this.flexipageMigration.assess();
       }
-    } catch (Error) {
+    } catch (error) {
       // Log the error
-      Logger.error(JSON.stringify(Error));
-      Logger.error(Error.stack);
+      Logger.error('Error processing related objects', error);
     }
     // TODO: Uncomment code once MVP for migration is completed
     // try {
     //   if (relatedObjects.includes(Constants.LWC)) {
+    //     Logger.logVerbose(migrateMessages.getMessage('startingLwcMigration', [this.projectPath]));
     //     lwcAssessmentInfos = isMigration ? this.lwcMigration.migrate() : this.lwcMigration.assessment();
     //   }
     // } catch (Error) {
-    //   // Log the error
     //   Logger.error(Error.message);
     // }
 
