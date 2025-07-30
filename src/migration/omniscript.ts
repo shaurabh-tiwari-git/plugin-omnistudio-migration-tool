@@ -315,6 +315,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           warnings: omniAssessmentInfo.warnings,
           errors: [],
           migrationStatus: migrationStatus,
+          nameMapping: omniAssessmentInfo.nameMapping,
         };
         osAssessmentInfos.push(osAssessmentInfo);
       } else {
@@ -365,7 +366,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     let migrationStatus = 'Can be Automated';
 
     //const missingRA: string[] = [];
-
+    Logger.logVerbose(migrationStatus);
     for (const elem of elements) {
       const type = elem[this.namespacePrefix + 'Type__c'];
       const elemName = `${elem['Name']}`;
@@ -525,14 +526,15 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       missingOS: missingOS,
     };
 
+    // TODO - ABC New things to be added are not there
     if (omniProcessType === this.OMNISCRIPT) {
       const nameMapping: OmniscriptNameMapping = {
         oldType: existingType,
         oldSubtype: existingSubType,
         oldLanguage: omniscript[this.namespacePrefix + 'Language__c'],
-        newType: '',
-        newSubType: '',
-        newLanguage: '',
+        newType: newType,
+        newSubType: newSubType,
+        newLanguage: newLanguage,
       };
       result.nameMapping = nameMapping;
     }
@@ -553,23 +555,25 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         let nameMapping = currentOsRecordInfo.nameMapping as OmniscriptNameMapping;
 
         if (nameMapping === undefined) {
+          Logger.logVerbose(this.messages.getMessage('nameMappingUndefined'));
           continue;
         }
 
         let value: OmniScriptStorage = {
-          type: nameMapping.oldType,
-          subtype: nameMapping.oldSubtype,
-          language: nameMapping.oldLanguage,
+          type: nameMapping.newType,
+          subtype: nameMapping.newSubType,
+          language: nameMapping.newLanguage,
           isDuplicate: false,
         };
-        if (currentOsRecordInfo.errors) {
+
+        if (Array.isArray(currentOsRecordInfo.errors) && currentOsRecordInfo.errors.length > 0) {
           value.error = currentOsRecordInfo.errors;
           value.migrationSuccess = false;
         } else {
           value.migrationSuccess = true;
         }
 
-        let finalKey = `${nameMapping.oldType}${nameMapping.oldSubtype}${nameMapping.newLanguage}`;
+        let finalKey = `${nameMapping.oldType}${nameMapping.oldSubtype}${nameMapping.oldLanguage}`;
 
         if (storage.osStorage.has(finalKey)) {
           // Key already exists - handle accordingly
@@ -585,7 +589,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       }
     }
 
-    StorageUtil.printMigrationStorage();
+    StorageUtil.printAssessmentStorage();
   }
 
   async migrate(): Promise<MigrationResult[]> {

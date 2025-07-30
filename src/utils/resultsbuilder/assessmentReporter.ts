@@ -90,6 +90,18 @@ export class AssessmentReporter {
       );
 
       this.createDocument(
+        path.join(this.basePath, this.experienceSiteAssessmentFileName),
+        TemplateParser.generate(
+          assessmentReportTemplate,
+          ExperienceSiteAssessmentReporter.getExperienceSiteAssessmentData(
+            result.experienceSiteAssessmentInfos,
+            omnistudioOrgDetails
+          ),
+          messages
+        )
+      );
+
+      this.createDocument(
         path.join(this.basePath, this.flexipageAssessmentFileName),
         TemplateParser.generate(
           assessmentReportTemplate,
@@ -369,12 +381,13 @@ export class AssessmentReporter {
         file: this.flexipageAssessmentFileName,
       });
     }
-    if (reports.includes(Constants.FlexiPage)) { // TODO - Experience Sites
+    if (reports.includes(Constants.ExpSites)) {
+      // TODO - Experience Sites
       summaryItems.push({
         name: 'ExperienceSite',
-        total: result.flexipageAssessmentInfos.length,
-        data: FlexipageAssessmentReporter.getSummaryData(result.flexipageAssessmentInfos),
-        file: this.flexipageAssessmentFileName,
+        total: result.experienceSiteAssessmentInfos.length,
+        data: ExperienceSiteAssessmentReporter.getSummaryData(result.experienceSiteAssessmentInfos),
+        file: this.experienceSiteAssessmentFileName,
       });
     }
 

@@ -91,7 +91,7 @@ export default class OmnistudioRelatedObjectMigrationFacade {
 
     if (relatedObjects.includes(Constants.ExpSites)) {
       Logger.logVerbose(EXPERIENCEBUNDLE);
-      sfProject.retrieve(EXPERIENCEBUNDLE, this.org.getUsername());
+      // sfProject.retrieve(EXPERIENCEBUNDLE, this.org.getUsername());
     }
 
     shell.cd(pwd);
@@ -105,10 +105,10 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     );
 
     // Retrieve metadata if needed
-    if (isMigration) {
-      Logger.logVerbose(migrateMessages.getMessage('retrievingMetadata', [String(relatedObjects), this.projectPath]));
-      this.retrieveMetadata(relatedObjects);
-    }
+    // if (isMigration) { - TODO-ABC Why only retrieve when migration
+    Logger.logVerbose(migrateMessages.getMessage('retrievingMetadata', [String(relatedObjects), this.projectPath]));
+    this.retrieveMetadata(relatedObjects);
+    // }
 
     const debugTimer = DebugTimer.getInstance();
     debugTimer.start();

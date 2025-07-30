@@ -76,8 +76,7 @@ export class PreMigrate extends BaseMigrationTool {
         const userInput = await askStringWithTimeout(
           Logger.prompt.bind(Logger),
           question,
-          this.messages.getMessage('requestTimedOut'),
-          1000
+          this.messages.getMessage('requestTimedOut')
         );
 
         // Validate and convert the input

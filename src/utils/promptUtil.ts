@@ -1,23 +1,5 @@
 import { Messages } from '@salesforce/core';
 
-export async function askPromptWithTimeout<T>(
-  promptFn: (message: string) => Promise<T>,
-  question: string,
-  timeoutMsg: string,
-  timeoutMs: number = 5 * 60 * 1000
-): Promise<T> {
-  return askUserWithTimeout(() => promptFn(question), timeoutMsg, timeoutMs);
-}
-
-export async function askConfirmWithTimeout(
-  confirmFn: (message: string) => Promise<boolean>,
-  question: string,
-  timeoutMsg: string,
-  timeoutMs: number = 5 * 60 * 1000
-): Promise<boolean> {
-  return askPromptWithTimeout<boolean>(confirmFn, question, timeoutMsg, timeoutMs);
-}
-
 export async function askStringWithTimeout(
   promptFn: (message: string) => Promise<string>,
   question: string,
@@ -25,6 +7,15 @@ export async function askStringWithTimeout(
   timeoutMs: number = 5 * 60 * 1000
 ): Promise<string> {
   return askPromptWithTimeout<string>(promptFn, question, timeoutMsg, timeoutMs);
+}
+
+export async function askPromptWithTimeout<T>(
+  promptFn: (message: string) => Promise<T>,
+  question: string,
+  timeoutMsg: string,
+  timeoutMs: number = 5 * 60 * 1000
+): Promise<T> {
+  return askUserWithTimeout(() => promptFn(question), timeoutMsg, timeoutMs);
 }
 
 async function askUserWithTimeout<T>(

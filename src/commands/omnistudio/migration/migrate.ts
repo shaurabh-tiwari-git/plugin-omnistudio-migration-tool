@@ -29,6 +29,7 @@ import { YES_SHORT, YES_LONG, NO_SHORT, NO_LONG } from '../../../utils/projectPa
 import { PostMigrate } from '../../../migration/postMigrate';
 import { PreMigrate } from '../../../migration/premigrate';
 import { GlobalAutoNumberMigrationTool } from '../../../migration/globalautonumber';
+// import { labeledStatement } from '@babel/types';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -207,7 +208,7 @@ export default class Migrate extends OmniStudioBaseCommand {
       objectsToProcess
     );
 
-    if (!migrateOnly) {    
+    if (!migrateOnly) {
       await postMigrate.setDesignersToUseStandardDataModel(namespace, actionItems);
     }
     // From here also actionItems need to be collected
@@ -452,11 +453,7 @@ export default class Migrate extends OmniStudioBaseCommand {
         let errors: any[] = obj.errors || [];
         errors = errors.concat(recordResults.errors || []);
 
-        obj.status = recordResults?.skipped
-          ? messages.getMessage('labelStatusSkipped')
-          : !recordResults || recordResults.hasErrors
-          ? messages.getMessage('labelStatusFailed')
-          : messages.getMessage('labelStatusComplete');
+        obj.status = 'MyHardcodedValue';
         obj.errors = errors;
         obj.migratedId = recordResults.id;
         obj.warnings = recordResults.warnings;
