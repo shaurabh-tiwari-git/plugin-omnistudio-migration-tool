@@ -59,7 +59,6 @@ export class ExperienceSiteAssessmentReporter {
       return [];
     }
     experienceSiteAssessmentInfos.forEach((apexAssessmentInfo) => {
-      Logger.logVerbose('ALPHA printing the apexAssessmentInfoDiff');
       Logger.logVerbose('The diff of apex assessment info is ' + JSON.stringify(apexAssessmentInfo.diff));
       Logger.logVerbose('ALPHA printing the diff');
       const diffString = FileDiffUtil.getDiffHTML(apexAssessmentInfo.diff, apexAssessmentInfo.name);

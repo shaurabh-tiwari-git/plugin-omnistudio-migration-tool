@@ -185,7 +185,6 @@ export default class Assess extends OmniStudioBaseCommand {
       userActionMessages
     );
 
-    Logger.logVerbose('Reached assessment report generation');
     await AssessmentReporter.generate(
       assesmentInfo,
       conn.instanceUrl,

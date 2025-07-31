@@ -450,11 +450,13 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     const newType = existingTypeVal.cleanName();
     const newSubType = existingSubTypeVal.cleanName();
     const newLanguage = omniscript[this.namespacePrefix + 'Language__c']
-      ? `_${omniscript[this.namespacePrefix + 'Language__c']}`
+      ? `${omniscript[this.namespacePrefix + 'Language__c']}`
       : '';
 
     const recordName =
-      `${newType}_` + `${newSubType}` + `${newLanguage}` + `_${omniscript[this.namespacePrefix + 'Version__c']}`;
+      `${newType}_` + `${newSubType}` + omniscript[this.namespacePrefix + 'Language__c']
+        ? `_${omniscript[this.namespacePrefix + 'Language__c']}`
+        : '' + `_${omniscript[this.namespacePrefix + 'Version__c']}`;
 
     const oldName =
       `${existingTypeVal.val}_` +
@@ -575,6 +577,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
         let finalKey = `${nameMapping.oldType}${nameMapping.oldSubtype}${nameMapping.oldLanguage}`;
 
+        finalKey = finalKey.toLowerCase();
         if (storage.osStorage.has(finalKey)) {
           // Key already exists - handle accordingly
           Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', [finalKey]));
@@ -928,6 +931,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
             oldrecord[this.namespacePrefix + 'SubType__c']
           }${oldrecord[this.namespacePrefix + 'Language__c']}`;
 
+          finalKey = finalKey.toLowerCase();
           if (storage.osStorage.has(finalKey)) {
             // Key already exists - handle accordingly
             Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', [finalKey]));

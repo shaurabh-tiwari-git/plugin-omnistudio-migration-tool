@@ -23,8 +23,8 @@ import { BaseRelatedObjectMigration } from './BaseRealtedObjectMigration';
 
 Messages.importMessagesDirectory(__dirname);
 
-const TARGET_COMPONENT_NAME_OS = 'runtime_omnistudio_omniscript';
-const TARGET_COMPONENT_NAME_FC = 'runtime_omnisctudio_flexcard';
+const TARGET_COMPONENT_NAME_OS = 'runtime_omnistudio:omniscript';
+const TARGET_COMPONENT_NAME_FC = 'runtime_omnisctudio:flexcard';
 const FLEXCARD_PREFIX = 'cf';
 
 export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
@@ -183,7 +183,11 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
 
     Logger.logVerbose(this.messages.getMessage('printDifference', [JSON.stringify(difference)]));
 
-    if (type === this.MIGRATE && normalizedOriginalFileContent !== noarmalizeUpdatedFileContent) {
+    // TODO - only for testing
+    if (
+      (type === this.MIGRATE || type === this.ASSESS) &&
+      normalizedOriginalFileContent !== noarmalizeUpdatedFileContent
+    ) {
       Logger.logVerbose(this.messages.getMessage('updatingFile'));
       fs.writeFileSync(file.location, noarmalizeUpdatedFileContent, 'utf8');
     }
@@ -253,7 +257,8 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
   ): void {
     Logger.logVerbose(this.messages.getMessage('processingOmniscriptComponent', [JSON.stringify(component)]));
     // Use storage to find the updated properties
-    const targetDataFromStorage: OmniScriptStorage = storage.osStorage.get(targetName);
+    const targetDataFromStorage: OmniScriptStorage = storage.osStorage.get(targetName.toLocaleLowerCase());
+    StorageUtil.printAssessmentStorage();
     Logger.logVerbose(this.messages.getMessage('targetData', [JSON.stringify(targetDataFromStorage)]));
 
     if (this.shouldAddWarning(targetDataFromStorage)) {
