@@ -452,7 +452,11 @@ export default class Migrate extends OmniStudioBaseCommand {
         let errors: any[] = obj.errors || [];
         errors = errors.concat(recordResults.errors || []);
 
-        obj.status = 'Hardcoded';
+        obj.status = recordResults?.skipped
+          ? messages.getMessage('labelStatusSkipped')
+          : !recordResults || recordResults.hasErrors
+          ? messages.getMessage('labelStatusFailed')
+          : messages.getMessage('labelStatusComplete');
         obj.errors = errors;
         obj.migratedId = recordResults.id;
         obj.warnings = recordResults.warnings;
