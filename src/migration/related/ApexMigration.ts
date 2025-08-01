@@ -20,6 +20,7 @@ import { ApexAssessmentInfo } from '../../utils';
 import { FileDiffUtil } from '../../utils/lwcparser/fileutils/FileDiffUtil';
 import { Stringutil } from '../../utils/StringValue/stringutil';
 import { Constants } from '../../utils/constants/stringContants';
+import { createProgressBar } from '../base';
 import { BaseRelatedObjectMigration } from './BaseRealtedObjectMigration';
 
 Messages.importMessagesDirectory(__dirname);
@@ -57,15 +58,15 @@ export class ApexMigration extends BaseRelatedObjectMigration {
     Logger.logVerbose(migrateMessages.getMessage('startingApexMigration', [this.projectPath]));
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
-    // const targetOrg: Org = this.org;
-    // sfProject.retrieve(APEXCLASS, targetOrg.getUsername());
+    const targetOrg: Org = this.org;
+    sfProject.retrieve(APEXCLASS, targetOrg.getUsername());
     Logger.info(migrateMessages.getMessage('processingApexFilesForMigration'));
     const apexAssessmentInfos = this.processApexFiles(this.projectPath, 'migration');
     Logger.info(migrateMessages.getMessage('successfullyProcessedApexFilesForMigration', [apexAssessmentInfos.length]));
     Logger.logVerbose(
       migrateMessages.getMessage('apexMigrationResults', [JSON.stringify(apexAssessmentInfos, null, 2)])
     );
-    // sfProject.deploy(APEXCLASS, targetOrg.getUsername());
+    sfProject.deploy(APEXCLASS, targetOrg.getUsername());
     shell.cd(pwd);
     return apexAssessmentInfos;
   }
@@ -89,25 +90,53 @@ export class ApexMigration extends BaseRelatedObjectMigration {
     let files: File[] = [];
     files = FileUtil.readFilesSync(dir);
     Logger.logVerbose(assessMessages.getMessage('foundApexFilesInDirectory', [files.length, dir]));
+    const notVerboseMode = !Logger.getVerbose();
+    const progressBar =
+      type.toLowerCase() === 'migration'
+        ? createProgressBar('Migrating', 'Apex Classes')
+        : createProgressBar('Assessing', 'Apex Classes');
+    let progressCounter = 0;
+    // Only show progress bar if verbose mode is disabled
+    if (notVerboseMode) {
+      progressBar.start(files.length, progressCounter);
+    }
     const fileAssessmentInfo: ApexAssessmentInfo[] = [];
+    const processingErrorsList: string[] = [];
     for (const file of files) {
       if (file.ext !== '.cls') {
         Logger.logVerbose(assessMessages.getMessage('skippingNonApexFile', [file.name]));
+        if (notVerboseMode) {
+          progressBar.update(++progressCounter);
+        }
         continue;
       }
       try {
         Logger.logVerbose(assessMessages.getMessage('processingApexFile', [file.name]));
         const apexAssementInfo = this.processApexFile(file, type);
         if (apexAssementInfo && apexAssementInfo.diff.length < 3) {
-          Logger.logVerbose(assessMessages.getMessage('skippingApexFileFewChanges', [file.name]));
+          Logger.logVerbose(assessMessages.getMessage('skippingApexFileNoChanges', [file.name]));
+          if (notVerboseMode) {
+            progressBar.update(++progressCounter);
+          }
           continue;
         }
         fileAssessmentInfo.push(apexAssementInfo);
         Logger.logVerbose(assessMessages.getMessage('successfullyProcessedApexFile', [file.name]));
+        if (notVerboseMode) {
+          progressBar.update(++progressCounter);
+        }
       } catch (err) {
-        Logger.error(assessMessages.getMessage('errorProcessingApexFile', [file.name]), err);
+        processingErrorsList.push(assessMessages.getMessage('errorProcessingApexFile', [file.name]));
+        if (notVerboseMode) {
+          progressBar.update(++progressCounter);
+        }
       }
-      Logger.logVerbose(assessMessages.getMessage('successfullyProcessedApexFile', [file.name]));
+    }
+    if (notVerboseMode) {
+      progressBar.stop();
+    }
+    if (processingErrorsList.length > 0) {
+      Logger.error(processingErrorsList.join('\n'));
     }
     return fileAssessmentInfo;
   }
@@ -191,7 +220,10 @@ export class ApexMigration extends BaseRelatedObjectMigration {
       tokenUpdates.push(new RangeTokenUpdate(CALLABLE, tokens[0], tokens[1]));
       tokenUpdates.push(new InsertAfterTokenUpdate(this.callMethodBody(), parser.classDeclaration));
     } else if (implementsInterface.has(this.vlocityOpenInterface)) {
-      Logger.error(assessMessages.getMessage('fileImplementsVlocityOpenInterface', [file.name]));
+      Logger.logger.info(assessMessages.getMessage('fileImplementsVlocityOpenInterface', [file.name]));
+      const tokens = implementsInterface.get(this.vlocityOpenInterface);
+      tokenUpdates.push(new RangeTokenUpdate(CALLABLE, tokens[0], tokens[1]));
+      tokenUpdates.push(new InsertAfterTokenUpdate(this.callMethodBody(), parser.classDeclaration));
     }
     return tokenUpdates;
   }
@@ -260,7 +292,6 @@ export class ApexMigration extends BaseRelatedObjectMigration {
         const newName = `'${Stringutil.cleanName(token.text)}'`;
         if (token.text === newName) continue;
         Logger.info(assessMessages.getMessage('inApexDrNameWillBeUpdated', [file.name, token.text, newName]));
-        Logger.log(assessMessages.getMessage('inApexDrNameWillBeUpdated', [file.name, token.text, newName]));
         tokenUpdates.push(new SingleTokenUpdate(newName, token));
       }
     }

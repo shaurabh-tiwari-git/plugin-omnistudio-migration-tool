@@ -135,8 +135,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     const preMigrate: PreMigrate = new PreMigrate(this.org, namespace, conn, this.logger, messages, this.ux);
     const isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean } = { value: false };
     if (relatedObjects) {
-      // To-Do: Add LWC to valid options when GA is released
-      const validOptions = [Constants.Apex, Constants.ExpSites, Constants.FlexiPage];
+      const validOptions = [Constants.Apex, Constants.ExpSites, Constants.FlexiPage, Constants.LWC];
       objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
       // Validate input
       for (const obj of objectsToProcess) {

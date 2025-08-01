@@ -8,8 +8,7 @@ import { Logger } from '../utils/logger';
 import { TransformData, UploadRecordResult } from './interfaces';
 
 export type ComponentType = 'Data Mapper' | 'Flexcard' | 'Omniscript and Integration Procedure' | 'GlobalAutoNumber';
-
-export type RelatedObjectType = 'Flexipage' | 'ExperienceSites';
+export type RelatedObjectType = 'Flexipage' | 'ExperienceSites' | 'Lightning Web Components' | 'Apex Classes';;
 
 /**
  * Creates a progress bar for migration/assessment operations

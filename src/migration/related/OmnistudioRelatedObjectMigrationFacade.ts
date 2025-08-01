@@ -24,8 +24,7 @@ Messages.importMessagesDirectory(__dirname);
 const assessMessages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'assess');
 const migrateMessages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'migrate');
 
-// TODO: Uncomment code once MVP for migration is completed
-// const LWCTYPE = 'LightningComponentBundle';
+const LWCTYPE = 'LightningComponentBundle';
 const APEXCLASS = 'Apexclass';
 const EXPERIENCEBUNDLE = 'EXPERIENCEBUNDLE';
 
@@ -62,8 +61,7 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     // Initialize migration instances
     this.apexMigration = new ApexMigration(this.projectPath, this.namespace, this.org, targetApexNamespace);
     this.flexipageMigration = new FlexipageMigration(this.projectPath, this.namespace, this.org, assessMessages);
-    // TODO: Uncomment code once MVP for migration is completed
-    // this.lwcMigration = new LwcMigration(this.projectPath, this.namespace, this.org);
+    this.lwcMigration = new LwcMigration(this.projectPath, this.namespace, this.org);
 
     this.experienceSiteMigration = new ExperienceSiteMigration(
       this.projectPath,
@@ -81,10 +79,9 @@ export default class OmnistudioRelatedObjectMigrationFacade {
   private retrieveMetadata(relatedObjects: string[]): void {
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
-    // TODO: Uncomment code once MVP for migration is completed
-    // if (relatedObjects.includes(Constants.LWC)) {
-    //   // sfProject.retrieve(LWCTYPE, this.org.getUsername());
-    // }
+    if (relatedObjects.includes(Constants.LWC)) {
+      sfProject.retrieve(LWCTYPE, this.org.getUsername());
+    }
     if (relatedObjects.includes(Constants.Apex)) {
       sfProject.retrieve(APEXCLASS, this.org.getUsername());
     }
@@ -111,7 +108,7 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     debugTimer.start();
 
     let apexAssessmentInfos: ApexAssessmentInfo[] = [];
-    const lwcAssessmentInfos: LWCAssessmentInfo[] = [];
+    let lwcAssessmentInfos: LWCAssessmentInfo[] = [];
     let experienceSiteAssessmentInfos: ExperienceSiteAssessmentInfo[] = [];
     let flexipageAssessmentInfos: FlexiPageAssessmentInfo[] = [];
 
@@ -129,19 +126,21 @@ export default class OmnistudioRelatedObjectMigrationFacade {
       if (relatedObjects.includes(Constants.FlexiPage)) {
         flexipageAssessmentInfos = isMigration ? this.flexipageMigration.migrate() : this.flexipageMigration.assess();
       }
+      if (relatedObjects.includes(Constants.LWC)) {
+        lwcAssessmentInfos = isMigration ? this.lwcMigration.migrate() : this.lwcMigration.assessment();
+      }
     } catch (error) {
       // Log the error
       Logger.error('Error processing related objects', error);
     }
-    // TODO: Uncomment code once MVP for migration is completed
-    // try {
-    //   if (relatedObjects.includes(Constants.LWC)) {
-    //     Logger.logVerbose(migrateMessages.getMessage('startingLwcMigration', [this.projectPath]));
-    //     lwcAssessmentInfos = isMigration ? this.lwcMigration.migrate() : this.lwcMigration.assessment();
-    //   }
-    // } catch (Error) {
-    //   Logger.error(Error.message);
-    // }
+    try {
+      if (relatedObjects.includes(Constants.LWC)) {
+        Logger.logVerbose(migrateMessages.getMessage('startingLwcMigration', [this.projectPath]));
+        lwcAssessmentInfos = isMigration ? this.lwcMigration.migrate() : this.lwcMigration.assessment();
+      }
+    } catch (error) {
+      Logger.error(error.message);
+    }
 
     // Stop the debug timer
     const timer = debugTimer.stop();

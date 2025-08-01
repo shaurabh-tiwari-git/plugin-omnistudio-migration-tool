@@ -5,6 +5,7 @@ import { Messages } from '@salesforce/core';
 import { pushAssestUtilites } from '../file/fileUtil';
 import {
   ApexAssessmentInfo,
+  LWCAssessmentInfo,
   MigratedObject,
   MigratedRecordInfo,
   RelatedObjectAssesmentInfo,
@@ -26,7 +27,6 @@ import { getMigrationHeading } from '../stringUtils';
 import { Constants } from '../constants/stringContants';
 import { reportingHelper } from './reportingHelper';
 const resultsDir = path.join(process.cwd(), 'migration_report');
-// const lwcConstants = { componentName: 'lwc', title: 'LWC Components Migration Result' };
 const migrationReportHTMLfileName = 'dashboard.html';
 const flexipageFileName = 'flexipage.html';
 const templateDir = 'templates';
@@ -36,6 +36,7 @@ const reportTemplateFilePath = path.join(__dirname, '..', '..', templateDir, rep
 const dashboardTemplateFilePath = path.join(__dirname, '..', '..', templateDir, dashboardTemplateName);
 const apexFileName = 'apex.html';
 const experienceSiteFileName = 'experienceSite.html';
+const lwcFileName = 'lwc.html';
 
 export class ResultsBuilder {
   private static rowClass = 'data-row-';
@@ -230,6 +231,9 @@ export class ResultsBuilder {
     }
     if (objectsToProcess.includes(Constants.FlexiPage)) {
       this.generateReportForFlexipage(result.flexipageAssessmentInfos, instanceUrl, orgDetails, messages);
+    }
+    if (objectsToProcess.includes(Constants.LWC)) {
+      this.generateReportForLwc(result.lwcAssessmentInfos, instanceUrl, orgDetails, messages);
     }
   }
 
@@ -504,6 +508,117 @@ export class ResultsBuilder {
     // call generate html from template
   }
 
+  private static generateReportForLwc(
+    result: LWCAssessmentInfo[],
+    instanceUrl: string,
+    orgDetails: OmnistudioOrgDetails,
+    messages: Messages
+  ): void {
+    Logger.captureVerboseData('lwc data', result);
+    const data: ReportParam = {
+      title: 'LWC Migration Report',
+      heading: 'LWC Migration Report',
+      org: {
+        name: orgDetails.orgDetails.Name,
+        id: orgDetails.orgDetails.Id,
+        namespace: orgDetails.packageDetails.namespace,
+        dataModel: orgDetails.dataModel,
+      },
+      assessmentDate: new Date().toLocaleString(),
+      total: result.length,
+      filterGroups: [
+        createFilterGroupParam('Filter by Status', 'status', ['Can be Automated', 'Need Manual Intervention']),
+      ],
+      headerGroups: [
+        {
+          header: [
+            {
+              name: 'Name',
+              colspan: 1,
+              rowspan: 1,
+            },
+            {
+              name: 'File Reference',
+              colspan: 1,
+              rowspan: 1,
+            },
+            {
+              name: 'Code Difference',
+              colspan: 1,
+              rowspan: 1,
+            },
+            {
+              name: 'Migration Status',
+              colspan: 1,
+              rowspan: 1,
+            },
+            {
+              name: 'Errors',
+              colspan: 1,
+              rowspan: 1,
+            },
+          ],
+        },
+      ],
+      rows: result.flatMap((item) =>
+        item.changeInfos.map((fileChangeInfo) => ({
+          rowId: `${this.rowClass}${this.rowId++}`,
+          data: [
+            createRowDataParam('name', item.name, true, 1, 1, false),
+            createRowDataParam(
+              'path',
+              fileChangeInfo.name,
+              false,
+              1,
+              1,
+              true,
+              fileChangeInfo.path,
+              fileChangeInfo.name
+            ),
+            createRowDataParam(
+              'diff',
+              fileChangeInfo.name + 'diff',
+              false,
+              1,
+              1,
+              false,
+              undefined,
+              FileDiffUtil.getDiffHTML(fileChangeInfo.diff, fileChangeInfo.name)
+            ),
+            createRowDataParam(
+              'status',
+              item.errors && item.errors.length > 0 ? 'Need Manual Intervention' : 'Can be Automated',
+              false,
+              1,
+              1,
+              false,
+              undefined,
+              undefined,
+              item.errors && item.errors.length > 0 ? 'text-error' : 'text-success'
+            ),
+            createRowDataParam(
+              'errors',
+              item.errors ? 'Has Errors' : 'Has No Errors',
+              false,
+              1,
+              1,
+              false,
+              undefined,
+              item.errors ? reportingHelper.decorateErrors(item.errors) : []
+            ),
+          ],
+        }))
+      ),
+      rollbackFlags: (orgDetails.rollbackFlags || []).includes('RollbackLWCChanges')
+        ? ['RollbackLWCChanges']
+        : undefined,
+    };
+
+    const reportTemplate = fs.readFileSync(reportTemplateFilePath, 'utf8');
+    const html = TemplateParser.generate(reportTemplate, data, messages);
+    fs.writeFileSync(path.join(resultsDir, lwcFileName), html);
+  }
+
   private static generateMigrationReportDashboard(
     orgDetails: OmnistudioOrgDetails,
     results: MigratedObject[],
@@ -535,6 +650,14 @@ export class ResultsBuilder {
         total: relatedObjectMigrationResult.flexipageAssessmentInfos?.length || 0,
         data: this.getDifferentStatusDataForFlexipage(relatedObjectMigrationResult.flexipageAssessmentInfos),
         file: flexipageFileName,
+      });
+    }
+    if (objectsToProcess.includes(Constants.LWC)) {
+      relatedObjectSummaryItems.push({
+        name: 'LWC',
+        total: relatedObjectMigrationResult.lwcAssessmentInfos?.length || 0,
+        data: this.getDifferentStatusDataForLwc(relatedObjectMigrationResult.lwcAssessmentInfos),
+        file: lwcFileName,
       });
     }
 
@@ -610,6 +733,28 @@ export class ResultsBuilder {
     return [
       { name: 'Completed', count: completed, cssClass: 'text-success' },
       { name: 'Failed', count: failed, cssClass: 'text-error' },
+    ];
+  }
+
+  private static getDifferentStatusDataForLwc(data: LWCAssessmentInfo[]): SummaryItemDetailParam[] {
+    let canBeAutomated = 0;
+    let hasWarnings = 0;
+    let hasErrors = 0;
+    data.forEach((item) => {
+      if (!item.errors || item.errors.length === 0) {
+        canBeAutomated++;
+      } else {
+        hasErrors++;
+      }
+      if (item.warnings && item.warnings.length > 0) {
+        hasWarnings++;
+      }
+    });
+
+    return [
+      { name: 'Can be Automated', count: canBeAutomated, cssClass: 'text-success' },
+      { name: 'Has Warnings', count: hasWarnings, cssClass: 'text-warning' },
+      { name: 'Has Errors', count: hasErrors, cssClass: 'text-error' },
     ];
   }
 }

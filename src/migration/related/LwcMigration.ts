@@ -8,6 +8,7 @@ import { Logger } from '../../utils/logger';
 import { FileProcessorFactory } from '../../utils/lwcparser/fileutils/FileProcessorFactory';
 import { FileChangeInfo, LWCAssessmentInfo } from '../../utils';
 import { Constants } from '../../utils/constants/stringContants';
+import { createProgressBar } from '../base';
 import { BaseRelatedObjectMigration } from './BaseRealtedObjectMigration';
 
 Messages.importMessagesDirectory(__dirname);
@@ -72,6 +73,12 @@ export class LwcMigration extends BaseRelatedObjectMigration {
 
   // This method to process the parsing and return the LWCAssessmentInfo[]
   private processFiles(fileMap: Map<string, File[]>, type: string): LWCAssessmentInfo[] {
+    const progressBar =
+      type.toLowerCase() === 'migration'
+        ? createProgressBar('Migrating', 'Lightning Web Components')
+        : createProgressBar('Assessing', 'Lightning Web Components');
+    progressBar.start(fileMap.size, 0);
+    let progressCounter = 0;
     try {
       const jsonData: LWCAssessmentInfo[] = [];
       fileMap.forEach((fileList, dir) => {
@@ -116,9 +123,12 @@ export class LwcMigration extends BaseRelatedObjectMigration {
             jsonData.push(assesmentInfo);
           }
         }
+        progressBar.update(++progressCounter);
       });
+      progressBar.stop();
       return jsonData;
     } catch (error) {
+      progressBar.stop();
       Logger.error(assessMessages.getMessage('errorProcessingFiles'), error);
     }
   }
