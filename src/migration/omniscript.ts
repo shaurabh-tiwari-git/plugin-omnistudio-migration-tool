@@ -357,7 +357,6 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     const missingOS: string[] = [];
     const dependenciesRA: nameLocation[] = [];
     const dependenciesLWC: nameLocation[] = [];
-    let migrationStatus: string;
 
     //const missingRA: string[] = [];
     for (const elem of elements) {
@@ -498,7 +497,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       const type = omniscript[this.namespacePrefix + 'IsLwcEnabled__c'] ? 'LWC' : 'Angular';
       if (type === 'Angular') {
         warnings.unshift(this.messages.getMessage('angularOSWarning'));
-        migrationStatus = 'Need Manual Intervention';
+        assessmentStatus = 'Need Manual Intervention';
       }
     }
 
