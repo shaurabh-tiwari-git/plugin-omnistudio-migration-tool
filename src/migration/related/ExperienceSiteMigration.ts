@@ -184,11 +184,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
 
     Logger.logVerbose(this.messages.getMessage('printDifference', [JSON.stringify(difference)]));
 
-    // TODO - only for testing
-    if (
-      (type === this.MIGRATE || type === this.ASSESS) &&
-      normalizedOriginalFileContent !== noarmalizeUpdatedFileContent
-    ) {
+    if (type === this.MIGRATE && normalizedOriginalFileContent !== noarmalizeUpdatedFileContent) {
       Logger.logVerbose(this.messages.getMessage('updatingFile'));
       fs.writeFileSync(file.location, noarmalizeUpdatedFileContent, 'utf8');
     }
