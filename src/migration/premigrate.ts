@@ -18,7 +18,7 @@ export class PreMigrate extends BaseMigrationTool {
   }
 
   // Just to disable org is unused error coming
-  public printOrg(): void {
+  public printOrgDetails(): void {
     try {
       Logger.log(JSON.stringify(this.org));
     } catch (e) {
