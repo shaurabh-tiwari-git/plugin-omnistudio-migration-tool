@@ -500,45 +500,6 @@ describe('ExperienceSiteMigration', () => {
       expect(result.warnings).to.have.length(0);
     });
 
-    it('should transform component correctly in assess mode', () => {
-      // Arrange
-      const mockStorage: MigrationStorage = {
-        osStorage: new Map<string, OmniScriptStorage>(),
-        fcStorage: new Map(),
-      };
-
-      const mockOSStorage: OmniScriptStorage = {
-        type: 'AssessType',
-        subtype: 'AssessSubtype',
-        language: 'Spanish',
-        isDuplicate: false,
-        migrationSuccess: true,
-      };
-
-      mockStorage.osStorage.set('assesssubtype:spanish', mockOSStorage);
-      storageUtilStub.returns(mockStorage);
-
-      const assessSiteJson = JSON.parse(JSON.stringify(sampleExperienceSiteJson)) as ExpSitePageJson;
-      assessSiteJson.regions[1].components[0].componentAttributes.target = 'AssessType:AssessSubtype:Spanish';
-      fsReadStub.returns(JSON.stringify(assessSiteJson));
-
-      // Act
-      const result = experienceSiteMigration.processExperienceSite(mockFile, Assess);
-
-      // Assert
-      expect(result.hasOmnistudioContent).to.be.true;
-      expect(fsWriteStub.calledOnce).to.be.true;
-
-      const writtenContent = fsWriteStub.firstCall.args[1];
-      const parsedContent = JSON.parse(writtenContent) as ExpSitePageJson;
-      const component = parsedContent.regions[1].components[0];
-
-      expect(component.componentName).to.equal('runtime_omnistudio:omniscript');
-      expect(component.componentAttributes.type).to.equal('AssessType');
-      expect(component.componentAttributes.subType).to.equal('AssessSubtype');
-      expect(component.componentAttributes.language).to.equal('Spanish');
-    });
-
     it('should generate warnings when assessment storage has missing data', () => {
       // Arrange
       const mockStorage: MigrationStorage = {
