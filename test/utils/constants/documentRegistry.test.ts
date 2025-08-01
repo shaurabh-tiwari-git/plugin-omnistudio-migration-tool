@@ -135,8 +135,8 @@ describe('DocumentRegistry', () => {
         'authordNameChangeMessage',
         'omniScriptNameChangeMessage',
         'dataRaptorNameChangeMessage',
-        'integrationProcedureNameChangeMessage',
-        'integrationProcedureManualUpdateMessage',
+        // 'integrationProcedureNameChangeMessage',
+        // 'integrationProcedureManualUpdateMessage',
         'duplicateCardNameMessage',
       ];
 

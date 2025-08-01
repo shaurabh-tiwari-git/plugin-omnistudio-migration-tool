@@ -256,6 +256,7 @@ export class AssessmentReporter {
     }
 
     if (relatedObjects && relatedObjects.includes(Constants.ExpSites)) {
+      reports.push(Constants.ExpSites);
       this.createDocument(
         path.join(this.basePath, this.experienceSiteAssessmentFileName),
         TemplateParser.generate(

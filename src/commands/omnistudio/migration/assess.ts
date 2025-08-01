@@ -179,7 +179,7 @@ export default class Assess extends OmniStudioBaseCommand {
       objectsToProcess
     );
 
-    const userActionMessages: string[] = ['abcd'];
+    const userActionMessages: string[] = [];
     await postMigrate.restoreExperienceAPIMetadataSettings(
       isExperienceBundleMetadataAPIProgramaticallyEnabled,
       userActionMessages

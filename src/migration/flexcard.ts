@@ -230,7 +230,6 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       newName: cleanedName,
     };
 
-
     flexCardAssessmentInfo.migrationStatus = assessmentStatus;
     this.updateDependencies(flexCard, flexCardAssessmentInfo);
 
@@ -667,6 +666,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           value.migrationSuccess = true;
         }
         let finalKey = `${flexCardAssessmentInfo.nameMapping.oldName}`;
+        finalKey = finalKey.toLowerCase();
         if (storage.fcStorage.has(finalKey)) {
           // Key already exists - handle accordingly
           Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', [finalKey]));
@@ -714,6 +714,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         }
 
         let finalKey = `${oldrecord['Name']}`;
+        finalKey = finalKey.toLowerCase();
         if (storage.fcStorage.has(finalKey)) {
           // Key already exists - handle accordingly
           Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', [finalKey]));

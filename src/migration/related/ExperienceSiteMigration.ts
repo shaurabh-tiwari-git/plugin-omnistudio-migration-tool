@@ -76,6 +76,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     progressBar.start(count.total, progressCounter);
 
     const experienceSitesAssessmentInfo: ExperienceSiteAssessmentInfo[] = [];
+    Logger.logVerbose('The namespace for expsites processing is ' + this.namespace);
     for (const directory of directoryMap.keys()) {
       const fileArray = directoryMap.get(directory);
       for (const file of fileArray) {
