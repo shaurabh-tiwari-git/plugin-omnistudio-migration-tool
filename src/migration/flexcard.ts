@@ -628,7 +628,6 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   }
 
   private prepareAssessmentStorageForFlexcards(flexcardAssessmentInfos: FlexCardAssessmentInfo[]) {
-    Logger.logVerbose('Started preparing storage for flexcards');
     let storage: MigrationStorage = StorageUtil.getOmnistudioAssessmentStorage();
 
     for (let flexCardAssessmentInfo of flexcardAssessmentInfos) {

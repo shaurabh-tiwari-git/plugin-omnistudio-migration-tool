@@ -24,7 +24,7 @@ import { BaseRelatedObjectMigration } from './BaseRealtedObjectMigration';
 Messages.importMessagesDirectory(__dirname);
 
 const TARGET_COMPONENT_NAME_OS = 'runtime_omnistudio:omniscript';
-const TARGET_COMPONENT_NAME_FC = 'runtime_omnisctudio:flexcard';
+const TARGET_COMPONENT_NAME_FC = 'runtime_omnistudio:flexcard';
 const FLEXCARD_PREFIX = 'cf';
 
 export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
