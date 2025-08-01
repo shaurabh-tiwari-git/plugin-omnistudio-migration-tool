@@ -357,7 +357,6 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     const missingOS: string[] = [];
     const dependenciesRA: nameLocation[] = [];
     const dependenciesLWC: nameLocation[] = [];
-    let migrationStatus = 'Can be Automated';
 
     //const missingRA: string[] = [];
     for (const elem of elements) {
