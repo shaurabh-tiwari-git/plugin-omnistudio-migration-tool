@@ -99,7 +99,7 @@ describe('DocumentRegistry', () => {
           ? urlCheckCache.get(url)
           : await checkSalesforceUrlWithPuppeteer(key, url);
         urlCheckCache.set(url, isValid);
-        expect(isValid, `URL for ${key} (${url}) should be accessible`).to.be.true;    
+        expect(isValid, `URL for ${key} (${url}) should be accessible`).to.be.true;
       });
 
     it('should have all required document registry entries', () => {
