@@ -360,7 +360,6 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     let migrationStatus = 'Can be Automated';
 
     //const missingRA: string[] = [];
-    Logger.logVerbose(migrationStatus);
     for (const elem of elements) {
       const type = elem[this.namespacePrefix + 'Type__c'];
       const elemName = `${elem['Name']}`;

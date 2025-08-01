@@ -105,10 +105,10 @@ export default class OmnistudioRelatedObjectMigrationFacade {
     );
 
     // Retrieve metadata if needed
-    // if (isMigration) { - TODO-ABC Why only retrieve when migration
-    Logger.logVerbose(migrateMessages.getMessage('retrievingMetadata', [String(relatedObjects), this.projectPath]));
-    this.retrieveMetadata(relatedObjects);
-    // }
+    if (isMigration) {
+      Logger.logVerbose(migrateMessages.getMessage('retrievingMetadata', [String(relatedObjects), this.projectPath]));
+      this.retrieveMetadata(relatedObjects);
+    }
 
     const debugTimer = DebugTimer.getInstance();
     debugTimer.start();
