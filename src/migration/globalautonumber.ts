@@ -13,14 +13,22 @@ import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
 import { OrgPreferences } from '../utils/orgPreferences';
 import { OmniGlobalAutoNumberPrefManager } from '../utils/OmniGlobalAutoNumberPrefManager';
+import { NameMappingRegistry } from './NameMappingRegistry';
 import { Constants } from '../utils/constants/stringContants';
 
 export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements MigrationTool {
   private prefManager: OmniGlobalAutoNumberPrefManager;
   private globalAutoNumberSettings: AnyJson[] | null = null;
 
-  constructor(namespace: string, connection: Connection, logger: Logger, messages: Messages, ux: UX) {
-    super(namespace, connection, logger, messages, ux);
+  constructor(
+    namespace: string,
+    connection: Connection,
+    logger: Logger,
+    messages: Messages,
+    ux: UX,
+    nameRegistry?: NameMappingRegistry
+  ) {
+    super(namespace, connection, logger, messages, ux, nameRegistry);
     this.prefManager = new OmniGlobalAutoNumberPrefManager(this.connection, this.messages);
   }
 
@@ -202,6 +210,7 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
     Logger.logVerbose(
       this.messages.getMessage('foundGlobalAutoNumbersToMigrate', [this.globalAutoNumberSettings.length])
     );
+
     const progressBar = createProgressBar('Migrating', 'GlobalAutoNumber');
     progressBar.start(this.globalAutoNumberSettings.length, progressCounter);
 

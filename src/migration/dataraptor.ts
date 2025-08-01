@@ -101,6 +101,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
       (dr) => dr[this.namespacePrefix + 'Type__c'] !== 'Migration'
     ).length;
     Logger.log(this.messages.getMessage('foundDataRaptorsToMigrate', [nonMigrationDataRaptors]));
+
     const progressBar = createProgressBar('Migrating', 'Data Mapper');
     progressBar.start(nonMigrationDataRaptors, progressCounter);
     for (let dr of dataRaptors) {
@@ -478,6 +479,11 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     // Set the parent/child relationship
     mappedObject['OmniDataTransformationId'] = omniDataTransformationId;
     mappedObject['Name'] = this.cleanName(mappedObject['Name']);
+
+    // Update formula field references if NameMappingRegistry is available
+    if (this.nameRegistry && mappedObject['Formula']) {
+      mappedObject['Formula'] = this.nameRegistry.updateDependencyReferences(mappedObject['Formula']);
+    }
 
     // BATCH framework requires that each record has an "attributes" property
     mappedObject['attributes'] = {

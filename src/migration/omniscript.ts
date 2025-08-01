@@ -24,6 +24,7 @@ import {
   UploadRecordResult,
 } from './interfaces';
 import { ObjectMapping } from './interfaces';
+import { NameMappingRegistry } from './NameMappingRegistry';
 import { NetUtils, RequestMethod } from '../utils/net';
 import { Connection, Messages } from '@salesforce/core';
 import { UX } from '@salesforce/command';
@@ -70,9 +71,10 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     logger: Logger,
     messages: Messages,
     ux: UX,
-    allVersions: boolean
+    allVersions: boolean,
+    nameRegistry?: NameMappingRegistry
   ) {
-    super(namespace, connection, logger, messages, ux);
+    super(namespace, connection, logger, messages, ux, nameRegistry);
     this.exportType = exportType;
     this.allVersions = allVersions;
   }
@@ -415,7 +417,14 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       }
 
       // Check for DataRaptor dependencies
-      if (['DataRaptor Extract Action', 'DataRaptor Turbo Action', 'DataRaptor Post Action'].includes(type)) {
+      if (
+        [
+          'DataRaptor Extract Action',
+          'DataRaptor Turbo Action',
+          'DataRaptor Transform Action',
+          'DataRaptor Post Action',
+        ].includes(type)
+      ) {
         const nameVal = `${elemName}`;
         dependencyDR.push({ name: propertySet['bundle'], location: nameVal });
         if (!existingOmniscriptNames.has(nameVal) && !existingDataRaptorNames.has(nameVal)) {
@@ -640,6 +649,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     let originalOsRecords = new Map<string, any>();
     let osUploadInfo = new Map<string, UploadRecordResult>();
     Logger.log(this.messages.getMessage('foundOmniScriptsToMigrate', [omniscripts.length]));
+
     const progressBar = createProgressBar('Migrating', 'Omniscript and Integration Procedure');
     let progressCounter = 0;
     progressBar.start(omniscripts.length, progressCounter);
@@ -1303,40 +1313,103 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     // We need to fix the child references
     const elementType = mappedObject[ElementMappings.Type__c];
     const propertySet = JSON.parse(mappedObject[ElementMappings.PropertySet__c] || '{}');
+
+    // Use NameMappingRegistry to update all dependency references
+    const updatedPropertySet = this.nameRegistry.updateDependencyReferences(propertySet);
+
     switch (elementType) {
       case 'OmniScript':
-        propertySet['Type'] = this.cleanName(propertySet['Type']);
-        propertySet['Sub Type'] = this.cleanName(propertySet['Sub Type']);
+        // Use registry for OmniScript references with explicit fallback
+        const osType = propertySet['Type'] || '';
+        const osSubType = propertySet['Sub Type'] || '';
+        const osLanguage = propertySet['Language'] || 'English';
+
+        // Construct full OmniScript name to check registry
+        const fullOmniScriptName = `${osType}_${osSubType}_${osLanguage}`;
+
+        if (this.nameRegistry.hasOmniScriptMapping(fullOmniScriptName)) {
+          // Registry has mapping for this OmniScript - extract cleaned parts
+          const cleanedFullName = this.nameRegistry.getCleanedName(fullOmniScriptName, 'OmniScript');
+          const parts = cleanedFullName.split('_');
+
+          if (parts.length >= 2) {
+            updatedPropertySet['Type'] = parts[0];
+            updatedPropertySet['Sub Type'] = parts[1];
+            // Language doesn't typically change, but update if provided
+            if (parts.length >= 3) {
+              updatedPropertySet['Language'] = parts[2];
+            }
+          }
+        } else {
+          // No registry mapping - use original fallback approach
+          updatedPropertySet['Type'] = this.cleanName(osType);
+          updatedPropertySet['Sub Type'] = this.cleanName(osSubType);
+        }
         break;
       case 'Integration Procedure Action':
-        const remoteOptions = propertySet['remoteOptions'] || {};
-        remoteOptions['preTransformBundle'] = this.cleanName(remoteOptions['preTransformBundle']);
-        remoteOptions['postTransformBundle'] = this.cleanName(remoteOptions['postTransformBundle']);
-        propertySet['remoteOptions'] = remoteOptions;
+        const remoteOptions = updatedPropertySet['remoteOptions'] || {};
+        // Use registry for DataMapper references with explicit fallback
+        const preTransformBundle = propertySet['remoteOptions']?.['preTransformBundle'] || '';
+        if (preTransformBundle && this.nameRegistry.hasDataMapperMapping(preTransformBundle)) {
+          remoteOptions['preTransformBundle'] = this.nameRegistry.getDataMapperCleanedName(preTransformBundle);
+        } else {
+          remoteOptions['preTransformBundle'] = this.cleanName(preTransformBundle);
+        }
 
-        propertySet['preTransformBundle'] = this.cleanName(propertySet['preTransformBundle']);
-        propertySet['postTransformBundle'] = this.cleanName(propertySet['postTransformBundle']);
+        const postTransformBundle = propertySet['remoteOptions']?.['postTransformBundle'] || '';
+        if (postTransformBundle && this.nameRegistry.hasDataMapperMapping(postTransformBundle)) {
+          remoteOptions['postTransformBundle'] = this.nameRegistry.getDataMapperCleanedName(postTransformBundle);
+        } else {
+          remoteOptions['postTransformBundle'] = this.cleanName(postTransformBundle);
+        }
+        updatedPropertySet['remoteOptions'] = remoteOptions;
 
-        // We can't update the IP references, we need to let the user know
+        const preBundle = propertySet['preTransformBundle'] || '';
+        if (preBundle && this.nameRegistry.hasDataMapperMapping(preBundle)) {
+          updatedPropertySet['preTransformBundle'] = this.nameRegistry.getDataMapperCleanedName(preBundle);
+        } else {
+          updatedPropertySet['preTransformBundle'] = this.cleanName(preBundle);
+        }
+
+        const postBundle = propertySet['postTransformBundle'] || '';
+        if (postBundle && this.nameRegistry.hasDataMapperMapping(postBundle)) {
+          updatedPropertySet['postTransformBundle'] = this.nameRegistry.getDataMapperCleanedName(postBundle);
+        } else {
+          updatedPropertySet['postTransformBundle'] = this.cleanName(postBundle);
+        }
+
+        // Use registry for Integration Procedure references
         const key: String = propertySet['integrationProcedureKey'] || '';
         if (key) {
-          const parts = key.split('_');
-          const newKey = parts.map((p) => this.cleanName(p, true)).join('_');
-          if (parts.length > 2) {
-            invalidIpReferences.set(mappedObject[ElementMappings.Name], key);
+          const hasRegistryMapping = this.nameRegistry.hasIntegrationProcedureMapping(key as string);
+          if (hasRegistryMapping) {
+            const cleanedIpName = this.nameRegistry.getIntegrationProcedureCleanedName(key as string);
+            updatedPropertySet['integrationProcedureKey'] = cleanedIpName;
+          } else {
+            const parts = key.split('_');
+            const newKey = parts.map((p) => this.cleanName(p, true)).join('_');
+            if (parts.length > 2) {
+              invalidIpReferences.set(mappedObject[ElementMappings.Name], key);
+            }
+            updatedPropertySet['integrationProcedureKey'] = newKey;
           }
-          propertySet['integrationProcedureKey'] = newKey;
         }
         break;
       case 'DataRaptor Turbo Action':
       case 'DataRaptor Transform Action':
       case 'DataRaptor Post Action':
       case 'DataRaptor Extract Action':
-        propertySet['bundle'] = this.cleanName(propertySet['bundle']);
+        // Use registry for DataMapper references with explicit fallback
+        const bundleName = propertySet['bundle'] || '';
+        if (bundleName && this.nameRegistry.hasDataMapperMapping(bundleName)) {
+          updatedPropertySet['bundle'] = this.nameRegistry.getDataMapperCleanedName(bundleName);
+        } else {
+          updatedPropertySet['bundle'] = this.cleanName(bundleName);
+        }
         break;
     }
 
-    mappedObject[ElementMappings.PropertySet__c] = JSON.stringify(propertySet);
+    mappedObject[ElementMappings.PropertySet__c] = JSON.stringify(updatedPropertySet);
 
     // BATCH framework requires that each record has an "attributes" property
     mappedObject['attributes'] = {

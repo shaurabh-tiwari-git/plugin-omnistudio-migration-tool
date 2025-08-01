@@ -199,5 +199,8 @@
   "errorMigrationMessage": "Error migrating object: %s",
   "experienceSiteException": "Exception occurred while processing experience sites",
   "reservedKeysFoundInPropertySet": "Reserved keys found in any of output response transformation fields: %s.",
-  "nameMappingUndefined": "Name Mapping is undefined"
+  "nameMappingUndefined": "Name Mapping is undefined",
+  "errorComponentMapping": "Error during component pre-processing: %s",
+  "startingComponentPreProcessing": "Pre-processing components for name mapping",
+  "completeComponentMappingMessage": "Registered name mappings for %s components"
 }

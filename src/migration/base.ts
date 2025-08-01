@@ -6,6 +6,7 @@ import { NetUtils } from '../utils/net';
 import { Stringutil } from '../utils/StringValue/stringutil';
 import { Logger } from '../utils/logger';
 import { TransformData, UploadRecordResult } from './interfaces';
+import { NameMappingRegistry } from './NameMappingRegistry';
 
 export type ComponentType = 'Data Mapper' | 'Flexcard' | 'Omniscript and Integration Procedure' | 'GlobalAutoNumber';
 export type RelatedObjectType = 'Flexipage' | 'ExperienceSites' | 'Lightning Web Components' | 'Apex Classes';
@@ -36,13 +37,22 @@ export class BaseMigrationTool {
   protected readonly logger: Logger;
   protected readonly messages: Messages;
   protected readonly ux: UX;
+  protected readonly nameRegistry: NameMappingRegistry;
 
-  public constructor(namespace: string, connection: Connection, logger: Logger, messages: Messages, ux: UX) {
+  public constructor(
+    namespace: string,
+    connection: Connection,
+    logger: Logger,
+    messages: Messages,
+    ux: UX,
+    nameRegistry?: NameMappingRegistry
+  ) {
     this.namespace = namespace;
     this.connection = connection;
     this.logger = logger;
     this.messages = messages;
     this.ux = ux;
+    this.nameRegistry = nameRegistry || NameMappingRegistry.getInstance();
     this.namespacePrefix = namespace ? namespace + '__' : '';
   }
 

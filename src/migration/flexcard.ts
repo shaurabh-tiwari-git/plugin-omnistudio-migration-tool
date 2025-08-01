@@ -18,6 +18,7 @@ import { UX } from '@salesforce/command';
 import { FlexCardAssessmentInfo } from '../../src/utils';
 import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
+import { NameMappingRegistry } from './NameMappingRegistry';
 import { Constants } from '../utils/constants/stringContants';
 import { StorageUtil } from '../utils/storageUtil';
 
@@ -33,9 +34,10 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     logger: Logger,
     messages: Messages,
     ux: UX,
-    allVersions: boolean
+    allVersions: boolean,
+    nameRegistry?: NameMappingRegistry
   ) {
-    super(namespace, connection, logger, messages, ux);
+    super(namespace, connection, logger, messages, ux, nameRegistry);
     this.allVersions = allVersions;
   }
 
@@ -814,56 +816,8 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       mappedObject[CardMappings.Datasource__c] = JSON.stringify(datasource);
     }
 
-    // Update the propertyset datasource
-    const propertySet = JSON.parse(mappedObject[CardMappings.Definition__c] || '{}');
-    if (propertySet) {
-      if (propertySet.dataSource) {
-        const type = propertySet.dataSource.type;
-        if (type === 'DataRaptor') {
-          propertySet.dataSource.value.bundle = this.cleanName(propertySet.dataSource.value.bundle);
-        } else if (type === 'IntegrationProcedures') {
-          const ipMethod: string = propertySet.dataSource.value.ipMethod || '';
-
-          const parts = ipMethod.split('_');
-          const newKey = parts.map((p) => this.cleanName(p, true)).join('_');
-          propertySet.dataSource.value.ipMethod = newKey;
-
-          if (parts.length > 2) {
-            invalidIpNames.set('DataSource', ipMethod);
-          }
-        }
-      }
-
-      // update the states for child cards
-      for (let i = 0; i < (propertySet.states || []).length; i++) {
-        const state = propertySet.states[i];
-
-        // Clean childCards property
-        if (state.childCards && Array.isArray(state.childCards)) {
-          state.childCards = state.childCards.map((c) => this.cleanName(c));
-        }
-
-        // Fix the "components" for child cards
-        for (let componentKey in state.components) {
-          if (state.components.hasOwnProperty(componentKey)) {
-            const component = state.components[componentKey];
-
-            if (component.children && Array.isArray(component.children)) {
-              this.fixChildren(component.children);
-            }
-          }
-        }
-
-        if (state.omniscripts && Array.isArray(state.omniscripts)) {
-          for (let osIdx = 0; osIdx < state.omniscripts.length; osIdx++) {
-            state.omniscripts[osIdx].type = this.cleanName(state.omniscripts[osIdx].type);
-            state.omniscripts[osIdx].subtype = this.cleanName(state.omniscripts[osIdx].subtype);
-          }
-        }
-      }
-
-      mappedObject[CardMappings.Definition__c] = JSON.stringify(propertySet);
-    }
+    // Update all dependencies comprehensively
+    this.updateAllDependenciesWithRegistry(mappedObject, invalidIpNames);
 
     mappedObject['attributes'] = {
       type: CardMigrationTool.OMNIUICARD_NAME,
@@ -873,22 +827,250 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     return mappedObject;
   }
 
-  private fixChildren(children: any[]) {
-    for (let j = 0; j < children.length; j++) {
-      const child = children[j];
+  /**
+   * Comprehensive dependency update using NameMappingRegistry - mirrors assessment logic
+   */
+  private updateAllDependenciesWithRegistry(mappedObject: any, invalidIpNames: Map<string, string>): void {
+    // 1. Handle propertySet (Definition) datasource
+    const propertySet = JSON.parse(mappedObject[CardMappings.Definition__c] || '{}');
+    if (propertySet) {
+      // Use NameMappingRegistry to update all dependency references first
+      const updatedPropertySet = this.nameRegistry.updateDependencyReferences(propertySet);
 
-      if (child.element === 'childCardPreview') {
-        child.property.cardName = this.cleanName(child.property.cardName);
-      } else if (child.element === 'action') {
-        if (child.property && child.property.stateAction && child.property.stateAction.omniType) {
-          const parts = (child.property.stateAction.omniType.Name || '').split('/');
-          child.property.stateAction.omniType.Name = parts.map((p) => this.cleanName(p)).join('/');
+      // Handle dataSource in propertySet
+      if (updatedPropertySet.dataSource) {
+        this.updateDataSourceWithRegistry(updatedPropertySet.dataSource, invalidIpNames, 'PropertySet');
+      }
+
+      // Handle states comprehensively
+      if (updatedPropertySet.states && Array.isArray(updatedPropertySet.states)) {
+        for (let i = 0; i < updatedPropertySet.states.length; i++) {
+          const state = updatedPropertySet.states[i];
+
+          // Handle child cards using registry
+          if (state.childCards && Array.isArray(state.childCards)) {
+            state.childCards = state.childCards.map((c) => {
+              if (c && this.nameRegistry.hasFlexCardMapping(c)) {
+                return this.nameRegistry.getFlexCardCleanedName(c);
+              } else {
+                return this.cleanName(c);
+              }
+            });
+          }
+
+          // Handle omniscripts using registry
+          if (state.omniscripts && Array.isArray(state.omniscripts)) {
+            for (let osIdx = 0; osIdx < state.omniscripts.length; osIdx++) {
+              this.updateOmniScriptReferenceWithRegistry(state.omniscripts[osIdx]);
+            }
+          }
+
+          // Handle components comprehensively using registry
+          if (state.components) {
+            for (const componentKey in state.components) {
+              if (state.components.hasOwnProperty(componentKey)) {
+                const component = state.components[componentKey];
+                this.updateComponentDependenciesWithRegistry(component);
+              }
+            }
+          }
         }
       }
 
-      if (child.children && Array.isArray(child.children)) {
-        this.fixChildren(child.children);
+      mappedObject[CardMappings.Definition__c] = JSON.stringify(updatedPropertySet);
+    }
+  }
+
+  /**
+   * Update dataSource (DataRaptor, Integration Procedures, Apex Remote) using registry
+   */
+  private updateDataSourceWithRegistry(dataSource: any, invalidIpNames: Map<string, string>, context: string): void {
+    const type = dataSource.type;
+
+    if (type === Constants.DataRaptorComponentName || type === 'DataRaptor') {
+      // Handle DataRaptor using registry
+      const originalBundle = dataSource.value?.bundle || '';
+      if (originalBundle && this.nameRegistry.hasDataMapperMapping(originalBundle)) {
+        dataSource.value.bundle = this.nameRegistry.getDataMapperCleanedName(originalBundle);
+      } else {
+        dataSource.value.bundle = this.cleanName(originalBundle);
       }
+    } else if (type === Constants.IntegrationProcedurePluralName || type === 'IntegrationProcedures') {
+      // Handle Integration Procedures using registry
+      const ipMethod: string = dataSource.value?.ipMethod || '';
+      const hasRegistryMapping = this.nameRegistry.hasIntegrationProcedureMapping(ipMethod);
+      if (hasRegistryMapping) {
+        const cleanedIpName = this.nameRegistry.getIntegrationProcedureCleanedName(ipMethod);
+        dataSource.value.ipMethod = cleanedIpName;
+      } else {
+        const parts = ipMethod.split('_');
+        const newKey = parts.map((p) => this.cleanName(p, true)).join('_');
+        dataSource.value.ipMethod = newKey;
+        if (parts.length > 2) {
+          invalidIpNames.set(context, ipMethod);
+        }
+      }
+    }
+  }
+
+  /**
+   * Update OmniScript reference using registry
+   */
+  private updateOmniScriptReferenceWithRegistry(omniscriptRef: any): void {
+    const originalType = omniscriptRef.type;
+    const originalSubtype = omniscriptRef.subtype;
+    const language = omniscriptRef.language || 'English';
+
+    // Construct full OmniScript name to check registry
+    const fullOmniScriptName = `${originalType}_${originalSubtype}_${language}`;
+
+    if (this.nameRegistry.hasOmniScriptMapping(fullOmniScriptName)) {
+      // Registry has mapping for this OmniScript - extract cleaned parts
+      const cleanedFullName = this.nameRegistry.getCleanedName(fullOmniScriptName, 'OmniScript');
+      const parts = cleanedFullName.split('_');
+
+      if (parts.length >= 2) {
+        omniscriptRef.type = parts[0];
+        omniscriptRef.subtype = parts[1];
+        // Language doesn't typically change, but update if provided
+        if (parts.length >= 3) {
+          omniscriptRef.language = parts[2];
+        }
+      }
+    } else {
+      // No registry mapping - use original fallback approach
+      omniscriptRef.type = this.cleanName(originalType);
+      omniscriptRef.subtype = this.cleanName(originalSubtype);
+    }
+  }
+
+  /**
+   * Update component dependencies comprehensively
+   */
+  private updateComponentDependenciesWithRegistry(component: any): void {
+    // Handle action elements with actionList (like assessment)
+    if (component.element === 'action' && component.property && component.property.actionList) {
+      for (const action of component.property.actionList) {
+        if (action.stateAction) {
+          // Case 1: Direct OmniScript reference
+          if (action.stateAction.type === Constants.OmniScriptComponentName && action.stateAction.omniType) {
+            this.updateOmniTypeNameWithRegistry(action.stateAction.omniType);
+          }
+          // Case 2: Flyout OmniScript reference
+          else if (
+            action.stateAction.type === 'Flyout' &&
+            action.stateAction.flyoutType === Constants.OmniScriptPluralName &&
+            action.stateAction.osName
+          ) {
+            this.updateOsNameWithRegistry(action.stateAction, 'osName');
+          }
+        }
+      }
+    }
+
+    // Handle Custom LWC components (no cleaning needed typically)
+    if (component.element === 'customLwc' && component.property) {
+      // Note: Custom LWC names typically don't need cleaning
+    }
+
+    // Handle standard component actions (like assessment)
+    if (component.actions && Array.isArray(component.actions)) {
+      for (const action of component.actions) {
+        if (action.stateAction && action.stateAction.omniType) {
+          this.updateOmniTypeNameWithRegistry(action.stateAction.omniType);
+        }
+      }
+    }
+
+    // Handle direct stateAction on component property (existing logic)
+    if (component.property && component.property.stateAction) {
+      if (component.property.stateAction.omniType) {
+        this.updateOmniTypeNameWithRegistry(component.property.stateAction.omniType);
+      }
+      if (
+        component.property.stateAction.type === 'Flyout' &&
+        component.property.stateAction.flyoutType === 'OmniScripts' &&
+        component.property.stateAction.osName
+      ) {
+        this.updateOsNameWithRegistry(component.property.stateAction, 'osName');
+      }
+    }
+
+    // Handle childCardPreview elements (from old fixChildren method)
+    if (component.element === 'childCardPreview' && component.property) {
+      if (component.property.cardName) {
+        const originalCardName = component.property.cardName;
+        if (this.nameRegistry.hasFlexCardMapping(originalCardName)) {
+          component.property.cardName = this.nameRegistry.getFlexCardCleanedName(originalCardName);
+        } else {
+          component.property.cardName = this.cleanName(originalCardName);
+        }
+      }
+    }
+
+    // Handle child components recursively
+    if (component.children && Array.isArray(component.children)) {
+      for (const child of component.children) {
+        this.updateComponentDependenciesWithRegistry(child);
+      }
+    }
+  }
+
+  /**
+   * Update omniType.Name using registry (handles Type/SubType/Language format)
+   */
+  private updateOmniTypeNameWithRegistry(omniType: any): void {
+    const originalName = omniType.Name || '';
+    const parts = originalName.split('/');
+
+    if (parts.length >= 3) {
+      // Construct full OmniScript name: Type_SubType_Language
+      const fullOmniScriptName = `${parts[0]}_${parts[1]}_${parts[2]}`;
+
+      if (this.nameRegistry.hasOmniScriptMapping(fullOmniScriptName)) {
+        // Registry has mapping - extract cleaned parts and convert back to / format
+        const cleanedFullName = this.nameRegistry.getCleanedName(fullOmniScriptName, 'OmniScript');
+        const cleanedParts = cleanedFullName.split('_');
+
+        if (cleanedParts.length >= 3) {
+          omniType.Name = cleanedParts.join('/');
+        }
+      } else {
+        // No registry mapping - use original fallback approach
+        omniType.Name = parts.map((p) => this.cleanName(p)).join('/');
+      }
+    } else {
+      // Fallback for unexpected format
+      omniType.Name = parts.map((p) => this.cleanName(p)).join('/');
+    }
+  }
+
+  /**
+   * Update osName using registry (handles Type/SubType/Language format)
+   */
+  private updateOsNameWithRegistry(stateAction: any, fieldName: string): void {
+    const originalOsName = stateAction[fieldName];
+    const parts = originalOsName.split('/');
+
+    if (parts.length >= 3) {
+      // Construct full OmniScript name: Type_SubType_Language
+      const fullOmniScriptName = `${parts[0]}_${parts[1]}_${parts[2]}`;
+
+      if (this.nameRegistry.hasOmniScriptMapping(fullOmniScriptName)) {
+        // Registry has mapping - extract cleaned parts and convert back to / format
+        const cleanedFullName = this.nameRegistry.getCleanedName(fullOmniScriptName, 'OmniScript');
+        const cleanedParts = cleanedFullName.split('_');
+
+        if (cleanedParts.length >= 3) {
+          stateAction[fieldName] = cleanedParts.join('/');
+        }
+      } else {
+        // No registry mapping - use original fallback approach
+        stateAction[fieldName] = parts.map((p) => this.cleanName(p)).join('/');
+      }
+    } else {
+      // Fallback for unexpected format
+      stateAction[fieldName] = parts.map((p) => this.cleanName(p)).join('/');
     }
   }
 
