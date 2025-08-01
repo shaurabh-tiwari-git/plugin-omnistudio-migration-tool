@@ -70,7 +70,7 @@ describe('transformFlexipageBundle', () => {
     const changed = result as Flexipage;
     const item = changed.flexiPageRegions[0].itemInstances[0];
     expect(item.componentInstance.componentName).to.equal(targetComponentName);
-    expect(item.componentInstance.identifier).to.equal(targetIdentifier);
+    expect(item.componentInstance.identifier).to.equal(`${targetIdentifier}1`);
     // Should not have 'target' property
     expect(item.componentInstance.componentInstanceProperties.find((p) => p.name === 'target')).to.be.undefined;
     // Should have new properties
@@ -128,5 +128,163 @@ describe('transformFlexipageBundle', () => {
     const original = JSON.stringify(bundle);
     transformFlexipageBundle(bundle, namespace, 'migrate');
     expect(JSON.stringify(bundle)).to.equal(original);
+  });
+
+  it('generates sequential IDs for multiple OmniScript components on the same page', () => {
+    // Mock StorageUtil
+    const mockStorage = {
+      osStorage: new Map([
+        ['subtype1', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
+        ['subtype2', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
+        ['subtype3', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
+      ]),
+      fcStorage: new Map(),
+    };
+    sandbox.stub(StorageUtil, 'getOmnistudioMigrationStorage').returns(mockStorage);
+
+    const bundle: Flexipage = {
+      flexiPageRegions: [
+        makeRegion([
+          makeItemInstance([{ name: 'target', value: 'type:subtype1' }]),
+          makeItemInstance([{ name: 'target', value: 'type:subtype2' }]),
+          makeItemInstance([{ name: 'target', value: 'type:subtype3' }]),
+        ]),
+      ],
+    };
+    const result = transformFlexipageBundle(bundle, namespace, 'migrate');
+    expect(result).to.not.equal(false);
+    const changed = result as Flexipage;
+
+    // Check sequential IDs
+    expect(changed.flexiPageRegions[0].itemInstances[0].componentInstance.identifier).to.equal(`${targetIdentifier}1`);
+    expect(changed.flexiPageRegions[0].itemInstances[1].componentInstance.identifier).to.equal(`${targetIdentifier}2`);
+    expect(changed.flexiPageRegions[0].itemInstances[2].componentInstance.identifier).to.equal(`${targetIdentifier}3`);
+  });
+
+  it('generates sequential IDs for multiple FlexCard components on the same page', () => {
+    // Mock StorageUtil
+    const mockStorage = {
+      osStorage: new Map(),
+      fcStorage: new Map([
+        ['card1', { name: 'Card1', isDuplicate: false }],
+        ['card2', { name: 'Card2', isDuplicate: false }],
+        ['card3', { name: 'Card3', isDuplicate: false }],
+      ]),
+    };
+    sandbox.stub(StorageUtil, 'getOmnistudioMigrationStorage').returns(mockStorage);
+
+    const bundle: Flexipage = {
+      flexiPageRegions: [
+        makeRegion([
+          makeItemInstance([{ name: 'target', value: 'type:cfcard1' }]),
+          makeItemInstance([{ name: 'target', value: 'type:cfcard2' }]),
+          makeItemInstance([{ name: 'target', value: 'type:cfcard3' }]),
+        ]),
+      ],
+    };
+    const result = transformFlexipageBundle(bundle, namespace, 'migrate');
+    expect(result).to.not.equal(false);
+    const changed = result as Flexipage;
+
+    // Check sequential IDs for FlexCards
+    expect(changed.flexiPageRegions[0].itemInstances[0].componentInstance.identifier).to.equal(
+      'runtime_omnistudio_flexcard1'
+    );
+    expect(changed.flexiPageRegions[0].itemInstances[1].componentInstance.identifier).to.equal(
+      'runtime_omnistudio_flexcard2'
+    );
+    expect(changed.flexiPageRegions[0].itemInstances[2].componentInstance.identifier).to.equal(
+      'runtime_omnistudio_flexcard3'
+    );
+  });
+
+  it('generates sequential IDs for mixed OmniScript and FlexCard components on the same page', () => {
+    // Mock StorageUtil
+    const mockStorage = {
+      osStorage: new Map([
+        ['subtype1', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
+        ['subtype2', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
+      ]),
+      fcStorage: new Map([
+        ['card1', { name: 'Card1', isDuplicate: false }],
+        ['card2', { name: 'Card2', isDuplicate: false }],
+      ]),
+    };
+    sandbox.stub(StorageUtil, 'getOmnistudioMigrationStorage').returns(mockStorage);
+
+    const bundle: Flexipage = {
+      flexiPageRegions: [
+        makeRegion([
+          makeItemInstance([{ name: 'target', value: 'type:subtype1' }]),
+          makeItemInstance([{ name: 'target', value: 'type:cfcard1' }]),
+          makeItemInstance([{ name: 'target', value: 'type:subtype2' }]),
+          makeItemInstance([{ name: 'target', value: 'type:cfcard2' }]),
+        ]),
+      ],
+    };
+    const result = transformFlexipageBundle(bundle, namespace, 'migrate');
+    expect(result).to.not.equal(false);
+    const changed = result as Flexipage;
+
+    // Check sequential IDs for mixed components
+    expect(changed.flexiPageRegions[0].itemInstances[0].componentInstance.identifier).to.equal(`${targetIdentifier}1`);
+    expect(changed.flexiPageRegions[0].itemInstances[1].componentInstance.identifier).to.equal(
+      'runtime_omnistudio_flexcard1'
+    );
+    expect(changed.flexiPageRegions[0].itemInstances[2].componentInstance.identifier).to.equal(`${targetIdentifier}2`);
+    expect(changed.flexiPageRegions[0].itemInstances[3].componentInstance.identifier).to.equal(
+      'runtime_omnistudio_flexcard2'
+    );
+  });
+
+  it('resets sequence counters for different pages', () => {
+    // Mock StorageUtil
+    const mockStorage = {
+      osStorage: new Map([
+        ['subtype1', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
+        ['subtype2', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
+      ]),
+      fcStorage: new Map([
+        ['card1', { name: 'Card1', isDuplicate: false }],
+        ['card2', { name: 'Card2', isDuplicate: false }],
+      ]),
+    };
+    sandbox.stub(StorageUtil, 'getOmnistudioMigrationStorage').returns(mockStorage);
+
+    // First page
+    const bundle1: Flexipage = {
+      flexiPageRegions: [
+        makeRegion([
+          makeItemInstance([{ name: 'target', value: 'type:subtype1' }]),
+          makeItemInstance([{ name: 'target', value: 'type:cfcard1' }]),
+        ]),
+      ],
+    };
+    const result1 = transformFlexipageBundle(bundle1, namespace, 'migrate');
+    expect(result1).to.not.equal(false);
+    const changed1 = result1 as Flexipage;
+
+    // Second page
+    const bundle2: Flexipage = {
+      flexiPageRegions: [
+        makeRegion([
+          makeItemInstance([{ name: 'target', value: 'type:subtype2' }]),
+          makeItemInstance([{ name: 'target', value: 'type:cfcard2' }]),
+        ]),
+      ],
+    };
+    const result2 = transformFlexipageBundle(bundle2, namespace, 'migrate');
+    expect(result2).to.not.equal(false);
+    const changed2 = result2 as Flexipage;
+
+    // Check that sequence counters reset for second page
+    expect(changed1.flexiPageRegions[0].itemInstances[0].componentInstance.identifier).to.equal(`${targetIdentifier}1`);
+    expect(changed1.flexiPageRegions[0].itemInstances[1].componentInstance.identifier).to.equal(
+      'runtime_omnistudio_flexcard1'
+    );
+    expect(changed2.flexiPageRegions[0].itemInstances[0].componentInstance.identifier).to.equal(`${targetIdentifier}1`);
+    expect(changed2.flexiPageRegions[0].itemInstances[1].componentInstance.identifier).to.equal(
+      'runtime_omnistudio_flexcard1'
+    );
   });
 });

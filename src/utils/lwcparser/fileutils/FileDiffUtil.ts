@@ -46,16 +46,25 @@ export class FileDiffUtil {
     let linecount = 0;
     for (const { old: original, new: modified } of diffArray) {
       if (original === modified) {
-        result += `<div style="color: black;">• Line ${modifiedLine}: ${this.escapeHtml(original)}</div>`;
+        result += `<div style="color: black;">• Line ${modifiedLine}: ${this.escapeHtml(original).replace(
+          / /g,
+          '&nbsp;'
+        )}</div>`;
         modifiedLine++;
         originalLine++;
         linecount++;
       } else if (original !== null && modified === null) {
-        result += `<div style="color: red;">- Line ${originalLine}: ${this.escapeHtml(original)}</div>`;
+        result += `<div style="color: red;">- Line ${originalLine}: ${this.escapeHtml(original).replace(
+          / /g,
+          '&nbsp;'
+        )}</div>`;
         originalLine++;
         linecount++;
       } else if (original === null && modified !== null) {
-        result += `<div style="color: green;">+ Line ${modifiedLine}: ${this.escapeHtml(modified)}</div>`;
+        result += `<div style="color: green;">+ Line ${modifiedLine}: ${this.escapeHtml(modified).replace(
+          / /g,
+          '&nbsp;'
+        )}</div>`;
         modifiedLine++;
         linecount++;
       }
@@ -149,24 +158,23 @@ export class FileDiffUtil {
   }
 
   public getXMLDiff(originalFileContent: string, modifiedFileContent: string): DiffPair[] {
-    const diff = diffLines(originalFileContent, modifiedFileContent, { newlineIsToken: true });
-    return diff.map((line): DiffPair => {
-      if (line.added) {
-        return {
-          old: null,
-          new: line.value,
-        };
-      } else if (line.removed) {
-        return {
-          old: line.value,
-          new: null,
-        };
+    const diff = diffLines(originalFileContent, modifiedFileContent, { stripTrailingCr: true });
+    const result: DiffPair[] = [];
+    for (const block of diff) {
+      if (block.added) {
+        block.value.split('\n').forEach((line) => {
+          result.push({ old: null, new: line });
+        });
+      } else if (block.removed) {
+        block.value.split('\n').forEach((line) => {
+          result.push({ old: line, new: null });
+        });
       } else {
-        return {
-          old: line.value,
-          new: line.value,
-        };
+        block.value.split('\n').forEach((line) => {
+          result.push({ old: line, new: line });
+        });
       }
-    }) as DiffPair[];
+    }
+    return result;
   }
 }
