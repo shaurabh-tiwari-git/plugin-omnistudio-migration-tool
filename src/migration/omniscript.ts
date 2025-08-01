@@ -197,13 +197,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
   ): Promise<OmniAssessmentInfo> {
     try {
       Logger.log(this.messages.getMessage('startingOmniScriptAssessment'));
-      // const omniscripts = await this.getAllOmniScripts();
-
-      let omniscripts = await this.getAllOmniScripts();
-      let filteredOmniscripts = omniscripts.filter(
-        (omniscript: any) => typeof omniscript === 'object' && 'Name' in omniscript && omniscript.Name.includes('ABC')
-      );
-      omniscripts = filteredOmniscripts;
+      const omniscripts = await this.getAllOmniScripts();
 
       Logger.log(this.messages.getMessage('foundOmniScriptsToAssess', [omniscripts.length]));
 
@@ -528,7 +522,6 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       missingOS: missingOS,
     };
 
-    // TODO - ABC New things to be added are not there
     if (omniProcessType === this.OMNISCRIPT) {
       const nameMapping: OmniscriptNameMapping = {
         oldType: existingType,
@@ -597,13 +590,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
   async migrate(): Promise<MigrationResult[]> {
     // Get All Records from OmniScript__c (IP & OS Parent Records)
-    // const omniscripts = await this.getAllOmniScripts();
-
-    let omniscripts = await this.getAllOmniScripts();
-    let filteredOmniscripts = omniscripts.filter(
-      (omniscript: any) => typeof omniscript === 'object' && 'Name' in omniscript && omniscript.Name.includes('ABC')
-    );
-    omniscripts = filteredOmniscripts;
+    const omniscripts = await this.getAllOmniScripts();
 
     const functionDefinitionMetadata = await getAllFunctionMetadata(this.namespace, this.connection);
     populateRegexForFunctionMetadata(functionDefinitionMetadata);

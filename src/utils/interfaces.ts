@@ -29,9 +29,9 @@ export interface LWCAssessmentInfo {
 }
 
 export interface OSAssessmentInfo {
-  name: string; // Need to understand this as well
+  name: string;
   id: string;
-  oldName: string; // Need to understand what is going in this and what we need
+  oldName: string;
   dependenciesIP: nameLocation[];
   missingIP: string[];
   dependenciesDR: nameLocation[];
