@@ -102,6 +102,7 @@ describe('DocumentRegistry', () => {
         expect(isValid, `URL for ${key} (${url}) should be accessible`).to.be.true;
       });
     });
+
     it('should have all required document registry entries', () => {
       const expectedKeys = [
         'errorNoOrgResults',
