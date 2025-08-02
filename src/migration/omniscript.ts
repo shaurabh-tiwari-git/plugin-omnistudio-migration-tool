@@ -291,7 +291,6 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       }
       if (omniAssessmentInfo.type === 'OmniScript') {
         const type = omniscript[this.namespacePrefix + 'IsLwcEnabled__c'] ? 'LWC' : 'Angular';
-        let migrationStatus = 'Can be Automated';
         const osAssessmentInfo: OSAssessmentInfo = {
           name: omniAssessmentInfo.name,
           type: type,
@@ -308,7 +307,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           infos: [],
           warnings: omniAssessmentInfo.warnings,
           errors: [],
-          migrationStatus: migrationStatus,
+          migrationStatus: omniAssessmentInfo.migrationStatus,
           nameMapping: omniAssessmentInfo.nameMapping,
         };
         osAssessmentInfos.push(osAssessmentInfo);
