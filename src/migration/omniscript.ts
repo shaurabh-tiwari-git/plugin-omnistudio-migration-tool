@@ -446,9 +446,10 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       : '';
 
     const recordName =
-      `${newType}_` + `${newSubType}` + omniscript[this.namespacePrefix + 'Language__c']
-        ? `_${omniscript[this.namespacePrefix + 'Language__c']}`
-        : '' + `_${omniscript[this.namespacePrefix + 'Version__c']}`;
+      `${newType}_` +
+      `${newSubType}` +
+      (omniscript[this.namespacePrefix + 'Language__c'] ? `_${omniscript[this.namespacePrefix + 'Language__c']}` : '') +
+      `_${omniscript[this.namespacePrefix + 'Version__c']}`;
 
     const oldName =
       `${existingTypeVal.val}_` +
