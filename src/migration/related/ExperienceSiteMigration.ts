@@ -79,6 +79,9 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     Logger.logVerbose('The namespace for expsites processing is ' + this.namespace);
     for (const directory of directoryMap.keys()) {
       const fileArray = directoryMap.get(directory);
+      if (!fileArray) {
+        continue;
+      }
       for (const file of fileArray) {
         progressBar.update(++progressCounter);
         if (file.ext !== '.json') {
@@ -124,7 +127,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     // TODO - undefined check here
     const experienceSiteParsedJSON = JSON.parse(fileContent) as ExpSitePageJson;
     const normalizedOriginalFileContent = JSON.stringify(experienceSiteParsedJSON, null, 2);
-    const regions: ExpSiteRegion[] = experienceSiteParsedJSON['regions'];
+    const regions: ExpSiteRegion[] = experienceSiteParsedJSON.regions;
 
     // TODO - When will it be Flexcard
 
@@ -142,35 +145,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     }
 
     for (const region of regions) {
-      Logger.logVerbose(this.messages.getMessage('currentRegionOfExperienceSite', [JSON.stringify(region)]));
-
-      const regionComponents: ExpSiteComponent[] = region['components'];
-
-      if (regionComponents === undefined) {
-        continue;
-      }
-
-      if (Array.isArray(regionComponents)) {
-        for (const component of regionComponents) {
-          if (component === undefined || component === null) {
-            continue;
-          }
-
-          Logger.logVerbose(this.messages.getMessage('currentComponentOfExperienceSite', [JSON.stringify(component)]));
-
-          if (component.componentName === lookupComponentName) {
-            Logger.logVerbose(this.messages.getMessage('omniWrapperFound'));
-            experienceSiteAssessmentInfo.hasOmnistudioContent = true;
-
-            this.updateComponentAndItsAttributes(
-              component,
-              component.componentAttributes,
-              experienceSiteAssessmentInfo,
-              storage
-            );
-          }
-        }
-      }
+      this.processRegion(region, experienceSiteAssessmentInfo, storage, lookupComponentName);
     }
 
     Logger.logVerbose(this.messages.getMessage('printUpdatedObject', [JSON.stringify(experienceSiteParsedJSON)]));
@@ -191,6 +166,60 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
 
     experienceSiteAssessmentInfo.diff = JSON.stringify(difference);
     return experienceSiteAssessmentInfo;
+  }
+
+  private processRegion(
+    region: ExpSiteRegion,
+    experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo,
+    storage: MigrationStorage,
+    lookupComponentName: string
+  ): void {
+    Logger.logVerbose(this.messages.getMessage('currentRegionOfExperienceSite', [JSON.stringify(region)]));
+
+    const regionComponents: ExpSiteComponent[] = region.components;
+
+    if (regionComponents === undefined) {
+      return;
+    }
+
+    if (Array.isArray(regionComponents)) {
+      for (const component of regionComponents) {
+        this.processComponent(component, experienceSiteAssessmentInfo, storage, lookupComponentName);
+      }
+    }
+  }
+
+  private processComponent(
+    component: ExpSiteComponent,
+    experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo,
+    storage: MigrationStorage,
+    lookupComponentName: string
+  ): void {
+    if (component === undefined || component === null) {
+      return;
+    }
+
+    if (component.componentName === lookupComponentName) {
+      Logger.logVerbose(this.messages.getMessage('omniWrapperFound'));
+      experienceSiteAssessmentInfo.hasOmnistudioContent = true;
+
+      this.updateComponentAndItsAttributes(
+        component,
+        component.componentAttributes,
+        experienceSiteAssessmentInfo,
+        storage
+      );
+
+      return;
+    }
+
+    const regionsInsideComponent: ExpSiteRegion[] = component.regions;
+
+    if (Array.isArray(regionsInsideComponent)) {
+      for (const region of regionsInsideComponent) {
+        this.processRegion(region, experienceSiteAssessmentInfo, storage, lookupComponentName);
+      }
+    }
   }
 
   private updateComponentAndItsAttributes(
@@ -254,7 +283,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
   ): void {
     Logger.logVerbose(this.messages.getMessage('processingOmniscriptComponent', [JSON.stringify(component)]));
     // Use storage to find the updated properties
-    const targetDataFromStorage: OmniScriptStorage = storage.osStorage.get(targetName.toLocaleLowerCase());
+    const targetDataFromStorage: OmniScriptStorage = storage.osStorage.get(targetName.toLowerCase());
     StorageUtil.printAssessmentStorage();
     Logger.logVerbose(this.messages.getMessage('targetData', [JSON.stringify(targetDataFromStorage)]));
 
@@ -267,9 +296,9 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       // Preserve the layout value before clearing
       const originalLayout = currentAttribute['layout'];
 
-      // define an array and delete those keys
-      // Clear existing properties and set new ones
-      Object.keys(currentAttribute).forEach((key) => delete currentAttribute[key]);
+      // Clear existing properties more safely - preserve any properties we don't want to delete
+      const keysToDelete = ['layout', 'params', 'standAlone', 'target'];
+      keysToDelete.forEach((key) => delete currentAttribute[key]);
 
       currentAttribute['direction'] = 'ltr';
       currentAttribute['display'] = 'Display button to open Omniscript';
