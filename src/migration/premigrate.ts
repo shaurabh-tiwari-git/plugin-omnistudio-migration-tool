@@ -39,9 +39,7 @@ export class PreMigrate extends BaseMigrationTool {
         Logger.warn(this.messages.getMessage('experienceSiteConsentNotProvidedWarning'));
         this.removeKeyFromRelatedObjectsToProcess(Constants.ExpSites, objectsToProcess);
         Logger.logVerbose(
-          this.messages.getMessage(this.messages.getMessage('relatedObjectsToProcessAfterExpSitesRemoval'), [
-            JSON.stringify(objectsToProcess),
-          ])
+          this.messages.getMessage('relatedObjectsToProcessAfterExpSitesRemoval', [JSON.stringify(objectsToProcess)])
         );
         return;
       }
