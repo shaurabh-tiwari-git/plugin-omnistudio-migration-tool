@@ -73,7 +73,7 @@ export class PostMigrate extends BaseMigrationTool {
       try {
         await OrgPreferences.toggleExperienceBundleMetadataAPI(this.connection, false);
       } catch (error) {
-        userActionMessage.push('errorRevertingExperienceBundleMetadataAPI');
+        userActionMessage.push(this.messages.getMessage('errorRevertingExperienceBundleMetadataAPI'));
       }
     }
   }
