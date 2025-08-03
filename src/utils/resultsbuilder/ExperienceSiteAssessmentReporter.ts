@@ -69,17 +69,17 @@ export class ExperienceSiteAssessmentReporter {
         createRowDataParam('path', experienceSiteAssessmentInfo.path, true, 1, 1, false),
         createRowDataParam(
           'status',
-          experienceSiteAssessmentInfo.warnings ? 'Errors' : 'Can be Automated',
+          experienceSiteAssessmentInfo.status,
           false,
           1,
           1,
           false,
           undefined,
-          experienceSiteAssessmentInfo.warnings ? 'Errors' : 'Can be Automated'
+          experienceSiteAssessmentInfo.status
         ),
         createRowDataParam(
           'diff',
-          'ABCD',
+          '',
           false,
           1,
           1,
@@ -89,7 +89,7 @@ export class ExperienceSiteAssessmentReporter {
         ),
         createRowDataParam(
           'summary',
-          experienceSiteAssessmentInfo.warnings ? 'Has Errors' : 'Has No Errors',
+          '',
           false,
           1,
           1,

@@ -236,6 +236,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       experienceSiteAssessmentInfo.warnings.push(
         'Target exists as empty string. Please check experience site configuration'
       );
+      experienceSiteAssessmentInfo.status = 'Errors';
       return;
     }
 
@@ -290,6 +291,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     if (this.shouldAddWarning(targetDataFromStorage)) {
       const warningMsg: string = this.getWarningMessage(targetName, targetDataFromStorage);
       experienceSiteAssessmentInfo.warnings.push(warningMsg);
+      experienceSiteAssessmentInfo.status = 'Errors';
     } else {
       component.componentName = TARGET_COMPONENT_NAME_OS;
 
