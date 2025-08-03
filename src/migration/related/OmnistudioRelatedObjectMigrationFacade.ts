@@ -104,11 +104,8 @@ export default class OmnistudioRelatedObjectMigrationFacade {
       assessMessages.getMessage('startingProcessRelatedObjects', [String(relatedObjects), this.projectPath])
     );
 
-    // Retrieve metadata if needed
-    if (isMigration) {
-      Logger.logVerbose(migrateMessages.getMessage('retrievingMetadata', [String(relatedObjects), this.projectPath]));
-      this.retrieveMetadata(relatedObjects);
-    }
+    Logger.logVerbose(migrateMessages.getMessage('retrievingMetadata', [String(relatedObjects), this.projectPath]));
+    this.retrieveMetadata(relatedObjects);
 
     const debugTimer = DebugTimer.getInstance();
     debugTimer.start();
