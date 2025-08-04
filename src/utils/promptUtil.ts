@@ -1,5 +1,45 @@
 import { Messages } from '@salesforce/core';
 
+export async function askStringWithTimeout(
+  promptFn: (message: string) => Promise<string>,
+  question: string,
+  timeoutMsg: string,
+  timeoutMs: number = 5 * 60 * 1000
+): Promise<string> {
+  return askPromptWithTimeout<string>(promptFn, question, timeoutMsg, timeoutMs);
+}
+
+export async function askPromptWithTimeout<T>(
+  promptFn: (message: string) => Promise<T>,
+  question: string,
+  timeoutMsg: string,
+  timeoutMs: number = 5 * 60 * 1000
+): Promise<T> {
+  return askUserWithTimeout(() => promptFn(question), timeoutMsg, timeoutMs);
+}
+
+async function askUserWithTimeout<T>(
+  asyncFn: () => Promise<T>,
+  timeoutMsg: string,
+  timeoutMs: number = 5 * 60 * 1000
+): Promise<T> {
+  let timeoutHandle: NodeJS.Timeout;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutHandle = setTimeout(() => {
+      reject(new Error(timeoutMsg));
+    }, timeoutMs);
+  });
+
+  try {
+    const result = await Promise.race([asyncFn(), timeoutPromise]);
+    clearTimeout(timeoutHandle);
+    return result;
+  } catch (error) {
+    clearTimeout(timeoutHandle);
+    throw error;
+  }
+}
+
 export class PromptUtil {
   public static askWithTimeOut(
     messages: Messages

@@ -8,7 +8,8 @@ import { Logger } from '../utils/logger';
 import { TransformData, UploadRecordResult } from './interfaces';
 
 export type ComponentType = 'Data Mapper' | 'Flexcard' | 'Omniscript and Integration Procedure' | 'GlobalAutoNumber';
-export type RelatedObjectType = 'Flexipage';
+
+export type RelatedObjectType = 'Flexipage' | 'ExperienceSites';
 
 /**
  * Creates a progress bar for migration/assessment operations
@@ -18,10 +19,9 @@ export type RelatedObjectType = 'Flexipage';
  * @returns A configured cliProgress.SingleBar instance
  */
 export const createProgressBar = (action: string, type: ComponentType | RelatedObjectType): cliProgress.SingleBar => {
+  const space = type === 'Omniscript and Integration Procedure' || type === 'ExperienceSites' ? '' : '\t\t\t\t';
   return new cliProgress.SingleBar({
-    format: `${action} ${type} |${
-      type === 'Omniscript and Integration Procedure' ? '' : '\t\t\t\t'
-    } {bar} | {percentage}% || {value}/{total} Tasks`,
+    format: `${action} ${type} | ${space} {bar} | {percentage}% || {value}/{total} Tasks`,
     barCompleteChar: '\u2588',
     barIncompleteChar: '\u2591',
     hideCursor: true,

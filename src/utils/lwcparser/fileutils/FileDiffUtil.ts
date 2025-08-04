@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/explicit-member-accessibility */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { createPatch, diffLines } from 'diff';
+import { createPatch } from 'diff';
 import { Logger } from '../../../utils/logger';
 import { DiffPair } from '../../interfaces';
 
@@ -146,27 +146,5 @@ export class FileDiffUtil {
       Logger.error(`Error in FileDiffUtil: ${String(error)}`);
       return [];
     }
-  }
-
-  public getXMLDiff(originalFileContent: string, modifiedFileContent: string): DiffPair[] {
-    const diff = diffLines(originalFileContent, modifiedFileContent, { newlineIsToken: true });
-    return diff.map((line): DiffPair => {
-      if (line.added) {
-        return {
-          old: null,
-          new: line.value,
-        };
-      } else if (line.removed) {
-        return {
-          old: line.value,
-          new: null,
-        };
-      } else {
-        return {
-          old: line.value,
-          new: line.value,
-        };
-      }
-    }) as DiffPair[];
   }
 }

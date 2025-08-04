@@ -1,5 +1,5 @@
 import { expect } from '@salesforce/command/lib/test';
-import { Org } from '@salesforce/core';
+import { Messages, Org } from '@salesforce/core';
 import sinon = require('sinon');
 import { ExperienceSiteMigration } from '../../../src/migration/related/ExperienceSiteMigration';
 import { FileUtil, File } from '../../../src/utils/file/fileUtil';
@@ -13,8 +13,12 @@ import {
   ExpSiteComponent,
 } from '../../../src/migration/interfaces';
 
+const Migrate = 'Migrate';
+const Assess = 'Assess';
+
 describe('ExperienceSiteMigration', () => {
   let org: Org;
+  let mockMessages: Messages;
   let experienceSiteMigration: ExperienceSiteMigration;
   const testProjectPath = '/test/project/path';
   const testNamespace = 'vlocity_ins';
@@ -79,7 +83,31 @@ describe('ExperienceSiteMigration', () => {
 
   beforeEach(() => {
     org = {} as unknown as Org;
-    experienceSiteMigration = new ExperienceSiteMigration(testProjectPath, testNamespace, org);
+
+    // Mock Messages
+    const getMessageStub = sinon.stub();
+    getMessageStub
+      .withArgs('manualInterventionForExperienceSite', sinon.match.any)
+      .callsFake((key: string, args: string[]) => {
+        return `${args[0]} needs manual intervention`;
+      });
+    getMessageStub
+      .withArgs('manualInterventionForExperienceSiteAsFailure', sinon.match.any)
+      .callsFake((key: string, args: string[]) => {
+        return `${args[0]} needs manual intervention as migration failed`;
+      });
+    getMessageStub
+      .withArgs('manualInterventionForExperienceSiteAsDuplicateKey', sinon.match.any)
+      .callsFake((key: string, args: string[]) => {
+        return `${args[0]} needs manual intervention as duplicated key found`;
+      });
+    getMessageStub.returns('Mock message'); // fallback for any other message keys
+
+    mockMessages = {
+      getMessage: getMessageStub,
+    } as unknown as Messages;
+
+    experienceSiteMigration = new ExperienceSiteMigration(testProjectPath, testNamespace, org, mockMessages);
 
     // Mock Logger
     sinon.stub(Logger, 'logVerbose');
@@ -98,6 +126,20 @@ describe('ExperienceSiteMigration', () => {
 
       // Assert
       expect(result).to.equal('expsites');
+    });
+  });
+
+  describe('assess', () => {
+    it('should call process with assess mode', () => {
+      // Arrange
+      const processStub = sinon.stub(experienceSiteMigration, 'process').returns([]);
+
+      // Act
+      experienceSiteMigration.assess();
+
+      // Assert
+      expect(processStub.calledOnce).to.be.true;
+      expect(processStub.calledWith('Assess')).to.be.true;
     });
   });
 
@@ -124,6 +166,8 @@ describe('ExperienceSiteMigration', () => {
         infos: [],
         path: '/test/path/site1.json',
         diff: '[]',
+        errors: [],
+        status: 'Can be Automated',
       });
       processFileStub.onCall(1).returns({
         name: 'site3.json',
@@ -132,10 +176,12 @@ describe('ExperienceSiteMigration', () => {
         infos: [],
         path: '/test/path/site3.json',
         diff: '[]',
+        errors: [],
+        status: 'Can be Automated',
       });
 
       // Act
-      const result = experienceSiteMigration.processExperienceSites('/test/project');
+      const result = experienceSiteMigration.processExperienceSites('/test/project', Migrate);
 
       // Assert
       expect(fileUtilStub.calledOnce).to.be.true;
@@ -154,7 +200,7 @@ describe('ExperienceSiteMigration', () => {
       sinon.stub(experienceSiteMigration, 'processExperienceSite').throws(new Error('Processing failed'));
 
       // Act
-      const result = experienceSiteMigration.processExperienceSites('/test/project');
+      const result = experienceSiteMigration.processExperienceSites('/test/project', Migrate);
 
       // Assert
       expect(result).to.be.an('array').that.is.empty;
@@ -202,12 +248,12 @@ describe('ExperienceSiteMigration', () => {
         migrationSuccess: true,
       };
 
-      mockStorage.osStorage.set('TestSubtype:English', mockOSStorage);
+      mockStorage.osStorage.set('testsubtype:english', mockOSStorage);
       storageUtilStub.returns(mockStorage);
       fsReadStub.returns(JSON.stringify(sampleExperienceSiteJson));
 
       // Act
-      const result = experienceSiteMigration.processExperienceSite(mockFile);
+      const result = experienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
       expect(result.hasOmnistudioContent).to.be.true;
@@ -218,7 +264,7 @@ describe('ExperienceSiteMigration', () => {
       const parsedContent = JSON.parse(writtenContent) as ExpSitePageJson;
       const component = parsedContent.regions[1].components[0];
 
-      expect(component.componentName).to.equal('runtime_omnistudio_omniscript');
+      expect(component.componentName).to.equal('runtime_omnistudio:omniscript');
       expect(component.componentAttributes.type).to.equal('TestType');
       expect(component.componentAttributes.subType).to.equal('TestSubtype');
       expect(component.componentAttributes.language).to.equal('English');
@@ -232,7 +278,7 @@ describe('ExperienceSiteMigration', () => {
       fsReadStub.returns(JSON.stringify(sampleExperienceSiteJsonWithoutWrapper));
 
       // Act
-      const result = experienceSiteMigration.processExperienceSite(mockFile);
+      const result = experienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
       expect(result.hasOmnistudioContent).to.be.false;
@@ -245,7 +291,7 @@ describe('ExperienceSiteMigration', () => {
       fsReadStub.returns(JSON.stringify(siteWithoutRegions));
 
       // Act
-      const result = experienceSiteMigration.processExperienceSite(mockFile);
+      const result = experienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
       expect(result.hasOmnistudioContent).to.be.false;
@@ -262,7 +308,7 @@ describe('ExperienceSiteMigration', () => {
       fsReadStub.returns(JSON.stringify(sampleExperienceSiteJson));
 
       // Act
-      const result = experienceSiteMigration.processExperienceSite(mockFile);
+      const result = experienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
       expect(result.hasOmnistudioContent).to.be.true;
@@ -285,17 +331,16 @@ describe('ExperienceSiteMigration', () => {
         migrationSuccess: false,
       };
 
-      mockStorage.osStorage.set('TestSubtype:English', failedOSStorage);
+      mockStorage.osStorage.set('testsubtype:english', failedOSStorage);
       storageUtilStub.returns(mockStorage);
       fsReadStub.returns(JSON.stringify(sampleExperienceSiteJson));
 
       // Act
-      const result = experienceSiteMigration.processExperienceSite(mockFile);
+      const result = experienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
       expect(result.hasOmnistudioContent).to.be.true;
       expect(result.warnings).to.have.length(1);
-      expect(result.warnings[0]).to.include('needs manual intervention as migration failed');
     });
 
     it('should add warning when duplicate key found in storage', () => {
@@ -313,12 +358,12 @@ describe('ExperienceSiteMigration', () => {
         migrationSuccess: true,
       };
 
-      mockStorage.osStorage.set('TestSubtype:English', duplicateOSStorage);
+      mockStorage.osStorage.set('testsubtype:english', duplicateOSStorage);
       storageUtilStub.returns(mockStorage);
       fsReadStub.returns(JSON.stringify(sampleExperienceSiteJson));
 
       // Act
-      const result = experienceSiteMigration.processExperienceSite(mockFile);
+      const result = experienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
       expect(result.hasOmnistudioContent).to.be.true;
@@ -339,7 +384,7 @@ describe('ExperienceSiteMigration', () => {
       fsReadStub.returns(JSON.stringify(siteWithEmptyTarget));
 
       // Act
-      const result = experienceSiteMigration.processExperienceSite(mockFile);
+      const result = experienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
       expect(result.hasOmnistudioContent).to.be.true;
@@ -361,7 +406,7 @@ describe('ExperienceSiteMigration', () => {
       fsReadStub.returns(JSON.stringify(siteWithUndefinedComponent));
 
       // Act
-      const result = experienceSiteMigration.processExperienceSite(mockFile);
+      const result = experienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
       expect(result.hasOmnistudioContent).to.be.true;
@@ -383,7 +428,7 @@ describe('ExperienceSiteMigration', () => {
         migrationSuccess: true,
       };
 
-      mockStorage.osStorage.set('TestSubtype:English', mockOSStorage);
+      mockStorage.osStorage.set('testsubtype:english', mockOSStorage);
       storageUtilStub.returns(mockStorage);
 
       const siteWithCustomLayout = JSON.parse(JSON.stringify(sampleExperienceSiteJson)) as ExpSitePageJson;
@@ -391,7 +436,7 @@ describe('ExperienceSiteMigration', () => {
       fsReadStub.returns(JSON.stringify(siteWithCustomLayout));
 
       // Act
-      experienceSiteMigration.processExperienceSite(mockFile);
+      experienceSiteMigration.processExperienceSite(mockFile, 'Migrate');
 
       // Assert
       const writtenContent = fsWriteStub.firstCall.args[1];
@@ -399,6 +444,231 @@ describe('ExperienceSiteMigration', () => {
       const component = parsedContent.regions[1].components[0];
 
       expect(component.componentAttributes.theme).to.equal('customLayout');
+    });
+  });
+
+  describe('Assess Mode Tests', () => {
+    let mockFile: File;
+    let fsReadStub: sinon.SinonStub;
+    let fsWriteStub: sinon.SinonStub;
+    let storageUtilStub: sinon.SinonStub;
+
+    beforeEach(() => {
+      mockFile = {
+        name: 'assess-test.json',
+        location: '/test/path/assess-test.json',
+        ext: '.json',
+      };
+
+      // Stub fs methods
+      fsReadStub = sinon.stub();
+      fsWriteStub = sinon.stub();
+      // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+      sinon.stub(require('fs'), 'readFileSync').value(fsReadStub);
+      // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+      sinon.stub(require('fs'), 'writeFileSync').value(fsWriteStub);
+
+      storageUtilStub = sinon.stub(StorageUtil, 'getOmnistudioAssessmentStorage');
+      sinon.stub(FileDiffUtil.prototype, 'getFileDiff').returns([]);
+    });
+
+    it('should use assessment storage instead of migration storage in assess mode', () => {
+      // Arrange
+      const mockStorage: MigrationStorage = {
+        osStorage: new Map<string, OmniScriptStorage>(),
+        fcStorage: new Map(),
+      };
+
+      const mockOSStorage: OmniScriptStorage = {
+        type: 'TestType',
+        subtype: 'TestSubtype',
+        language: 'English',
+        isDuplicate: false,
+        migrationSuccess: true,
+      };
+
+      mockStorage.osStorage.set('testsubtype:english', mockOSStorage);
+      storageUtilStub.returns(mockStorage);
+      fsReadStub.returns(JSON.stringify(sampleExperienceSiteJson));
+
+      // Act
+      const result = experienceSiteMigration.processExperienceSite(mockFile, Assess);
+
+      // Assert
+      expect(storageUtilStub.calledOnce).to.be.true;
+      expect(result.hasOmnistudioContent).to.be.true;
+      expect(result.warnings).to.have.length(0);
+    });
+
+    it('should generate warnings when assessment storage has missing data', () => {
+      // Arrange
+      const mockStorage: MigrationStorage = {
+        osStorage: new Map<string, OmniScriptStorage>(),
+        fcStorage: new Map(),
+      };
+      // Empty storage - no data for the target
+      storageUtilStub.returns(mockStorage);
+      fsReadStub.returns(JSON.stringify(sampleExperienceSiteJson));
+
+      // Act
+      const result = experienceSiteMigration.processExperienceSite(mockFile, Assess);
+
+      // Assert
+      expect(result.hasOmnistudioContent).to.be.true;
+      expect(result.warnings).to.have.length(1);
+      expect(result.warnings[0]).to.include('TestSubtype:English needs manual intervention');
+    });
+
+    it('should generate warnings when assessment storage has migration failure', () => {
+      // Arrange
+      const mockStorage: MigrationStorage = {
+        osStorage: new Map<string, OmniScriptStorage>(),
+        fcStorage: new Map(),
+      };
+
+      const failedOSStorage: OmniScriptStorage = {
+        type: 'FailedType',
+        subtype: 'FailedSubtype',
+        language: 'English',
+        isDuplicate: false,
+        migrationSuccess: false,
+      };
+
+      mockStorage.osStorage.set('testsubtype:english', failedOSStorage);
+      storageUtilStub.returns(mockStorage);
+      fsReadStub.returns(JSON.stringify(sampleExperienceSiteJson));
+
+      // Act
+      const result = experienceSiteMigration.processExperienceSite(mockFile, Assess);
+
+      // Assert
+      expect(result.hasOmnistudioContent).to.be.true;
+      expect(result.warnings).to.have.length(1);
+      expect(result.warnings[0]).to.include('needs manual intervention as migration failed');
+    });
+
+    it('should generate warnings when assessment storage has duplicate keys', () => {
+      // Arrange
+      const mockStorage: MigrationStorage = {
+        osStorage: new Map<string, OmniScriptStorage>(),
+        fcStorage: new Map(),
+      };
+
+      const duplicateOSStorage: OmniScriptStorage = {
+        type: 'DuplicateType',
+        subtype: 'DuplicateSubtype',
+        language: 'English',
+        isDuplicate: true,
+        migrationSuccess: true,
+      };
+
+      mockStorage.osStorage.set('testsubtype:english', duplicateOSStorage);
+      storageUtilStub.returns(mockStorage);
+      fsReadStub.returns(JSON.stringify(sampleExperienceSiteJson));
+
+      // Act
+      const result = experienceSiteMigration.processExperienceSite(mockFile, Assess);
+
+      // Assert
+      expect(result.hasOmnistudioContent).to.be.true;
+      expect(result.warnings).to.have.length(1);
+      expect(result.warnings[0]).to.include('needs manual intervention as duplicated key found');
+    });
+
+    it('should return false for hasOmnistudioContent when no wrapper component found in assess mode', () => {
+      // Arrange
+      const mockStorage: MigrationStorage = {
+        osStorage: new Map<string, OmniScriptStorage>(),
+        fcStorage: new Map(),
+      };
+      storageUtilStub.returns(mockStorage);
+      fsReadStub.returns(JSON.stringify(sampleExperienceSiteJsonWithoutWrapper));
+
+      // Act
+      const result = experienceSiteMigration.processExperienceSite(mockFile, Assess);
+
+      // Assert
+      expect(result.hasOmnistudioContent).to.be.false;
+      expect(result.warnings).to.have.length(0);
+      expect(fsWriteStub.called).to.be.false;
+    });
+
+    it('should handle multiple components with different storage results in assess mode', () => {
+      // Arrange
+      const mockStorage: MigrationStorage = {
+        osStorage: new Map<string, OmniScriptStorage>(),
+        fcStorage: new Map(),
+      };
+
+      // One successful, one duplicate
+      const successfulStorage: OmniScriptStorage = {
+        type: 'SuccessType',
+        subtype: 'SuccessSubtype',
+        language: 'English',
+        isDuplicate: false,
+        migrationSuccess: true,
+      };
+
+      const duplicateStorage: OmniScriptStorage = {
+        type: 'DuplicateType',
+        subtype: 'DuplicateSubtype',
+        language: 'English',
+        isDuplicate: true,
+        migrationSuccess: true,
+      };
+
+      mockStorage.osStorage.set('successsubtype:english', successfulStorage);
+      mockStorage.osStorage.set('duplicatesubtype:english', duplicateStorage);
+      storageUtilStub.returns(mockStorage);
+
+      // Create a site with multiple wrapper components
+      const multiComponentSite = JSON.parse(JSON.stringify(sampleExperienceSiteJson)) as ExpSitePageJson;
+      multiComponentSite.regions[1].components.push({
+        componentAttributes: {
+          layout: 'lightning',
+          params: '',
+          standAlone: false,
+          target: 'DuplicateType:DuplicateSubtype:English',
+        },
+        componentName: 'vlocity_ins:vlocityLWCOmniWrapper',
+        id: 'second-component-id',
+        renderPriority: 'NEUTRAL',
+        renditionMap: {},
+        type: 'component',
+      });
+
+      // Update first component target to match successful storage
+      multiComponentSite.regions[1].components[0].componentAttributes.target = 'SuccessType:SuccessSubtype:English';
+
+      fsReadStub.returns(JSON.stringify(multiComponentSite));
+
+      // Act
+      const result = experienceSiteMigration.processExperienceSite(mockFile, Assess);
+
+      // Assert
+      expect(result.hasOmnistudioContent).to.be.true;
+      expect(result.warnings).to.have.length(1); // Only the duplicate should generate a warning
+      expect(result.warnings[0]).to.include('DuplicateSubtype:English');
+      expect(result.warnings[0]).to.include('duplicated key found');
+    });
+
+    it('should handle assessment storage gracefully when empty', () => {
+      // Arrange
+      const emptyStorage: MigrationStorage = {
+        osStorage: new Map<string, OmniScriptStorage>(),
+        fcStorage: new Map(),
+      };
+      storageUtilStub.returns(emptyStorage);
+      fsReadStub.returns(JSON.stringify(sampleExperienceSiteJson));
+
+      // Act
+      const result = experienceSiteMigration.processExperienceSite(mockFile, Assess);
+
+      // Assert
+      expect(result.hasOmnistudioContent).to.be.true;
+      expect(result.warnings).to.have.length(1);
+      expect(result.warnings[0]).to.include('needs manual intervention');
+      expect(result.status).to.equal('Errors');
     });
   });
 });

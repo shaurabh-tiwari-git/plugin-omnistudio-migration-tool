@@ -28,10 +28,12 @@ export class PostMigrate extends BaseMigrationTool {
     this.relatedObjectsToProcess = relatedObjectsToProcess;
   }
 
-  public async setDesignersToUseStandardDataModel(namespaceToModify: string): Promise<string[]> {
-    const userActionMessage: string[] = [];
+  public async setDesignersToUseStandardDataModel(
+    namespaceToModify: string,
+    userActionMessage: string[]
+  ): Promise<string[]> {
     try {
-      Logger.logVerbose('Setting designers to use the standard data model');
+      Logger.logVerbose(this.messages.getMessage('settingDesignersToStandardModel'));
       const apexCode = `
           ${namespaceToModify}.OmniStudioPostInstallClass.useStandardDataModel();
         `;
@@ -40,28 +42,39 @@ export class PostMigrate extends BaseMigrationTool {
 
       if (result?.success === false) {
         const message = result?.exceptionStackTrace;
-        Logger.error(`Error occurred while setting designers to use the standard data model ${message}`);
+        Logger.error(this.messages.getMessage('errorSettingDesignersToStandardModel', [message]));
         userActionMessage.push(this.messages.getMessage('manuallySwitchDesignerToStandardDataModel'));
       } else if (result?.success === true) {
-        Logger.logVerbose('Successfully executed setDesignersToUseStandardDataModel');
+        Logger.logVerbose(this.messages.getMessage('designersSetToStandardModel'));
       }
     } catch (ex) {
-      Logger.error(`Exception occurred while setting designers to use the standard data model ${JSON.stringify(ex)}`);
+      Logger.error(this.messages.getMessage('exceptionSettingDesignersToStandardModel', [JSON.stringify(ex)]));
       userActionMessage.push(this.messages.getMessage('manuallySwitchDesignerToStandardDataModel'));
     }
     return userActionMessage;
   }
 
   // If we processed exp sites and switched metadata api from off->on then only we revert it
-  public async restoreExperienceAPIMetadataSettings(isExperienceBundleMetadataAPIProgramaticallyEnabled: {
-    value: boolean;
-  }): Promise<void> {
+  public async restoreExperienceAPIMetadataSettings(
+    isExperienceBundleMetadataAPIProgramaticallyEnabled: {
+      value: boolean;
+    },
+    userActionMessage: string[]
+  ): Promise<void> {
+    if (this.relatedObjectsToProcess === undefined || this.relatedObjectsToProcess === null) {
+      Logger.logVerbose(this.messages.getMessage('noRelatedObjects'));
+      return;
+    }
     if (
       this.relatedObjectsToProcess.includes(Constants.ExpSites) &&
       isExperienceBundleMetadataAPIProgramaticallyEnabled.value === true
     ) {
-      Logger.logVerbose('Since ExperienceSiteMetadata API was programatically enabled, turing it off');
-      await OrgPreferences.setExperienceBundleMetadataAPI(this.connection, false);
+      Logger.logVerbose(this.messages.getMessage('turnOffExperienceBundleAPI'));
+      try {
+        await OrgPreferences.toggleExperienceBundleMetadataAPI(this.connection, false);
+      } catch (error) {
+        userActionMessage.push(this.messages.getMessage('errorRevertingExperienceBundleMetadataAPI'));
+      }
     }
   }
 }

@@ -121,6 +121,15 @@ export class OrgPreferences {
     }
   }
 
+  public static async toggleExperienceBundleMetadataAPI(connection: Connection, enable: boolean): Promise<void> {
+    await connection.metadata.update('ExperienceBundleSettings', [
+      {
+        fullName: 'ExperienceBundle',
+        enableExperienceBundleMetadata: enable,
+      } as ExperienceBundleSettingsMetadata,
+    ]);
+  }
+
   /**
    * Sets the ExperienceBundle Metadata API setting in Digital Experience Settings
    *
@@ -134,12 +143,7 @@ export class OrgPreferences {
   public static async setExperienceBundleMetadataAPI(connection: Connection, enable: boolean): Promise<boolean> {
     try {
       // Enable the setting
-      await connection.metadata.update('ExperienceBundleSettings', [
-        {
-          fullName: 'ExperienceBundle',
-          enableExperienceBundleMetadata: enable,
-        } as ExperienceBundleSettingsMetadata,
-      ]);
+      await OrgPreferences.toggleExperienceBundleMetadataAPI(connection, enable);
 
       Logger.logVerbose(`Successfully set the experienceBundleMetadata API to ${enable}`);
       return true;
