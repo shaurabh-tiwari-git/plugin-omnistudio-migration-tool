@@ -39,6 +39,10 @@ export class StorageUtil {
     this.printStorage(this.omnistudioMigrationStorage);
   }
 
+  public static printAssessmentStorage(): void {
+    this.printStorage(this.omnistudioAssessmentStorage);
+  }
+
   private static printStorage(storage: MigrationStorage): void {
     try {
       Logger.logVerbose('Printing the storage');

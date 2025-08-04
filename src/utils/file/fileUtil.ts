@@ -23,6 +23,8 @@ export class FileUtil {
 
   public static getAllFilesInsideDirectory(
     dirPath: string,
+    count: { total: number } = { total: 0 },
+    reqExt: string = undefined,
     fileMap: Map<string, File[]> = new Map<string, File[]>()
   ): Map<string, File[]> {
     if (!fs.existsSync(dirPath)) {
@@ -39,12 +41,21 @@ export class FileUtil {
 
       if (stat.isDirectory()) {
         // Recurse into subdirectory
-        this.getAllFilesInsideDirectory(fullPath, fileMap);
+        this.getAllFilesInsideDirectory(fullPath, count, reqExt, fileMap);
       } else if (stat.isFile()) {
         // Add file to current directory
-        const name = path.parse(filename).name;
         const ext = path.parse(filename).ext;
-        currentDirFiles.push(new File(name, fullPath, ext));
+        const name = path.parse(filename).name;
+
+        if (reqExt === undefined) {
+          Logger.logVerbose('Non extension file');
+          count.total++;
+          currentDirFiles.push(new File(name, fullPath, ext));
+        } else if (reqExt !== undefined && ext === reqExt) {
+          Logger.logVerbose('Required extension file');
+          count.total++;
+          currentDirFiles.push(new File(name, fullPath, ext));
+        }
       }
     });
 

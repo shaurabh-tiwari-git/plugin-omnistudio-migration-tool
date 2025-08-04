@@ -1,18 +1,29 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { ApexAssessmentInfo, FlexiPageAssessmentInfo, LWCAssessmentInfo } from './interfaces';
+import {
+  ApexAssessmentInfo,
+  ExperienceSiteAssessmentInfo,
+  FlexiPageAssessmentInfo,
+  LWCAssessmentInfo,
+} from './interfaces';
 
 export class generatePackageXml {
   // Method to generate package.xml with additional types
   public static createChangeList(
     apexAssementInfos: ApexAssessmentInfo[],
     lwcAssessmentInfos: LWCAssessmentInfo[],
+    experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo[],
     flexipageAssessmentInfos: FlexiPageAssessmentInfo[]
   ): void {
     const apexXml = generatePackageXml.getXmlElementforMembers(this.getApexclasses(apexAssementInfos), 'ApexClass');
     const lwcXml = generatePackageXml.getXmlElementforMembers(
       this.getLwcs(lwcAssessmentInfos),
       'LightningComponentBundle'
+    );
+
+    const expsiteXml = generatePackageXml.getXmlElementforMembers(
+      this.getExperienceSiteXml(experienceSiteAssessmentInfo),
+      'ExperienceSite'
     );
 
     const flexipageXml = generatePackageXml.getXmlElementforMembers(
@@ -44,6 +55,7 @@ export class generatePackageXml {
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
       ${apexXml}
       ${lwcXml}
+      ${expsiteXml}
       ${flexipageXml}
       ${additionalTypes}
     <version>57.0</version>
@@ -80,6 +92,15 @@ export class generatePackageXml {
         ${membersTag}
         <name>${type}</name>
     </types> `;
+  }
+
+  private static getExperienceSiteXml(experienceSiteAssessmentInfos: ExperienceSiteAssessmentInfo[]): string[] {
+    if (!experienceSiteAssessmentInfos || experienceSiteAssessmentInfos.length === 0) return [];
+    return experienceSiteAssessmentInfos
+      .filter((experienceSiteAssessmentInfo) => experienceSiteAssessmentInfo.status === 'Complete')
+      .map((experienceSiteAssessmentInfo) => {
+        return experienceSiteAssessmentInfo.name;
+      });
   }
 
   private static getFlexipageXml(flexipageAssessmentInfos: FlexiPageAssessmentInfo[]): string[] {

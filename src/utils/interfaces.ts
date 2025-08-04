@@ -45,6 +45,21 @@ export interface OSAssessmentInfo {
   infos: string[];
   warnings: string[];
   errors: string[];
+  nameMapping?: OmniscriptNameMapping;
+}
+
+export interface FlexcardNameMapping {
+  oldName: string;
+  newName: string;
+}
+
+export interface OmniscriptNameMapping {
+  oldType: string;
+  oldSubtype: string;
+  newType: string;
+  newSubType: string;
+  oldLanguage: string;
+  newLanguage: string;
 }
 
 export interface IPAssessmentInfo {
@@ -86,6 +101,7 @@ export interface AssessmentInfo {
   omniAssessmentInfo: OmniAssessmentInfo; // Corrected to an array
   flexCardAssessmentInfos: FlexCardAssessmentInfo[];
   dataRaptorAssessmentInfos: DataRaptorAssessmentInfo[];
+  experienceSiteAssessmentInfos: ExperienceSiteAssessmentInfo[];
   flexipageAssessmentInfos: FlexiPageAssessmentInfo[];
   globalAutoNumberAssessmentInfos: GlobalAutoNumberAssessmentInfo[];
 }
@@ -110,6 +126,12 @@ export interface FlexCardAssessmentInfo {
   warnings: string[];
   errors: string[];
   migrationStatus: string;
+  nameMapping?: FlexcardNameMapping;
+}
+
+export interface FlexcardNameMapping {
+  oldName: string;
+  newName: string;
 }
 
 export interface DataRaptorAssessmentInfo {
@@ -159,6 +181,8 @@ export interface ExperienceSiteAssessmentInfo extends FileChangeInfo {
   warnings: string[];
   infos: string[];
   hasOmnistudioContent: boolean;
+  errors: string[];
+  status: 'Can be Automated' | 'Errors' | 'No Changes' | 'Complete' | 'Failed';
 }
 
 export interface FileProcessor {

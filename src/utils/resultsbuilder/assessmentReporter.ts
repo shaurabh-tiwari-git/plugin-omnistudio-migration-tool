@@ -18,6 +18,7 @@ import { DRAssessmentReporter } from './DRAssessmentReporter';
 import { FlexcardAssessmentReporter } from './FlexcardAssessmentReporter';
 import { GlobalAutoNumberAssessmentReporter } from './GlobalAutoNumberAssessmentReporter';
 import { FlexipageAssessmentReporter } from './FlexipageAssessmentReporter';
+import { ExperienceSiteAssessmentReporter } from './ExperienceSiteAssessmentReporter';
 
 export class AssessmentReporter {
   private static basePath = path.join(process.cwd(), 'assessment_reports');
@@ -30,6 +31,7 @@ export class AssessmentReporter {
   // private static lwcAssessmentFileName = 'lwc_assessment.html';
   private static dashboardFileName = 'dashboard.html';
   private static templateDir = 'templates';
+  private static experienceSiteAssessmentFileName = 'experience_site_assessment.html';
   private static flexipageAssessmentFileName = 'flexipage_assessment.html';
   private static dashboardTemplateName = 'dashboard.template';
   private static reportTemplateName = 'assessmentReport.template';
@@ -41,7 +43,8 @@ export class AssessmentReporter {
     omnistudioOrgDetails: OmnistudioOrgDetails,
     assessOnly: string,
     relatedObjects: string[],
-    messages: Messages
+    messages: Messages,
+    userActionMessages: string[]
   ): Promise<void> {
     fs.mkdirSync(this.basePath, { recursive: true });
 
@@ -82,6 +85,18 @@ export class AssessmentReporter {
         TemplateParser.generate(
           assessmentReportTemplate,
           ApexAssessmentReporter.getApexAssessmentData(result.apexAssessmentInfos, omnistudioOrgDetails),
+          messages
+        )
+      );
+
+      this.createDocument(
+        path.join(this.basePath, this.experienceSiteAssessmentFileName),
+        TemplateParser.generate(
+          assessmentReportTemplate,
+          ExperienceSiteAssessmentReporter.getExperienceSiteAssessmentData(
+            result.experienceSiteAssessmentInfos,
+            omnistudioOrgDetails
+          ),
           messages
         )
       );
@@ -240,6 +255,21 @@ export class AssessmentReporter {
       );
     }
 
+    if (relatedObjects && relatedObjects.includes(Constants.ExpSites)) {
+      reports.push(Constants.ExpSites);
+      this.createDocument(
+        path.join(this.basePath, this.experienceSiteAssessmentFileName),
+        TemplateParser.generate(
+          assessmentReportTemplate,
+          ExperienceSiteAssessmentReporter.getExperienceSiteAssessmentData(
+            result.experienceSiteAssessmentInfos,
+            omnistudioOrgDetails
+          ),
+          messages
+        )
+      );
+    }
+
     if (relatedObjects && relatedObjects.includes(Constants.FlexiPage)) {
       reports.push(Constants.FlexiPage);
       this.createDocument(
@@ -265,24 +295,26 @@ export class AssessmentReporter {
     // }
 
     // await this.createMasterDocument(nameUrls, basePath);
-    this.createDashboard(this.basePath, result, omnistudioOrgDetails, messages, reports);
+    this.createDashboard(this.basePath, result, omnistudioOrgDetails, messages, reports, userActionMessages);
     pushAssestUtilites('javascripts', this.basePath);
     pushAssestUtilites('styles', this.basePath);
     await open(path.join(this.basePath, this.dashboardFileName));
   }
+
   private static createDashboard(
     basePath: string,
     result: AssessmentInfo,
     omnistudioOrgDetails: OmnistudioOrgDetails,
     messages: Messages,
-    reports: string[]
+    reports: string[],
+    userActionMessages: string[]
   ): void {
     const dashboardTemplate = fs.readFileSync(this.dashboardTemplate, 'utf8');
     this.createDocument(
       path.join(basePath, this.dashboardFileName),
       TemplateParser.generate(
         dashboardTemplate,
-        this.createDashboardParam(result, omnistudioOrgDetails, reports),
+        this.createDashboardParam(result, omnistudioOrgDetails, reports, userActionMessages),
         messages
       )
     );
@@ -290,7 +322,8 @@ export class AssessmentReporter {
   private static createDashboardParam(
     result: AssessmentInfo,
     omnistudioOrgDetails: OmnistudioOrgDetails,
-    reports: string[]
+    reports: string[],
+    userActionMessages: string[]
   ): DashboardParam {
     const summaryItems = [];
     if (reports.includes(Constants.DataMapper)) {
@@ -349,6 +382,15 @@ export class AssessmentReporter {
         file: this.flexipageAssessmentFileName,
       });
     }
+    if (reports.includes(Constants.ExpSites)) {
+      // TODO - Experience Sites
+      summaryItems.push({
+        name: 'ExperienceSite',
+        total: result.experienceSiteAssessmentInfos.length,
+        data: ExperienceSiteAssessmentReporter.getSummaryData(result.experienceSiteAssessmentInfos),
+        file: this.experienceSiteAssessmentFileName,
+      });
+    }
 
     // if (reports.includes(Constants.LWC)) {
     //   summaryItems.push({
@@ -365,6 +407,7 @@ export class AssessmentReporter {
       assessmentDate: new Date().toLocaleString(),
       summaryItems,
       mode: 'assess',
+      actionItems: userActionMessages,
     };
   }
 

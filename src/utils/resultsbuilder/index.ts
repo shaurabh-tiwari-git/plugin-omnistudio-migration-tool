@@ -251,12 +251,12 @@ export class ResultsBuilder {
       },
       assessmentDate: new Date().toString(),
       total: result.length,
-      filterGroups: [createFilterGroupParam('Filter by Errors', 'warnings', ['Has Errors', 'Has No Errors'])],
+      filterGroups: [createFilterGroupParam('Filter by Status', 'status', ['Complete', 'Error'])],
       headerGroups: [
         {
           header: [
             {
-              name: 'Component Name',
+              name: 'ExperienceSite Name',
               colspan: 1,
               rowspan: 1,
             },
@@ -266,12 +266,12 @@ export class ResultsBuilder {
               rowspan: 1,
             },
             {
-              name: 'Code Difference',
+              name: 'Status',
               colspan: 1,
               rowspan: 1,
             },
             {
-              name: 'Summary',
+              name: 'Differences',
               colspan: 1,
               rowspan: 1,
             },
@@ -289,6 +289,16 @@ export class ResultsBuilder {
           createRowDataParam('name', item.name, true, 1, 1, false),
           createRowDataParam('path', item.path, false, 1, 1, false),
           createRowDataParam(
+            'status',
+            item.warnings ? 'Error' : 'Complete', // This is the value which the status key takes
+            false,
+            1,
+            1,
+            false,
+            undefined,
+            item.warnings ? 'Error' : 'Complete' // This is what gets displayed
+          ),
+          createRowDataParam(
             'diff',
             item.name + 'diff',
             false,
@@ -299,18 +309,8 @@ export class ResultsBuilder {
             FileDiffUtil.getDiffHTML(item.diff, item.name)
           ),
           createRowDataParam(
-            'infos',
-            item.infos ? item.infos.join(', ') : '',
-            false,
-            1,
-            1,
-            false,
-            undefined,
-            item.infos
-          ),
-          createRowDataParam(
-            'warnings',
-            item.warnings ? 'Has Errors' : 'Has No Errors',
+            'errors',
+            item.warnings ? 'Error' : 'Complete',
             false,
             1,
             1,

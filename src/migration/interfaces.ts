@@ -158,6 +158,7 @@ export interface ExpSiteComponent {
   type: string;
   subtype?: string;
   language?: string;
+  regions?: ExpSiteRegion[]; // Optional, as some components can contain regions (e.g., forceCommunity:section)
 }
 
 export interface ExpSiteComponentAttributes {

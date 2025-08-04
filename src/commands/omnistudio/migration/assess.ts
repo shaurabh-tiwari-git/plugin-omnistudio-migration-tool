@@ -15,6 +15,8 @@ import { OmnistudioOrgDetails, OrgUtils } from '../../../utils/orgUtils';
 import { OrgPreferences } from '../../../utils/orgPreferences';
 import { Constants } from '../../../utils/constants/stringContants';
 import { ProjectPathUtil } from '../../../utils/projectPathUtil';
+import { PreMigrate } from '../../../migration/premigrate';
+import { PostMigrate } from '../../../migration/postMigrate';
 
 Messages.importMessagesDirectory(__dirname);
 const messages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'assess');
@@ -69,8 +71,11 @@ export default class Assess extends OmniStudioBaseCommand {
     const allVersions = (this.flags.allversions || false) as boolean;
     const assessOnly = (this.flags.only || '') as string;
     const relatedObjects = (this.flags.relatedobjects || '') as string;
+    const isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean } = { value: false };
     const conn = this.org.getConnection();
-
+    let objectsToProcess: string[];
+    // To-Do: Add LWC to valid options when GA is released
+    const validOptions = [Constants.Apex, Constants.ExpSites, Constants.FlexiPage];
     if (apiVersion) {
       conn.setApiVersion(apiVersion);
     } else {
@@ -93,8 +98,16 @@ export default class Assess extends OmniStudioBaseCommand {
 
     const namespace = orgs.packageDetails.namespace;
     let projectPath = '';
+    const preMigrate: PreMigrate = new PreMigrate(this.org, namespace, conn, this.logger, messages, this.ux);
     if (relatedObjects) {
+      objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
       projectPath = await ProjectPathUtil.getProjectPath(messages, true);
+
+      await preMigrate.handleExperienceSitePrerequisites(
+        objectsToProcess,
+        conn,
+        isExperienceBundleMetadataAPIProgramaticallyEnabled
+      );
     }
 
     const assesmentInfo: AssessmentInfo = {
@@ -108,6 +121,7 @@ export default class Assess extends OmniStudioBaseCommand {
         ipAssessmentInfos: [],
       },
       flexipageAssessmentInfos: [],
+      experienceSiteAssessmentInfos: [],
     };
 
     Logger.log(messages.getMessage('assessmentInitialization', [String(namespace)]));
@@ -124,13 +138,8 @@ export default class Assess extends OmniStudioBaseCommand {
       process.exit(1);
     }
 
-    let objectsToProcess: string[];
     // Assess related objects if specified
     if (relatedObjects) {
-      // To-Do: Add LWC to valid options when GA is released
-      const validOptions = [Constants.Apex, Constants.FlexiPage];
-      objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
-
       // Validate input
       for (const obj of objectsToProcess) {
         if (!validOptions.includes(obj)) {
@@ -150,6 +159,7 @@ export default class Assess extends OmniStudioBaseCommand {
       assesmentInfo.lwcAssessmentInfos = relatedObjectAssessmentResult.lwcAssessmentInfos;
       assesmentInfo.apexAssessmentInfos = relatedObjectAssessmentResult.apexAssessmentInfos;
       assesmentInfo.flexipageAssessmentInfos = relatedObjectAssessmentResult.flexipageAssessmentInfos;
+      assesmentInfo.experienceSiteAssessmentInfos = relatedObjectAssessmentResult.experienceSiteAssessmentInfos;
     }
     try {
       orgs.rollbackFlags = await OrgPreferences.checkRollbackFlags(conn);
@@ -157,7 +167,33 @@ export default class Assess extends OmniStudioBaseCommand {
       Logger.log((error as Error).message);
       Logger.log((error as Error).stack);
     }
-    await AssessmentReporter.generate(assesmentInfo, conn.instanceUrl, orgs, assessOnly, objectsToProcess, messages);
+
+    // Post Assessment tasks
+    const postMigrate: PostMigrate = new PostMigrate(
+      this.org,
+      namespace,
+      conn,
+      this.logger,
+      messages,
+      this.ux,
+      objectsToProcess
+    );
+
+    const userActionMessages: string[] = [];
+    await postMigrate.restoreExperienceAPIMetadataSettings(
+      isExperienceBundleMetadataAPIProgramaticallyEnabled,
+      userActionMessages
+    );
+
+    await AssessmentReporter.generate(
+      assesmentInfo,
+      conn.instanceUrl,
+      orgs,
+      assessOnly,
+      objectsToProcess,
+      messages,
+      userActionMessages
+    );
     return assesmentInfo;
   }
 
