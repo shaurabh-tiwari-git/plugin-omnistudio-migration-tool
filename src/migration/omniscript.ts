@@ -24,7 +24,6 @@ import {
   UploadRecordResult,
 } from './interfaces';
 import { ObjectMapping } from './interfaces';
-import { NameMappingRegistry } from './NameMappingRegistry';
 import { NetUtils, RequestMethod } from '../utils/net';
 import { Connection, Messages } from '@salesforce/core';
 import { UX } from '@salesforce/command';
@@ -71,10 +70,9 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     logger: Logger,
     messages: Messages,
     ux: UX,
-    allVersions: boolean,
-    nameRegistry?: NameMappingRegistry
+    allVersions: boolean
   ) {
-    super(namespace, connection, logger, messages, ux, nameRegistry);
+    super(namespace, connection, logger, messages, ux);
     this.exportType = exportType;
     this.allVersions = allVersions;
   }
@@ -1342,6 +1340,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           }
         } else {
           // No registry mapping - use original fallback approach
+          Logger.logVerbose(this.messages.getMessage('componentMappingNotFound', ['OmniScript', fullOmniScriptName]));
           updatedPropertySet['Type'] = this.cleanName(osType);
           updatedPropertySet['Sub Type'] = this.cleanName(osSubType);
         }
@@ -1353,6 +1352,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         if (preTransformBundle && this.nameRegistry.hasDataMapperMapping(preTransformBundle)) {
           remoteOptions['preTransformBundle'] = this.nameRegistry.getDataMapperCleanedName(preTransformBundle);
         } else {
+          Logger.logVerbose(this.messages.getMessage('componentMappingNotFound', ['DataMapper', preTransformBundle]));
           remoteOptions['preTransformBundle'] = this.cleanName(preTransformBundle);
         }
 
@@ -1360,6 +1360,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         if (postTransformBundle && this.nameRegistry.hasDataMapperMapping(postTransformBundle)) {
           remoteOptions['postTransformBundle'] = this.nameRegistry.getDataMapperCleanedName(postTransformBundle);
         } else {
+          Logger.logVerbose(this.messages.getMessage('componentMappingNotFound', ['DataMapper', postTransformBundle]));
           remoteOptions['postTransformBundle'] = this.cleanName(postTransformBundle);
         }
         updatedPropertySet['remoteOptions'] = remoteOptions;
@@ -1368,6 +1369,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         if (preBundle && this.nameRegistry.hasDataMapperMapping(preBundle)) {
           updatedPropertySet['preTransformBundle'] = this.nameRegistry.getDataMapperCleanedName(preBundle);
         } else {
+          Logger.logVerbose(this.messages.getMessage('componentMappingNotFound', ['DataMapper', preBundle]));
           updatedPropertySet['preTransformBundle'] = this.cleanName(preBundle);
         }
 
@@ -1375,6 +1377,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         if (postBundle && this.nameRegistry.hasDataMapperMapping(postBundle)) {
           updatedPropertySet['postTransformBundle'] = this.nameRegistry.getDataMapperCleanedName(postBundle);
         } else {
+          Logger.logVerbose(this.messages.getMessage('componentMappingNotFound', ['DataMapper', postBundle]));
           updatedPropertySet['postTransformBundle'] = this.cleanName(postBundle);
         }
 
@@ -1386,6 +1389,9 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
             const cleanedIpName = this.nameRegistry.getIntegrationProcedureCleanedName(key as string);
             updatedPropertySet['integrationProcedureKey'] = cleanedIpName;
           } else {
+            Logger.logVerbose(
+              this.messages.getMessage('componentMappingNotFound', ['IntegrationProcedure', key as string])
+            );
             const parts = key.split('_');
             const newKey = parts.map((p) => this.cleanName(p, true)).join('_');
             if (parts.length > 2) {
@@ -1404,6 +1410,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         if (bundleName && this.nameRegistry.hasDataMapperMapping(bundleName)) {
           updatedPropertySet['bundle'] = this.nameRegistry.getDataMapperCleanedName(bundleName);
         } else {
+          Logger.logVerbose(this.messages.getMessage('componentMappingNotFound', ['DataMapper', bundleName]));
           updatedPropertySet['bundle'] = this.cleanName(bundleName);
         }
         break;

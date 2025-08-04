@@ -18,7 +18,7 @@ import { UX } from '@salesforce/command';
 import { FlexCardAssessmentInfo } from '../../src/utils';
 import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
-import { NameMappingRegistry } from './NameMappingRegistry';
+
 import { Constants } from '../utils/constants/stringContants';
 import { StorageUtil } from '../utils/storageUtil';
 
@@ -34,10 +34,9 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     logger: Logger,
     messages: Messages,
     ux: UX,
-    allVersions: boolean,
-    nameRegistry?: NameMappingRegistry
+    allVersions: boolean
   ) {
-    super(namespace, connection, logger, messages, ux, nameRegistry);
+    super(namespace, connection, logger, messages, ux);
     this.allVersions = allVersions;
   }
 
@@ -853,6 +852,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
               if (c && this.nameRegistry.hasFlexCardMapping(c)) {
                 return this.nameRegistry.getFlexCardCleanedName(c);
               } else {
+                Logger.logVerbose(this.messages.getMessage('componentMappingNotFound', ['FlexCard', c]));
                 return this.cleanName(c);
               }
             });
@@ -893,6 +893,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       if (originalBundle && this.nameRegistry.hasDataMapperMapping(originalBundle)) {
         dataSource.value.bundle = this.nameRegistry.getDataMapperCleanedName(originalBundle);
       } else {
+        Logger.logVerbose(this.messages.getMessage('componentMappingNotFound', ['DataMapper', originalBundle]));
         dataSource.value.bundle = this.cleanName(originalBundle);
       }
     } else if (type === Constants.IntegrationProcedurePluralName || type === 'IntegrationProcedures') {
@@ -903,6 +904,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         const cleanedIpName = this.nameRegistry.getIntegrationProcedureCleanedName(ipMethod);
         dataSource.value.ipMethod = cleanedIpName;
       } else {
+        Logger.logVerbose(this.messages.getMessage('componentMappingNotFound', ['IntegrationProcedure', ipMethod]));
         const parts = ipMethod.split('_');
         const newKey = parts.map((p) => this.cleanName(p, true)).join('_');
         dataSource.value.ipMethod = newKey;
@@ -939,6 +941,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       }
     } else {
       // No registry mapping - use original fallback approach
+      Logger.logVerbose(this.messages.getMessage('componentMappingNotFound', ['OmniScript', fullOmniScriptName]));
       omniscriptRef.type = this.cleanName(originalType);
       omniscriptRef.subtype = this.cleanName(originalSubtype);
     }
@@ -1003,6 +1006,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         if (this.nameRegistry.hasFlexCardMapping(originalCardName)) {
           component.property.cardName = this.nameRegistry.getFlexCardCleanedName(originalCardName);
         } else {
+          Logger.logVerbose(this.messages.getMessage('componentMappingNotFound', ['FlexCard', originalCardName]));
           component.property.cardName = this.cleanName(originalCardName);
         }
       }
@@ -1037,6 +1041,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         }
       } else {
         // No registry mapping - use original fallback approach
+        Logger.logVerbose(this.messages.getMessage('componentMappingNotFound', ['OmniScript', fullOmniScriptName]));
         omniType.Name = parts.map((p) => this.cleanName(p)).join('/');
       }
     } else {
@@ -1066,6 +1071,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         }
       } else {
         // No registry mapping - use original fallback approach
+        Logger.logVerbose(this.messages.getMessage('componentMappingNotFound', ['OmniScript', fullOmniScriptName]));
         stateAction[fieldName] = parts.map((p) => this.cleanName(p)).join('/');
       }
     } else {

@@ -17,19 +17,13 @@ describe('FlexCard Dependency Updates with NameMappingRegistry', () => {
 
     // Use simple mock objects instead of Sinon stubs to avoid conflicts
     mockConnection = {};
-    mockMessages = {};
+    mockMessages = {
+      getMessage: () => 'Mock message for testing',
+    };
     mockUx = {};
     mockLogger = {};
 
-    cardTool = new CardMigrationTool(
-      'vlocity_ins',
-      mockConnection,
-      mockLogger,
-      mockMessages,
-      mockUx,
-      false,
-      nameRegistry
-    );
+    cardTool = new CardMigrationTool('vlocity_ins', mockConnection, mockLogger, mockMessages, mockUx, false);
 
     // Setup test name mappings
     setupTestNameMappings();

@@ -203,8 +203,5 @@
   "errorComponentMapping": "Error during component pre-processing: %s",
   "startingComponentPreProcessing": "Pre-processing components for name mapping",
   "completeComponentMappingMessage": "Registered name mappings for %s components",
-  "fallbackNameCleaningUsed": "Fallback name cleaning used for %s: %s",
-  "noMappingFoundForReference": "No mapping found for potential component reference: %s",
-  "fallbackOmniScriptNameCleaning": "Fallback OmniScript name cleaning for: %s",
   "componentMappingNotFound": "No registry mapping found for %s component: %s, using fallback cleaning"
 }

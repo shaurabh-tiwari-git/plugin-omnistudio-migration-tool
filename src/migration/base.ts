@@ -39,20 +39,13 @@ export class BaseMigrationTool {
   protected readonly ux: UX;
   protected readonly nameRegistry: NameMappingRegistry;
 
-  public constructor(
-    namespace: string,
-    connection: Connection,
-    logger: Logger,
-    messages: Messages,
-    ux: UX,
-    nameRegistry?: NameMappingRegistry
-  ) {
+  public constructor(namespace: string, connection: Connection, logger: Logger, messages: Messages, ux: UX) {
     this.namespace = namespace;
     this.connection = connection;
     this.logger = logger;
     this.messages = messages;
     this.ux = ux;
-    this.nameRegistry = nameRegistry || NameMappingRegistry.getInstance();
+    this.nameRegistry = NameMappingRegistry.getInstance();
     this.namespacePrefix = namespace ? namespace + '__' : '';
   }
 

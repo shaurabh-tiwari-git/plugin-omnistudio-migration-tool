@@ -9,7 +9,7 @@
  */
 import * as os from 'os';
 import { flags } from '@salesforce/command';
-import { Messages, Connection } from '@salesforce/core';
+import { Connection, Messages } from '@salesforce/core';
 import OmniStudioBaseCommand from '../../basecommand';
 import { DataRaptorMigrationTool } from '../../../migration/dataraptor';
 import { DebugTimer, MigratedObject, MigratedRecordInfo } from '../../../utils';
@@ -147,7 +147,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     nameRegistry.clear(); // Clear any previous mappings
 
     Logger.log(messages.getMessage('startingComponentPreProcessing'));
-    await this.preProcessAllComponents(nameRegistry, namespace, conn, migrateOnly);
+    await this.preProcessAllComponents(namespace, conn, migrateOnly);
 
     // Register the migration objects with CORRECTED ORDER
     let migrationObjects: MigrationTool[] = [];
@@ -156,8 +156,7 @@ export default class Migrate extends OmniStudioBaseCommand {
       migrationObjects,
       namespace,
       conn,
-      allVersions,
-      nameRegistry
+      allVersions
     );
 
     // Migrate individual objects
@@ -239,6 +238,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     let projectPath: string;
     let objectsToProcess: string[] = [];
     let targetApexNamespace: string;
+    const preMigrate: PreMigrate = new PreMigrate(this.org, namespace, conn, this.logger, messages, this.ux);
     const isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean } = { value: false };
     if (relatedObjects) {
       const validOptions = [Constants.Apex, Constants.ExpSites, Constants.FlexiPage, Constants.LWC];
@@ -376,7 +376,7 @@ export default class Migrate extends OmniStudioBaseCommand {
   /**
    * Get migration objects in the correct dependency order:
    * 1. DataMappers (lowest dependencies)
-   * 2. OmniScripts/Integration Procedures
+   * 2. Integration Procedures/ OmniScripts
    * 3. FlexCards (highest dependencies)
    * 4. GlobalAutoNumbers (independent)
    */
@@ -385,13 +385,12 @@ export default class Migrate extends OmniStudioBaseCommand {
     migrationObjects: MigrationTool[],
     namespace: string,
     conn: any,
-    allVersions: any,
-    nameRegistry: NameMappingRegistry
+    allVersions: any
   ): MigrationTool[] {
     if (!migrateOnly) {
       // Correct order: DataMapper -> OmniScript/IP -> FlexCard -> GlobalAutoNumber
       migrationObjects = [
-        new DataRaptorMigrationTool(namespace, conn, this.logger, messages, this.ux, nameRegistry),
+        new DataRaptorMigrationTool(namespace, conn, this.logger, messages, this.ux),
         new OmniScriptMigrationTool(
           OmniScriptExportType.All,
           namespace,
@@ -399,11 +398,10 @@ export default class Migrate extends OmniStudioBaseCommand {
           this.logger,
           messages,
           this.ux,
-          allVersions,
-          nameRegistry
+          allVersions
         ),
-        new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions, nameRegistry),
-        new GlobalAutoNumberMigrationTool(namespace, conn, this.logger, messages, this.ux, nameRegistry),
+        new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions),
+        new GlobalAutoNumberMigrationTool(namespace, conn, this.logger, messages, this.ux),
       ];
     } else {
       // For single component migration, the order doesn't matter as much
@@ -418,8 +416,7 @@ export default class Migrate extends OmniStudioBaseCommand {
               this.logger,
               messages,
               this.ux,
-              allVersions,
-              nameRegistry
+              allVersions
             )
           );
           break;
@@ -432,25 +429,18 @@ export default class Migrate extends OmniStudioBaseCommand {
               this.logger,
               messages,
               this.ux,
-              allVersions,
-              nameRegistry
+              allVersions
             )
           );
           break;
         case Constants.Flexcard:
-          migrationObjects.push(
-            new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions, nameRegistry)
-          );
+          migrationObjects.push(new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions));
           break;
         case Constants.DataMapper:
-          migrationObjects.push(
-            new DataRaptorMigrationTool(namespace, conn, this.logger, messages, this.ux, nameRegistry)
-          );
+          migrationObjects.push(new DataRaptorMigrationTool(namespace, conn, this.logger, messages, this.ux));
           break;
         case Constants.GlobalAutoNumber:
-          migrationObjects.push(
-            new GlobalAutoNumberMigrationTool(namespace, conn, this.logger, messages, this.ux, nameRegistry)
-          );
+          migrationObjects.push(new GlobalAutoNumberMigrationTool(namespace, conn, this.logger, messages, this.ux));
           break;
         default:
           throw new Error(messages.getMessage('invalidOnlyFlag'));
@@ -462,13 +452,9 @@ export default class Migrate extends OmniStudioBaseCommand {
   /**
    * Pre-process all components to register their name mappings
    */
-  private async preProcessAllComponents(
-    nameRegistry: NameMappingRegistry,
-    namespace: string,
-    conn: any,
-    migrateOnly: string
-  ): Promise<void> {
+  private async preProcessAllComponents(namespace: string, conn: any, migrateOnly: string): Promise<void> {
     try {
+      const nameRegistry = NameMappingRegistry.getInstance();
       // Query all components that will be migrated
       const dataMappers = await this.queryDataMappers(conn, namespace);
       const omniScripts = await this.queryOmniScripts(conn, namespace, false); // OmniScripts only
