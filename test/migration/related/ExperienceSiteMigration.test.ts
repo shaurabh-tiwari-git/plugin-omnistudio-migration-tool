@@ -668,7 +668,7 @@ describe('ExperienceSiteMigration', () => {
       expect(result.hasOmnistudioContent).to.be.true;
       expect(result.warnings).to.have.length(1);
       expect(result.warnings[0]).to.include('needs manual intervention');
-      expect(result.status).to.equal('Can be Automated');
+      expect(result.status).to.equal('Errors');
     });
   });
 });
