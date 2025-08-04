@@ -109,9 +109,9 @@ function createNewProps(
   componentInstanceProperties: FlexiComponentInstanceProperty[]
 ): { componentName: string; identifier: string; props: Record<string, string> } {
   if (nameKey.startsWith(flexCardPrefix)) {
-    return createNewPropsForFlexCard(nameKey.substring(flexCardPrefix.length), namespace, mode);
+    return createNewPropsForFlexCard(nameKey.substring(flexCardPrefix.length).toLowerCase(), namespace, mode);
   }
-  return createNewPropsForOmniScript(nameKey, namespace, mode, componentInstanceProperties);
+  return createNewPropsForOmniScript(nameKey.toLowerCase(), namespace, mode, componentInstanceProperties);
 }
 
 function createNewPropsForOmniScript(

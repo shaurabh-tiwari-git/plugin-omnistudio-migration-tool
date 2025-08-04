@@ -287,4 +287,104 @@ describe('transformFlexipageBundle', () => {
       'runtime_omnistudio_flexcard1'
     );
   });
+
+  it('handles mixed case OmniScript names correctly', () => {
+    // Mock StorageUtil
+    const mockStorage = {
+      osStorage: new Map([
+        ['mixedcase', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
+        ['lowercase', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
+      ]),
+      fcStorage: new Map(),
+    };
+    sandbox.stub(StorageUtil, 'getOmnistudioMigrationStorage').returns(mockStorage);
+
+    const bundle: Flexipage = {
+      flexiPageRegions: [
+        makeRegion([
+          makeItemInstance([{ name: 'target', value: 'type:MixedCase' }]),
+          makeItemInstance([{ name: 'target', value: 'type:LowerCase' }]),
+        ]),
+      ],
+    };
+    const result = transformFlexipageBundle(bundle, namespace, 'migrate');
+    expect(result).to.not.equal(false);
+    const changed = result as Flexipage;
+
+    // All should be transformed to lowercase and find the correct storage entries
+    expect(changed.flexiPageRegions[0].itemInstances[0].componentInstance.componentName).to.equal(targetComponentName);
+    expect(changed.flexiPageRegions[0].itemInstances[1].componentInstance.componentName).to.equal(targetComponentName);
+  });
+
+  it('handles mixed case FlexCard names correctly', () => {
+    // Mock StorageUtil
+    const mockStorage = {
+      osStorage: new Map(),
+      fcStorage: new Map([
+        ['mixedcase', { name: 'MixedCaseCard', isDuplicate: false }],
+        ['lowercase', { name: 'lowercasecard', isDuplicate: false }],
+      ]),
+    };
+    sandbox.stub(StorageUtil, 'getOmnistudioMigrationStorage').returns(mockStorage);
+
+    const bundle: Flexipage = {
+      flexiPageRegions: [
+        makeRegion([
+          makeItemInstance([{ name: 'target', value: 'type:cfMixedCase' }]),
+          makeItemInstance([{ name: 'target', value: 'type:cfLowerCase' }]),
+        ]),
+      ],
+    };
+    const result = transformFlexipageBundle(bundle, namespace, 'migrate');
+    expect(result).to.not.equal(false);
+    const changed = result as Flexipage;
+
+    // All should be transformed to lowercase and find the correct storage entries
+    expect(changed.flexiPageRegions[0].itemInstances[0].componentInstance.componentName).to.equal(
+      'runtime_omnistudio:flexcard'
+    );
+    expect(changed.flexiPageRegions[0].itemInstances[1].componentInstance.componentName).to.equal(
+      'runtime_omnistudio:flexcard'
+    );
+  });
+
+  it('works with assess mode for mixed case OmniScript names', () => {
+    // Mock StorageUtil for assess mode
+    const mockStorage = {
+      osStorage: new Map([
+        ['mixedcase', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
+      ]),
+      fcStorage: new Map(),
+    };
+    sandbox.stub(StorageUtil, 'getOmnistudioAssessmentStorage').returns(mockStorage);
+
+    const bundle: Flexipage = {
+      flexiPageRegions: [makeRegion([makeItemInstance([{ name: 'target', value: 'type:MixedCase' }])])],
+    };
+    const result = transformFlexipageBundle(bundle, namespace, 'assess');
+    expect(result).to.not.equal(false);
+    const changed = result as Flexipage;
+
+    expect(changed.flexiPageRegions[0].itemInstances[0].componentInstance.componentName).to.equal(targetComponentName);
+  });
+
+  it('works with assess mode for mixed case FlexCard names', () => {
+    // Mock StorageUtil for assess mode
+    const mockStorage = {
+      osStorage: new Map(),
+      fcStorage: new Map([['mixedcase', { name: 'MixedCaseCard', isDuplicate: false }]]),
+    };
+    sandbox.stub(StorageUtil, 'getOmnistudioAssessmentStorage').returns(mockStorage);
+
+    const bundle: Flexipage = {
+      flexiPageRegions: [makeRegion([makeItemInstance([{ name: 'target', value: 'type:cfMixedCase' }])])],
+    };
+    const result = transformFlexipageBundle(bundle, namespace, 'assess');
+    expect(result).to.not.equal(false);
+    const changed = result as Flexipage;
+
+    expect(changed.flexiPageRegions[0].itemInstances[0].componentInstance.componentName).to.equal(
+      'runtime_omnistudio:flexcard'
+    );
+  });
 });
