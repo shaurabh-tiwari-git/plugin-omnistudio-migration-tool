@@ -192,7 +192,7 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
       Logger.logVerbose(this.messages.getMessage('updatedModifiedContent', [filePath]));
     }
 
-    const diff = new FileDiffUtil().getFileDiff(fileName, fileContent, modifiedContent);
+    const diff = new FileDiffUtil().getXMLDiff(fileContent, modifiedContent);
     Logger.logVerbose(this.messages.getMessage('generatedDiffForFile', [fileName]));
 
     return {

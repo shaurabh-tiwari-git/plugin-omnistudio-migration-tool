@@ -21,6 +21,9 @@ const targetComponentNameOS = 'runtime_omnistudio:omniscript';
 /** Target identifier after transformation */
 const targetIdentifierOS = 'runtime_omnistudio_omniscript';
 
+let osSeq = 1;
+let fcSeq = 1;
+
 const targetComponentNameFlexCard = 'runtime_omnistudio:flexcard';
 const targetIdentifierFlexCard = 'runtime_omnistudio_flexcard';
 
@@ -46,6 +49,9 @@ export function transformFlexipageBundle(
   namespace: string,
   mode: 'assess' | 'migrate'
 ): Flexipage | boolean {
+  osSeq = 1;
+  fcSeq = 1;
+
   const bundle: Flexipage = JSON.parse(JSON.stringify(ogBundle)) as Flexipage;
   let changes = false;
 
@@ -103,9 +109,9 @@ function createNewProps(
   componentInstanceProperties: FlexiComponentInstanceProperty[]
 ): { componentName: string; identifier: string; props: Record<string, string> } {
   if (nameKey.startsWith(flexCardPrefix)) {
-    return createNewPropsForFlexCard(nameKey.substring(flexCardPrefix.length), namespace, mode);
+    return createNewPropsForFlexCard(nameKey.substring(flexCardPrefix.length).toLowerCase(), namespace, mode);
   }
-  return createNewPropsForOmniScript(nameKey, namespace, mode, componentInstanceProperties);
+  return createNewPropsForOmniScript(nameKey.toLowerCase(), namespace, mode, componentInstanceProperties);
 }
 
 function createNewPropsForOmniScript(
@@ -142,7 +148,7 @@ function createNewPropsForOmniScript(
 
   return {
     componentName: targetComponentNameOS,
-    identifier: targetIdentifierOS,
+    identifier: `${targetIdentifierOS}${osSeq++}`,
     props: newProps,
   };
 }
@@ -173,7 +179,7 @@ function createNewPropsForFlexCard(
 
   return {
     componentName: targetComponentNameFlexCard,
-    identifier: targetIdentifierFlexCard,
+    identifier: `${targetIdentifierFlexCard}${fcSeq++}`,
     props: newProps,
   };
 }

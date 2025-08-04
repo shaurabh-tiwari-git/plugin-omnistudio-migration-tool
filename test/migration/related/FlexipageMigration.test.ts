@@ -29,6 +29,7 @@ interface MockXmlUtil {
 
 interface MockFileDiffUtil {
   getFileDiff: sinon.SinonStub;
+  getXMLDiff: sinon.SinonStub;
 }
 
 interface MockTransformFlexipageBundle extends sinon.SinonStub {
@@ -104,6 +105,7 @@ describe('FlexipageMigration', () => {
     // Mock FileDiffUtil
     mockFileDiffUtil = {
       getFileDiff: sandbox.stub().returns('mock-diff'),
+      getXMLDiff: sandbox.stub().returns('mock-diff'),
     };
 
     // Mock transformFlexipageBundle

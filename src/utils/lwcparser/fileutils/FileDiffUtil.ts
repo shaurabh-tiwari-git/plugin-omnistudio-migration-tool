@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/explicit-member-accessibility */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { createPatch } from 'diff';
+import { createPatch, diffLines } from 'diff';
 import { Logger } from '../../../utils/logger';
 import { DiffPair } from '../../interfaces';
 
@@ -46,16 +46,25 @@ export class FileDiffUtil {
     let linecount = 0;
     for (const { old: original, new: modified } of diffArray) {
       if (original === modified) {
-        result += `<div style="color: black;">• Line ${modifiedLine}: ${this.escapeHtml(original)}</div>`;
+        result += `<div style="color: black;">• Line ${modifiedLine}: ${this.escapeHtml(original).replace(
+          / /g,
+          '&nbsp;'
+        )}</div>`;
         modifiedLine++;
         originalLine++;
         linecount++;
       } else if (original !== null && modified === null) {
-        result += `<div style="color: red;">- Line ${originalLine}: ${this.escapeHtml(original)}</div>`;
+        result += `<div style="color: red;">- Line ${originalLine}: ${this.escapeHtml(original).replace(
+          / /g,
+          '&nbsp;'
+        )}</div>`;
         originalLine++;
         linecount++;
       } else if (original === null && modified !== null) {
-        result += `<div style="color: green;">+ Line ${modifiedLine}: ${this.escapeHtml(modified)}</div>`;
+        result += `<div style="color: green;">+ Line ${modifiedLine}: ${this.escapeHtml(modified).replace(
+          / /g,
+          '&nbsp;'
+        )}</div>`;
         modifiedLine++;
         linecount++;
       }
@@ -146,5 +155,26 @@ export class FileDiffUtil {
       Logger.error(`Error in FileDiffUtil: ${String(error)}`);
       return [];
     }
+  }
+
+  public getXMLDiff(originalFileContent: string, modifiedFileContent: string): DiffPair[] {
+    const diff = diffLines(originalFileContent, modifiedFileContent, { stripTrailingCr: true });
+    const result: DiffPair[] = [];
+    for (const block of diff) {
+      if (block.added) {
+        block.value.split('\n').forEach((line) => {
+          result.push({ old: null, new: line });
+        });
+      } else if (block.removed) {
+        block.value.split('\n').forEach((line) => {
+          result.push({ old: line, new: null });
+        });
+      } else {
+        block.value.split('\n').forEach((line) => {
+          result.push({ old: line, new: line });
+        });
+      }
+    }
+    return result;
   }
 }
