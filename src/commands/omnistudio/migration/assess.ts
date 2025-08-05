@@ -210,7 +210,8 @@ export default class Assess extends OmniStudioBaseCommand {
       // If no specific component is specified, assess all components
       await this.assessDataRaptors(assesmentInfo, namespace, conn);
       await this.assessFlexCards(assesmentInfo, namespace, conn, allVersions);
-      await this.assessOmniScripts(assesmentInfo, namespace, conn, allVersions, OmniScriptExportType.All);
+      await this.assessOmniScripts(assesmentInfo, namespace, conn, allVersions, OmniScriptExportType.OS);
+      await this.assessOmniScripts(assesmentInfo, namespace, conn, allVersions, OmniScriptExportType.IP);
       await this.assessGlobalAutoNumbers(assesmentInfo, namespace, conn);
       return;
     }

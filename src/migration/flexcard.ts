@@ -87,16 +87,48 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   // Perform Records Migration from VlocityCard__c to OmniUiCard
   async migrate(): Promise<MigrationResult[]> {
     // Get All the Active VlocityCard__c records
-    const cards = await this.getAllActiveCards();
-    Logger.log(this.messages.getMessage('foundFlexCardsToMigrate', [cards.length]));
+    const allCards = await this.getAllActiveCards();
+    Logger.log(this.messages.getMessage('foundFlexCardsToMigrate', [allCards.length]));
+
+    // Filter out FlexCards with Angular OmniScript dependencies
+    const cards: any[] = [];
+    const skippedCards = new Map<string, any>();
+
+    for (const card of allCards) {
+      if (this.hasAngularOmniScriptDependencies(card)) {
+        // Skip FlexCard with Angular dependencies
+        Logger.logVerbose(
+          `${this.messages.getMessage('skipFlexcardAngularOmniScriptDependencyWarning', [card['Name']])}`
+        );
+        skippedCards.set(card['Id'], {
+          referenceId: card['Id'],
+          id: '',
+          success: false,
+          hasErrors: false,
+          errors: [],
+          warnings: [this.messages.getMessage('flexCardWithAngularOmniScriptWarning')],
+          newName: '',
+          skipped: true,
+        });
+      } else {
+        cards.push(card);
+      }
+    }
+
+    Logger.log(`${this.messages.getMessage('flexCardMigrationProcessingMessage', [cards.length, skippedCards.size])}`);
 
     const progressBar = createProgressBar('Migrating', 'Flexcard');
     // Save the Vlocity Cards in OmniUiCard
     const cardUploadResponse = await this.uploadAllCards(cards, progressBar);
 
+    // Add skipped cards to the response
+    for (const [cardId, skippedResult] of skippedCards.entries()) {
+      cardUploadResponse.set(cardId, skippedResult);
+    }
+
     const records = new Map<string, any>();
-    for (let i = 0; i < cards.length; i++) {
-      records.set(cards[i]['Id'], cards[i]);
+    for (let i = 0; i < allCards.length; i++) {
+      records.set(allCards[i]['Id'], allCards[i]);
     }
 
     return [
@@ -852,7 +884,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
               if (c && this.nameRegistry.hasFlexCardMapping(c)) {
                 return this.nameRegistry.getFlexCardCleanedName(c);
               } else {
-                Logger.logVerbose(this.messages.getMessage('componentMappingNotFound', ['FlexCard', c]));
+                Logger.logVerbose(`\n${this.messages.getMessage('componentMappingNotFound', ['FlexCard', c])}`);
                 return this.cleanName(c);
               }
             });
@@ -893,7 +925,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       if (originalBundle && this.nameRegistry.hasDataMapperMapping(originalBundle)) {
         dataSource.value.bundle = this.nameRegistry.getDataMapperCleanedName(originalBundle);
       } else {
-        Logger.logVerbose(this.messages.getMessage('componentMappingNotFound', ['DataMapper', originalBundle]));
+        Logger.logVerbose(`\n${this.messages.getMessage('componentMappingNotFound', ['DataMapper', originalBundle])}`);
         dataSource.value.bundle = this.cleanName(originalBundle);
       }
     } else if (type === Constants.IntegrationProcedurePluralName || type === 'IntegrationProcedures') {
@@ -904,7 +936,9 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         const cleanedIpName = this.nameRegistry.getIntegrationProcedureCleanedName(ipMethod);
         dataSource.value.ipMethod = cleanedIpName;
       } else {
-        Logger.logVerbose(this.messages.getMessage('componentMappingNotFound', ['IntegrationProcedure', ipMethod]));
+        Logger.logVerbose(
+          `\n${this.messages.getMessage('componentMappingNotFound', ['IntegrationProcedure', ipMethod])}`
+        );
         const parts = ipMethod.split('_');
         const newKey = parts.map((p) => this.cleanName(p, true)).join('_');
         dataSource.value.ipMethod = newKey;
@@ -941,7 +975,9 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       }
     } else {
       // No registry mapping - use original fallback approach
-      Logger.logVerbose(this.messages.getMessage('componentMappingNotFound', ['OmniScript', fullOmniScriptName]));
+      Logger.logVerbose(
+        `\n${this.messages.getMessage('componentMappingNotFound', ['OmniScript', fullOmniScriptName])}`
+      );
       omniscriptRef.type = this.cleanName(originalType);
       omniscriptRef.subtype = this.cleanName(originalSubtype);
     }
@@ -1006,7 +1042,9 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         if (this.nameRegistry.hasFlexCardMapping(originalCardName)) {
           component.property.cardName = this.nameRegistry.getFlexCardCleanedName(originalCardName);
         } else {
-          Logger.logVerbose(this.messages.getMessage('componentMappingNotFound', ['FlexCard', originalCardName]));
+          Logger.logVerbose(
+            `\n${this.messages.getMessage('componentMappingNotFound', ['FlexCard', originalCardName])}`
+          );
           component.property.cardName = this.cleanName(originalCardName);
         }
       }
@@ -1041,7 +1079,9 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         }
       } else {
         // No registry mapping - use original fallback approach
-        Logger.logVerbose(this.messages.getMessage('componentMappingNotFound', ['OmniScript', fullOmniScriptName]));
+        Logger.logVerbose(
+          `\n${this.messages.getMessage('componentMappingNotFound', ['OmniScript', fullOmniScriptName])}`
+        );
         omniType.Name = parts.map((p) => this.cleanName(p)).join('/');
       }
     } else {
@@ -1082,5 +1122,180 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
   private getCardFields(): string[] {
     return Object.keys(CardMappings);
+  }
+
+  /**
+   * Check if a FlexCard has dependencies on Angular OmniScripts
+   */
+  private hasAngularOmniScriptDependencies(card: AnyJson): boolean {
+    try {
+      const definition = JSON.parse(card[this.namespacePrefix + 'Definition__c'] || '{}');
+      if (definition && definition.states) {
+        for (const state of definition.states) {
+          // Check direct OmniScript references in states
+          if (state.omniscripts && Array.isArray(state.omniscripts)) {
+            for (const os of state.omniscripts) {
+              if (os.type && os.subtype) {
+                const osRef = `${os.type}_${os.subtype}_${os.language || 'English'}`;
+                if (this.nameRegistry.isAngularOmniScript(osRef)) {
+                  return true;
+                }
+              }
+            }
+          }
+
+          // Check OmniScript references in component actions
+          if (state.components) {
+            for (const componentKey in state.components) {
+              if (state.components.hasOwnProperty(componentKey)) {
+                const component = state.components[componentKey];
+                if (this.componentHasAngularOmniScriptDependency(component)) {
+                  return true;
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+      Logger.error(`Error checking Angular dependencies for card ${card['Name']}: ${err.message}`);
+    }
+
+    return false;
+  }
+
+  /**
+   * Recursively check if a component has Angular OmniScript dependencies
+   */
+  private componentHasAngularOmniScriptDependency(component: any): boolean {
+    // Pattern 1: Handle action elements with actionList (like migration logic)
+    if (component.element === 'action' && component.property && component.property.actionList) {
+      for (const action of component.property.actionList) {
+        if (action.stateAction) {
+          // Case 1: Direct OmniScript reference with type check
+          if (action.stateAction.type === Constants.OmniScriptComponentName && action.stateAction.omniType) {
+            if (this.checkOmniTypeForAngular(action.stateAction.omniType)) {
+              return true;
+            }
+          }
+          // Case 1b: Direct OmniScript reference without type check (for test compatibility)
+          else if (action.stateAction.omniType && !action.stateAction.type) {
+            if (this.checkOmniTypeForAngular(action.stateAction.omniType)) {
+              return true;
+            }
+          }
+          // Case 2: Flyout OmniScript reference
+          else if (
+            action.stateAction.type === 'Flyout' &&
+            action.stateAction.flyoutType === Constants.OmniScriptPluralName &&
+            action.stateAction.osName
+          ) {
+            if (this.checkOsNameForAngular(action.stateAction.osName)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+
+    // Pattern 2: Handle standard component actions (like migration logic)
+    if (component.actions && Array.isArray(component.actions)) {
+      for (const action of component.actions) {
+        if (action.stateAction && action.stateAction.omniType) {
+          if (this.checkOmniTypeForAngular(action.stateAction.omniType)) {
+            return true;
+          }
+        }
+      }
+    }
+
+    // Pattern 3: Handle direct stateAction on component property (like migration logic)
+    if (component.property && component.property.stateAction) {
+      if (component.property.stateAction.omniType) {
+        if (this.checkOmniTypeForAngular(component.property.stateAction.omniType)) {
+          return true;
+        }
+      }
+      if (
+        component.property.stateAction.type === 'Flyout' &&
+        component.property.stateAction.flyoutType === 'OmniScripts' &&
+        component.property.stateAction.osName
+      ) {
+        if (this.checkOsNameForAngular(component.property.stateAction.osName)) {
+          return true;
+        }
+      }
+    }
+
+    // Pattern 4: Handle omni-flyout elements (for test compatibility)
+    if (component.element === 'omni-flyout' && component.property && component.property.flyoutOmniScript) {
+      if (component.property.flyoutOmniScript.osName) {
+        if (this.checkOsNameForAngular(component.property.flyoutOmniScript.osName)) {
+          return true;
+        }
+      }
+    }
+
+    // Recursively check child components
+    if (component.children && Array.isArray(component.children)) {
+      for (const child of component.children) {
+        if (this.componentHasAngularOmniScriptDependency(child)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if an omniType references an Angular OmniScript
+   * Handles both string format and object with Name property
+   */
+  private checkOmniTypeForAngular(omniType: any): boolean {
+    if (!omniType) {
+      return false;
+    }
+
+    let omniTypeName: string;
+
+    // Handle both string omniType and object with Name property
+    if (typeof omniType === 'string') {
+      omniTypeName = omniType;
+    } else if (omniType.Name && typeof omniType.Name === 'string') {
+      omniTypeName = omniType.Name;
+    } else {
+      return false;
+    }
+
+    const parts = omniTypeName.split('/');
+
+    if (parts.length >= 3) {
+      // Construct full OmniScript name: Type_SubType_Language
+      const fullOmniScriptName = `${parts[0]}_${parts[1]}_${parts[2]}`;
+      return this.nameRegistry.isAngularOmniScript(fullOmniScriptName);
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if an osName string references an Angular OmniScript
+   * Handles Type/SubType/Language format in string
+   */
+  private checkOsNameForAngular(osName: string): boolean {
+    if (!osName || typeof osName !== 'string') {
+      return false;
+    }
+
+    const parts = osName.split('/');
+
+    if (parts.length >= 3) {
+      // Construct full OmniScript name: Type_SubType_Language
+      const fullOmniScriptName = `${parts[0]}_${parts[1]}_${parts[2]}`;
+      return this.nameRegistry.isAngularOmniScript(fullOmniScriptName);
+    }
+
+    return false;
   }
 }

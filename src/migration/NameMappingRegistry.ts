@@ -38,6 +38,9 @@ export class NameMappingRegistry {
   private integrationProcedureMappings: Map<string, string> = new Map(); // original -> cleaned
   private flexCardMappings: Map<string, string> = new Map(); // original -> cleaned
 
+  // Track Angular OmniScripts that should be skipped (Type_SubType_Language format)
+  private angularOmniScriptRefs: Set<string> = new Set();
+
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   private constructor() {}
 
@@ -235,6 +238,28 @@ export class NameMappingRegistry {
     this.omniScriptMappings.clear();
     this.integrationProcedureMappings.clear();
     this.flexCardMappings.clear();
+    this.angularOmniScriptRefs.clear();
+  }
+
+  /**
+   * Register an Angular OmniScript that should be skipped during migration
+   */
+  public registerAngularOmniScript(omniScriptRef: string): void {
+    this.angularOmniScriptRefs.add(omniScriptRef);
+  }
+
+  /**
+   * Check if an OmniScript reference is Angular (should be skipped)
+   */
+  public isAngularOmniScript(omniScriptRef: string): boolean {
+    return this.angularOmniScriptRefs.has(omniScriptRef);
+  }
+
+  /**
+   * Get all Angular OmniScript references
+   */
+  public getAngularOmniScriptRefs(): Set<string> {
+    return new Set(this.angularOmniScriptRefs);
   }
 
   /**
@@ -245,7 +270,9 @@ export class NameMappingRegistry {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     dataMappers: any[],
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    omniScripts: any[],
+    lwcOmniScripts: any[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    angularOmniScripts: any[],
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     integrationProcedures: any[],
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -265,7 +292,7 @@ export class NameMappingRegistry {
     }
 
     // Register OmniScript mappings
-    for (const os of omniScripts) {
+    for (const os of lwcOmniScripts) {
       // Extract namespace from field names (e.g., vlocity_ins__Type__c -> vlocity_ins)
       const fieldNames = Object.keys(os);
       const typeField = fieldNames.find((field) => field.endsWith('__Type__c')) || 'Type__c';
@@ -291,6 +318,26 @@ export class NameMappingRegistry {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         recordId: os.Id,
       });
+    }
+
+    // Register Angular OmniScript references (to be skipped during migration)
+    for (const angularOs of angularOmniScripts) {
+      // Extract namespace from field names (e.g., vlocity_ins__Type__c -> vlocity_ins)
+      const fieldNames = Object.keys(angularOs);
+      const typeField = fieldNames.find((field) => field.endsWith('__Type__c')) || 'Type__c';
+      const subTypeField = fieldNames.find((field) => field.endsWith('__SubType__c')) || 'SubType__c';
+      const languageField = fieldNames.find((field) => field.endsWith('__Language__c')) || 'Language__c';
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      const type = angularOs[typeField];
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      const subType = angularOs[subTypeField];
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      const language = angularOs[languageField] || 'English';
+
+      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+      const angularRef = `${type}_${subType}_${language}`;
+      this.registerAngularOmniScript(angularRef);
     }
 
     // Register Integration Procedure mappings

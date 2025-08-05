@@ -78,7 +78,7 @@ describe('NameMappingRegistry', () => {
         { Id: 'dr2', Name: 'Account_Information' },
       ];
 
-      registry.preProcessComponents(dataMappers, [], [], []);
+      registry.preProcessComponents(dataMappers, [], [], [], []);
 
       expect(registry.hasDataMapperMapping('Customer-Data Loader')).to.be.true;
       expect(registry.getDataMapperCleanedName('Customer-Data Loader')).to.equal('CustomerDataLoader');
@@ -96,7 +96,7 @@ describe('NameMappingRegistry', () => {
         },
       ];
 
-      registry.preProcessComponents([], omniScripts, [], []);
+      registry.preProcessComponents([], omniScripts, [], [], []);
 
       expect(registry.hasOmniScriptMapping('Customer-Info_Account Details_English')).to.be.true;
     });
@@ -113,7 +113,7 @@ describe('NameMappingRegistry', () => {
         },
       ];
 
-      registry.preProcessComponents([], [], integrationProcedures, []);
+      registry.preProcessComponents([], [], [], integrationProcedures, []);
 
       expect(registry.hasIntegrationProcedureMapping('API-Gateway_Customer Data')).to.be.true;
       expect(registry.getIntegrationProcedureCleanedName('API-Gateway_Customer Data')).to.equal(

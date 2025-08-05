@@ -132,7 +132,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     DebugTimer.getInstance().start();
 
     // Handle related objects processing
-    const relatedObjectsResult = await this.processRelatedObjects(relatedObjects, conn, namespace);
+    const relatedObjectsResult = await this.processRelatedObjects(relatedObjects, conn);
     const { projectPath, objectsToProcess, targetApexNamespace, isExperienceBundleMetadataAPIProgramaticallyEnabled } =
       relatedObjectsResult;
 
@@ -227,8 +227,7 @@ export default class Migrate extends OmniStudioBaseCommand {
 
   private async processRelatedObjects(
     relatedObjects: string,
-    conn: Connection,
-    namespace: string
+    conn: Connection
   ): Promise<{
     projectPath: string;
     objectsToProcess: string[];
@@ -390,8 +389,19 @@ export default class Migrate extends OmniStudioBaseCommand {
       // Correct order: DataMapper -> OmniScript/IP -> FlexCard -> GlobalAutoNumber
       migrationObjects = [
         new DataRaptorMigrationTool(namespace, conn, this.logger, messages, this.ux),
+        // Integration Procedure
         new OmniScriptMigrationTool(
-          OmniScriptExportType.All,
+          OmniScriptExportType.IP,
+          namespace,
+          conn,
+          this.logger,
+          messages,
+          this.ux,
+          allVersions
+        ),
+        // OmniScript
+        new OmniScriptMigrationTool(
+          OmniScriptExportType.OS,
           namespace,
           conn,
           this.logger,
@@ -456,23 +466,30 @@ export default class Migrate extends OmniStudioBaseCommand {
       const nameRegistry = NameMappingRegistry.getInstance();
       // Query all components that will be migrated
       const dataMappers = await this.queryDataMappers(conn, namespace);
-      const omniScripts = await this.queryOmniScripts(conn, namespace, false); // OmniScripts only
+      const allOmniScripts = await this.queryOmniScripts(conn, namespace, false); // All OmniScripts (LWC + Angular)
       const integrationProcedures = await this.queryOmniScripts(conn, namespace, true); // Integration Procedures only
       const flexCards = await this.queryFlexCards(conn, namespace);
+
+      // Separate OmniScripts into LWC and Angular types
+      const { lwc: lwcOmniScripts, angular: angularOmniScripts } = this.separateOmniScriptsByType(
+        allOmniScripts,
+        namespace
+      );
 
       // Filter based on migrateOnly flag if specified
       const filteredData = this.filterComponentsByMigrateOnly(
         migrateOnly,
         dataMappers,
-        omniScripts,
+        lwcOmniScripts, // Only LWC OmniScripts for migration
         integrationProcedures,
         flexCards
       );
 
-      // Register all name mappings
+      // Register all name mappings (including Angular OmniScripts for tracking)
       nameRegistry.preProcessComponents(
         filteredData.dataMappers,
-        filteredData.omniScripts,
+        filteredData.omniScripts, // LWC OmniScripts
+        angularOmniScripts, // Angular OmniScripts (for tracking)
         filteredData.integrationProcedures,
         filteredData.flexCards
       );
@@ -496,15 +513,35 @@ export default class Migrate extends OmniStudioBaseCommand {
   }
 
   /**
-   * Query OmniScripts/Integration Procedures from the org
+   * Query OmniScripts from the org (both LWC and Angular)
    */
   private async queryOmniScripts(conn: any, namespace: string, isProcedure: boolean): Promise<any[]> {
     const procedureFilter = isProcedure ? 'true' : 'false';
-    const query = `SELECT Id, Name, ${namespace}__Type__c, ${namespace}__SubType__c, ${namespace}__Language__c, ${namespace}__IsProcedure__c FROM ${namespace}__OmniScript__c WHERE ${namespace}__IsProcedure__c = ${procedureFilter} and ${namespace}__IsActive__c = true`;
+    // Query all OmniScripts (both LWC and Angular)
+    const query = `SELECT Id, Name, ${namespace}__Type__c, ${namespace}__SubType__c, ${namespace}__Language__c, ${namespace}__IsProcedure__c, ${namespace}__IsLwcEnabled__c FROM ${namespace}__OmniScript__c WHERE ${namespace}__IsProcedure__c = ${procedureFilter} and ${namespace}__IsActive__c = true`;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const result = await conn.query(query);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return result.records || [];
+  }
+
+  /**
+   * Separate OmniScripts into LWC and Angular based on IsLwcEnabled__c field
+   */
+  private separateOmniScriptsByType(omniscripts: any[], namespace: string): { lwc: any[]; angular: any[] } {
+    const lwc: any[] = [];
+    const angular: any[] = [];
+
+    for (const omniscript of omniscripts) {
+      const isLwcEnabled = omniscript[`${namespace}__IsLwcEnabled__c`];
+      if (isLwcEnabled) {
+        lwc.push(omniscript);
+      } else {
+        angular.push(omniscript);
+      }
+    }
+
+    return { lwc, angular };
   }
 
   /**

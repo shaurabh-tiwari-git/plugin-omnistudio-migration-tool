@@ -70,7 +70,7 @@
   "formulaSyntaxError": "There was some problem while updating the formula syntax, please check the all the formula's syntax once : %s",
   "foundDataRaptorsToMigrate": "Found %s DataRaptors to migrate",
   "foundFlexCardsToMigrate": "Found %s FlexCards to migrate",
-  "foundOmniScriptsToMigrate": "Found %s OmniScripts and Integration Procedures to migrate",
+  "foundOmniScriptsToMigrate": "Found %s %s to migrate",
   "foundGlobalAutoNumbersToMigrate": "Found %s GlobalAutoNumbers to migrate",
   "allVersionsInfo": "allVersions : %s",
   "migrationInitialization": "Migration Initialization: Using namespace: %s",
@@ -203,5 +203,9 @@
   "errorComponentMapping": "Error during component pre-processing: %s",
   "startingComponentPreProcessing": "Pre-processing components for name mapping",
   "completeComponentMappingMessage": "Registered name mappings for %s components",
-  "componentMappingNotFound": "No registry mapping found for %s component: %s, using fallback cleaning"
+  "componentMappingNotFound": "No registry mapping found for %s component: %s, using fallback cleaning",
+  "flexCardWithAngularOmniScriptWarning": "FlexCard has dependencies on Angular OmniScript(s) which are not migrated. Please convert OmniScript(s) to LWC before migrating this FlexCard.",
+  "angularOmniScriptDependencyWarning": "Element '%s' references Angular OmniScript '%s' which will not be migrated. Consider converting the referenced OmniScript to LWC",
+  "skipFlexcardAngularOmniScriptDependencyWarning": "Skipping FlexCard %s due to Angular OmniScript dependencies",
+  "flexCardMigrationProcessingMessage": "Processing %s FlexCards for migration (%s skipped due to Angular dependencies)"
 }

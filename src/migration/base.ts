@@ -8,7 +8,7 @@ import { Logger } from '../utils/logger';
 import { TransformData, UploadRecordResult } from './interfaces';
 import { NameMappingRegistry } from './NameMappingRegistry';
 
-export type ComponentType = 'Data Mapper' | 'Flexcard' | 'Omniscript and Integration Procedure' | 'GlobalAutoNumber';
+export type ComponentType = 'Data Mapper' | 'Flexcard' | 'Omniscripts' | 'Integration Procedures' | 'GlobalAutoNumber';
 export type RelatedObjectType = 'Flexipage' | 'ExperienceSites' | 'Lightning Web Components' | 'Apex Classes';
 
 /**
@@ -19,7 +19,13 @@ export type RelatedObjectType = 'Flexipage' | 'ExperienceSites' | 'Lightning Web
  * @returns A configured cliProgress.SingleBar instance
  */
 export const createProgressBar = (action: string, type: ComponentType | RelatedObjectType): cliProgress.SingleBar => {
-  const space = type === 'Omniscript and Integration Procedure' || type === 'ExperienceSites' ? '' : '\t\t\t\t';
+  // Normalize type to string for comparison
+  const typeStr = String(type);
+
+  // Determine if space should be empty or tabs
+  const noSpaceTypes = ['Omniscript', 'Integration Procedure', 'ExperienceSites'];
+  const space = noSpaceTypes.includes(typeStr) ? '' : '\t\t\t\t';
+
   return new cliProgress.SingleBar({
     format: `${action} ${type} | ${space} {bar} | {percentage}% || {value}/{total} Tasks`,
     barCompleteChar: '\u2588',
