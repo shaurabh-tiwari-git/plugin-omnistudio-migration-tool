@@ -49,7 +49,7 @@
   "foundOmniScriptsToAssess": "Found %s %s to assess",
   "foundGlobalAutoNumbersToAssess": "Found %s GlobalAutoNumbers to assess",
   "startingDataRaptorAssessment": "Starting DataRaptor assessment",
-  "startingOmniScriptAssessment": "Starting OmniScript assessment",
+  "startingOmniScriptAssessment": "Starting %s assessment",
   "startingGlobalAutoNumberAssessment": "Starting GlobalAutoNumber assessment",
   "allVersionsInfo": "allVersions : %s",
   "assessmentInitialization": "Assessment Initialization: Using namespace: %s",
