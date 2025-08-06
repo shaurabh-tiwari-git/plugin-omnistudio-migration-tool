@@ -115,5 +115,5 @@
   "labelStatusComplete": "Complete",
   "migrationConsentNotGiven": "Couldn't confirm whether assessment errors are resolved",
   "migrationConsentMessage": "Ensure that all items in the assessment report are marked as Green before proceeding with the migration. Do you want to proceed?",
-  "invalidTypeMigrateErrorMessage": "Cannot migrate Omnistudio components within %s"
+  "invalidTypeMigrateErrorMessage": "We couldn't migrate your Omnistudio components in the %s namespace. Select the correct namespace and try again"
 }
