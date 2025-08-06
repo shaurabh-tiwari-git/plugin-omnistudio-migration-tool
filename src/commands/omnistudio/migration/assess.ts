@@ -269,16 +269,29 @@ export default class Assess extends OmniStudioBaseCommand {
     const exportComponentType = exportType === OmniScriptExportType.IP ? 'Integration Procedures' : 'Omniscripts';
     Logger.logVerbose(messages.getMessage('omniScriptAssessment', [exportComponentType]));
     const osMigrator = new OmniScriptMigrationTool(exportType, namespace, conn, Logger, messages, this.ux, allVersions);
-    assesmentInfo.omniAssessmentInfo = await osMigrator.assess(
+    const newOmniAssessmentInfo = await osMigrator.assess(
       assesmentInfo.dataRaptorAssessmentInfos,
       assesmentInfo.flexCardAssessmentInfos
     );
 
+    // Initialize omniAssessmentInfo if it doesn't exist
+    if (!assesmentInfo.omniAssessmentInfo) {
+      assesmentInfo.omniAssessmentInfo = {
+        osAssessmentInfos: [],
+        ipAssessmentInfos: [],
+      };
+    }
+
+    // Merge results instead of overwriting
     if (exportType === OmniScriptExportType.OS) {
+      // For OmniScript assessment, update osAssessmentInfos
+      assesmentInfo.omniAssessmentInfo.osAssessmentInfos = newOmniAssessmentInfo.osAssessmentInfos;
       Logger.logVerbose(
         messages.getMessage('assessedOmniScriptsCount', [assesmentInfo.omniAssessmentInfo.osAssessmentInfos.length])
       );
     } else {
+      // For Integration Procedure assessment, update ipAssessmentInfos
+      assesmentInfo.omniAssessmentInfo.ipAssessmentInfos = newOmniAssessmentInfo.ipAssessmentInfos;
       Logger.logVerbose(
         messages.getMessage('assessedIntegrationProceduresCount', [
           assesmentInfo.omniAssessmentInfo.ipAssessmentInfos.length,
