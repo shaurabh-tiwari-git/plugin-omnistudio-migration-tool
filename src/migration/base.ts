@@ -7,7 +7,7 @@ import { Stringutil } from '../utils/StringValue/stringutil';
 import { Logger } from '../utils/logger';
 import { TransformData, UploadRecordResult } from './interfaces';
 
-export type ComponentType = 'Data Mapper' | 'Flexcard' | 'Omniscript and Integration Procedure';
+export type ComponentType = 'DataMappers' | 'Flexcards' | 'Omniscripts' | 'Integration Procedures';
 
 /**
  * Creates a progress bar for migration/assessment operations
@@ -17,10 +17,15 @@ export type ComponentType = 'Data Mapper' | 'Flexcard' | 'Omniscript and Integra
  * @returns A configured cliProgress.SingleBar instance
  */
 export const createProgressBar = (action: string, componentType: ComponentType): cliProgress.SingleBar => {
+  // Normalize type to string for comparison
+  const typeStr = String(componentType);
+
+  // Determine if space should be empty or tabs
+  const noSpaceTypes = ['Omniscript', 'Integration Procedure', 'ExperienceSites'];
+  const space = noSpaceTypes.includes(typeStr) ? '' : '\t\t\t\t';
+
   return new cliProgress.SingleBar({
-    format: `${action} ${componentType} |${
-      componentType === 'Omniscript and Integration Procedure' ? '' : '\t\t\t\t'
-    } {bar} | {percentage}% || {value}/{total} Tasks`,
+    format: `${action} ${componentType} | ${space} {bar} | {percentage}% || {value}/{total} Tasks`,
     barCompleteChar: '\u2588',
     barIncompleteChar: '\u2591',
     hideCursor: true,

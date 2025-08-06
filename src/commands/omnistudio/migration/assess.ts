@@ -168,7 +168,8 @@ export default class Assess extends OmniStudioBaseCommand {
       // If no specific component is specified, assess all components
       await this.assessDataRaptors(assesmentInfo, namespace, conn);
       await this.assessFlexCards(assesmentInfo, namespace, conn, allVersions);
-      await this.assessOmniScripts(assesmentInfo, namespace, conn, allVersions, OmniScriptExportType.All);
+      await this.assessOmniScripts(assesmentInfo, namespace, conn, allVersions, OmniScriptExportType.OS);
+      await this.assessOmniScripts(assesmentInfo, namespace, conn, allVersions, OmniScriptExportType.IP);
       return;
     }
 
@@ -219,20 +220,38 @@ export default class Assess extends OmniStudioBaseCommand {
     allVersions: boolean,
     exportType: OmniScriptExportType
   ): Promise<void> {
-    Logger.logVerbose(messages.getMessage('omniScriptAssessment'));
+    const exportComponentType = exportType === OmniScriptExportType.IP ? 'Integration Procedures' : 'Omniscripts';
+    Logger.logVerbose(messages.getMessage('omniScriptAssessment', [exportComponentType]));
     const osMigrator = new OmniScriptMigrationTool(exportType, namespace, conn, Logger, messages, this.ux, allVersions);
-    assesmentInfo.omniAssessmentInfo = await osMigrator.assess(
+    const newOmniAssessmentInfo = await osMigrator.assess(
       assesmentInfo.dataRaptorAssessmentInfos,
       assesmentInfo.flexCardAssessmentInfos
     );
-    Logger.logVerbose(
-      messages.getMessage('assessedOmniScriptsCount', [assesmentInfo.omniAssessmentInfo.osAssessmentInfos.length])
-    );
-    Logger.logVerbose(
-      messages.getMessage('assessedIntegrationProceduresCount', [
-        assesmentInfo.omniAssessmentInfo.ipAssessmentInfos.length,
-      ])
-    );
-    Logger.log(messages.getMessage('omniScriptAssessmentCompleted'));
+
+    // Initialize omniAssessmentInfo if it doesn't exist
+    if (!assesmentInfo.omniAssessmentInfo) {
+      assesmentInfo.omniAssessmentInfo = {
+        osAssessmentInfos: [],
+        ipAssessmentInfos: [],
+      };
+    }
+
+    // Merge results instead of overwriting
+    if (exportType === OmniScriptExportType.OS) {
+      // For OmniScript assessment, update osAssessmentInfos
+      assesmentInfo.omniAssessmentInfo.osAssessmentInfos = newOmniAssessmentInfo.osAssessmentInfos;
+      Logger.logVerbose(
+        messages.getMessage('assessedOmniScriptsCount', [assesmentInfo.omniAssessmentInfo.osAssessmentInfos.length])
+      );
+    } else {
+      // For Integration Procedure assessment, update ipAssessmentInfos
+      assesmentInfo.omniAssessmentInfo.ipAssessmentInfos = newOmniAssessmentInfo.ipAssessmentInfos;
+      Logger.logVerbose(
+        messages.getMessage('assessedIntegrationProceduresCount', [
+          assesmentInfo.omniAssessmentInfo.ipAssessmentInfos.length,
+        ])
+      );
+    }
+    Logger.log(messages.getMessage('omniScriptAssessmentCompleted', [exportComponentType]));
   }
 }
