@@ -183,5 +183,6 @@
   "missingInfo": "Info is missing",
   "errorCheckingGlobalAutoNumber": "We couldn’t check whether the Global Auto Number setting is enabled: %s. Try again later.",
   "errorMigrationMessage": "Error migrating object: %s",
-  "nameMappingUndefined": "Name Mapping is undefined"
+  "nameMappingUndefined": "Name Mapping is undefined",
+  "experienceSiteException": "Exception occurred while processing experience sites"
 }

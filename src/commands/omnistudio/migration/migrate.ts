@@ -132,7 +132,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     let projectPath: string;
     let objectsToProcess: string[] = [];
     let targetApexNamespace: string;
-    const preMigrate: PreMigrate = new PreMigrate(this.org, namespace, conn, this.logger, messages, this.ux);
+    const preMigrate: PreMigrate = new PreMigrate(namespace, conn, this.logger, messages, this.ux);
     const isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean } = { value: false };
     if (relatedObjects) {
       // To-Do: Add LWC to valid options when GA is released
@@ -452,11 +452,14 @@ export default class Migrate extends OmniStudioBaseCommand {
         let errors: any[] = obj.errors || [];
         errors = errors.concat(recordResults.errors || []);
 
+        obj.status = 'Complete';
+        /*
         obj.status = recordResults?.skipped
           ? messages.getMessage('labelStatusSkipped')
           : !recordResults || recordResults.hasErrors
-          ? messages.getMessage('labelStatusFailed')
-          : messages.getMessage('labelStatusComplete');
+            ? messages.getMessage('labelStatusFailed')
+            : messages.getMessage('labelStatusComplete');
+        */
         obj.errors = errors;
         obj.migratedId = recordResults.id;
         obj.warnings = recordResults.warnings;

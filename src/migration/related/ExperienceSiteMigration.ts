@@ -97,6 +97,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
             Logger.logVerbose(this.messages.getMessage('fileNotHavingWrapper'));
           }
         } catch (err) {
+          this.populateExceptionInfo(file, experienceSitesAssessmentInfo);
           Logger.error(this.messages.getMessage('errorProcessingExperienceSite', [file.name]));
           Logger.error(JSON.stringify(err));
         }
@@ -166,6 +167,25 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
 
     experienceSiteAssessmentInfo.diff = JSON.stringify(difference);
     return experienceSiteAssessmentInfo;
+  }
+
+  private populateExceptionInfo(file: File, experienceSiteAssessmentInfos: ExperienceSiteAssessmentInfo[]): void {
+    try {
+      const experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo = {
+        name: file.name,
+        warnings: [],
+        errors: ['Unknown error occurred'],
+        infos: [],
+        path: file.location,
+        diff: JSON.stringify([]),
+        hasOmnistudioContent: false,
+        status: 'Errors',
+      };
+
+      experienceSiteAssessmentInfos.push(experienceSiteAssessmentInfo);
+    } catch {
+      Logger.error(this.messages.getMessage('experienceSiteException'));
+    }
   }
 
   private processRegion(
@@ -290,7 +310,6 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     Logger.logVerbose(this.messages.getMessage('processingOmniscriptComponent', [JSON.stringify(component)]));
     // Use storage to find the updated properties
     const targetDataFromStorage: OmniScriptStorage = storage.osStorage.get(targetName.toLowerCase());
-    StorageUtil.printAssessmentStorage();
     Logger.logVerbose(this.messages.getMessage('targetData', [JSON.stringify(targetDataFromStorage)]));
 
     if (this.shouldAddWarning(targetDataFromStorage)) {
@@ -308,7 +327,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       keysToDelete.forEach((key) => delete currentAttribute[key]);
 
       currentAttribute['direction'] = 'ltr';
-      currentAttribute['display'] = 'Display button to open Omniscript';
+      currentAttribute['display'] = 'Display OmniScript on page';
       currentAttribute['inlineVariant'] = 'brand';
       currentAttribute['language'] =
         targetDataFromStorage.language === undefined ? 'English' : targetDataFromStorage.language;

@@ -1,6 +1,6 @@
 /* eslint-disable */
 
-import { Connection, Messages, Org } from '@salesforce/core';
+import { Connection, Messages } from '@salesforce/core';
 import { UX } from '@salesforce/command';
 import { Logger } from '../utils/logger';
 import { Constants } from '../utils/constants/stringContants';
@@ -9,21 +9,9 @@ import { BaseMigrationTool } from './base';
 import { askStringWithTimeout } from '../utils/promptUtil';
 
 export class PreMigrate extends BaseMigrationTool {
-  private readonly org: Org;
-
   // Source Custom Object Names
-  constructor(org: Org, namespace: string, connection: Connection, logger: Logger, messages: Messages, ux: UX) {
+  constructor(namespace: string, connection: Connection, logger: Logger, messages: Messages, ux: UX) {
     super(namespace, connection, logger, messages, ux);
-    this.org = org;
-  }
-
-  // Just to disable org is unused error coming
-  public printOrgDetails(): void {
-    try {
-      Logger.log(JSON.stringify(this.org));
-    } catch (e) {
-      Logger.log(e);
-    }
   }
 
   public async handleExperienceSitePrerequisites(

@@ -537,6 +537,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
   private updateStorageForOmniscriptAssessment(osAssessmentInfo: OSAssessmentInfo[]): void {
     if (osAssessmentInfo === undefined || osAssessmentInfo === null) {
+      Logger.error(this.messages.getMessage('missingInfo'));
       return;
     }
 
@@ -579,7 +580,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           storage.osStorage.set(finalKey, value);
         }
       } catch (error) {
-        Logger.logVerbose(error);
+        Logger.error(error);
       }
     }
 
@@ -905,11 +906,16 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
             isDuplicate: false,
           };
 
-          if (newrecord.hasErrors) {
-            value.error = newrecord.errors;
+          // New record can be undefined
+          if (newrecord === undefined) {
             value.migrationSuccess = false;
           } else {
-            value.migrationSuccess = true;
+            if (newrecord.hasErrors) {
+              value.error = newrecord.errors;
+              value.migrationSuccess = false;
+            } else {
+              value.migrationSuccess = true;
+            }
           }
 
           let finalKey = `${oldrecord[this.namespacePrefix + 'Type__c']}${

@@ -636,7 +636,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           flexCardAssessmentInfo.nameMapping === undefined ||
           flexCardAssessmentInfo.nameMapping === null
         ) {
-          Logger.logVerbose(this.messages.getMessage('missingInfo'));
+          Logger.error(this.messages.getMessage('missingInfo'));
           return;
         }
 
@@ -689,13 +689,13 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
         if (newrecord === undefined) {
           value.error = ['Migration Failed'];
-        }
-
-        if (newrecord.hasErrors) {
-          value.error = newrecord.errors;
-          value.migrationSuccess = false;
         } else {
-          value.migrationSuccess = true;
+          if (newrecord.hasErrors) {
+            value.error = newrecord.errors;
+            value.migrationSuccess = false;
+          } else {
+            value.migrationSuccess = true;
+          }
         }
 
         let finalKey = `${oldrecord['Name']}`;

@@ -251,7 +251,7 @@ export class ResultsBuilder {
       },
       assessmentDate: new Date().toString(),
       total: result.length,
-      filterGroups: [createFilterGroupParam('Filter by Status', 'status', ['Complete', 'Error'])],
+      filterGroups: [createFilterGroupParam('Filter by Status', 'status', ['Can be Automated', 'Error'])],
       headerGroups: [
         {
           header: [
@@ -288,16 +288,7 @@ export class ResultsBuilder {
         data: [
           createRowDataParam('name', item.name, true, 1, 1, false),
           createRowDataParam('path', item.path, false, 1, 1, false),
-          createRowDataParam(
-            'status',
-            item.warnings ? 'Error' : 'Complete', // This is the value which the status key takes
-            false,
-            1,
-            1,
-            false,
-            undefined,
-            item.warnings ? 'Error' : 'Complete' // This is what gets displayed
-          ),
+          createRowDataParam('status', item.status, false, 1, 1, false, undefined, item.status),
           createRowDataParam(
             'diff',
             item.name + 'diff',
@@ -306,7 +297,7 @@ export class ResultsBuilder {
             1,
             false,
             undefined,
-            FileDiffUtil.getDiffHTML(item.diff, item.name)
+            FileDiffUtil.getDiffHTML(item.diff, this.rowId.toString())
           ),
           createRowDataParam(
             'errors',

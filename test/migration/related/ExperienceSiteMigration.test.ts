@@ -203,7 +203,11 @@ describe('ExperienceSiteMigration', () => {
       const result = experienceSiteMigration.processExperienceSites('/test/project', Migrate);
 
       // Assert
-      expect(result).to.be.an('array').that.is.empty;
+      expect(result).to.be.an('array').that.has.length(1);
+      expect(result[0].name).to.equal('error.json');
+      expect(result[0].status).to.equal('Errors');
+      expect(result[0].errors).to.include('Unknown error occurred');
+      expect(result[0].hasOmnistudioContent).to.be.false;
       expect((Logger.error as sinon.SinonStub).called).to.be.true;
     });
   });
@@ -269,7 +273,7 @@ describe('ExperienceSiteMigration', () => {
       expect(component.componentAttributes.subType).to.equal('TestSubtype');
       expect(component.componentAttributes.language).to.equal('English');
       expect(component.componentAttributes.direction).to.equal('ltr');
-      expect(component.componentAttributes.display).to.equal('Display button to open Omniscript');
+      expect(component.componentAttributes.display).to.equal('Display OmniScript on page');
       expect(component.componentAttributes.theme).to.equal('lightning'); // Preserved from original layout
     });
 
