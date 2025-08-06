@@ -259,7 +259,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
   ): void {
     Logger.logVerbose(this.messages.getMessage('processingFlexcardComponent', [JSON.stringify(component)]));
     const flexcardName = targetName.substring(2); // cfCardName -> CardName
-    const targetDataFromStorageFC: FlexcardStorage = storage.fcStorage.get(flexcardName);
+    const targetDataFromStorageFC: FlexcardStorage = storage.fcStorage.get(flexcardName.toLowerCase());
 
     Logger.logVerbose(this.messages.getMessage('targetData', [JSON.stringify(targetDataFromStorageFC)]));
 
@@ -269,6 +269,11 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       experienceSiteAssessmentInfo.warnings.push(warningMsg);
     } else {
       component.componentName = TARGET_COMPONENT_NAME_FC;
+
+      const keysToDelete = ['target', 'layout', 'params', 'standalone'];
+
+      keysToDelete.forEach((key) => delete currentAttribute[key]);
+
       currentAttribute['flexcardName'] = targetDataFromStorageFC.name;
       currentAttribute['objectApiName'] = '{!objectApiName}';
       currentAttribute['recordId'] = '{!recordId}';
