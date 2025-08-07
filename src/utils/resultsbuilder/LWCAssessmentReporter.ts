@@ -21,7 +21,7 @@ export class LWCAssessmentReporter {
   ): ReportParam {
     Logger.captureVerboseData('lwc data:', lwcAssessmentInfos);
     return {
-      title: 'LWC Migration Assessment',
+      title: 'LWC Assessment Report',
       heading: 'LWC',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
       assessmentDate: new Date().toString(),

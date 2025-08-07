@@ -553,7 +553,7 @@ export class ResultsBuilder {
               rowspan: 1,
             },
             {
-              name: 'Assessment Status',
+              name: 'Migration Status',
               colspan: 1,
               rowspan: 1,
             },
@@ -766,24 +766,19 @@ export class ResultsBuilder {
   }
 
   private static getDifferentStatusDataForLwc(data: LWCAssessmentInfo[]): SummaryItemDetailParam[] {
-    let canBeAutomated = 0;
-    let hasWarnings = 0;
-    let hasErrors = 0;
+    let completed = 0;
+    let failed = 0;
     data.forEach((item) => {
       if (!item.errors || item.errors.length === 0) {
-        canBeAutomated++;
+        completed++;
       } else {
-        hasErrors++;
-      }
-      if (item.warnings && item.warnings.length > 0) {
-        hasWarnings++;
+        failed++;
       }
     });
 
     return [
-      { name: 'Can be Automated', count: canBeAutomated, cssClass: 'text-success' },
-      { name: 'Has Warnings', count: hasWarnings, cssClass: 'text-warning' },
-      { name: 'Has Errors', count: hasErrors, cssClass: 'text-error' },
+      { name: 'Completed', count: completed, cssClass: 'text-success' },
+      { name: 'Failed', count: failed, cssClass: 'text-error' },
     ];
   }
 }
