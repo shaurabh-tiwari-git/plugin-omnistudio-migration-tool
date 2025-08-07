@@ -296,7 +296,7 @@ export default class Migrate extends OmniStudioBaseCommand {
         );
       } catch (ex: any) {
         if (ex instanceof InvalidEntityTypeError) {
-          Logger.error(`${messages.getMessage('invalidTypeMigrateErrorMessage', [namespace])}`);
+          Logger.error(messages.getMessage('invalidTypeMigrateErrorMessage', [namespace]));
           process.exit(1);
         }
         Logger.error('Error migrating object', ex);
