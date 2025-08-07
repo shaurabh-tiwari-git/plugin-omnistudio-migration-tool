@@ -169,7 +169,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     const allTruncateComplete = objectMigrationResults.length === 0;
 
     if (allTruncateComplete) {
-      objectMigrationResults = await this.migrateObjects(migrationObjects, debugTimer);
+      objectMigrationResults = await this.migrateObjects(migrationObjects, debugTimer, namespace);
     }
 
     const omnistudioRelatedObjectsMigration = new OmnistudioRelatedObjectMigrationFacade(
@@ -274,7 +274,11 @@ export default class Migrate extends OmniStudioBaseCommand {
     return objectMigrationResults;
   }
 
-  private async migrateObjects(migrationObjects: MigrationTool[], debugTimer: DebugTimer): Promise<MigratedObject[]> {
+  private async migrateObjects(
+    migrationObjects: MigrationTool[],
+    debugTimer: DebugTimer,
+    namespace: string
+  ): Promise<MigratedObject[]> {
     let objectMigrationResults: MigratedObject[] = [];
     for (const cls of migrationObjects.reverse()) {
       try {
@@ -292,7 +296,7 @@ export default class Migrate extends OmniStudioBaseCommand {
         );
       } catch (ex: any) {
         if (ex instanceof InvalidEntityTypeError) {
-          Logger.error(ex.message);
+          Logger.error(messages.getMessage('invalidTypeMigrateErrorMessage', [namespace]));
           process.exit(1);
         }
         Logger.error('Error migrating object', ex);
