@@ -9,7 +9,7 @@
  */
 import * as os from 'os';
 import { flags } from '@salesforce/command';
-import { Messages } from '@salesforce/core';
+import { Connection, Messages } from '@salesforce/core';
 import OmniStudioBaseCommand from '../../basecommand';
 import { DataRaptorMigrationTool } from '../../../migration/dataraptor';
 import { DebugTimer, MigratedObject, MigratedRecordInfo } from '../../../utils';
@@ -134,32 +134,19 @@ export default class Migrate extends OmniStudioBaseCommand {
     let targetApexNamespace: string;
     const preMigrate: PreMigrate = new PreMigrate(this.org, namespace, conn, this.logger, messages, this.ux);
     const isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean } = { value: false };
+
+    let autoDeploy = false;
     if (relatedObjects) {
-      // To-Do: Add LWC to valid options when GA is released
-      const validOptions = [Constants.Apex, Constants.ExpSites, Constants.FlexiPage];
-      objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
-      // Validate input
-      for (const obj of objectsToProcess) {
-        if (!validOptions.includes(obj)) {
-          Logger.error(messages.getMessage('invalidRelatedObjectsOption', [obj]));
-          process.exit(1);
-        }
-      }
-      // Check for general consent to make modifications with OMT
-      const generalConsent = await this.getGeneralConsent();
-      if (generalConsent) {
-        // Use ProjectPathUtil for APEX project folder selection (matches assess.ts logic)
-        projectPath = await ProjectPathUtil.getProjectPath(messages, true);
-        targetApexNamespace = await this.getTargetApexNamespace(objectsToProcess, targetApexNamespace);
-        await preMigrate.handleExperienceSitePrerequisites(
-          objectsToProcess,
-          conn,
-          isExperienceBundleMetadataAPIProgramaticallyEnabled
-        );
-        Logger.logVerbose(
-          'The objects to process after handleExpSitePrerequisite are ' + JSON.stringify(objectsToProcess)
-        );
-      } // TODO - What if general consent is no
+      const relatedObjectMigrationResult = await this.migrateRelatedObjects(
+        relatedObjects,
+        preMigrate,
+        conn,
+        isExperienceBundleMetadataAPIProgramaticallyEnabled
+      );
+      objectsToProcess = relatedObjectMigrationResult.objectsToProcess;
+      projectPath = relatedObjectMigrationResult.projectPath;
+      targetApexNamespace = relatedObjectMigrationResult.targetApexNamespace;
+      autoDeploy = relatedObjectMigrationResult.autoDeploy;
     }
 
     Logger.log(messages.getMessage('migrationInitialization', [String(namespace)]));
@@ -204,8 +191,16 @@ export default class Migrate extends OmniStudioBaseCommand {
       this.logger,
       messages,
       this.ux,
-      objectsToProcess
+      objectsToProcess,
+      autoDeploy,
+      projectPath
     );
+
+    try {
+      postMigrate.deploy();
+    } catch (error) {
+      Logger.error(messages.getMessage('errorDeployingComponents'), error);
+    }
 
     if (!migrateOnly) {
       await postMigrate.setDesignersToUseStandardDataModel(namespace, actionItems);
@@ -223,7 +218,8 @@ export default class Migrate extends OmniStudioBaseCommand {
       relatedObjectMigrationResult.apexAssessmentInfos,
       relatedObjectMigrationResult.lwcAssessmentInfos,
       relatedObjectMigrationResult.experienceSiteAssessmentInfos,
-      relatedObjectMigrationResult.flexipageAssessmentInfos
+      relatedObjectMigrationResult.flexipageAssessmentInfos,
+      this.org.getConnection().version
     );
 
     await ResultsBuilder.generateReport(
@@ -237,7 +233,73 @@ export default class Migrate extends OmniStudioBaseCommand {
     );
 
     // Return results needed for --json flag
-    return { objectMigrationResults };
+    return { objectMigrationResults: [] };
+  }
+
+  private async migrateRelatedObjects(
+    relatedObjects: string,
+    preMigrate: PreMigrate,
+    conn: Connection,
+    isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean }
+  ): Promise<{ objectsToProcess: string[]; projectPath: string; targetApexNamespace: string; autoDeploy: boolean }> {
+    const validOptions = [Constants.Apex, Constants.ExpSites, Constants.FlexiPage];
+    const objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
+    // Validate input
+    for (const obj of objectsToProcess) {
+      if (!validOptions.includes(obj)) {
+        Logger.error(messages.getMessage('invalidRelatedObjectsOption', [obj]));
+        process.exit(1);
+      }
+    }
+
+    const autoDeploy = await this.getAutoDeployConsent();
+    let projectPath: string;
+    let targetApexNamespace: string;
+    // Check for general consent to make modifications with OMT
+    const generalConsent = await this.getGeneralConsent();
+    if (generalConsent) {
+      // Use ProjectPathUtil for APEX project folder selection (matches assess.ts logic)
+      projectPath = await ProjectPathUtil.getProjectPath(messages, true);
+      targetApexNamespace = await this.getTargetApexNamespace(objectsToProcess, targetApexNamespace);
+      await preMigrate.handleExperienceSitePrerequisites(
+        objectsToProcess,
+        conn,
+        isExperienceBundleMetadataAPIProgramaticallyEnabled
+      );
+      Logger.logVerbose(
+        'The objects to process after handleExpSitePrerequisite are ' + JSON.stringify(objectsToProcess)
+      );
+    }
+
+    return { objectsToProcess, projectPath, targetApexNamespace, autoDeploy };
+  }
+
+  private async getAutoDeployConsent(): Promise<boolean> {
+    const askWithTimeOut = PromptUtil.askWithTimeOut(messages);
+    let validResponse = false;
+    let consent = false;
+
+    while (!validResponse) {
+      try {
+        const resp = await askWithTimeOut(Logger.prompt.bind(Logger), messages.getMessage('autoDeployConsentMessage'));
+        const response = typeof resp === 'string' ? resp.trim().toLowerCase() : '';
+
+        if (response === YES_SHORT || response === YES_LONG) {
+          consent = true;
+          validResponse = true;
+        } else if (response === NO_SHORT || response === NO_LONG) {
+          consent = false;
+          validResponse = true;
+        } else {
+          Logger.error(messages.getMessage('invalidYesNoResponse'));
+        }
+      } catch (err) {
+        Logger.error(messages.getMessage('requestTimedOut'));
+        process.exit(1);
+      }
+    }
+
+    return consent;
   }
 
   private async getMigrationConsent(): Promise<boolean> {

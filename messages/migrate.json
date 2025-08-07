@@ -198,5 +198,14 @@
   "incompleteMigrationDetected": "We couldn’t complete the migration process",
   "errorCheckingGlobalAutoNumber": "We couldn’t check whether the Global Auto Number setting is enabled: %s. Try again later.",
   "errorMigrationMessage": "Error migrating object: %s",
-  "nameMappingUndefined": "Name Mapping is undefined"
+  "nameMappingUndefined": "Name Mapping is undefined",
+  "autoDeployConsentMessage": "Do you want to auto deploy the migrated components? [y/n]",
+  "errorDeployingComponents": "Error deploying components post migration",
+  "installingDependency": "Installing node dependency %s",
+  "dependencyInstalled": "Node dependency %s installed",
+  "deployingFromManifest": "Deploying from metadata packages",
+  "manifestDeployed": "Metadata packages are deployed",
+  "installingRequiredDependencies": "Installing required node dependencies",
+  "creatingNPMConfigFile": "Creating npm config file",
+  "npmConfigFileCreated": "Npm config file created"
 }

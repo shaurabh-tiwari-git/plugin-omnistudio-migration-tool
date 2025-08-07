@@ -13,7 +13,8 @@ export class generatePackageXml {
     apexAssementInfos: ApexAssessmentInfo[],
     lwcAssessmentInfos: LWCAssessmentInfo[],
     experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo[],
-    flexipageAssessmentInfos: FlexiPageAssessmentInfo[]
+    flexipageAssessmentInfos: FlexiPageAssessmentInfo[],
+    version: string
   ): void {
     const apexXml = generatePackageXml.getXmlElementforMembers(this.getApexclasses(apexAssementInfos), 'ApexClass');
     const lwcXml = generatePackageXml.getXmlElementforMembers(
@@ -31,25 +32,6 @@ export class generatePackageXml {
       'FlexiPage'
     );
 
-    const additionalTypes = `
-    <types>
-        <members>*</members>
-        <name>OmniDataTransform</name>
-    </types>
-    <types>
-        <members>*</members>
-        <name>OmniIntegrationProcedure</name>
-    </types>
-    <types>
-        <members>*</members>
-        <name>OmniScript</name>
-    </types>
-    <types>
-        <members>*</members>
-        <name>OmniUiCard</name>
-    </types>
-  `;
-
     const packageXmlContent = `
 <?xml version="1.0" encoding="UTF-8"?>
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
@@ -57,12 +39,11 @@ export class generatePackageXml {
       ${lwcXml}
       ${expsiteXml}
       ${flexipageXml}
-      ${additionalTypes}
-    <version>57.0</version>
+    <version>${version}</version>
 </Package>
 `;
 
-    const filePath = path.join(__dirname, 'package.xml');
+    const filePath = path.join(process.cwd(), 'package.xml');
     fs.writeFileSync(filePath, packageXmlContent.trim());
   }
 

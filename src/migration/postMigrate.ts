@@ -8,10 +8,13 @@ import { AnonymousApexRunner } from '../utils/apex/executor/AnonymousApexRunner'
 import { Constants } from '../utils/constants/stringContants';
 import { OrgPreferences } from '../utils/orgPreferences';
 import { BaseMigrationTool } from './base';
+import { Deployer } from './deployer';
 
 export class PostMigrate extends BaseMigrationTool {
   private readonly org: Org;
   private readonly relatedObjectsToProcess: string[];
+  private readonly projectPath: string;
+  private readonly autoDeploy: boolean;
 
   // Source Custom Object Names
   constructor(
@@ -21,11 +24,15 @@ export class PostMigrate extends BaseMigrationTool {
     logger: Logger,
     messages: Messages,
     ux: UX,
-    relatedObjectsToProcess: string[]
+    relatedObjectsToProcess: string[],
+    autoDeploy: boolean,
+    projectPath: string
   ) {
     super(namespace, connection, logger, messages, ux);
     this.org = org;
     this.relatedObjectsToProcess = relatedObjectsToProcess;
+    this.autoDeploy = autoDeploy;
+    this.projectPath = projectPath;
   }
 
   public async setDesignersToUseStandardDataModel(
@@ -75,6 +82,18 @@ export class PostMigrate extends BaseMigrationTool {
       } catch (error) {
         userActionMessage.push(this.messages.getMessage('errorRevertingExperienceBundleMetadataAPI'));
       }
+    }
+  }
+
+  public deploy(): void {
+    if (!this.autoDeploy) {
+      return;
+    }
+    try {
+      const deployer = new Deployer(this.projectPath, this.messages, this.org.getUsername());
+      deployer.deploy();
+    } catch (error) {
+      Logger.error(this.messages.getMessage('errorDeployingComponents'), error);
     }
   }
 }

@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import { Messages } from '@salesforce/core';
 import { Logger } from '../../logger';
 import { cli } from '../../shell/cli';
@@ -27,9 +28,32 @@ export class sfProject {
     Logger.log(messages.getMessage('metadataDeployed', [metadataName, username]));
   }
 
+  public static installDependency(dependency?: string): void {
+    Logger.logVerbose(messages.getMessage('installingDependency', [dependency]));
+    const cmd = `npm install ${dependency || ''}`;
+    sfProject.executeCommand(cmd);
+    Logger.logVerbose(messages.getMessage('dependencyInstalled', [dependency]));
+  }
+
+  public static deployFromManifest(manifestPath: string, username: string): void {
+    Logger.logVerbose(messages.getMessage('deployingFromManifest'));
+    const cmd = `sf project deploy start --manifest ${manifestPath} --target-org ${username}`;
+    sfProject.executeCommand(cmd);
+    Logger.logVerbose(messages.getMessage('manifestDeployed'));
+  }
+
+  public static createNPMConfigFile(authKey: string): void {
+    Logger.logVerbose(messages.getMessage('creatingNPMConfigFile'));
+    fs.writeFileSync(
+      '.npmrc',
+      `always-auth=true\nregistry=https://repo.vlocity.com/repository/npm-public/\n//repo.vlocity.com/repository/npm-public/:_auth="${authKey}"`
+    );
+    Logger.logVerbose(messages.getMessage('npmConfigFileCreated'));
+  }
+
   private static executeCommand(cmd: string): void {
     try {
-      cli.exec(`${cmd} --json > /dev/null 2>&1`);
+      cli.exec(`${cmd} --json`);
     } catch (error) {
       Logger.error(messages.getMessage('sfProjectCommandError', [String(error)]));
       throw error;

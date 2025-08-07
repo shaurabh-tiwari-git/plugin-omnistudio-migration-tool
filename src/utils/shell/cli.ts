@@ -6,14 +6,10 @@ import * as shell from 'shelljs';
 
 export class cli {
   public static exec(cmd: string): string {
-    const exec = shell.exec(cmd);
-    let stdout: string;
+    const exec = shell.exec(cmd, { silent: true });
     if (exec.code !== 0) {
-      stdout = exec.stderr;
-    } else {
-      stdout = exec.stdout;
+      throw new Error(`Command failed with exit code ${exec.code}: ${exec.stderr || exec.stdout}`);
     }
-
-    return stdout;
+    return exec.stdout;
   }
 }
