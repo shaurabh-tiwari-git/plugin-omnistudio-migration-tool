@@ -133,14 +133,6 @@ export default class OmnistudioRelatedObjectMigrationFacade {
       // Log the error
       Logger.error('Error processing related objects', error);
     }
-    try {
-      if (relatedObjects.includes(Constants.LWC)) {
-        Logger.logVerbose(migrateMessages.getMessage('startingLwcMigration', [this.projectPath]));
-        lwcAssessmentInfos = isMigration ? this.lwcMigration.migrate() : this.lwcMigration.assessment();
-      }
-    } catch (error) {
-      Logger.error(error.message);
-    }
 
     // Stop the debug timer
     const timer = debugTimer.stop();

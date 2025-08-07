@@ -59,7 +59,7 @@ export class ApexMigration extends BaseRelatedObjectMigration {
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
     const targetOrg: Org = this.org;
-    sfProject.retrieve(APEXCLASS, targetOrg.getUsername());
+    // sfProject.retrieve(APEXCLASS, targetOrg.getUsername());
     Logger.info(migrateMessages.getMessage('processingApexFilesForMigration'));
     const apexAssessmentInfos = this.processApexFiles(this.projectPath, 'migration');
     Logger.info(migrateMessages.getMessage('successfullyProcessedApexFilesForMigration', [apexAssessmentInfos.length]));
@@ -90,24 +90,19 @@ export class ApexMigration extends BaseRelatedObjectMigration {
     let files: File[] = [];
     files = FileUtil.readFilesSync(dir);
     Logger.logVerbose(assessMessages.getMessage('foundApexFilesInDirectory', [files.length, dir]));
-    const notVerboseMode = !Logger.getVerbose();
     const progressBar =
       type.toLowerCase() === 'migration'
         ? createProgressBar('Migrating', 'Apex Classes')
         : createProgressBar('Assessing', 'Apex Classes');
     let progressCounter = 0;
     // Only show progress bar if verbose mode is disabled
-    if (notVerboseMode) {
-      progressBar.start(files.length, progressCounter);
-    }
+    progressBar.start(files.length, progressCounter);
     const fileAssessmentInfo: ApexAssessmentInfo[] = [];
     const processingErrorsList: string[] = [];
     for (const file of files) {
       if (file.ext !== '.cls') {
         Logger.logVerbose(assessMessages.getMessage('skippingNonApexFile', [file.name]));
-        if (notVerboseMode) {
-          progressBar.update(++progressCounter);
-        }
+        progressBar.update(++progressCounter);
         continue;
       }
       try {
@@ -115,26 +110,18 @@ export class ApexMigration extends BaseRelatedObjectMigration {
         const apexAssementInfo = this.processApexFile(file, type);
         if (apexAssementInfo && apexAssementInfo.diff.length < 3) {
           Logger.logVerbose(assessMessages.getMessage('skippingApexFileNoChanges', [file.name]));
-          if (notVerboseMode) {
-            progressBar.update(++progressCounter);
-          }
+          progressBar.update(++progressCounter);
           continue;
         }
         fileAssessmentInfo.push(apexAssementInfo);
         Logger.logVerbose(assessMessages.getMessage('successfullyProcessedApexFile', [file.name]));
-        if (notVerboseMode) {
-          progressBar.update(++progressCounter);
-        }
+        progressBar.update(++progressCounter);
       } catch (err) {
         processingErrorsList.push(assessMessages.getMessage('errorProcessingApexFile', [file.name]));
-        if (notVerboseMode) {
-          progressBar.update(++progressCounter);
-        }
+        progressBar.update(++progressCounter);
       }
     }
-    if (notVerboseMode) {
-      progressBar.stop();
-    }
+    progressBar.stop();
     if (processingErrorsList.length > 0) {
       Logger.error(processingErrorsList.join('\n'));
     }

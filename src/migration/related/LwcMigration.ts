@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+import { Messages, Org } from '@salesforce/core';
 import * as shell from 'shelljs';
-import { Messages } from '@salesforce/core';
 import { FileUtil, File } from '../../utils/file/fileUtil';
 import { sfProject } from '../../utils/sfcli/project/sfProject';
 import { Logger } from '../../utils/logger';
@@ -47,14 +47,14 @@ export class LwcMigration extends BaseRelatedObjectMigration {
     Logger.logVerbose(migrateMessages.getMessage('startingLwcMigration', [this.projectPath]));
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
-    // const targetOrg: Org = this.org;
+    const targetOrg: Org = this.org;
     // sfProject.retrieve(LWCTYPE, targetOrg.getUsername());
     Logger.info(migrateMessages.getMessage('processingLwcsForMigration'));
     const filesMap = this.processLwcFiles(this.projectPath);
     const LWCAssessmentInfos = this.processFiles(filesMap, 'migration');
     Logger.info(migrateMessages.getMessage('successfullyProcessedLwcsForMigration', [LWCAssessmentInfos.length]));
     Logger.logVerbose(migrateMessages.getMessage('lwcMigrationResults', [JSON.stringify(LWCAssessmentInfos, null, 2)]));
-    // sfProject.deploy(LWCTYPE, targetOrg.getUsername());
+    sfProject.deploy(LWCTYPE, targetOrg.getUsername());
     shell.cd(pwd);
     return LWCAssessmentInfos;
   }

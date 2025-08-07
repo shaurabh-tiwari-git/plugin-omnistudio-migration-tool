@@ -14,6 +14,7 @@ import {
 } from '../interfaces';
 import {
   ReportParam,
+  ReportRowParam,
   SummaryItemDetailParam,
   SummaryItemParam,
   DashboardParam,
@@ -527,7 +528,11 @@ export class ResultsBuilder {
       assessmentDate: new Date().toLocaleString(),
       total: result.length,
       filterGroups: [
-        createFilterGroupParam('Filter by Status', 'status', ['Can be Automated', 'Need Manual Intervention']),
+        createFilterGroupParam('Filter By Migration Status', 'comments', [
+          'Can be Automated',
+          'Need Manual Intervention',
+        ]),
+        createFilterGroupParam('Filter By Errors', 'errors', ['Has Errors', 'Has No Errors']),
       ],
       headerGroups: [
         {
@@ -543,12 +548,12 @@ export class ResultsBuilder {
               rowspan: 1,
             },
             {
-              name: 'Code Difference',
+              name: 'File Diff',
               colspan: 1,
               rowspan: 1,
             },
             {
-              name: 'Migration Status',
+              name: 'Assessment Status',
               colspan: 1,
               rowspan: 1,
             },
@@ -560,13 +565,34 @@ export class ResultsBuilder {
           ],
         },
       ],
-      rows: result.flatMap((item) =>
-        item.changeInfos.map((fileChangeInfo) => ({
+      rows: this.getLwcRowsForReport(result),
+      rollbackFlags: (orgDetails.rollbackFlags || []).includes('RollbackLWCChanges')
+        ? ['RollbackLWCChanges']
+        : undefined,
+    };
+
+    const reportTemplate = fs.readFileSync(reportTemplateFilePath, 'utf8');
+    const html = TemplateParser.generate(reportTemplate, data, messages);
+    fs.writeFileSync(path.join(resultsDir, lwcFileName), html);
+  }
+
+  private static getLwcRowsForReport(lwcAssessmentInfos: LWCAssessmentInfo[]): ReportRowParam[] {
+    const rows: ReportRowParam[] = [];
+
+    for (const lwcAssessmentInfo of lwcAssessmentInfos) {
+      const changeInfosCount = lwcAssessmentInfo.changeInfos.length;
+
+      for (let fileIndex = 0; fileIndex < lwcAssessmentInfo.changeInfos.length; fileIndex++) {
+        const fileChangeInfo = lwcAssessmentInfo.changeInfos[fileIndex];
+
+        rows.push({
           rowId: `${this.rowClass}${this.rowId++}`,
           data: [
-            createRowDataParam('name', item.name, true, 1, 1, false),
+            ...(fileIndex === 0
+              ? [createRowDataParam('name', lwcAssessmentInfo.name, true, changeInfosCount, 1, false)]
+              : []),
             createRowDataParam(
-              'path',
+              'fileReference',
               fileChangeInfo.name,
               false,
               1,
@@ -585,38 +611,41 @@ export class ResultsBuilder {
               undefined,
               FileDiffUtil.getDiffHTML(fileChangeInfo.diff, fileChangeInfo.name)
             ),
-            createRowDataParam(
-              'status',
-              item.errors && item.errors.length > 0 ? 'Need Manual Intervention' : 'Can be Automated',
-              false,
-              1,
-              1,
-              false,
-              undefined,
-              undefined,
-              item.errors && item.errors.length > 0 ? 'text-error' : 'text-success'
-            ),
-            createRowDataParam(
-              'errors',
-              item.errors ? 'Has Errors' : 'Has No Errors',
-              false,
-              1,
-              1,
-              false,
-              undefined,
-              item.errors ? reportingHelper.decorateErrors(item.errors) : []
-            ),
+            ...(fileIndex === 0
+              ? [
+                  createRowDataParam(
+                    'comments',
+                    lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0
+                      ? 'Need Manual Intervention'
+                      : 'Can be Automated',
+                    false,
+                    changeInfosCount,
+                    1,
+                    false,
+                    undefined,
+                    lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0
+                      ? 'Need Manual Intervention'
+                      : 'Can be Automated',
+                    lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0 ? 'text-error' : 'text-success'
+                  ),
+                  createRowDataParam(
+                    'errors',
+                    lwcAssessmentInfo.errors ? lwcAssessmentInfo.errors.join(', ') : '',
+                    false,
+                    changeInfosCount,
+                    1,
+                    false,
+                    undefined,
+                    lwcAssessmentInfo.errors ? reportingHelper.decorateErrors(lwcAssessmentInfo.errors) : []
+                  ),
+                ]
+              : []),
           ],
-        }))
-      ),
-      rollbackFlags: (orgDetails.rollbackFlags || []).includes('RollbackLWCChanges')
-        ? ['RollbackLWCChanges']
-        : undefined,
-    };
+        });
+      }
+    }
 
-    const reportTemplate = fs.readFileSync(reportTemplateFilePath, 'utf8');
-    const html = TemplateParser.generate(reportTemplate, data, messages);
-    fs.writeFileSync(path.join(resultsDir, lwcFileName), html);
+    return rows;
   }
 
   private static generateMigrationReportDashboard(

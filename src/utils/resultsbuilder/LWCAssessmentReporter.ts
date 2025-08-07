@@ -58,11 +58,17 @@ export class LWCAssessmentReporter {
     const rows: ReportRowParam[] = [];
 
     for (const lwcAssessmentInfo of lwcAssessmentInfos) {
-      for (const fileChangeInfo of lwcAssessmentInfo.changeInfos) {
+      const changeInfosCount = lwcAssessmentInfo.changeInfos.length;
+
+      for (let fileIndex = 0; fileIndex < lwcAssessmentInfo.changeInfos.length; fileIndex++) {
+        const fileChangeInfo = lwcAssessmentInfo.changeInfos[fileIndex];
+
         rows.push({
           rowId: `${this.rowIdPrefix}${this.rowId++}`,
           data: [
-            createRowDataParam('name', lwcAssessmentInfo.name, true, 1, 1, false),
+            ...(fileIndex === 0
+              ? [createRowDataParam('name', lwcAssessmentInfo.name, true, changeInfosCount, 1, false)]
+              : []),
             createRowDataParam(
               'fileReference',
               fileChangeInfo.name,
@@ -83,31 +89,35 @@ export class LWCAssessmentReporter {
               undefined,
               FileDiffUtil.getDiffHTML(fileChangeInfo.diff, fileChangeInfo.name)
             ),
-            createRowDataParam(
-              'comments',
-              lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0
-                ? 'Need Manual Intervention'
-                : 'Can be Automated',
-              false,
-              1,
-              1,
-              false,
-              undefined,
-              lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0
-                ? 'Need Manual Intervention'
-                : 'Can be Automated',
-              lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0 ? 'text-error' : 'text-success'
-            ),
-            createRowDataParam(
-              'errors',
-              lwcAssessmentInfo.errors ? lwcAssessmentInfo.errors.join(', ') : '',
-              false,
-              1,
-              1,
-              false,
-              undefined,
-              lwcAssessmentInfo.errors ? reportingHelper.decorateErrors(lwcAssessmentInfo.errors) : []
-            ),
+            ...(fileIndex === 0
+              ? [
+                  createRowDataParam(
+                    'comments',
+                    lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0
+                      ? 'Need Manual Intervention'
+                      : 'Can be Automated',
+                    false,
+                    changeInfosCount,
+                    1,
+                    false,
+                    undefined,
+                    lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0
+                      ? 'Need Manual Intervention'
+                      : 'Can be Automated',
+                    lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0 ? 'text-error' : 'text-success'
+                  ),
+                  createRowDataParam(
+                    'errors',
+                    lwcAssessmentInfo.errors ? lwcAssessmentInfo.errors.join(', ') : '',
+                    false,
+                    changeInfosCount,
+                    1,
+                    false,
+                    undefined,
+                    lwcAssessmentInfo.errors ? reportingHelper.decorateErrors(lwcAssessmentInfo.errors) : []
+                  ),
+                ]
+              : []),
           ],
         });
       }
@@ -151,7 +161,7 @@ export class LWCAssessmentReporter {
             rowspan: 1,
           },
           {
-            name: 'Migration Status',
+            name: 'Assessment Status',
             colspan: 1,
             rowspan: 1,
           },
