@@ -251,7 +251,7 @@ export class ResultsBuilder {
       },
       assessmentDate: new Date().toString(),
       total: result.length,
-      filterGroups: [createFilterGroupParam('Filter by Status', 'status', ['Can be Automated', 'Error'])],
+      filterGroups: [createFilterGroupParam('Filter by Status', 'status', ['Can be Automated', 'Errors'])],
       headerGroups: [
         {
           header: [

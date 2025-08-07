@@ -1,16 +1,15 @@
-/* eslint-disable */
-
 import { Connection, Messages } from '@salesforce/core';
 import { UX } from '@salesforce/command';
 import { Logger } from '../utils/logger';
 import { Constants } from '../utils/constants/stringContants';
 import { OrgPreferences } from '../utils/orgPreferences';
-import { BaseMigrationTool } from './base';
 import { askStringWithTimeout } from '../utils/promptUtil';
+import { YES_SHORT, YES_LONG, NO_SHORT, NO_LONG } from '../utils/projectPathUtil';
+import { BaseMigrationTool } from './base';
 
 export class PreMigrate extends BaseMigrationTool {
   // Source Custom Object Names
-  constructor(namespace: string, connection: Connection, logger: Logger, messages: Messages, ux: UX) {
+  public constructor(namespace: string, connection: Connection, logger: Logger, messages: Messages, ux: UX) {
     super(namespace, connection, logger, messages, ux);
   }
 
@@ -55,8 +54,9 @@ export class PreMigrate extends BaseMigrationTool {
   // This needs to be behind timeout
   private async getExpSiteMetadataEnableConsent(): Promise<boolean> {
     const question = this.messages.getMessage('consentForExperienceSites');
+    const validResponse = false;
 
-    while (true) {
+    while (!validResponse) {
       try {
         // Get string input from user with timeout
         const userInput = await askStringWithTimeout(
@@ -68,19 +68,18 @@ export class PreMigrate extends BaseMigrationTool {
         // Validate and convert the input
         const normalizedInput = userInput.trim().toLowerCase();
 
-        if (normalizedInput === 'y' || normalizedInput === 'yes') {
+        if (normalizedInput === YES_SHORT || normalizedInput === YES_LONG) {
           return true;
-        } else if (normalizedInput === 'n' || normalizedInput === 'no') {
+        } else if (normalizedInput === NO_SHORT || normalizedInput === NO_LONG) {
           return false;
         } else {
           // Invalid input - show error and continue loop to re-prompt
           Logger.error(this.messages.getMessage('invalidYesNoResponse'));
-          Logger.log('Please enter "y" or "yes" to consent, "n" or "no" to decline.');
         }
       } catch (error) {
         // Handle timeout or other errors
-        Logger.error(this.messages.getMessage('failedToGetConsentError', [error.message]));
-        throw error; // Re-throw to let caller handle timeout
+        Logger.error(this.messages.getMessage('requestTimedOut'));
+        process.exit(1);
       }
     }
   }

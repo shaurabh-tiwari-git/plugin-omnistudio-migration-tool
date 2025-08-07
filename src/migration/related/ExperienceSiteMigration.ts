@@ -287,6 +287,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     if (this.shouldAddWarning(targetDataFromStorageFC)) {
       const warningMsg: string = this.getWarningMessage(flexcardName, targetDataFromStorageFC);
       experienceSiteAssessmentInfo.warnings.push(warningMsg);
+      experienceSiteAssessmentInfo.status = 'Errors';
     } else {
       component.componentName = TARGET_COMPONENT_NAME_FC;
 
