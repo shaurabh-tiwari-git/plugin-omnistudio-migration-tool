@@ -8,7 +8,7 @@ import { Logger } from '../../utils/logger';
 import { FileProcessorFactory } from '../../utils/lwcparser/fileutils/FileProcessorFactory';
 import { FileChangeInfo, LWCAssessmentInfo } from '../../utils';
 import { Constants } from '../../utils/constants/stringContants';
-import { createProgressBar } from '../base';
+import { ComponentType, createProgressBar } from '../base';
 import { BaseRelatedObjectMigration } from './BaseRealtedObjectMigration';
 
 Messages.importMessagesDirectory(__dirname);
@@ -75,8 +75,8 @@ export class LwcMigration extends BaseRelatedObjectMigration {
   private processFiles(fileMap: Map<string, File[]>, type: string): LWCAssessmentInfo[] {
     const progressBar =
       type.toLowerCase() === 'migration'
-        ? createProgressBar('Migrating', 'Lightning Web Components')
-        : createProgressBar('Assessing', 'Lightning Web Components');
+        ? createProgressBar('Migrating', Constants.LWCComponentName as ComponentType)
+        : createProgressBar('Assessing', Constants.LWCComponentName as ComponentType);
     progressBar.start(fileMap.size, 0);
     let progressCounter = 0;
     try {

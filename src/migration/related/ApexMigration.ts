@@ -20,7 +20,7 @@ import { ApexAssessmentInfo } from '../../utils';
 import { FileDiffUtil } from '../../utils/lwcparser/fileutils/FileDiffUtil';
 import { Stringutil } from '../../utils/StringValue/stringutil';
 import { Constants } from '../../utils/constants/stringContants';
-import { createProgressBar } from '../base';
+import { ComponentType, createProgressBar } from '../base';
 import { BaseRelatedObjectMigration } from './BaseRealtedObjectMigration';
 
 Messages.importMessagesDirectory(__dirname);
@@ -92,8 +92,8 @@ export class ApexMigration extends BaseRelatedObjectMigration {
     Logger.logVerbose(assessMessages.getMessage('foundApexFilesInDirectory', [files.length, dir]));
     const progressBar =
       type.toLowerCase() === 'migration'
-        ? createProgressBar('Migrating', 'Apex Classes')
-        : createProgressBar('Assessing', 'Apex Classes');
+        ? createProgressBar('Migrating', Constants.ApexComponentName as ComponentType)
+        : createProgressBar('Assessing', Constants.ApexComponentName as ComponentType);
     let progressCounter = 0;
     // Only show progress bar if verbose mode is disabled
     progressBar.start(files.length, progressCounter);
