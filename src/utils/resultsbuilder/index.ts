@@ -528,11 +528,8 @@ export class ResultsBuilder {
       assessmentDate: new Date().toLocaleString(),
       total: result.length,
       filterGroups: [
-        createFilterGroupParam('Filter By Migration Status', 'comments', [
-          'Can be Automated',
-          'Need Manual Intervention',
-        ]),
-        createFilterGroupParam('Filter By Errors', 'errors', ['Has Errors', 'Has No Errors']),
+        createFilterGroupParam('Filter By Migration Status', 'comments', ['Completed', 'Failed']),
+        createFilterGroupParam('Filter By Errors', 'comments', ['Failed', 'Completed']),
       ],
       headerGroups: [
         {
@@ -580,17 +577,11 @@ export class ResultsBuilder {
     const rows: ReportRowParam[] = [];
 
     for (const lwcAssessmentInfo of lwcAssessmentInfos) {
-      const changeInfosCount = lwcAssessmentInfo.changeInfos.length;
-
-      for (let fileIndex = 0; fileIndex < lwcAssessmentInfo.changeInfos.length; fileIndex++) {
-        const fileChangeInfo = lwcAssessmentInfo.changeInfos[fileIndex];
-
+      for (const fileChangeInfo of lwcAssessmentInfo.changeInfos) {
         rows.push({
           rowId: `${this.rowClass}${this.rowId++}`,
           data: [
-            ...(fileIndex === 0
-              ? [createRowDataParam('name', lwcAssessmentInfo.name, true, changeInfosCount, 1, false)]
-              : []),
+            createRowDataParam('name', lwcAssessmentInfo.name, true, 1, 1, false),
             createRowDataParam(
               'fileReference',
               fileChangeInfo.name,
@@ -611,35 +602,27 @@ export class ResultsBuilder {
               undefined,
               FileDiffUtil.getDiffHTML(fileChangeInfo.diff, fileChangeInfo.name)
             ),
-            ...(fileIndex === 0
-              ? [
-                  createRowDataParam(
-                    'comments',
-                    lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0
-                      ? 'Need Manual Intervention'
-                      : 'Can be Automated',
-                    false,
-                    changeInfosCount,
-                    1,
-                    false,
-                    undefined,
-                    lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0
-                      ? 'Need Manual Intervention'
-                      : 'Can be Automated',
-                    lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0 ? 'text-error' : 'text-success'
-                  ),
-                  createRowDataParam(
-                    'errors',
-                    lwcAssessmentInfo.errors ? lwcAssessmentInfo.errors.join(', ') : '',
-                    false,
-                    changeInfosCount,
-                    1,
-                    false,
-                    undefined,
-                    lwcAssessmentInfo.errors ? reportingHelper.decorateErrors(lwcAssessmentInfo.errors) : []
-                  ),
-                ]
-              : []),
+            createRowDataParam(
+              'comments',
+              lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0 ? 'Failed' : 'Completed',
+              false,
+              1,
+              1,
+              false,
+              undefined,
+              lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0 ? 'Failed' : 'Completed',
+              lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0 ? 'text-error' : 'text-success'
+            ),
+            createRowDataParam(
+              'errors',
+              lwcAssessmentInfo.errors ? lwcAssessmentInfo.errors.join(', ') : '',
+              false,
+              1,
+              1,
+              false,
+              undefined,
+              lwcAssessmentInfo.errors ? reportingHelper.decorateErrors(lwcAssessmentInfo.errors) : []
+            ),
           ],
         });
       }
@@ -683,7 +666,7 @@ export class ResultsBuilder {
     }
     if (objectsToProcess.includes(Constants.LWC)) {
       relatedObjectSummaryItems.push({
-        name: 'LWC',
+        name: 'Lightning Web Components',
         total: relatedObjectMigrationResult.lwcAssessmentInfos?.length || 0,
         data: this.getDifferentStatusDataForLwc(relatedObjectMigrationResult.lwcAssessmentInfos),
         file: lwcFileName,
