@@ -173,8 +173,8 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     try {
       const experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo = {
         name: file.name,
-        warnings: [],
-        errors: ['Unknown error occurred'],
+        warnings: ['Unknown error occurred'],
+        errors: [''],
         infos: [],
         path: file.location,
         diff: JSON.stringify([]),
