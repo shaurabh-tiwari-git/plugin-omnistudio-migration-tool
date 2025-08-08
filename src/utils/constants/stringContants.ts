@@ -22,4 +22,6 @@ export const Constants = {
   GlobalAutoNumberComponentName: 'GlobalAutoNumber',
   GlobalAutoNumberPluralName: 'GlobalAutoNumbers',
   ApexRemoteComponentName: 'ApexRemote',
+  LWCComponentName: 'Lightning Web Component',
+  ApexComponentName: 'Apex Classes',
 };

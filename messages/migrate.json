@@ -195,7 +195,6 @@
   "flexcardStorageProcessingStarted": "Started preparing storage for flexcards",
   "errorWhileProcessingFlexcardStorage": "Error occurred while processing key for flexcard storage",
   "missingInfo": "Info is missing",
-  "incompleteMigrationDetected": "We couldn’t complete the migration process",
   "errorCheckingGlobalAutoNumber": "We couldn’t check whether the Global Auto Number setting is enabled: %s. Try again later.",
   "errorMigrationMessage": "Error migrating object: %s",
   "nameMappingUndefined": "Name Mapping is undefined",
@@ -208,5 +207,6 @@
   "installingRequiredDependencies": "Installing required node dependencies",
   "creatingNPMConfigFile": "Creating npm config file",
   "npmConfigFileCreated": "Npm config file created",
-  "authKeyEnvVarNotSet": "OMA_AUTH_KEY environment variable is not set, LWCs will not be deployed"
+  "authKeyEnvVarNotSet": "OMA_AUTH_KEY environment variable is not set, LWCs will not be deployed",
+  "experienceSiteException": "Exception occurred while processing experience sites"
 }

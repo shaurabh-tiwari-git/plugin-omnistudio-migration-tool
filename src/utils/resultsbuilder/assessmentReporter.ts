@@ -16,6 +16,7 @@ import { ApexAssessmentReporter } from './ApexAssessmentReporter';
 import { IPAssessmentReporter } from './IPAssessmentReporter';
 import { DRAssessmentReporter } from './DRAssessmentReporter';
 import { FlexcardAssessmentReporter } from './FlexcardAssessmentReporter';
+import { LWCAssessmentReporter } from './LWCAssessmentReporter';
 import { GlobalAutoNumberAssessmentReporter } from './GlobalAutoNumberAssessmentReporter';
 import { FlexipageAssessmentReporter } from './FlexipageAssessmentReporter';
 import { ExperienceSiteAssessmentReporter } from './ExperienceSiteAssessmentReporter';
@@ -28,7 +29,7 @@ export class AssessmentReporter {
   private static dataMapperAssessmentFileName = 'datamapper_assessment.html';
   private static globalAutoNumberAssessmentFileName = 'globalautonumber_assessment.html';
   private static apexAssessmentFileName = 'apex_assessment.html';
-  // private static lwcAssessmentFileName = 'lwc_assessment.html';
+  private static lwcAssessmentFileName = 'lwc_assessment.html';
   private static dashboardFileName = 'dashboard.html';
   private static templateDir = 'templates';
   private static experienceSiteAssessmentFileName = 'experience_site_assessment.html';
@@ -110,14 +111,14 @@ export class AssessmentReporter {
         )
       );
 
-      // this.createDocument(
-      //   path.join(this.basePath, this.lwcAssessmentFileName),
-      //   TemplateParser.generate(
-      //     assessmentReportTemplate,
-      //     LWCAssessmentReporter.getLwcAssessmentData(result.lwcAssessmentInfos, omnistudioOrgDetails),
-      //     messages
-      //   )
-      // );
+      this.createDocument(
+        path.join(this.basePath, this.lwcAssessmentFileName),
+        TemplateParser.generate(
+          assessmentReportTemplate,
+          LWCAssessmentReporter.getLwcAssessmentData(result.lwcAssessmentInfos, omnistudioOrgDetails),
+          messages
+        )
+      );
 
       this.createDocument(
         path.join(this.basePath, this.integrationProcedureAssessmentFileName),
@@ -281,18 +282,18 @@ export class AssessmentReporter {
         )
       );
     }
-    // TODO: Uncomment code once MVP for migration is completed
-    // if (relatedObjects && relatedObjects.includes(Constants.LWC)) {
-    //   reports.push(Constants.LWC);
-    //   this.createDocument(
-    //     path.join(this.basePath, this.lwcAssessmentFileName),
-    //     TemplateParser.generate(
-    //       assessmentReportTemplate,
-    //       LWCAssessmentReporter.getLwcAssessmentData(result.lwcAssessmentInfos, omnistudioOrgDetails),
-    //       messages
-    //     )
-    //   );
-    // }
+
+    if (relatedObjects && relatedObjects.includes(Constants.LWC)) {
+      reports.push(Constants.LWC);
+      this.createDocument(
+        path.join(this.basePath, this.lwcAssessmentFileName),
+        TemplateParser.generate(
+          assessmentReportTemplate,
+          LWCAssessmentReporter.getLwcAssessmentData(result.lwcAssessmentInfos, omnistudioOrgDetails),
+          messages
+        )
+      );
+    }
 
     // await this.createMasterDocument(nameUrls, basePath);
     this.createDashboard(this.basePath, result, omnistudioOrgDetails, messages, reports, userActionMessages);
@@ -392,14 +393,14 @@ export class AssessmentReporter {
       });
     }
 
-    // if (reports.includes(Constants.LWC)) {
-    //   summaryItems.push({
-    //     name: 'Lightning Web Components',
-    //     total: result.lwcAssessmentInfos.length,
-    //     data: LWCAssessmentReporter.getSummaryData(result.lwcAssessmentInfos),
-    //     file: this.lwcAssessmentFileName,
-    //   });
-    // }
+    if (reports.includes(Constants.LWC)) {
+      summaryItems.push({
+        name: 'Lightning Web Components',
+        total: result.lwcAssessmentInfos.length,
+        data: LWCAssessmentReporter.getSummaryData(result.lwcAssessmentInfos),
+        file: this.lwcAssessmentFileName,
+      });
+    }
     return {
       title: 'Omnistudio Assessment Report Dashboard',
       heading: 'Omnistudio Assessment Report Dashboard',

@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import * as shell from 'shelljs';
 import { Messages } from '@salesforce/core';
+import * as shell from 'shelljs';
 import { FileUtil, File } from '../../utils/file/fileUtil';
-import { sfProject } from '../../utils/sfcli/project/sfProject';
 import { Logger } from '../../utils/logger';
 import { FileProcessorFactory } from '../../utils/lwcparser/fileutils/FileProcessorFactory';
 import { FileChangeInfo, LWCAssessmentInfo } from '../../utils';
 import { Constants } from '../../utils/constants/stringContants';
+import { ComponentType, createProgressBar } from '../base';
 import { BaseRelatedObjectMigration } from './BaseRealtedObjectMigration';
 
 Messages.importMessagesDirectory(__dirname);
@@ -15,7 +15,6 @@ const assessMessages = Messages.loadMessages('@salesforce/plugin-omnistudio-migr
 const migrateMessages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'migrate');
 
 const LWC_DIR_PATH = '/force-app/main/default/lwc';
-const LWCTYPE = 'LightningComponentBundle';
 
 export class LwcMigration extends BaseRelatedObjectMigration {
   public processObjectType(): string {
@@ -33,7 +32,6 @@ export class LwcMigration extends BaseRelatedObjectMigration {
     const type = 'assessment';
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
-    sfProject.retrieve(LWCTYPE, this.org.getUsername());
     Logger.info(assessMessages.getMessage('processingLwcsForAssessment'));
     const filesMap = this.processLwcFiles(this.projectPath);
     Logger.info(assessMessages.getMessage('successfullyProcessedLwcsForAssessment', [filesMap.size]));
@@ -46,14 +44,11 @@ export class LwcMigration extends BaseRelatedObjectMigration {
     Logger.logVerbose(migrateMessages.getMessage('startingLwcMigration', [this.projectPath]));
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
-    // const targetOrg: Org = this.org;
-    // sfProject.retrieve(LWCTYPE, targetOrg.getUsername());
     Logger.info(migrateMessages.getMessage('processingLwcsForMigration'));
     const filesMap = this.processLwcFiles(this.projectPath);
     const LWCAssessmentInfos = this.processFiles(filesMap, 'migration');
     Logger.info(migrateMessages.getMessage('successfullyProcessedLwcsForMigration', [LWCAssessmentInfos.length]));
     Logger.logVerbose(migrateMessages.getMessage('lwcMigrationResults', [JSON.stringify(LWCAssessmentInfos, null, 2)]));
-    // sfProject.deploy(LWCTYPE, targetOrg.getUsername());
     shell.cd(pwd);
     return LWCAssessmentInfos;
   }
@@ -72,6 +67,12 @@ export class LwcMigration extends BaseRelatedObjectMigration {
 
   // This method to process the parsing and return the LWCAssessmentInfo[]
   private processFiles(fileMap: Map<string, File[]>, type: string): LWCAssessmentInfo[] {
+    const progressBar =
+      type.toLowerCase() === 'migration'
+        ? createProgressBar('Migrating', Constants.LWCComponentName as ComponentType)
+        : createProgressBar('Assessing', Constants.LWCComponentName as ComponentType);
+    progressBar.start(fileMap.size, 0);
+    let progressCounter = 0;
     try {
       const jsonData: LWCAssessmentInfo[] = [];
       fileMap.forEach((fileList, dir) => {
@@ -116,9 +117,12 @@ export class LwcMigration extends BaseRelatedObjectMigration {
             jsonData.push(assesmentInfo);
           }
         }
+        progressBar.update(++progressCounter);
       });
+      progressBar.stop();
       return jsonData;
     } catch (error) {
+      progressBar.stop();
       Logger.error(assessMessages.getMessage('errorProcessingFiles'), error);
     }
   }

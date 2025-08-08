@@ -113,7 +113,8 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       const flexCards = await this.getAllActiveCards();
       Logger.log(this.messages.getMessage('foundFlexCardsToAssess', [flexCards.length]));
 
-      const flexCardsAssessmentInfos = this.processCardComponents(flexCards);
+      const flexCardsAssessmentInfos = await this.processCardComponents(flexCards);
+      this.prepareAssessmentStorageForFlexcards(flexCardsAssessmentInfos);
       return flexCardsAssessmentInfos;
     } catch (err) {
       if (err instanceof InvalidEntityTypeError) {
@@ -135,9 +136,6 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       try {
         const flexCardAssessmentInfo = await this.processFlexCard(flexCard, uniqueNames);
         flexCardAssessmentInfos.push(flexCardAssessmentInfo);
-
-        // Prepare assessment storage for flexcards
-        this.prepareAssessmentStorageForFlexcards(flexCardAssessmentInfos);
       } catch (e) {
         flexCardAssessmentInfos.push({
           name: flexCard['Name'],
@@ -638,7 +636,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           flexCardAssessmentInfo.nameMapping === undefined ||
           flexCardAssessmentInfo.nameMapping === null
         ) {
-          Logger.logVerbose(this.messages.getMessage('missingInfo'));
+          Logger.error(this.messages.getMessage('missingInfo'));
           return;
         }
 
@@ -647,8 +645,8 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           isDuplicate: false,
         };
 
-        if (flexCardAssessmentInfo.warnings) {
-          value.error = flexCardAssessmentInfo.warnings;
+        if (flexCardAssessmentInfo.errors && flexCardAssessmentInfo.errors.length > 0) {
+          value.error = flexCardAssessmentInfo.errors;
           value.migrationSuccess = false;
         } else {
           value.migrationSuccess = true;
@@ -668,9 +666,8 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         Logger.logVerbose(this.messages.getMessage('errorWhileProcessingFlexcardStorage'));
         Logger.error(error);
       }
-
-      StorageUtil.printMigrationStorage();
     }
+    StorageUtil.printAssessmentStorage();
   }
 
   private prepareStorageForFlexcards(
@@ -692,13 +689,13 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
         if (newrecord === undefined) {
           value.error = ['Migration Failed'];
-        }
-
-        if (newrecord.hasErrors) {
-          value.error = newrecord.errors;
-          value.migrationSuccess = false;
         } else {
-          value.migrationSuccess = true;
+          if (newrecord.hasErrors) {
+            value.error = newrecord.errors;
+            value.migrationSuccess = false;
+          } else {
+            value.migrationSuccess = true;
+          }
         }
 
         let finalKey = `${oldrecord['Name']}`;
