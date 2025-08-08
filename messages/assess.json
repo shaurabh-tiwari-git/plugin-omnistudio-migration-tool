@@ -184,5 +184,6 @@
   "errorCheckingGlobalAutoNumber": "We couldn’t check whether the Global Auto Number setting is enabled: %s. Try again later.",
   "errorMigrationMessage": "Error migrating object: %s",
   "nameMappingUndefined": "Name Mapping is undefined",
-  "experienceSiteException": "Exception occurred while processing experience sites"
+  "experienceSiteException": "Exception occurred while processing experience sites",
+  "reservedKeysFoundInPropertySet": "Reserved keys found in any of output response transformation fields: %s."
 }

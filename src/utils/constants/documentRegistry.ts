@@ -58,4 +58,6 @@ export const documentRegistry = {
   duplicateCardNameMessage: 'https://help.salesforce.com/s/articleView?id=xcloud.os_clone_a_flexcard.htm&type=5',
   duplicateGlobalAutoNumberNameMessage:
     'https://help.salesforce.com/s/articleView?id=xcloud.os_omnistudio_naming_conventions.htm&type=5',
+  reservedKeysFoundInPropertySet:
+    'https://help.salesforce.com/s/articleView?id=xcloud.os_omnistudio_naming_conventions.htm&type=5',
 };
