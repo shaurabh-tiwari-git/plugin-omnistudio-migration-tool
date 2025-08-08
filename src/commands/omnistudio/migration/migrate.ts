@@ -259,7 +259,7 @@ export default class Migrate extends OmniStudioBaseCommand {
       }
     }
 
-    const deploymentConfig = await this.getAutoDeployConsent();
+    const deploymentConfig = await this.getAutoDeployConsent(objectsToProcess.includes(Constants.LWC));
     let projectPath: string;
     let targetApexNamespace: string;
     // Check for general consent to make modifications with OMT
@@ -281,7 +281,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     return { objectsToProcess, projectPath, targetApexNamespace, deploymentConfig };
   }
 
-  private async getAutoDeployConsent(): Promise<{ autoDeploy: boolean; authKey: string | undefined }> {
+  private async getAutoDeployConsent(includeLwc: boolean): Promise<{ autoDeploy: boolean; authKey: string | undefined }> {
     const askWithTimeOut = PromptUtil.askWithTimeOut(messages);
     let validResponse = false;
     let consent = false;
@@ -310,7 +310,7 @@ export default class Migrate extends OmniStudioBaseCommand {
       autoDeploy: consent,
       authKey: undefined,
     };
-    if (consent) {
+    if (consent && includeLwc) {
       deploymentConfig.authKey = process.env[authEnvKey];
       if (!deploymentConfig.authKey) {
         Logger.error(messages.getMessage('authKeyEnvVarNotSet'));
