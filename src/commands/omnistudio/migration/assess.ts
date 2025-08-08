@@ -27,10 +27,6 @@ export default class Assess extends OmniStudioBaseCommand {
   public static args = [{ name: 'file' }];
 
   protected static flagsConfig = {
-    namespace: flags.string({
-      char: 'n',
-      description: messages.getMessage('namespaceFlagDescription'),
-    }),
     only: flags.string({
       char: 'o',
       description: messages.getMessage('onlyFlagDescription'),
@@ -56,8 +52,9 @@ export default class Assess extends OmniStudioBaseCommand {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return await this.runAssess();
-    } catch (error) {
-      Logger.error(messages.getMessage('errorRunningAssess'), error);
+    } catch (e) {
+      const error = e as Error;
+      Logger.error(messages.getMessage('errorRunningAssess', [error.message]), error);
       process.exit(1);
     }
   }
@@ -65,18 +62,13 @@ export default class Assess extends OmniStudioBaseCommand {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async runAssess(): Promise<any> {
     DebugTimer.getInstance().start();
-    let apiVersion = this.flags.apiversion as string;
     const allVersions = (this.flags.allversions || false) as boolean;
     const assessOnly = (this.flags.only || '') as string;
     const relatedObjects = (this.flags.relatedobjects || '') as string;
     const conn = this.org.getConnection();
 
-    if (apiVersion) {
-      conn.setApiVersion(apiVersion);
-    } else {
-      apiVersion = conn.getApiVersion();
-    }
-    const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn, this.flags.namespace);
+    const apiVersion = conn.getApiVersion();
+    const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn);
 
     if (!orgs.hasValidNamespace && this.flags.namespace) {
       Logger.warn(messages.getMessage('invalidNamespace') + orgs.packageDetails.namespace);
@@ -120,10 +112,14 @@ export default class Assess extends OmniStudioBaseCommand {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (ex: any) {
       if (ex instanceof InvalidEntityTypeError) {
-        Logger.error(`${messages.getMessage('invalidTypeAssessErrorMessage', [namespace])}`);
+        Logger.error(messages.getMessage('invalidTypeAssessErrorMessage', [namespace]));
         process.exit(1);
       }
-      Logger.error('Error assessing object', ex);
+
+      if (ex instanceof Error) {
+        Logger.error(messages.getMessage('errorRunningAssess', [ex.message]));
+        process.exit(1);
+      }
     }
 
     let objectsToProcess: string[];

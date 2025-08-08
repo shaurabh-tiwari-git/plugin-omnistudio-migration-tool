@@ -50,7 +50,7 @@
   "notSfdxProjectFolderPath": "Provided folder is not a valid Salesforce DX project. Please select a folder containing sfdx-project.json",
   "operationCancelled": "Operation cancelled.",
   "failedToGetValidProjectPath": "Failed to get valid project path",
-  "errorRunningMigrate": "Error running migrate %s",
+  "errorRunningMigrate": "Migration process failed reason : %s",
   "couldNotEnableOmniPreferences": "Could not enable Omni preferences: %s",
   "errorSettingDesignersToStandardDataModel": "Error occurred while setting designers to use the standard data model %s",
   "exceptionSettingDesignersToStandardDataModel": "Exception occurred while setting designers to use the standard data model %s",

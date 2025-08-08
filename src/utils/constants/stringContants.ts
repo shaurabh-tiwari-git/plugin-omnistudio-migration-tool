@@ -3,7 +3,7 @@ export const Constants = {
   Omniscript: 'os',
   Flexcard: 'fc',
   IntegrationProcedure: 'ip',
-  DataMapper: 'dr',
+  DataMapper: 'dm',
   LWC: 'lwc',
   Apex: 'apex',
 
