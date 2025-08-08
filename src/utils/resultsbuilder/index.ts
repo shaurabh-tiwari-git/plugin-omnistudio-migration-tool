@@ -256,7 +256,7 @@ export class ResultsBuilder {
       },
       assessmentDate: new Date().toString(),
       total: result.length,
-      filterGroups: [createFilterGroupParam('Filter by Status', 'status', ['Complete', 'Error'])],
+      filterGroups: [createFilterGroupParam('Filter by Status', 'status', ['Complete', 'Failed'])],
       headerGroups: [
         {
           header: [
@@ -295,13 +295,13 @@ export class ResultsBuilder {
           createRowDataParam('path', item.path, false, 1, 1, false),
           createRowDataParam(
             'status',
-            item.warnings ? 'Error' : 'Complete', // This is the value which the status key takes
+            item.warnings && item.warnings.length > 0 ? 'Failed' : 'Complete',
             false,
             1,
             1,
             false,
             undefined,
-            item.warnings ? 'Error' : 'Complete' // This is what gets displayed
+            item.warnings && item.warnings.length > 0 ? 'Failed' : 'Complete'
           ),
           createRowDataParam(
             'diff',
@@ -311,17 +311,18 @@ export class ResultsBuilder {
             1,
             false,
             undefined,
-            FileDiffUtil.getDiffHTML(item.diff, item.name)
+            FileDiffUtil.getDiffHTML(item.diff, this.rowId.toString())
           ),
           createRowDataParam(
             'errors',
-            item.warnings ? 'Error' : 'Complete',
+            item.warnings && item.warnings.length > 0 ? 'Failed' : 'Complete',
             false,
             1,
             1,
             false,
             undefined,
-            item.warnings
+            item.warnings,
+            item.warnings ? 'text-error' : 'text-success'
           ),
         ],
       })),

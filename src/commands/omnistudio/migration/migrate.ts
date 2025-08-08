@@ -132,7 +132,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     let projectPath: string;
     let objectsToProcess: string[] = [];
     let targetApexNamespace: string;
-    const preMigrate: PreMigrate = new PreMigrate(this.org, namespace, conn, this.logger, messages, this.ux);
+    const preMigrate: PreMigrate = new PreMigrate(namespace, conn, this.logger, messages, this.ux);
     const isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean } = { value: false };
     if (relatedObjects) {
       const validOptions = [Constants.Apex, Constants.ExpSites, Constants.FlexiPage, Constants.LWC];
@@ -451,11 +451,13 @@ export default class Migrate extends OmniStudioBaseCommand {
         let errors: any[] = obj.errors || [];
         errors = errors.concat(recordResults.errors || []);
 
-        obj.status = recordResults?.skipped
-          ? messages.getMessage('labelStatusSkipped')
-          : !recordResults || recordResults.hasErrors
-          ? messages.getMessage('labelStatusFailed')
-          : messages.getMessage('labelStatusComplete');
+        if (recordResults?.skipped) {
+          obj.status = messages.getMessage('labelStatusSkipped');
+        } else if (!recordResults || recordResults.hasErrors) {
+          obj.status = messages.getMessage('labelStatusFailed');
+        } else {
+          obj.status = messages.getMessage('labelStatusComplete');
+        }
         obj.errors = errors;
         obj.migratedId = recordResults.id;
         obj.warnings = recordResults.warnings;

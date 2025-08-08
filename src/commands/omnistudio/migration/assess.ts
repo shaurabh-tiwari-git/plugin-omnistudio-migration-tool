@@ -98,7 +98,7 @@ export default class Assess extends OmniStudioBaseCommand {
 
     const namespace = orgs.packageDetails.namespace;
     let projectPath = '';
-    const preMigrate: PreMigrate = new PreMigrate(this.org, namespace, conn, this.logger, messages, this.ux);
+    const preMigrate: PreMigrate = new PreMigrate(namespace, conn, this.logger, messages, this.ux);
     if (relatedObjects) {
       objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
       projectPath = await ProjectPathUtil.getProjectPath(messages, true);
