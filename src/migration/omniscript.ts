@@ -687,6 +687,38 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
       // Get All elements for each OmniScript__c record(i.e IP/OS)
       const elements = await this.getAllElementsForOmniScript(recordId);
+
+      // Check for duplicate element names within the same OmniScript
+      const elementNames = new Set<string>();
+      const duplicateElementNames = new Set<string>();
+
+      for (const elem of elements) {
+        const elemName = elem['Name'];
+        if (elementNames.has(elemName)) {
+          duplicateElementNames.add(elemName);
+        } else {
+          elementNames.add(elemName);
+        }
+      }
+
+      // If duplicate element names found, skip this OmniScript
+      if (duplicateElementNames.size > 0) {
+        const duplicateNamesList = Array.from(duplicateElementNames).join(', ');
+        const skippedResponse: UploadRecordResult = {
+          referenceId: recordId,
+          id: '',
+          success: false,
+          hasErrors: false,
+          errors: [],
+          warnings: [this.messages.getMessage('invalidOrRepeatingOmniscriptElementNames', [duplicateNamesList])],
+          newName: '',
+          skipped: true,
+        };
+        osUploadInfo.set(recordId, skippedResponse);
+        originalOsRecords.set(recordId, omniscript);
+        continue;
+      }
+
       if (omniscript[`${this.namespacePrefix}IsProcedure__c`] === true) {
         // Check for reserved keys in PropertySet for Integration Procedures
         const foundReservedKeys = new Set<string>();
