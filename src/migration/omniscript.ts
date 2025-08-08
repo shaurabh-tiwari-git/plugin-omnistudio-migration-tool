@@ -206,8 +206,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     flexCardAssessmentInfos: FlexCardAssessmentInfo[]
   ): Promise<OmniAssessmentInfo> {
     try {
-      const exportComponentType =
-        this.exportType === OmniScriptExportType.IP ? 'Integration Procedures' : 'Omniscripts';
+      const exportComponentType = this.getName() as ComponentType;
       Logger.log(this.messages.getMessage('startingOmniScriptAssessment', [exportComponentType]));
       const omniscripts = await this.getAllOmniScripts();
       Logger.log(this.messages.getMessage('foundOmniScriptsToAssess', [omniscripts.length, exportComponentType]));
@@ -661,7 +660,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     // Variables to be returned After Migration
     let originalOsRecords = new Map<string, any>();
     let osUploadInfo = new Map<string, UploadRecordResult>();
-    const exportComponentType = this.exportType === OmniScriptExportType.IP ? 'Integration Procedures' : 'Omniscripts';
+    const exportComponentType = this.getName() as ComponentType;
     Logger.log(this.messages.getMessage('foundOmniScriptsToMigrate', [omniscripts.length, exportComponentType]));
     const progressBarType: ComponentType = exportComponentType;
     const progressBar = createProgressBar('Migrating', progressBarType);
@@ -1039,8 +1038,9 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
             }
           }
 
-          let finalKey = `${oldrecord[this.namespacePrefix + 'Type__c']}${oldrecord[this.namespacePrefix + 'SubType__c']
-            }${oldrecord[this.namespacePrefix + 'Language__c']}`;
+          let finalKey = `${oldrecord[this.namespacePrefix + 'Type__c']}${
+            oldrecord[this.namespacePrefix + 'SubType__c']
+          }${oldrecord[this.namespacePrefix + 'Language__c']}`;
 
           finalKey = finalKey.toLowerCase();
           if (storage.osStorage.has(finalKey)) {
@@ -1554,8 +1554,6 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       }
     }
   }
-
-
 
   private sleep() {
     return new Promise((resolve) => {

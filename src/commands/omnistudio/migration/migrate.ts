@@ -132,7 +132,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     DebugTimer.getInstance().start();
 
     // Handle related objects processing
-    const relatedObjectsResult = await this.processRelatedObjects(relatedObjects, conn);
+    const relatedObjectsResult = await this.processRelatedObjects(relatedObjects, conn, namespace);
     const { projectPath, objectsToProcess, targetApexNamespace, isExperienceBundleMetadataAPIProgramaticallyEnabled } =
       relatedObjectsResult;
 
@@ -227,7 +227,8 @@ export default class Migrate extends OmniStudioBaseCommand {
 
   private async processRelatedObjects(
     relatedObjects: string,
-    conn: Connection
+    conn: Connection,
+    namespace: string
   ): Promise<{
     projectPath: string;
     objectsToProcess: string[];
@@ -263,7 +264,7 @@ export default class Migrate extends OmniStudioBaseCommand {
         Logger.logVerbose(
           'The objects to process after handleExpSitePrerequisite are ' + JSON.stringify(objectsToProcess)
         );
-      } // TODO - What if general consent is no 
+      } // TODO - What if general consent is no
     }
 
     return { projectPath, objectsToProcess, targetApexNamespace, isExperienceBundleMetadataAPIProgramaticallyEnabled };
@@ -386,7 +387,6 @@ export default class Migrate extends OmniStudioBaseCommand {
     allVersions: any
   ): MigrationTool[] {
     if (!migrateOnly) {
-      // Correct order: DataMapper -> OmniScript/IP -> FlexCard -> GlobalAutoNumber
       migrationObjects = [
         new DataRaptorMigrationTool(namespace, conn, this.logger, messages, this.ux),
         // Integration Procedure
