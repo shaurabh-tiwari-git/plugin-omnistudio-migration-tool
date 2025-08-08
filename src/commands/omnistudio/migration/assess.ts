@@ -177,7 +177,7 @@ export default class Assess extends OmniStudioBaseCommand {
       messages,
       this.ux,
       objectsToProcess,
-      false,
+      undefined,
       undefined
     );
 

@@ -29,12 +29,13 @@ describe('PostMigrate', () => {
   const testRelatedObjectsToProcess = ['Flexipage', 'expsites'];
   const testProjectPath = '/test/project/path';
   const testUsername = 'test@example.com';
+  const testAuthKey = 'test-auth-key';
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
 
     // Set up environment variable for Deployer
-    process.env.OMA_AUTH_KEY = 'test-auth-key';
+    process.env.OMA_AUTH_KEY = testAuthKey;
 
     // Mock org
     org = {
@@ -103,7 +104,7 @@ describe('PostMigrate', () => {
       messages,
       ux,
       testRelatedObjectsToProcess,
-      true,
+      { autoDeploy: true, authKey: testAuthKey },
       testProjectPath
     );
   });
@@ -119,7 +120,8 @@ describe('PostMigrate', () => {
       expect((postMigrate as any).org).to.equal(org);
       expect((postMigrate as any).relatedObjectsToProcess).to.deep.equal(testRelatedObjectsToProcess);
       expect((postMigrate as any).projectPath).to.equal(testProjectPath);
-      expect((postMigrate as any).autoDeploy).to.be.true;
+      expect((postMigrate as any).deploymentConfig.autoDeploy).to.be.true;
+      expect((postMigrate as any).deploymentConfig.authKey).to.equal(testAuthKey);
       expect((postMigrate as any).namespace).to.equal(testNamespace);
       expect((postMigrate as any).connection).to.equal(connection);
       expect((postMigrate as any).logger).to.equal(logger);
@@ -128,35 +130,6 @@ describe('PostMigrate', () => {
     });
 
     it('should initialize with autoDeploy set to false', () => {
-      const postMigrateNoDeploy = new PostMigrate(
-        org,
-        testNamespace,
-        connection,
-        logger,
-        messages,
-        ux,
-        testRelatedObjectsToProcess,
-        false,
-        testProjectPath
-      );
-
-      expect((postMigrateNoDeploy as any).autoDeploy).to.be.false;
-    });
-  });
-
-  describe('deploy', () => {
-    it('should deploy when autoDeploy is true', () => {
-      // Arrange
-      const deployerStub = sandbox.stub(Deployer.prototype, 'deploy');
-
-      // Act
-      postMigrate.deploy();
-
-      // Assert
-      expect(deployerStub.called).to.be.true;
-    });
-
-    it('should not deploy when autoDeploy is false', () => {
       // Arrange
       const postMigrateNoDeploy = new PostMigrate(
         org,
@@ -166,7 +139,7 @@ describe('PostMigrate', () => {
         messages,
         ux,
         testRelatedObjectsToProcess,
-        false,
+        { autoDeploy: false, authKey: testAuthKey },
         testProjectPath
       );
       const deployerStub = sandbox.stub(Deployer.prototype, 'deploy');
@@ -175,6 +148,7 @@ describe('PostMigrate', () => {
       postMigrateNoDeploy.deploy();
 
       // Assert
+      expect((postMigrateNoDeploy as any).deploymentConfig.autoDeploy).to.be.false;
       expect(deployerStub.called).to.be.false;
     });
 
@@ -308,7 +282,7 @@ describe('PostMigrate', () => {
         messages,
         ux,
         undefined as any,
-        true,
+        { autoDeploy: true, authKey: testAuthKey },
         testProjectPath
       );
       const userActionMessage: string[] = [];
@@ -339,7 +313,7 @@ describe('PostMigrate', () => {
         messages,
         ux,
         null as any,
-        true,
+        { autoDeploy: true, authKey: testAuthKey },
         testProjectPath
       );
       const userActionMessage: string[] = [];
@@ -370,7 +344,7 @@ describe('PostMigrate', () => {
         messages,
         ux,
         ['Flexipage'], // No expsites
-        true,
+        { autoDeploy: true, authKey: testAuthKey },
         testProjectPath
       );
       const userActionMessage: string[] = [];
@@ -466,7 +440,7 @@ describe('PostMigrate', () => {
         messages,
         ux,
         testRelatedObjectsToProcess,
-        false,
+        { autoDeploy: false, authKey: testAuthKey },
         testProjectPath
       );
       const deployerStub = sandbox.stub(Deployer.prototype, 'deploy');

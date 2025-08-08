@@ -44,7 +44,7 @@ describe('Deployer', () => {
     sandbox.stub(sfProject, 'installDependency');
     sandbox.stub(sfProject, 'deployFromManifest');
 
-    deployer = new Deployer(testProjectPath, messages, testUsername);
+    deployer = new Deployer(testProjectPath, messages, testUsername, testAuthKey);
   });
 
   afterEach(() => {
@@ -61,24 +61,6 @@ describe('Deployer', () => {
       expect((deployer as any).authKey).to.equal(testAuthKey);
       expect((deployer as any).messages).to.equal(messages);
       expect((deployer as any).requiredNodeDependency).to.equal('@omnistudio/omniscript_customization@250.0.0');
-    });
-
-    it('should throw error when OMA_AUTH_KEY environment variable is not set', () => {
-      // Remove the environment variable
-      delete process.env.OMA_AUTH_KEY;
-
-      expect(() => {
-        new Deployer(testProjectPath, messages, testUsername);
-      }).to.throw('OMA_AUTH_KEY environment variable is not set');
-    });
-
-    it('should throw error when OMA_AUTH_KEY environment variable is empty', () => {
-      // Set empty environment variable
-      Object.assign(process.env, { OMA_AUTH_KEY: '' });
-
-      expect(() => {
-        new Deployer(testProjectPath, messages, testUsername);
-      }).to.throw('OMA_AUTH_KEY environment variable is not set');
     });
   });
 
@@ -152,10 +134,6 @@ describe('Deployer', () => {
   });
 
   describe('private properties', () => {
-    it('should have correct authEnvKey', () => {
-      expect((deployer as any).authEnvKey).to.equal('OMA_AUTH_KEY');
-    });
-
     it('should have correct requiredNodeDependency', () => {
       expect((deployer as any).requiredNodeDependency).to.equal('@omnistudio/omniscript_customization@250.0.0');
     });

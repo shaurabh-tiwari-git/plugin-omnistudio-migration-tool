@@ -33,6 +33,8 @@ import { GlobalAutoNumberMigrationTool } from '../../../migration/globalautonumb
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
 
+const authEnvKey = 'OMA_AUTH_KEY';
+
 // Load the specific messages for this file. Messages from @salesforce/command, @salesforce/core,
 // or any library that is using the messages framework can also be loaded this way.
 const messages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'migrate');
@@ -135,7 +137,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     const preMigrate: PreMigrate = new PreMigrate(this.org, namespace, conn, this.logger, messages, this.ux);
     const isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean } = { value: false };
 
-    let autoDeploy = false;
+    let deploymentConfig = { autoDeploy: false, authKey: undefined };
     if (relatedObjects) {
       const relatedObjectMigrationResult = await this.migrateRelatedObjects(
         relatedObjects,
@@ -146,7 +148,7 @@ export default class Migrate extends OmniStudioBaseCommand {
       objectsToProcess = relatedObjectMigrationResult.objectsToProcess;
       projectPath = relatedObjectMigrationResult.projectPath;
       targetApexNamespace = relatedObjectMigrationResult.targetApexNamespace;
-      autoDeploy = relatedObjectMigrationResult.autoDeploy;
+      deploymentConfig = relatedObjectMigrationResult.deploymentConfig;
     }
 
     Logger.log(messages.getMessage('migrationInitialization', [String(namespace)]));
@@ -192,15 +194,9 @@ export default class Migrate extends OmniStudioBaseCommand {
       messages,
       this.ux,
       objectsToProcess,
-      autoDeploy,
+      deploymentConfig,
       projectPath
     );
-
-    try {
-      postMigrate.deploy();
-    } catch (error) {
-      Logger.error(messages.getMessage('errorDeployingComponents'), error);
-    }
 
     if (!migrateOnly) {
       await postMigrate.setDesignersToUseStandardDataModel(namespace, actionItems);
@@ -216,11 +212,17 @@ export default class Migrate extends OmniStudioBaseCommand {
 
     generatePackageXml.createChangeList(
       relatedObjectMigrationResult.apexAssessmentInfos,
-      relatedObjectMigrationResult.lwcAssessmentInfos,
+      deploymentConfig.autoDeploy && deploymentConfig.authKey ? relatedObjectMigrationResult.lwcAssessmentInfos : [],
       relatedObjectMigrationResult.experienceSiteAssessmentInfos,
       relatedObjectMigrationResult.flexipageAssessmentInfos,
       this.org.getConnection().version
     );
+
+    try {
+      postMigrate.deploy();
+    } catch (error) {
+      Logger.error(messages.getMessage('errorDeployingComponents'), error);
+    }
 
     await ResultsBuilder.generateReport(
       objectMigrationResults,
@@ -241,7 +243,12 @@ export default class Migrate extends OmniStudioBaseCommand {
     preMigrate: PreMigrate,
     conn: Connection,
     isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean }
-  ): Promise<{ objectsToProcess: string[]; projectPath: string; targetApexNamespace: string; autoDeploy: boolean }> {
+  ): Promise<{
+    objectsToProcess: string[];
+    projectPath: string;
+    targetApexNamespace: string;
+    deploymentConfig: { autoDeploy: boolean; authKey: string | undefined };
+  }> {
     const validOptions = [Constants.Apex, Constants.ExpSites, Constants.FlexiPage];
     const objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
     // Validate input
@@ -252,7 +259,7 @@ export default class Migrate extends OmniStudioBaseCommand {
       }
     }
 
-    const autoDeploy = await this.getAutoDeployConsent();
+    const deploymentConfig = await this.getAutoDeployConsent();
     let projectPath: string;
     let targetApexNamespace: string;
     // Check for general consent to make modifications with OMT
@@ -271,10 +278,10 @@ export default class Migrate extends OmniStudioBaseCommand {
       );
     }
 
-    return { objectsToProcess, projectPath, targetApexNamespace, autoDeploy };
+    return { objectsToProcess, projectPath, targetApexNamespace, deploymentConfig };
   }
 
-  private async getAutoDeployConsent(): Promise<boolean> {
+  private async getAutoDeployConsent(): Promise<{ autoDeploy: boolean; authKey: string | undefined }> {
     const askWithTimeOut = PromptUtil.askWithTimeOut(messages);
     let validResponse = false;
     let consent = false;
@@ -299,7 +306,18 @@ export default class Migrate extends OmniStudioBaseCommand {
       }
     }
 
-    return consent;
+    const deploymentConfig = {
+      autoDeploy: consent,
+      authKey: undefined,
+    };
+    if (consent) {
+      deploymentConfig.authKey = process.env[authEnvKey];
+      if (!deploymentConfig.authKey) {
+        Logger.error(messages.getMessage('authKeyEnvVarNotSet'));
+      }
+    }
+
+    return deploymentConfig;
   }
 
   private async getMigrationConsent(): Promise<boolean> {

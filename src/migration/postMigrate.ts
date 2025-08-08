@@ -14,7 +14,7 @@ export class PostMigrate extends BaseMigrationTool {
   private readonly org: Org;
   private readonly relatedObjectsToProcess: string[];
   private readonly projectPath: string;
-  private readonly autoDeploy: boolean;
+  private readonly deploymentConfig: { autoDeploy: boolean; authKey: string | undefined };
 
   // Source Custom Object Names
   constructor(
@@ -25,13 +25,13 @@ export class PostMigrate extends BaseMigrationTool {
     messages: Messages,
     ux: UX,
     relatedObjectsToProcess: string[],
-    autoDeploy: boolean,
+    deploymentConfig: { autoDeploy: boolean; authKey: string | undefined },
     projectPath: string
   ) {
     super(namespace, connection, logger, messages, ux);
     this.org = org;
     this.relatedObjectsToProcess = relatedObjectsToProcess;
-    this.autoDeploy = autoDeploy;
+    this.deploymentConfig = deploymentConfig;
     this.projectPath = projectPath;
   }
 
@@ -86,11 +86,16 @@ export class PostMigrate extends BaseMigrationTool {
   }
 
   public deploy(): void {
-    if (!this.autoDeploy) {
+    if (!this.deploymentConfig.autoDeploy) {
       return;
     }
     try {
-      const deployer = new Deployer(this.projectPath, this.messages, this.org.getUsername());
+      const deployer = new Deployer(
+        this.projectPath,
+        this.messages,
+        this.org.getUsername(),
+        this.deploymentConfig.authKey
+      );
       deployer.deploy();
     } catch (error) {
       Logger.error(this.messages.getMessage('errorDeployingComponents'), error);
