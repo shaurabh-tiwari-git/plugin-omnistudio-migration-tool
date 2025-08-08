@@ -39,7 +39,7 @@ export class DRAssessmentReporter {
   public static getSummaryData(dataRaptorAssessmentInfos: DataRaptorAssessmentInfo[]): SummaryItemDetailParam[] {
     return [
       {
-        name: 'Can be Automated',
+        name: 'Ready for migration',
         count: dataRaptorAssessmentInfos.filter(
           (dataRaptorAssessmentInfo) =>
             !dataRaptorAssessmentInfo.warnings || dataRaptorAssessmentInfo.warnings.length === 0
@@ -47,7 +47,7 @@ export class DRAssessmentReporter {
         cssClass: 'text-success',
       },
       {
-        name: 'Has Warnings',
+        name: 'Warnings',
         count: dataRaptorAssessmentInfos.filter(
           (dataRaptorAssessmentInfo) =>
             dataRaptorAssessmentInfo.warnings && dataRaptorAssessmentInfo.warnings.length > 0
@@ -55,7 +55,7 @@ export class DRAssessmentReporter {
         cssClass: 'text-warning',
       },
       {
-        name: 'Has Errors',
+        name: 'Failed',
         count: dataRaptorAssessmentInfos.filter(
           (dataRaptorAssessmentInfo) => dataRaptorAssessmentInfo.errors && dataRaptorAssessmentInfo.errors.length > 0
         ).length,
@@ -175,7 +175,7 @@ export class DRAssessmentReporter {
           false,
           undefined,
           undefined,
-          dataRaptorAssessmentInfo.migrationStatus === 'Can be Automated' ? 'text-success' : 'text-error'
+          dataRaptorAssessmentInfo.migrationStatus === 'Ready for migration' ? 'text-success' : 'text-error'
         ),
         createRowDataParam(
           'summary',
