@@ -101,7 +101,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
       (dr) => dr[this.namespacePrefix + 'Type__c'] !== 'Migration'
     ).length;
     Logger.log(this.messages.getMessage('foundDataRaptorsToMigrate', [nonMigrationDataRaptors]));
-    const progressBar = createProgressBar('Migrating', 'Data Mapper');
+    const progressBar = createProgressBar('Migrating', 'DataMappers');
     progressBar.start(nonMigrationDataRaptors, progressCounter);
     for (let dr of dataRaptors) {
       // Skip if Type is "Migration"
@@ -237,7 +237,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     const existingDataRaptorNames = new Set<string>();
     const dataRaptorItemsMap = await this.getAllDRToItemsMap();
 
-    const progressBar = createProgressBar('Assessing', 'Data Mapper');
+    const progressBar = createProgressBar('Assessing', 'DataMappers');
     let progressCounter = 0;
     let nonMigrationDataRaptors = dataRaptors.filter(
       (dr) => dr[this.namespacePrefix + 'Type__c'] !== 'Migration'

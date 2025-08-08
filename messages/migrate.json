@@ -65,9 +65,9 @@
   "migratingComponent": "Migrating: %s",
   "migrationCompleted": "Migration completed: %s",
   "formulaSyntaxError": "There was some problem while updating the formula syntax, please check the all the formula's syntax once : %s",
-  "foundDataRaptorsToMigrate": "Found %s DataRaptors to migrate",
+  "foundDataRaptorsToMigrate": "Found %s DataMappers to migrate",
   "foundFlexCardsToMigrate": "Found %s FlexCards to migrate",
-  "foundOmniScriptsToMigrate": "Found %s OmniScripts and Integration Procedures to migrate",
+  "foundOmniScriptsToMigrate": "Found %s %s to migrate",
   "allVersionsInfo": "allVersions : %s",
   "migrationInitialization": "Migration Initialization: Using namespace: %s",
   "apiVersionInfo": "API Version: %s",
@@ -94,7 +94,7 @@
   "packageSelectionPrompt": "Enter the number of the package to use (1-%s):",
   "invalidPackageSelection": "Invalid selection. Please enter a number between 1 and %s.",
   "selectedPackage": "Selected package: %s (Version: %s)",
-  "dataRaptorNameChangeMessage": "DataRaptor reference %s will be changed to %s during migration.",
+  "dataRaptorNameChangeMessage": "DataMapper reference %s will be changed to %s during migration.",
   "integrationProcedureNameChangeMessage": "Integration Procedure reference %s will be changed to %s during migration.",
   "integrationProcedureManualUpdateMessage": "Integration Procedure reference %s may need manual updates after migration.",
   "cardAuthorNameChangeMessage": "Card author name has been modified to fit naming rules: %s",
@@ -115,5 +115,6 @@
   "labelStatusComplete": "Complete",
   "migrationConsentNotGiven": "Couldn't confirm whether assessment errors are resolved",
   "migrationConsentMessage": "Ensure that all items in the assessment report are marked as Green before proceeding with the migration. Do you want to proceed?",
+  "truncationFailed": "Truncation failed for %s: %s",
   "invalidTypeMigrateErrorMessage": "We couldn't migrate your Omnistudio components in the %s namespace. Select the correct namespace and try again"
 }

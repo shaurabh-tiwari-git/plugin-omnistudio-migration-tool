@@ -81,6 +81,7 @@ export default class Migrate extends OmniStudioBaseCommand {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line complexity
   public async runMigration(): Promise<any> {
     let apiVersion = this.flags.apiversion as string;
     const migrateOnly = (this.flags.only || '') as string;
@@ -167,6 +168,12 @@ export default class Migrate extends OmniStudioBaseCommand {
     // We need to truncate the standard objects first
     let objectMigrationResults = await this.truncateObjects(migrationObjects, debugTimer);
     const allTruncateComplete = objectMigrationResults.length === 0;
+
+    // Log truncation errors if any exist
+    if (!allTruncateComplete) {
+      this.logTruncationErrors(objectMigrationResults);
+      return;
+    }
 
     if (allTruncateComplete) {
       objectMigrationResults = await this.migrateObjects(migrationObjects, debugTimer, namespace);
@@ -280,6 +287,8 @@ export default class Migrate extends OmniStudioBaseCommand {
     namespace: string
   ): Promise<MigratedObject[]> {
     let objectMigrationResults: MigratedObject[] = [];
+    // Migrate in correct dependency order
+    // DM -> IP -> OS -> FC
     for (const cls of migrationObjects.reverse()) {
       try {
         Logger.log(messages.getMessage('migratingComponent', [cls.getName()]));
@@ -319,8 +328,19 @@ export default class Migrate extends OmniStudioBaseCommand {
     if (!migrateOnly) {
       migrationObjects = [
         new DataRaptorMigrationTool(namespace, conn, this.logger, messages, this.ux),
+        // Integration Procedure
         new OmniScriptMigrationTool(
-          OmniScriptExportType.All,
+          OmniScriptExportType.IP,
+          namespace,
+          conn,
+          this.logger,
+          messages,
+          this.ux,
+          allVersions
+        ),
+        // Omniscript
+        new OmniScriptMigrationTool(
+          OmniScriptExportType.OS,
           namespace,
           conn,
           this.logger,
@@ -432,5 +452,13 @@ export default class Migrate extends OmniStudioBaseCommand {
     }
 
     return mergedResults;
+  }
+
+  private logTruncationErrors(objectMigrationResults: MigratedObject[]): void {
+    objectMigrationResults.forEach((result) => {
+      if (result.errors && result.errors.length > 0) {
+        Logger.error(messages.getMessage('truncationFailed', [result.name, result.errors.join(', ')]));
+      }
+    });
   }
 }

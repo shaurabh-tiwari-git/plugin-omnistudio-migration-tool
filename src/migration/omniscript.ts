@@ -12,7 +12,7 @@ import {
   QueryTools,
   SortDirection,
 } from '../utils';
-import { BaseMigrationTool } from './base';
+import { BaseMigrationTool, ComponentType } from './base';
 import {
   InvalidEntityTypeError,
   MigrationResult,
@@ -65,7 +65,11 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
   }
 
   getName(): string {
-    return 'OmniScript / Integration Procedures';
+    if (this.exportType === OmniScriptExportType.IP) {
+      return 'Integration Procedures';
+    } else if (this.exportType === OmniScriptExportType.OS) {
+      return 'Omniscripts';
+    }
   }
 
   getRecordName(record: string) {
@@ -189,9 +193,11 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     flexCardAssessmentInfos: FlexCardAssessmentInfo[]
   ): Promise<OmniAssessmentInfo> {
     try {
-      Logger.log(this.messages.getMessage('startingOmniScriptAssessment'));
+      const exportComponentType =
+        this.exportType === OmniScriptExportType.IP ? 'Integration Procedures' : 'Omniscripts';
+      Logger.log(this.messages.getMessage('startingOmniScriptAssessment', [exportComponentType]));
       const omniscripts = await this.getAllOmniScripts();
-      Logger.log(this.messages.getMessage('foundOmniScriptsToAssess', [omniscripts.length]));
+      Logger.log(this.messages.getMessage('foundOmniScriptsToAssess', [omniscripts.length, exportComponentType]));
 
       const omniAssessmentInfos = await this.processOmniComponents(
         omniscripts,
@@ -220,7 +226,9 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     const existingDataRaptorNames = new Set(dataRaptorAssessmentInfos.map((info) => info.name));
     const existingFlexCardNames = new Set(flexCardAssessmentInfos.map((info) => info.name));
 
-    const progressBar = createProgressBar('Assessing', 'Omniscript and Integration Procedure');
+    const progressBarType: ComponentType =
+      this.exportType === OmniScriptExportType.IP ? 'Integration Procedures' : 'Omniscripts';
+    const progressBar = createProgressBar('Assessing', progressBarType);
     let progressCounter = 0;
     progressBar.start(omniscripts.length, progressCounter);
     // First, collect all OmniScript names from the omniscripts array
@@ -509,8 +517,10 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     // Variables to be returned After Migration
     let originalOsRecords = new Map<string, any>();
     let osUploadInfo = new Map<string, UploadRecordResult>();
-    Logger.log(this.messages.getMessage('foundOmniScriptsToMigrate', [omniscripts.length]));
-    const progressBar = createProgressBar('Migrating', 'Omniscript and Integration Procedure');
+    const exportComponentType = this.exportType === OmniScriptExportType.IP ? 'Integration Procedures' : 'Omniscripts';
+    Logger.log(this.messages.getMessage('foundOmniScriptsToMigrate', [omniscripts.length, exportComponentType]));
+    const progressBarType: ComponentType = exportComponentType;
+    const progressBar = createProgressBar('Migrating', progressBarType);
     let progressCounter = 0;
     progressBar.start(omniscripts.length, progressCounter);
 

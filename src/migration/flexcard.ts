@@ -86,7 +86,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     const cards = await this.getAllActiveCards();
     Logger.log(this.messages.getMessage('foundFlexCardsToMigrate', [cards.length]));
 
-    const progressBar = createProgressBar('Migrating', 'Flexcard');
+    const progressBar = createProgressBar('Migrating', 'Flexcards');
     // Save the Vlocity Cards in OmniUiCard
     const cardUploadResponse = await this.uploadAllCards(cards, progressBar);
 
@@ -123,7 +123,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   public async processCardComponents(flexCards: AnyJson[]): Promise<FlexCardAssessmentInfo[]> {
     const flexCardAssessmentInfos: FlexCardAssessmentInfo[] = [];
     let progressCounter = 0;
-    const progressBar = createProgressBar('Assessing', 'Flexcard');
+    const progressBar = createProgressBar('Assessing', 'Flexcards');
     progressBar.start(flexCards.length, progressCounter);
     const uniqueNames = new Set<string>();
 
