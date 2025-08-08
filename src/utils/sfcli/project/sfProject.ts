@@ -36,10 +36,12 @@ export class sfProject {
   }
 
   public static deployFromManifest(manifestPath: string, username: string): void {
-    Logger.logVerbose(messages.getMessage('deployingFromManifest'));
-    const cmd = `sf project deploy start --manifest ${manifestPath} --target-org ${username}`;
-    sfProject.executeCommand(cmd);
-    Logger.logVerbose(messages.getMessage('manifestDeployed'));
+    Logger.log(messages.getMessage('deployingFromManifest'));
+    const cmd = `sf project deploy start --manifest "${manifestPath}" --target-org "${username}" --async`;
+    Logger.log(cmd);
+    const cmdOutput = sfProject.executeCommand(cmd);
+    Logger.logVerbose(`Deploy output: ${cmdOutput}`);
+    sfProject.processOutput(cmdOutput);
   }
 
   public static createNPMConfigFile(authKey: string): void {
@@ -51,9 +53,20 @@ export class sfProject {
     Logger.logVerbose(messages.getMessage('npmConfigFileCreated'));
   }
 
-  private static executeCommand(cmd: string): void {
+  private static processOutput(cmdOutput: string): void {
     try {
-      cli.exec(`${cmd} --json`);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const jsonOutput = JSON.parse(cmdOutput);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      Logger.log(messages.getMessage('manifestDeployementStarted', [jsonOutput.result?.id]));
+    } catch (error) {
+      Logger.error(messages.getMessage('manifestDeployFailed'));
+    }
+  }
+
+  private static executeCommand(cmd: string): string {
+    try {
+      return cli.exec(`${cmd} --json`);
     } catch (error) {
       Logger.error(messages.getMessage('sfProjectCommandError', [String(error)]));
       throw error;

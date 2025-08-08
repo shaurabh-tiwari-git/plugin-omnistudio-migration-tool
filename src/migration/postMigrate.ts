@@ -9,6 +9,8 @@ import { Constants } from '../utils/constants/stringContants';
 import { OrgPreferences } from '../utils/orgPreferences';
 import { BaseMigrationTool } from './base';
 import { Deployer } from './deployer';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export class PostMigrate extends BaseMigrationTool {
   private readonly org: Org;
@@ -86,7 +88,7 @@ export class PostMigrate extends BaseMigrationTool {
   }
 
   public deploy(): void {
-    if (!this.deploymentConfig.autoDeploy) {
+    if (!this.deploymentConfig.autoDeploy || !fs.existsSync(path.join(process.cwd(), 'package.xml'))) {
       return;
     }
     try {

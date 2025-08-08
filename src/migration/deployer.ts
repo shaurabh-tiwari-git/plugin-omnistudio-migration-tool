@@ -19,13 +19,19 @@ export class Deployer {
   }
 
   public deploy(): void {
+    const pwd = shell.pwd();
     shell.cd(this.projectPath);
-    if (this.authKey) {
-      sfProject.createNPMConfigFile(this.authKey);
-      Logger.logVerbose(this.messages.getMessage('installingRequiredDependencies'));
-      sfProject.installDependency();
-      sfProject.installDependency(this.requiredNodeDependency);
+    try {
+      if (this.authKey) {
+        sfProject.createNPMConfigFile(this.authKey);
+        Logger.logVerbose(this.messages.getMessage('installingRequiredDependencies'));
+        sfProject.installDependency();
+        sfProject.installDependency(this.requiredNodeDependency);
+      }
+      Logger.log(path.join(pwd.toString(), 'package.xml'));
+      sfProject.deployFromManifest(path.join(pwd.toString(), 'package.xml'), this.username);
+    } finally {
+      shell.cd(pwd);
     }
-    sfProject.deployFromManifest(path.join(process.cwd(), 'package.xml'), this.username);
   }
 }

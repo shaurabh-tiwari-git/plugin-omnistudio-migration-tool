@@ -203,10 +203,12 @@
   "installingDependency": "Installing node dependency %s",
   "dependencyInstalled": "Node dependency %s installed",
   "deployingFromManifest": "Deploying from metadata packages",
-  "manifestDeployed": "Metadata packages are deployed",
+  "manifestDeployFailed": "Metadata packages deployment failed, check logs or status for more details",
   "installingRequiredDependencies": "Installing required node dependencies",
   "creatingNPMConfigFile": "Creating npm config file",
   "npmConfigFileCreated": "Npm config file created",
   "authKeyEnvVarNotSet": "OMA_AUTH_KEY environment variable is not set, LWCs will not be deployed",
-  "experienceSiteException": "Exception occurred while processing experience sites"
+  "experienceSiteException": "Exception occurred while processing experience sites",
+  "noMetadataToDeploy": "No metadata to deploy",
+  "manifestDeployementStarted": "Manifest deployment started with id: %s"
 }

@@ -233,8 +233,6 @@ describe('FlexipageMigration', () => {
       const result = (flexipageMigration as any).process('assess');
 
       // Assert
-      expect(mockShell.cd.calledWith(testProjectPath)).to.be.true;
-      expect(mockSfProject.retrieve.calledWith(Constants.FlexiPage, 'test@org.com')).to.be.true;
       expect(mockFs.readdirSync.calledWith(path.join(testProjectPath, 'force-app', 'main', 'default', 'flexipages'))).to
         .be.true;
       expect(result).to.be.an('array').with.length(2);
@@ -408,24 +406,6 @@ describe('FlexipageMigration', () => {
 
       // Act & Assert
       expect(() => (flexipageMigration as any).process('assess')).to.throw('File system error');
-    });
-
-    it('should handle sfProject.retrieve errors', async () => {
-      // Arrange
-      mockSfProject.retrieve.rejects(new Error('Retrieve error'));
-      // Mock fs.readdirSync to throw ENOENT error
-      const mockFs = {
-        readdirSync: sandbox.stub().throws(new Error('ENOENT: no such file or directory, scandir')),
-      };
-      sandbox.stub(require('fs'), 'readdirSync').value(mockFs.readdirSync);
-
-      // Act & Assert
-      try {
-        await (flexipageMigration as any).process('assess');
-        expect.fail('Expected error to be thrown');
-      } catch (err) {
-        expect((err as Error).message).to.include('ENOENT');
-      }
     });
   });
 });

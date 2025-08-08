@@ -215,7 +215,8 @@ export default class Migrate extends OmniStudioBaseCommand {
       deploymentConfig.autoDeploy && deploymentConfig.authKey ? relatedObjectMigrationResult.lwcAssessmentInfos : [],
       relatedObjectMigrationResult.experienceSiteAssessmentInfos,
       relatedObjectMigrationResult.flexipageAssessmentInfos,
-      this.org.getConnection().version
+      this.org.getConnection().version,
+      messages
     );
 
     try {
@@ -315,7 +316,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     if (consent && includeLwc) {
       deploymentConfig.authKey = process.env[authEnvKey];
       if (!deploymentConfig.authKey) {
-        Logger.error(messages.getMessage('authKeyEnvVarNotSet'));
+        Logger.warn(messages.getMessage('authKeyEnvVarNotSet'));
       }
     }
 
