@@ -5,6 +5,7 @@ import { Messages } from '@salesforce/core';
 import { pushAssestUtilites } from '../file/fileUtil';
 import {
   ApexAssessmentInfo,
+  LWCAssessmentInfo,
   MigratedObject,
   MigratedRecordInfo,
   RelatedObjectAssesmentInfo,
@@ -13,6 +14,7 @@ import {
 } from '../interfaces';
 import {
   ReportParam,
+  ReportRowParam,
   SummaryItemDetailParam,
   SummaryItemParam,
   DashboardParam,
@@ -26,7 +28,6 @@ import { getMigrationHeading } from '../stringUtils';
 import { Constants } from '../constants/stringContants';
 import { reportingHelper } from './reportingHelper';
 const resultsDir = path.join(process.cwd(), 'migration_report');
-// const lwcConstants = { componentName: 'lwc', title: 'LWC Components Migration Result' };
 const migrationReportHTMLfileName = 'dashboard.html';
 const flexipageFileName = 'flexipage.html';
 const templateDir = 'templates';
@@ -36,6 +37,7 @@ const reportTemplateFilePath = path.join(__dirname, '..', '..', templateDir, rep
 const dashboardTemplateFilePath = path.join(__dirname, '..', '..', templateDir, dashboardTemplateName);
 const apexFileName = 'apex.html';
 const experienceSiteFileName = 'experienceSite.html';
+const lwcFileName = 'lwc.html';
 
 export class ResultsBuilder {
   private static rowClass = 'data-row-';
@@ -231,6 +233,9 @@ export class ResultsBuilder {
     if (objectsToProcess.includes(Constants.FlexiPage)) {
       this.generateReportForFlexipage(result.flexipageAssessmentInfos, instanceUrl, orgDetails, messages);
     }
+    if (objectsToProcess.includes(Constants.LWC)) {
+      this.generateReportForLwc(result.lwcAssessmentInfos, instanceUrl, orgDetails, messages);
+    }
   }
 
   private static generateReportForExperienceSites(
@@ -423,7 +428,7 @@ export class ResultsBuilder {
       },
       assessmentDate: new Date().toLocaleString(),
       total: result.length,
-      filterGroups: [createFilterGroupParam('Filter by Errors', 'warnings', ['Has Errors', 'Has No Errors'])],
+      filterGroups: [createFilterGroupParam('Filter by Errors', 'warnings', ['Failed', 'Successfully Completed'])],
       headerGroups: [
         {
           header: [
@@ -482,19 +487,17 @@ export class ResultsBuilder {
           ),
           createRowDataParam(
             'warnings',
-            item.warnings ? 'Has Errors' : 'Has No Errors',
+            item.warnings.length > 0 ? 'Failed' : 'Successfully Completed',
             false,
             1,
             1,
             false,
             undefined,
-            item.warnings ? reportingHelper.decorateErrors(item.warnings) : []
+            item.warnings.length > 0 ? 'Failed' : 'Successfully Completed',
+            item.warnings.length > 0 ? 'text-error' : 'text-success'
           ),
         ],
       })),
-      rollbackFlags: (orgDetails.rollbackFlags || []).includes('RollbackApexChanges')
-        ? ['RollbackApexChanges']
-        : undefined,
     };
 
     const reportTemplate = fs.readFileSync(reportTemplateFilePath, 'utf8');
@@ -502,6 +505,124 @@ export class ResultsBuilder {
     fs.writeFileSync(path.join(resultsDir, apexFileName), html);
 
     // call generate html from template
+  }
+
+  private static generateReportForLwc(
+    result: LWCAssessmentInfo[],
+    instanceUrl: string,
+    orgDetails: OmnistudioOrgDetails,
+    messages: Messages
+  ): void {
+    Logger.captureVerboseData('lwc data', result);
+    const data: ReportParam = {
+      title: 'LWC Migration Report',
+      heading: 'LWC Migration Report',
+      org: {
+        name: orgDetails.orgDetails.Name,
+        id: orgDetails.orgDetails.Id,
+        namespace: orgDetails.packageDetails.namespace,
+        dataModel: orgDetails.dataModel,
+      },
+      assessmentDate: new Date().toLocaleString(),
+      total: result.length,
+      filterGroups: [
+        createFilterGroupParam('Filter By Migration Status', 'comments', ['Successfully Completed', 'Failed']),
+      ],
+      headerGroups: [
+        {
+          header: [
+            {
+              name: 'Name',
+              colspan: 1,
+              rowspan: 1,
+            },
+            {
+              name: 'File Reference',
+              colspan: 1,
+              rowspan: 1,
+            },
+            {
+              name: 'File Diff',
+              colspan: 1,
+              rowspan: 1,
+            },
+            {
+              name: 'Migration Status',
+              colspan: 1,
+              rowspan: 1,
+            },
+            {
+              name: 'Errors',
+              colspan: 1,
+              rowspan: 1,
+            },
+          ],
+        },
+      ],
+      rows: this.getLwcRowsForReport(result),
+    };
+
+    const reportTemplate = fs.readFileSync(reportTemplateFilePath, 'utf8');
+    const html = TemplateParser.generate(reportTemplate, data, messages);
+    fs.writeFileSync(path.join(resultsDir, lwcFileName), html);
+  }
+
+  private static getLwcRowsForReport(lwcAssessmentInfos: LWCAssessmentInfo[]): ReportRowParam[] {
+    const rows: ReportRowParam[] = [];
+
+    for (const lwcAssessmentInfo of lwcAssessmentInfos) {
+      for (const fileChangeInfo of lwcAssessmentInfo.changeInfos) {
+        rows.push({
+          rowId: `${this.rowClass}${this.rowId++}`,
+          data: [
+            createRowDataParam('name', lwcAssessmentInfo.name, true, 1, 1, false),
+            createRowDataParam(
+              'fileReference',
+              fileChangeInfo.name,
+              false,
+              1,
+              1,
+              true,
+              fileChangeInfo.path,
+              fileChangeInfo.name
+            ),
+            createRowDataParam(
+              'diff',
+              fileChangeInfo.name + 'diff',
+              false,
+              1,
+              1,
+              false,
+              undefined,
+              FileDiffUtil.getDiffHTML(fileChangeInfo.diff, fileChangeInfo.name)
+            ),
+            createRowDataParam(
+              'comments',
+              lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0 ? 'Failed' : 'Successfully Completed',
+              false,
+              1,
+              1,
+              false,
+              undefined,
+              lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0 ? 'Failed' : 'Successfully Completed',
+              lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0 ? 'text-error' : 'text-success'
+            ),
+            createRowDataParam(
+              'errors',
+              lwcAssessmentInfo.errors ? lwcAssessmentInfo.errors.join(', ') : '',
+              false,
+              1,
+              1,
+              false,
+              undefined,
+              lwcAssessmentInfo.errors ? reportingHelper.decorateErrors(lwcAssessmentInfo.errors) : []
+            ),
+          ],
+        });
+      }
+    }
+
+    return rows;
   }
 
   private static generateMigrationReportDashboard(
@@ -535,6 +656,14 @@ export class ResultsBuilder {
         total: relatedObjectMigrationResult.flexipageAssessmentInfos?.length || 0,
         data: this.getDifferentStatusDataForFlexipage(relatedObjectMigrationResult.flexipageAssessmentInfos),
         file: flexipageFileName,
+      });
+    }
+    if (objectsToProcess.includes(Constants.LWC)) {
+      relatedObjectSummaryItems.push({
+        name: 'Lightning Web Components',
+        total: relatedObjectMigrationResult.lwcAssessmentInfos?.length || 0,
+        data: this.getDifferentStatusDataForLwc(relatedObjectMigrationResult.lwcAssessmentInfos),
+        file: lwcFileName,
       });
     }
 
@@ -609,6 +738,23 @@ export class ResultsBuilder {
 
     return [
       { name: 'Completed', count: completed, cssClass: 'text-success' },
+      { name: 'Failed', count: failed, cssClass: 'text-error' },
+    ];
+  }
+
+  private static getDifferentStatusDataForLwc(data: LWCAssessmentInfo[]): SummaryItemDetailParam[] {
+    let completed = 0;
+    let failed = 0;
+    data.forEach((item) => {
+      if (!item.errors || item.errors.length === 0) {
+        completed++;
+      } else {
+        failed++;
+      }
+    });
+
+    return [
+      { name: 'Successfully Completed', count: completed, cssClass: 'text-success' },
       { name: 'Failed', count: failed, cssClass: 'text-error' },
     ];
   }

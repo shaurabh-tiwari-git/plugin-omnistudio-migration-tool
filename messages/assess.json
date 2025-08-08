@@ -78,7 +78,7 @@
   "foundApexFilesInDirectory": "Found %s Apex files in directory: %s",
   "skippingNonApexFile": "Skipping non-Apex file: %s",
   "processingApexFile": "Processing Apex file: %s",
-  "skippingApexFileFewChanges": "Skipping Apex file: %s as it has less than 3 changes",
+  "skippingApexFileNoChanges": "Skipping Apex file: %s as it has no changes",
   "successfullyProcessedApexFile": "Successfully processed Apex file: %s",
   "fileNoOmnistudioCalls": "File %s does not have any omnistudio calls or remote calls. No changes will be applied.",
   "fileAlreadyImplementsCallable": "file %s already implements callable no changes will be applied",

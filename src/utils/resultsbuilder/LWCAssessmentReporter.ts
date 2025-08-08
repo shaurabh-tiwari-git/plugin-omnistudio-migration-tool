@@ -1,146 +1,172 @@
-// import { LWCAssessmentInfo } from '../interfaces';
-// import { FileDiffUtil } from '../lwcparser/fileutils/FileDiffUtil';
-// import { generateHtmlTable } from '../reportGenerator/reportGenerator';
-// import {
-//   Filter,
-//   HeaderColumn,
-//   ReportFrameworkParameters,
-//   ReportHeaderFormat,
-//   TableColumn,
-// } from '../reportGenerator/reportInterfaces';
+import { LWCAssessmentInfo } from '../interfaces';
+import { Logger } from '../logger';
+import { OmnistudioOrgDetails } from '../orgUtils';
+import {
+  FilterGroupParam,
+  ReportHeaderGroupParam,
+  ReportParam,
+  ReportRowParam,
+  SummaryItemDetailParam,
+} from '../reportGenerator/reportInterfaces';
+import { createFilterGroupParam, createRowDataParam, getOrgDetailsForReport } from '../reportGenerator/reportUtil';
+import { FileDiffUtil } from '../lwcparser/fileutils/FileDiffUtil';
 
-// type RowType = {
-//   name: string;
-//   filePath: string;
-//   fileName: string;
-//   diff: string;
-//   migrationStatus: string;
-//   errors: string;
-// };
+export class LWCAssessmentReporter {
+  private static rowId = 0;
+  private static rowIdPrefix = 'lwc-row-data-';
+  public static getLwcAssessmentData(
+    lwcAssessmentInfos: LWCAssessmentInfo[],
+    omnistudioOrgDetails: OmnistudioOrgDetails
+  ): ReportParam {
+    Logger.captureVerboseData('lwc data:', lwcAssessmentInfos);
+    return {
+      title: 'LWC Assessment Report',
+      heading: 'LWC',
+      org: getOrgDetailsForReport(omnistudioOrgDetails),
+      assessmentDate: new Date().toString(),
+      total: lwcAssessmentInfos?.length || 0,
+      filterGroups: this.getFilterGroupsForReport(lwcAssessmentInfos),
+      headerGroups: this.getHeaderGroupsForReport(),
+      rows: this.getRowsForReport(lwcAssessmentInfos),
+    };
+  }
 
-// export class LWCAssessmentReporter {
-//   public static generateLwcAssesment(
-//     lwcAssessmentInfos: LWCAssessmentInfo[],
-//     instanceUrl: string,
-//     org: ReportHeaderFormat[]
-//   ): string {
-//     // Header Columns
-//     const headerColumn: HeaderColumn[] = [
-//       {
-//         label: 'Name',
-//         key: 'name',
-//         colspan: 1,
-//         rowspan: 1,
-//         subColumn: [],
-//       },
-//       {
-//         label: 'File Path',
-//         key: 'filePath',
-//         colspan: 1,
-//         rowspan: 1,
-//         subColumn: [],
-//       },
-//       {
-//         label: 'File Diff',
-//         key: 'diff',
-//         colspan: 1,
-//         rowspan: 1,
-//         subColumn: [],
-//       },
-//       {
-//         label: 'Migration Status',
-//         key: 'migrationStatus',
-//         colspan: 1,
-//         rowspan: 1,
-//         subColumn: [],
-//       },
-//       {
-//         label: 'Errors',
-//         key: 'errors',
-//         colspan: 1,
-//         rowspan: 1,
-//         subColumn: [],
-//       },
-//     ];
+  public static getSummaryData(lwcAssessmentInfos: LWCAssessmentInfo[]): SummaryItemDetailParam[] {
+    return [
+      {
+        name: 'Can be Automated',
+        count: lwcAssessmentInfos.filter(
+          (lwcAssessmentInfo) => !lwcAssessmentInfo.errors || lwcAssessmentInfo.errors.length === 0
+        ).length,
+        cssClass: 'text-success',
+      },
+      {
+        name: 'Has Warnings',
+        count: lwcAssessmentInfos.filter((info) => info.warnings && info.warnings.length > 0).length,
+        cssClass: 'text-warning',
+      },
+      {
+        name: 'Has Errors',
+        count: lwcAssessmentInfos.filter((info) => info.errors && info.errors.length > 0).length,
+        cssClass: 'text-error',
+      },
+    ];
+  }
 
-//     // Define columns
-//     const columns: Array<TableColumn<RowType>> = [
-//       {
-//         key: 'name',
-//         cell: (row: RowType): string => row.name,
-//         filterValue: (row: RowType): string => row.name,
-//         title: (row: RowType): string => row.name,
-//       },
-//       {
-//         key: 'filePath',
-//         cell: (row: RowType): string => `<span><a href="${row.filePath}">${row.fileName}</a></span>`,
-//         filterValue: (row: RowType): string => row.fileName,
-//         title: (row: RowType): string => row.fileName,
-//       },
-//       {
-//         key: 'diff',
-//         cell: (row: RowType): string => FileDiffUtil.getDiffHTML(row.diff, row.name),
-//         filterValue: (row: RowType): string => `Diff_${row.fileName}`,
-//         title: (row: RowType): string => `Diff_${row.fileName}`,
-//       },
-//       {
-//         key: 'migrationStatus',
-//         cell: (row: RowType): string => row.migrationStatus,
-//         filterValue: (row: RowType): string => row.migrationStatus,
-//         title: (row: RowType): string => row.migrationStatus,
-//       },
-//       {
-//         key: 'errors',
-//         cell: (row: RowType): string => row.errors,
-//         filterValue: (row: RowType): string => row.errors,
-//         title: (row: RowType): string => row.errors,
-//       },
-//     ];
+  private static getRowsForReport(lwcAssessmentInfos: LWCAssessmentInfo[]): ReportRowParam[] {
+    const rows: ReportRowParam[] = [];
 
-//     const rows = this.generateRows(lwcAssessmentInfos);
+    for (const lwcAssessmentInfo of lwcAssessmentInfos) {
+      const changeInfosCount = lwcAssessmentInfo.changeInfos.length;
+      const rId = `${this.rowIdPrefix}${this.rowId++}`;
 
-//     const filters: Filter[] = [
-//       {
-//         label: 'Status',
-//         key: 'status',
-//         filterOptions: Array.from(new Set(rows.map((row: RowType) => row.migrationStatus))),
-//       },
-//       {
-//         label: 'Errors',
-//         key: 'errors',
-//         filterOptions: Array.from(new Set(rows.map((row: RowType) => row.errors))),
-//       },
-//     ];
+      for (let fileIndex = 0; fileIndex < lwcAssessmentInfo.changeInfos.length; fileIndex++) {
+        const fileChangeInfo = lwcAssessmentInfo.changeInfos[fileIndex];
 
-//     const reportFrameworkParameters: ReportFrameworkParameters<RowType> = {
-//       headerColumns: headerColumn,
-//       columns,
-//       rows,
-//       orgDetails: org,
-//       filters,
-//       ctaSummary: [],
-//       reportHeaderLabel: 'LWC Assessment',
-//       showMigrationBanner: true,
-//     };
-//     // Render table
-//     const tableHtml = generateHtmlTable(reportFrameworkParameters);
-//     return `${tableHtml}`;
-//   }
+        rows.push({
+          rowId: rId,
+          data: [
+            ...(fileIndex === 0
+              ? [createRowDataParam('name', lwcAssessmentInfo.name, true, changeInfosCount, 1, false)]
+              : []),
+            createRowDataParam(
+              'fileReference',
+              fileChangeInfo.name,
+              false,
+              1,
+              1,
+              true,
+              fileChangeInfo.path,
+              fileChangeInfo.name
+            ),
+            createRowDataParam(
+              'diff',
+              fileChangeInfo.name + 'diff',
+              false,
+              1,
+              1,
+              false,
+              undefined,
+              FileDiffUtil.getDiffHTML(fileChangeInfo.diff, fileChangeInfo.name)
+            ),
+            ...(fileIndex === 0
+              ? [
+                  createRowDataParam(
+                    'comments',
+                    lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0
+                      ? 'Need Manual Intervention'
+                      : 'Can be Automated',
+                    false,
+                    changeInfosCount,
+                    1,
+                    false,
+                    undefined,
+                    lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0
+                      ? 'Need Manual Intervention'
+                      : 'Can be Automated',
+                    lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0 ? 'text-error' : 'text-success'
+                  ),
+                  createRowDataParam(
+                    'errors',
+                    lwcAssessmentInfo.errors ? lwcAssessmentInfo.errors.join(', ') : '',
+                    false,
+                    changeInfosCount,
+                    1,
+                    false,
+                    undefined,
+                    lwcAssessmentInfo.errors,
+                    lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0 ? 'text-error' : 'text-success'
+                  ),
+                ]
+              : []),
+          ],
+        });
+      }
+    }
 
-//   private static generateRows(lwcAssessmentInfos: LWCAssessmentInfo[]): RowType[] {
-//     const rows: RowType[] = [];
-//     for (const lwcAssessmentInfo of lwcAssessmentInfos) {
-//       for (const fileChangeInfo of lwcAssessmentInfo.changeInfos) {
-//         rows.push({
-//           name: lwcAssessmentInfo.name,
-//           filePath: fileChangeInfo.path,
-//           fileName: fileChangeInfo.name,
-//           diff: fileChangeInfo.diff,
-//           migrationStatus: '',
-//           errors: lwcAssessmentInfo.errors.join(', '),
-//         });
-//       }
-//     }
-//     return rows;
-//   }
-// }
+    return rows;
+  }
+
+  private static getFilterGroupsForReport(lwcAssessmentInfos: LWCAssessmentInfo[]): FilterGroupParam[] {
+    return [
+      createFilterGroupParam('Filter By Assessment Status', 'comments', [
+        'Can be Automated',
+        'Needs Manual Intervention',
+      ]),
+    ];
+  }
+
+  private static getHeaderGroupsForReport(): ReportHeaderGroupParam[] {
+    return [
+      {
+        header: [
+          {
+            name: 'Name',
+            colspan: 1,
+            rowspan: 1,
+          },
+          {
+            name: 'File Reference',
+            colspan: 1,
+            rowspan: 1,
+          },
+          {
+            name: 'File Diff',
+            colspan: 1,
+            rowspan: 1,
+          },
+          {
+            name: 'Assessment Status',
+            colspan: 1,
+            rowspan: 1,
+          },
+          {
+            name: 'Errors',
+            colspan: 1,
+            rowspan: 1,
+          },
+        ],
+      },
+    ];
+  }
+}

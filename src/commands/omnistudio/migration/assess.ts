@@ -75,7 +75,7 @@ export default class Assess extends OmniStudioBaseCommand {
     const conn = this.org.getConnection();
     let objectsToProcess: string[];
     // To-Do: Add LWC to valid options when GA is released
-    const validOptions = [Constants.Apex, Constants.ExpSites, Constants.FlexiPage];
+    const validOptions = [Constants.Apex, Constants.ExpSites, Constants.FlexiPage, Constants.LWC];
     if (apiVersion) {
       conn.setApiVersion(apiVersion);
     } else {
@@ -140,6 +140,8 @@ export default class Assess extends OmniStudioBaseCommand {
 
     // Assess related objects if specified
     if (relatedObjects) {
+      objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
+
       // Validate input
       for (const obj of objectsToProcess) {
         if (!validOptions.includes(obj)) {
