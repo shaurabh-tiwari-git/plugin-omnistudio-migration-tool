@@ -316,7 +316,8 @@ export class ResultsBuilder {
             1,
             false,
             undefined,
-            reportingHelper.decorateErrors(item.warnings)
+            item.warnings,
+            item.warnings ? 'text-error' : 'text-success'
           ),
         ],
       })),

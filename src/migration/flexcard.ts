@@ -645,11 +645,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           isDuplicate: false,
         };
 
-        if (
-          flexCardAssessmentInfo.errors &&
-          Array.isArray(flexCardAssessmentInfo.errors) &&
-          flexCardAssessmentInfo.errors.length > 0
-        ) {
+        if (flexCardAssessmentInfo.errors && flexCardAssessmentInfo.errors.length > 0) {
           value.error = flexCardAssessmentInfo.errors;
           value.migrationSuccess = false;
         } else {
