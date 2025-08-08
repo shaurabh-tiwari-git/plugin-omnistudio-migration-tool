@@ -281,7 +281,9 @@ export default class Migrate extends OmniStudioBaseCommand {
     return { objectsToProcess, projectPath, targetApexNamespace, deploymentConfig };
   }
 
-  private async getAutoDeployConsent(includeLwc: boolean): Promise<{ autoDeploy: boolean; authKey: string | undefined }> {
+  private async getAutoDeployConsent(
+    includeLwc: boolean
+  ): Promise<{ autoDeploy: boolean; authKey: string | undefined }> {
     const askWithTimeOut = PromptUtil.askWithTimeOut(messages);
     let validResponse = false;
     let consent = false;
