@@ -43,6 +43,12 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
   private readonly exportType: OmniScriptExportType;
   private readonly allVersions: boolean;
 
+  // Reserved keys that should not be used for storing output
+  private readonly reservedKeys = new Set<string>(['Request', 'Response', 'Condition']);
+
+  // Tags to validate in PropertySet for reserved key usage
+  private readonly tagsToValidate = new Set<string>(['additionalOutput']);
+
   // constants
   private readonly OMNISCRIPT = 'OmniScript';
 
@@ -358,10 +364,30 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     const dependenciesLWC: nameLocation[] = [];
 
     //const missingRA: string[] = [];
+
+    // Check for duplicate element names within the same OmniScript
+    const elementNames = new Set<string>();
+    const duplicateElementNames = new Set<string>();
+
+    // Track reserved keys found in PropertySet
+    const foundReservedKeys = new Set<string>();
+
+    for (const elem of elements) {
+      const elemName = elem['Name'];
+      if (elementNames.has(elemName)) {
+        duplicateElementNames.add(elemName);
+      } else {
+        elementNames.add(elemName);
+      }
+    }
+
     for (const elem of elements) {
       const type = elem[this.namespacePrefix + 'Type__c'];
       const elemName = `${elem['Name']}`;
       const propertySet = JSON.parse(elem[this.namespacePrefix + 'PropertySet__c'] || '{}');
+
+      // Collect reserved keys from PropertySet
+      this.collectReservedKeys(propertySet, foundReservedKeys);
 
       // Check for OmniScript dependencies
       if (type === 'OmniScript') {
@@ -491,6 +517,20 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       assessmentStatus = 'Has Warnings';
     } else {
       existingOmniscriptNames.add(recordName);
+    }
+
+    // Add warning for duplicate element names within the same OmniScript
+    if (duplicateElementNames.size > 0) {
+      const duplicateNamesList = Array.from(duplicateElementNames).join(', ');
+      warnings.unshift(this.messages.getMessage('invalidOrRepeatingOmniscriptElementNames', [duplicateNamesList]));
+      assessmentStatus = 'Needs Manual Intervention';
+    }
+
+    // Add warning for reserved keys found in PropertySet
+    if (foundReservedKeys.size > 0) {
+      const reservedKeysList = Array.from(foundReservedKeys).join(', ');
+      warnings.unshift(this.messages.getMessage('reservedKeysFoundInPropertySet', [reservedKeysList]));
+      assessmentStatus = 'Needs Manual Intervention';
     }
 
     if (omniProcessType === this.OMNISCRIPT) {
@@ -647,11 +687,50 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
       // Get All elements for each OmniScript__c record(i.e IP/OS)
       const elements = await this.getAllElementsForOmniScript(recordId);
+
+      // Check for duplicate element names within the same OmniScript
+      const elementNames = new Set<string>();
+      const duplicateElementNames = new Set<string>();
+
+      for (const elem of elements) {
+        const elemName = elem['Name'];
+        if (elementNames.has(elemName)) {
+          duplicateElementNames.add(elemName);
+        } else {
+          elementNames.add(elemName);
+        }
+      }
+
+      // If duplicate element names found, skip this OmniScript
+      if (duplicateElementNames.size > 0) {
+        const duplicateNamesList = Array.from(duplicateElementNames).join(', ');
+        const skippedResponse: UploadRecordResult = {
+          referenceId: recordId,
+          id: '',
+          success: false,
+          hasErrors: false,
+          errors: [],
+          warnings: [this.messages.getMessage('invalidOrRepeatingOmniscriptElementNames', [duplicateNamesList])],
+          newName: '',
+          skipped: true,
+        };
+        osUploadInfo.set(recordId, skippedResponse);
+        originalOsRecords.set(recordId, omniscript);
+        continue;
+      }
+
       if (omniscript[`${this.namespacePrefix}IsProcedure__c`] === true) {
+        // Check for reserved keys in PropertySet for Integration Procedures
+        const foundReservedKeys = new Set<string>();
+
         // do the formula replacement from custom to standard notation
         if (functionDefinitionMetadata.length > 0 && elements.length > 0) {
           for (let ipElement of elements) {
             if (ipElement[`${this.namespacePrefix}PropertySet__c`] != null) {
+              // Check for reserved keys while processing the PropertySet
+              const propertySet = JSON.parse(ipElement[`${this.namespacePrefix}PropertySet__c`] || '{}');
+              this.collectReservedKeys(propertySet, foundReservedKeys);
+
               var originalString = ipElement[`${this.namespacePrefix}PropertySet__c`];
               try {
                 originalString = getReplacedString(
@@ -668,6 +747,24 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
               }
             }
           }
+        }
+
+        // If reserved keys found, skip this IP
+        if (foundReservedKeys.size > 0) {
+          const reservedKeysList = Array.from(foundReservedKeys).join(', ');
+          const skippedResponse: UploadRecordResult = {
+            referenceId: recordId,
+            id: '',
+            success: false,
+            hasErrors: false,
+            errors: [],
+            warnings: [this.messages.getMessage('reservedKeysFoundInPropertySet', [reservedKeysList])],
+            newName: '',
+            skipped: true,
+          };
+          osUploadInfo.set(recordId, skippedResponse);
+          originalOsRecords.set(recordId, omniscript);
+          continue;
         }
       }
 
@@ -918,9 +1015,8 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
             }
           }
 
-          let finalKey = `${oldrecord[this.namespacePrefix + 'Type__c']}${
-            oldrecord[this.namespacePrefix + 'SubType__c']
-          }${oldrecord[this.namespacePrefix + 'Language__c']}`;
+          let finalKey = `${oldrecord[this.namespacePrefix + 'Type__c']}${oldrecord[this.namespacePrefix + 'SubType__c']
+            }${oldrecord[this.namespacePrefix + 'Language__c']}`;
 
           finalKey = finalKey.toLowerCase();
           if (storage.osStorage.has(finalKey)) {
@@ -1305,6 +1401,37 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
   private getOmniScriptDefinitionFields(): string[] {
     return Object.keys(OmniScriptDefinitionMappings);
   }
+
+  /**
+   * Collects reserved keys found in PropertySet tagsToValidate
+   * @param propertySet - The PropertySet JSON object to validate
+   * @param foundReservedKeys - Set to collect found reserved keys
+   */
+  private collectReservedKeys(propertySet: any, foundReservedKeys: Set<string>): void {
+    // Iterate through each tag that needs validation
+    for (const tagToValidate of this.tagsToValidate) {
+      const tagValue = propertySet[tagToValidate];
+
+      if (tagValue) {
+        if (typeof tagValue === 'object' && tagValue !== null) {
+          // If it's an object, check all its keys
+          const keys = Object.keys(tagValue);
+          for (const key of keys) {
+            if (this.reservedKeys.has(key)) {
+              foundReservedKeys.add(key);
+            }
+          }
+        } else if (typeof tagValue === 'string') {
+          // If it's a string, check if the value itself is a reserved key
+          if (this.reservedKeys.has(tagValue)) {
+            foundReservedKeys.add(tagValue);
+          }
+        }
+      }
+    }
+  }
+
+
 
   private sleep() {
     return new Promise((resolve) => {
