@@ -28,7 +28,7 @@ You can also authenticate using a consumer key (client ID) and secret key throug
 3. In a new terminal session, Install the Omnistudio Migration Assistant by running the `sf plugins install` command. For example
 
 ```
-sf plugins install @salesforce/plugin-omnistudio-migration-tool@2.0.0-beta.13
+sf plugins install @salesforce/plugin-omnistudio-migration-tool@2.0.0-beta.25
 ```
 
 4. Run the Omnistudio Migration Assistant from the Salesforce CLI:
@@ -42,7 +42,7 @@ sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM
 
 
 // To migrate/assess specific components: FlexCards, DataMappers, Integration Procedures, or OmniScripts, add the following parameters:
---only=dr
+--only=dm
 --only=ip
 --only=os
 --only=fc
@@ -53,8 +53,6 @@ sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM
 // To assess specific related objects:
 --relatedobjects=apex    // for Apex classes only
 
-// To specify the Velocity Namespace (Optional)
---namespace=VLOCITY_PACKAGE_NAMESPACE
 ```
 
 5. An HTML page will be open in your default browser with the results of your migration/assessment reports.
@@ -63,22 +61,15 @@ sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM
 
 ```
 USAGE
-  $ sf omnistudio:migration:assess [-n <string>] [-f] [-v <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel
+  $ sf omnistudio:migration:assess [-f] [-v <string>] [-u <string>] [--loglevel
   trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 OPTIONS
-  -n, --namespace=namespace                                                         the namespace of the vertical package
-
   -u, --targetusername=targetusername                                               username or alias for the target
                                                                                     org; overrides default target org
 
   -v, --targetdevhubusername=targetdevhubusername                                   username or alias for the dev hub
                                                                                     org; overrides default dev hub org
-
-  --apiversion=apiversion                                                           override the api version used for
-                                                                                    api requests made by this command
-
-  --json                                                                            format output as json
 
   --loglevel=(trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL)  [default: warn] logging level for
                                                                                     this command invocation
@@ -98,22 +89,15 @@ OPTIONS
 
 ```
 USAGE
-  $ sf omnistudio:migration:migrate [-n <string>] [-f] [-v <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel
+  $ sf omnistudio:migration:migrate [-f] [-v <string>] [-u <string>] [--loglevel
   trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 OPTIONS
-  -n, --namespace=namespace                                                         the namespace of the vertical package
-
   -u, --targetusername=targetusername                                               username or alias for the target
                                                                                     org; overrides default target org
 
   -v, --targetdevhubusername=targetdevhubusername                                   username or alias for the dev hub
                                                                                     org; overrides default dev hub org
-
-  --apiversion=apiversion                                                           override the api version used for
-                                                                                    api requests made by this command
-
-  --json                                                                            format output as json
 
   --loglevel=(trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL)  [default: warn] logging level for
                                                                                     this command invocation
@@ -122,7 +106,7 @@ OPTIONS
                                                                                     and not just the active ones.
 
   --only=only                                                                       specify components to migrate:
-                                                                                    dr (DataRaptors), ip (Integration Procedures),
+                                                                                    dm (DataMappers), ip (Integration Procedures),
                                                                                     os (OmniScripts), fc (FlexCards)
 
   --relatedobjects=relatedobjects                                                   specify related objects to assess:

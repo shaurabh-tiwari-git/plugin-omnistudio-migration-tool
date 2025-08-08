@@ -287,7 +287,7 @@ export class OrgUtils {
    * @param connection - Salesforce connection object
    * @returns Promise resolving to an array of PackageDetail objects
    */
-  public static async getOrgDetails(connection: Connection, namespace: string): Promise<OmnistudioOrgDetails> {
+  public static async getOrgDetails(connection: Connection): Promise<OmnistudioOrgDetails> {
     // Query all installed packages and cast the result to InstalledPackage[]
     const allInstalledPackages = (await QueryTools.queryAll(
       connection,
@@ -309,20 +309,10 @@ export class OrgUtils {
       namespace: '',
     };
 
-    for (const pkg of allInstalledPackages) {
-      if (namespace && namespace === pkg.NamespacePrefix) {
-        packageDetails.version = `${pkg.MajorVersion}.${pkg.MinorVersion}`;
-        packageDetails.namespace = pkg.NamespacePrefix;
-        break;
-      }
-    }
     const installedOmniPackages = [];
-    if (packageDetails.namespace === '') {
-      hasValidNamespace = false;
-      for (const pkg of allInstalledPackages) {
-        if ((namespace && namespace === pkg.NamespacePrefix) || this.namespaces.has(pkg.NamespacePrefix)) {
-          installedOmniPackages.push(pkg);
-        }
+    for (const pkg of allInstalledPackages) {
+      if (this.namespaces.has(pkg.NamespacePrefix)) {
+        installedOmniPackages.push(pkg);
       }
     }
 
