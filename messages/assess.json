@@ -114,5 +114,6 @@
   "errorParsingData": "Error while parsing data for template",
   "errorGeneratingHTML": "Error while generating HTML from template for %s with properties %s",
   "unexpectedError": "Unexpected Assessment error",
-  "errorEvaluatingExpression": "Error evaluating expression: %s, %s"
+  "errorEvaluatingExpression": "Error evaluating expression: %s, %s",
+  "invalidTypeAssessErrorMessage": "We couldn't assess your Omnistudio components in the %s namespace. Select the correct namespace and try again"
 }

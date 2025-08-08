@@ -5,6 +5,7 @@ import OmniStudioBaseCommand from '../../basecommand';
 import { AssessmentInfo } from '../../../utils/interfaces';
 import { AssessmentReporter } from '../../../utils/resultsbuilder/assessmentReporter';
 import { OmniScriptExportType, OmniScriptMigrationTool } from '../../../migration/omniscript';
+import { InvalidEntityTypeError } from '../../../migration/interfaces';
 import { CardMigrationTool } from '../../../migration/flexcard';
 import { DataRaptorMigrationTool } from '../../../migration/dataraptor';
 import { DebugTimer } from '../../../utils';
@@ -116,9 +117,13 @@ export default class Assess extends OmniStudioBaseCommand {
     try {
       // Assess OmniStudio components
       await this.assessOmniStudioComponents(assesmentInfo, assessOnly, namespace, conn, allVersions);
-    } catch (error) {
-      Logger.error(`Cannot assess OmniStudio components within ${namespace}`);
-      process.exit(1);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (ex: any) {
+      if (ex instanceof InvalidEntityTypeError) {
+        Logger.error(`${messages.getMessage('invalidTypeAssessErrorMessage', [namespace])}`);
+        process.exit(1);
+      }
+      Logger.error('Error assessing object', ex);
     }
 
     let objectsToProcess: string[];
