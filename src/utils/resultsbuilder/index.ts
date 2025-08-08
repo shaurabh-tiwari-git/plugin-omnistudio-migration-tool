@@ -251,7 +251,7 @@ export class ResultsBuilder {
       },
       assessmentDate: new Date().toString(),
       total: result.length,
-      filterGroups: [createFilterGroupParam('Filter by Status', 'status', ['Can be Automated', 'Errors'])],
+      filterGroups: [createFilterGroupParam('Filter by Status', 'status', ['Complete', 'Failed'])],
       headerGroups: [
         {
           header: [
@@ -288,7 +288,16 @@ export class ResultsBuilder {
         data: [
           createRowDataParam('name', item.name, true, 1, 1, false),
           createRowDataParam('path', item.path, false, 1, 1, false),
-          createRowDataParam('status', item.status, false, 1, 1, false, undefined, item.status),
+          createRowDataParam(
+            'status',
+            item.warnings && item.warnings.length > 0 ? 'Failed' : 'Complete',
+            false,
+            1,
+            1,
+            false,
+            undefined,
+            item.warnings && item.warnings.length > 0 ? 'Failed' : 'Complete'
+          ),
           createRowDataParam(
             'diff',
             item.name + 'diff',
@@ -301,13 +310,13 @@ export class ResultsBuilder {
           ),
           createRowDataParam(
             'errors',
-            item.warnings ? 'Error' : 'Complete',
+            item.warnings && item.warnings.length > 0 ? 'Failed' : 'Complete',
             false,
             1,
             1,
             false,
             undefined,
-            item.warnings
+            reportingHelper.decorateErrors(item.warnings)
           ),
         ],
       })),

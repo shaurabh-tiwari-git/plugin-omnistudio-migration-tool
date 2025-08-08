@@ -560,7 +560,11 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           isDuplicate: false,
         };
 
-        if (Array.isArray(currentOsRecordInfo.errors) && currentOsRecordInfo.errors.length > 0) {
+        if (
+          currentOsRecordInfo.errors &&
+          Array.isArray(currentOsRecordInfo.errors) &&
+          currentOsRecordInfo.errors.length > 0
+        ) {
           value.error = currentOsRecordInfo.errors;
           value.migrationSuccess = false;
         } else {
