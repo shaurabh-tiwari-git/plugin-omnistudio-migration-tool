@@ -206,7 +206,7 @@ describe('ExperienceSiteMigration', () => {
       expect(result).to.be.an('array').that.has.length(1);
       expect(result[0].name).to.equal('error.json');
       expect(result[0].status).to.equal('Errors');
-      expect(result[0].errors).to.include('Unknown error occurred');
+      expect(result[0].warnings).to.include('Unknown error occurred');
       expect(result[0].hasOmnistudioContent).to.be.false;
       expect((Logger.error as sinon.SinonStub).called).to.be.true;
     });

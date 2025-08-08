@@ -210,5 +210,6 @@
   "authKeyEnvVarNotSet": "OMA_AUTH_KEY environment variable is not set, LWCs will not be deployed",
   "experienceSiteException": "Exception occurred while processing experience sites",
   "noMetadataToDeploy": "No metadata to deploy",
-  "manifestDeployementStarted": "Manifest deployment started with id: %s"
+  "manifestDeployementStarted": "Manifest deployment started with id: %s",
+  "reservedKeysFoundInPropertySet": "Reserved keys found in any of output response transformation fields: %s."
 }
