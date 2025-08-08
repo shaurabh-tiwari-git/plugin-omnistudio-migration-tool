@@ -241,8 +241,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     const existingDataRaptorNames = new Set(dataRaptorAssessmentInfos.map((info) => info.name));
     const existingFlexCardNames = new Set(flexCardAssessmentInfos.map((info) => info.name));
 
-    const progressBarType: ComponentType =
-      this.exportType === OmniScriptExportType.IP ? 'Integration Procedures' : 'Omniscripts';
+    const progressBarType: ComponentType = this.getName() as ComponentType;
     const progressBar = createProgressBar('Assessing', progressBarType);
     let progressCounter = 0;
     progressBar.start(omniscripts.length, progressCounter);
