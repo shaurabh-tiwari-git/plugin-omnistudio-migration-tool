@@ -10,7 +10,6 @@ import {
 } from '../reportGenerator/reportInterfaces';
 import { createFilterGroupParam, createRowDataParam, getOrgDetailsForReport } from '../reportGenerator/reportUtil';
 import { FileDiffUtil } from '../lwcparser/fileutils/FileDiffUtil';
-import { reportingHelper } from './reportingHelper';
 
 export class LWCAssessmentReporter {
   private static rowId = 0;
@@ -115,7 +114,8 @@ export class LWCAssessmentReporter {
                     1,
                     false,
                     undefined,
-                    lwcAssessmentInfo.errors ? reportingHelper.decorateErrors(lwcAssessmentInfo.errors) : []
+                    lwcAssessmentInfo.errors,
+                    lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0 ? 'text-error' : 'text-success'
                   ),
                 ]
               : []),

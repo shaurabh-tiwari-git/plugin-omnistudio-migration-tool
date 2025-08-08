@@ -49,7 +49,6 @@ export class LwcMigration extends BaseRelatedObjectMigration {
     const LWCAssessmentInfos = this.processFiles(filesMap, 'migration');
     Logger.info(migrateMessages.getMessage('successfullyProcessedLwcsForMigration', [LWCAssessmentInfos.length]));
     Logger.logVerbose(migrateMessages.getMessage('lwcMigrationResults', [JSON.stringify(LWCAssessmentInfos, null, 2)]));
-    // sfProject.deploy(LWCTYPE, this.org.getUsername());
     shell.cd(pwd);
     return LWCAssessmentInfos;
   }
