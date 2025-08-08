@@ -59,12 +59,13 @@ export class LWCAssessmentReporter {
 
     for (const lwcAssessmentInfo of lwcAssessmentInfos) {
       const changeInfosCount = lwcAssessmentInfo.changeInfos.length;
+      const rId = `${this.rowIdPrefix}${this.rowId++}`;
 
       for (let fileIndex = 0; fileIndex < lwcAssessmentInfo.changeInfos.length; fileIndex++) {
         const fileChangeInfo = lwcAssessmentInfo.changeInfos[fileIndex];
 
         rows.push({
-          rowId: `${this.rowIdPrefix}${this.rowId++}`,
+          rowId: rId,
           data: [
             ...(fileIndex === 0
               ? [createRowDataParam('name', lwcAssessmentInfo.name, true, changeInfosCount, 1, false)]
@@ -127,17 +128,11 @@ export class LWCAssessmentReporter {
   }
 
   private static getFilterGroupsForReport(lwcAssessmentInfos: LWCAssessmentInfo[]): FilterGroupParam[] {
-    // Collect all errors from all LWC assessment infos
-    const allErrors: string[] = [];
-    for (const lwcAssessmentInfo of lwcAssessmentInfos) {
-      if (lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0) {
-        allErrors.push(...lwcAssessmentInfo.errors);
-      }
-    }
-
     return [
-      createFilterGroupParam('Filter By Comments', 'comments', Array.from(new Set(allErrors))),
-      createFilterGroupParam('Filter By Errors', 'errors', Array.from(new Set(allErrors))),
+      createFilterGroupParam('Filter By Assessment Status', 'comments', [
+        'Can be Automated',
+        'Needs Manual Intervention',
+      ]),
     ];
   }
 

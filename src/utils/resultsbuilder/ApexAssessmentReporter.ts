@@ -78,7 +78,7 @@ export class ApexAssessmentReporter {
           1,
           false,
           undefined,
-          undefined,
+          apexAssessmentInfo.warnings.length > 0 ? 'Has Warnings' : 'Can be Automated',
           apexAssessmentInfo.warnings.length > 0 ? 'text-error' : 'text-success'
         ),
         createRowDataParam(
@@ -117,16 +117,11 @@ export class ApexAssessmentReporter {
 
   private static getFilterGroupsForReport(apexAssessmentInfos: ApexAssessmentInfo[]): FilterGroupParam[] {
     return [
-      createFilterGroupParam(
-        'Filter By Summary',
-        'comments',
-        Array.from(new Set(apexAssessmentInfos.map((row: ApexAssessmentInfo) => row.infos.join(', '))))
-      ),
-      createFilterGroupParam(
-        'Filter By Errors',
-        'errors',
-        Array.from(new Set(apexAssessmentInfos.map((row: ApexAssessmentInfo) => row.warnings.join(', '))))
-      ),
+      createFilterGroupParam('Filter By Assessment Status', 'status', [
+        'Can be Automated',
+        'Has Warnings',
+        'Has Errors',
+      ]),
     ];
   }
 

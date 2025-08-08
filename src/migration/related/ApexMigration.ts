@@ -13,7 +13,7 @@ import {
   SingleTokenUpdate,
   TokenUpdater,
 } from '../../utils/apex/parser/apexparser';
-// import { sfProject } from '../../utils/sfcli/project/sfProject';
+import { sfProject } from '../../utils/sfcli/project/sfProject';
 import { FileUtil, File } from '../../utils/file/fileUtil';
 import { Logger } from '../../utils/logger';
 import { ApexAssessmentInfo } from '../../utils';
@@ -27,6 +27,7 @@ Messages.importMessagesDirectory(__dirname);
 const assessMessages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'assess');
 const migrateMessages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'migrate');
 
+const APEXCLASS = 'Apexclass';
 const APEX_CLASS_PATH = '/force-app/main/default/classes';
 const CALLABLE = 'System.Callable';
 const VLOCITY_OPEN_INTERFACE2 = 'VlocityOpenInterface2';
@@ -57,15 +58,14 @@ export class ApexMigration extends BaseRelatedObjectMigration {
     Logger.logVerbose(migrateMessages.getMessage('startingApexMigration', [this.projectPath]));
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
-    // const targetOrg: Org = this.org;
-    // sfProject.retrieve(APEXCLASS, targetOrg.getUsername());
+    const targetOrg: Org = this.org;
     Logger.info(migrateMessages.getMessage('processingApexFilesForMigration'));
     const apexAssessmentInfos = this.processApexFiles(this.projectPath, 'migration');
     Logger.info(migrateMessages.getMessage('successfullyProcessedApexFilesForMigration', [apexAssessmentInfos.length]));
     Logger.logVerbose(
       migrateMessages.getMessage('apexMigrationResults', [JSON.stringify(apexAssessmentInfos, null, 2)])
     );
-    // sfProject.deploy(APEXCLASS, targetOrg.getUsername());
+    sfProject.deploy(APEXCLASS, targetOrg.getUsername());
     shell.cd(pwd);
     return apexAssessmentInfos;
   }
@@ -74,7 +74,6 @@ export class ApexMigration extends BaseRelatedObjectMigration {
     Logger.logVerbose(assessMessages.getMessage('startingApexAssessment', [this.projectPath]));
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
-    // sfProject.retrieve(APEXCLASS, this.org.getUsername());
     Logger.info(assessMessages.getMessage('processingApexFilesForAssessment'));
     const apexAssessmentInfos = this.processApexFiles(this.projectPath, 'assessment');
     Logger.info(assessMessages.getMessage('successfullyProcessedApexFilesForAssessment', [apexAssessmentInfos.length]));

@@ -428,7 +428,7 @@ export class ResultsBuilder {
       },
       assessmentDate: new Date().toLocaleString(),
       total: result.length,
-      filterGroups: [createFilterGroupParam('Filter by Errors', 'warnings', ['Has Errors', 'Has No Errors'])],
+      filterGroups: [createFilterGroupParam('Filter by Errors', 'warnings', ['Failed', 'Successfully Completed'])],
       headerGroups: [
         {
           header: [
@@ -487,19 +487,17 @@ export class ResultsBuilder {
           ),
           createRowDataParam(
             'warnings',
-            item.warnings ? 'Has Errors' : 'Has No Errors',
+            item.warnings.length > 0 ? 'Failed' : 'Successfully Completed',
             false,
             1,
             1,
             false,
             undefined,
-            item.warnings ? reportingHelper.decorateErrors(item.warnings) : []
+            item.warnings.length > 0 ? 'Failed' : 'Successfully Completed',
+            item.warnings.length > 0 ? 'text-error' : 'text-success'
           ),
         ],
       })),
-      rollbackFlags: (orgDetails.rollbackFlags || []).includes('RollbackApexChanges')
-        ? ['RollbackApexChanges']
-        : undefined,
     };
 
     const reportTemplate = fs.readFileSync(reportTemplateFilePath, 'utf8');
@@ -528,8 +526,7 @@ export class ResultsBuilder {
       assessmentDate: new Date().toLocaleString(),
       total: result.length,
       filterGroups: [
-        createFilterGroupParam('Filter By Migration Status', 'comments', ['Completed', 'Failed']),
-        createFilterGroupParam('Filter By Errors', 'comments', ['Failed', 'Completed']),
+        createFilterGroupParam('Filter By Migration Status', 'comments', ['Successfully Completed', 'Failed']),
       ],
       headerGroups: [
         {
@@ -563,9 +560,6 @@ export class ResultsBuilder {
         },
       ],
       rows: this.getLwcRowsForReport(result),
-      rollbackFlags: (orgDetails.rollbackFlags || []).includes('RollbackLWCChanges')
-        ? ['RollbackLWCChanges']
-        : undefined,
     };
 
     const reportTemplate = fs.readFileSync(reportTemplateFilePath, 'utf8');
@@ -604,13 +598,13 @@ export class ResultsBuilder {
             ),
             createRowDataParam(
               'comments',
-              lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0 ? 'Failed' : 'Completed',
+              lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0 ? 'Failed' : 'Successfully Completed',
               false,
               1,
               1,
               false,
               undefined,
-              lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0 ? 'Failed' : 'Completed',
+              lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0 ? 'Failed' : 'Successfully Completed',
               lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0 ? 'text-error' : 'text-success'
             ),
             createRowDataParam(
@@ -760,7 +754,7 @@ export class ResultsBuilder {
     });
 
     return [
-      { name: 'Completed', count: completed, cssClass: 'text-success' },
+      { name: 'Successfully Completed', count: completed, cssClass: 'text-success' },
       { name: 'Failed', count: failed, cssClass: 'text-error' },
     ];
   }

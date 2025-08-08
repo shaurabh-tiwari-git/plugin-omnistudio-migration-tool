@@ -3,7 +3,6 @@
 import { Messages } from '@salesforce/core';
 import * as shell from 'shelljs';
 import { FileUtil, File } from '../../utils/file/fileUtil';
-// import { sfProject } from '../../utils/sfcli/project/sfProject';
 import { Logger } from '../../utils/logger';
 import { FileProcessorFactory } from '../../utils/lwcparser/fileutils/FileProcessorFactory';
 import { FileChangeInfo, LWCAssessmentInfo } from '../../utils';
@@ -33,7 +32,6 @@ export class LwcMigration extends BaseRelatedObjectMigration {
     const type = 'assessment';
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
-    // sfProject.retrieve(LWCTYPE, this.org.getUsername());
     Logger.info(assessMessages.getMessage('processingLwcsForAssessment'));
     const filesMap = this.processLwcFiles(this.projectPath);
     Logger.info(assessMessages.getMessage('successfullyProcessedLwcsForAssessment', [filesMap.size]));
@@ -46,14 +44,12 @@ export class LwcMigration extends BaseRelatedObjectMigration {
     Logger.logVerbose(migrateMessages.getMessage('startingLwcMigration', [this.projectPath]));
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
-    // const targetOrg: Org = this.org;
-    // sfProject.retrieve(LWCTYPE, targetOrg.getUsername());
     Logger.info(migrateMessages.getMessage('processingLwcsForMigration'));
     const filesMap = this.processLwcFiles(this.projectPath);
     const LWCAssessmentInfos = this.processFiles(filesMap, 'migration');
     Logger.info(migrateMessages.getMessage('successfullyProcessedLwcsForMigration', [LWCAssessmentInfos.length]));
     Logger.logVerbose(migrateMessages.getMessage('lwcMigrationResults', [JSON.stringify(LWCAssessmentInfos, null, 2)]));
-    // sfProject.deploy(LWCTYPE, targetOrg.getUsername());
+    // sfProject.deploy(LWCTYPE, this.org.getUsername());
     shell.cd(pwd);
     return LWCAssessmentInfos;
   }
