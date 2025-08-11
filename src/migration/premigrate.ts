@@ -3,9 +3,11 @@ import { UX } from '@salesforce/command';
 import { Logger } from '../utils/logger';
 import { Constants } from '../utils/constants/stringContants';
 import { OrgPreferences } from '../utils/orgPreferences';
-import { askStringWithTimeout } from '../utils/promptUtil';
+import { askStringWithTimeout, PromptUtil } from '../utils/promptUtil';
 import { YES_SHORT, YES_LONG, NO_SHORT, NO_LONG } from '../utils/projectPathUtil';
 import { BaseMigrationTool } from './base';
+
+const authEnvKey = 'OMA_AUTH_KEY';
 
 export class PreMigrate extends BaseMigrationTool {
   // Source Custom Object Names
@@ -49,6 +51,50 @@ export class PreMigrate extends BaseMigrationTool {
 
       Logger.logVerbose(this.messages.getMessage('relatedObjectsToProcess', [JSON.stringify(objectsToProcess)]));
     }
+  }
+
+  public async getAutoDeployConsent(
+    includeLwc: boolean
+  ): Promise<{ autoDeploy: boolean; authKey: string | undefined }> {
+    const askWithTimeOut = PromptUtil.askWithTimeOut(this.messages);
+    let validResponse = false;
+    let consent = false;
+
+    while (!validResponse) {
+      try {
+        const resp = await askWithTimeOut(
+          Logger.prompt.bind(Logger),
+          this.messages.getMessage('autoDeployConsentMessage')
+        );
+        const response = typeof resp === 'string' ? resp.trim().toLowerCase() : '';
+
+        if (response === YES_SHORT || response === YES_LONG) {
+          consent = true;
+          validResponse = true;
+        } else if (response === NO_SHORT || response === NO_LONG) {
+          consent = false;
+          validResponse = true;
+        } else {
+          Logger.error(this.messages.getMessage('invalidYesNoResponse'));
+        }
+      } catch (err) {
+        Logger.error(this.messages.getMessage('requestTimedOut'));
+        process.exit(1);
+      }
+    }
+
+    const deploymentConfig = {
+      autoDeploy: consent,
+      authKey: undefined,
+    };
+    if (consent && includeLwc) {
+      deploymentConfig.authKey = process.env[authEnvKey];
+      if (!deploymentConfig.authKey) {
+        Logger.warn(this.messages.getMessage('authKeyEnvVarNotSet'));
+      }
+    }
+
+    return deploymentConfig;
   }
 
   // This needs to be behind timeout

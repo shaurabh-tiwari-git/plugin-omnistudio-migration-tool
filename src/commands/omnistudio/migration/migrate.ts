@@ -33,8 +33,6 @@ import { GlobalAutoNumberMigrationTool } from '../../../migration/globalautonumb
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
 
-const authEnvKey = 'OMA_AUTH_KEY';
-
 // Load the specific messages for this file. Messages from @salesforce/command, @salesforce/core,
 // or any library that is using the messages framework can also be loaded this way.
 const messages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'migrate');
@@ -260,7 +258,7 @@ export default class Migrate extends OmniStudioBaseCommand {
       }
     }
 
-    const deploymentConfig = await this.getAutoDeployConsent(objectsToProcess.includes(Constants.LWC));
+    let deploymentConfig = { autoDeploy: false, authKey: undefined };
     let projectPath: string;
     let targetApexNamespace: string;
     // Check for general consent to make modifications with OMT
@@ -274,53 +272,13 @@ export default class Migrate extends OmniStudioBaseCommand {
         conn,
         isExperienceBundleMetadataAPIProgramaticallyEnabled
       );
+      deploymentConfig = await preMigrate.getAutoDeployConsent(objectsToProcess.includes(Constants.LWC));
       Logger.logVerbose(
         'The objects to process after handleExpSitePrerequisite are ' + JSON.stringify(objectsToProcess)
       );
     }
 
     return { objectsToProcess, projectPath, targetApexNamespace, deploymentConfig };
-  }
-
-  private async getAutoDeployConsent(
-    includeLwc: boolean
-  ): Promise<{ autoDeploy: boolean; authKey: string | undefined }> {
-    const askWithTimeOut = PromptUtil.askWithTimeOut(messages);
-    let validResponse = false;
-    let consent = false;
-
-    while (!validResponse) {
-      try {
-        const resp = await askWithTimeOut(Logger.prompt.bind(Logger), messages.getMessage('autoDeployConsentMessage'));
-        const response = typeof resp === 'string' ? resp.trim().toLowerCase() : '';
-
-        if (response === YES_SHORT || response === YES_LONG) {
-          consent = true;
-          validResponse = true;
-        } else if (response === NO_SHORT || response === NO_LONG) {
-          consent = false;
-          validResponse = true;
-        } else {
-          Logger.error(messages.getMessage('invalidYesNoResponse'));
-        }
-      } catch (err) {
-        Logger.error(messages.getMessage('requestTimedOut'));
-        process.exit(1);
-      }
-    }
-
-    const deploymentConfig = {
-      autoDeploy: consent,
-      authKey: undefined,
-    };
-    if (consent && includeLwc) {
-      deploymentConfig.authKey = process.env[authEnvKey];
-      if (!deploymentConfig.authKey) {
-        Logger.warn(messages.getMessage('authKeyEnvVarNotSet'));
-      }
-    }
-
-    return deploymentConfig;
   }
 
   private async getMigrationConsent(): Promise<boolean> {
