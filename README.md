@@ -44,7 +44,7 @@ sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM
 
 
 // To migrate/assess specific components: FlexCards, DataMappers, Integration Procedures, OmniScripts, or Global Auto Numbers, add the following parameters:
---only=dm    // DataMappers (DataRaptors)
+--only=dm    // DataMappers
 --only=ip    // Integration Procedures
 --only=os    // OmniScripts
 --only=fc    // FlexCards
@@ -105,7 +105,7 @@ sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM --only=autonum
 
 ```
 USAGE
-  $ sf omnistudio:migration:assess [-n <string>] [-f] [-v <string>] [-u <string>] [--loglevel
+  $ sf omnistudio:migration:assess [-f] [-v <string>] [-u <string>] [--loglevel
   trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 OPTIONS
@@ -133,7 +133,7 @@ OPTIONS
 
 ```
 USAGE
-  $ sf omnistudio:migration:migrate [-n <string>] [-f] [-v <string>] [-u <string>] [--loglevel
+  $ sf omnistudio:migration:migrate [-f] [-v <string>] [-u <string>] [--loglevel
   trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 OPTIONS
