@@ -13,7 +13,7 @@ import {
   QueryTools,
   SortDirection,
 } from '../utils';
-import { BaseMigrationTool } from './base';
+import { BaseMigrationTool, ComponentType } from './base';
 import {
   InvalidEntityTypeError,
   MigrationResult,
@@ -78,7 +78,11 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
   }
 
   getName(): string {
-    return 'OmniScript / Integration Procedures';
+    if (this.exportType === OmniScriptExportType.IP) {
+      return 'Integration Procedures';
+    } else if (this.exportType === OmniScriptExportType.OS) {
+      return 'OmniScripts';
+    }
   }
 
   getRecordName(record: string) {
@@ -202,10 +206,10 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     flexCardAssessmentInfos: FlexCardAssessmentInfo[]
   ): Promise<OmniAssessmentInfo> {
     try {
-      Logger.log(this.messages.getMessage('startingOmniScriptAssessment'));
+      const exportComponentType = this.getName() as ComponentType;
+      Logger.log(this.messages.getMessage('startingOmniScriptAssessment', [exportComponentType]));
       const omniscripts = await this.getAllOmniScripts();
-
-      Logger.log(this.messages.getMessage('foundOmniScriptsToAssess', [omniscripts.length]));
+      Logger.log(this.messages.getMessage('foundOmniScriptsToAssess', [omniscripts.length, exportComponentType]));
 
       const omniAssessmentInfos = await this.processOmniComponents(
         omniscripts,
@@ -237,7 +241,8 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     const existingDataRaptorNames = new Set(dataRaptorAssessmentInfos.map((info) => info.name));
     const existingFlexCardNames = new Set(flexCardAssessmentInfos.map((info) => info.name));
 
-    const progressBar = createProgressBar('Assessing', 'Omniscript and Integration Procedure');
+    const progressBarType: ComponentType = this.getName() as ComponentType;
+    const progressBar = createProgressBar('Assessing', progressBarType);
     let progressCounter = 0;
     progressBar.start(omniscripts.length, progressCounter);
     // First, collect all OmniScript names from the omniscripts array
@@ -415,7 +420,14 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       }
 
       // Check for DataRaptor dependencies
-      if (['DataRaptor Extract Action', 'DataRaptor Turbo Action', 'DataRaptor Post Action'].includes(type)) {
+      if (
+        [
+          'DataRaptor Extract Action',
+          'DataRaptor Turbo Action',
+          'DataRaptor Transform Action',
+          'DataRaptor Post Action',
+        ].includes(type)
+      ) {
         const nameVal = `${elemName}`;
         dependencyDR.push({ name: propertySet['bundle'], location: nameVal });
         if (!existingOmniscriptNames.has(nameVal) && !existingDataRaptorNames.has(nameVal)) {
@@ -461,6 +473,14 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     let assessmentStatus = 'Can be Automated';
 
     const warnings: string[] = [];
+
+    // Check for Angular OmniScript dependencies
+    for (const osDep of dependencyOS) {
+      if (this.nameRegistry.isAngularOmniScript(osDep.name)) {
+        warnings.push(this.messages.getMessage('angularOmniScriptDependencyWarning', [osDep.location, osDep.name]));
+        assessmentStatus = 'Need Manual Intervention';
+      }
+    }
 
     // This we need broken down, better create an object and propagate it
     // Here break it and then combine it
@@ -639,8 +659,10 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     // Variables to be returned After Migration
     let originalOsRecords = new Map<string, any>();
     let osUploadInfo = new Map<string, UploadRecordResult>();
-    Logger.log(this.messages.getMessage('foundOmniScriptsToMigrate', [omniscripts.length]));
-    const progressBar = createProgressBar('Migrating', 'Omniscript and Integration Procedure');
+    const exportComponentType = this.getName() as ComponentType;
+    Logger.log(this.messages.getMessage('foundOmniScriptsToMigrate', [omniscripts.length, exportComponentType]));
+    const progressBarType: ComponentType = exportComponentType;
+    const progressBar = createProgressBar('Migrating', progressBarType);
     let progressCounter = 0;
     progressBar.start(omniscripts.length, progressCounter);
 
@@ -1015,8 +1037,9 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
             }
           }
 
-          let finalKey = `${oldrecord[this.namespacePrefix + 'Type__c']}${oldrecord[this.namespacePrefix + 'SubType__c']
-            }${oldrecord[this.namespacePrefix + 'Language__c']}`;
+          let finalKey = `${oldrecord[this.namespacePrefix + 'Type__c']}${
+            oldrecord[this.namespacePrefix + 'SubType__c']
+          }${oldrecord[this.namespacePrefix + 'Language__c']}`;
 
           finalKey = finalKey.toLowerCase();
           if (storage.osStorage.has(finalKey)) {
@@ -1303,40 +1326,140 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     // We need to fix the child references
     const elementType = mappedObject[ElementMappings.Type__c];
     const propertySet = JSON.parse(mappedObject[ElementMappings.PropertySet__c] || '{}');
+
+    // Use NameMappingRegistry to update all dependency references
+    const updatedPropertySet = this.nameRegistry.updateDependencyReferences(propertySet);
+
     switch (elementType) {
       case 'OmniScript':
-        propertySet['Type'] = this.cleanName(propertySet['Type']);
-        propertySet['Sub Type'] = this.cleanName(propertySet['Sub Type']);
+        // Use registry for OmniScript references with explicit fallback
+        const osType = propertySet['Type'] || '';
+        const osSubType = propertySet['Sub Type'] || '';
+        const osLanguage = propertySet['Language'] || 'English';
+
+        // Construct full OmniScript name to check registry
+        const fullOmniScriptName = `${osType}_${osSubType}_${osLanguage}`;
+
+        if (this.nameRegistry.isAngularOmniScript(fullOmniScriptName)) {
+          // Referenced OmniScript is Angular - add warning and keep original reference
+          Logger.logVerbose(
+            `\n${this.messages.getMessage('angularOmniScriptDependencyWarning', [
+              'OmniScript element',
+              fullOmniScriptName,
+            ])}`
+          );
+          // Keep original reference as-is since Angular OmniScript won't be migrated
+          updatedPropertySet['Type'] = osType;
+          updatedPropertySet['Sub Type'] = osSubType;
+          updatedPropertySet['Language'] = osLanguage;
+        } else if (this.nameRegistry.hasOmniScriptMapping(fullOmniScriptName)) {
+          // Registry has mapping for this LWC OmniScript - extract cleaned parts
+          const cleanedFullName = this.nameRegistry.getCleanedName(fullOmniScriptName, 'OmniScript');
+          const parts = cleanedFullName.split('_');
+
+          if (parts.length >= 2) {
+            updatedPropertySet['Type'] = parts[0];
+            updatedPropertySet['Sub Type'] = parts[1];
+            // Language doesn't typically change, but update if provided
+            if (parts.length >= 3) {
+              updatedPropertySet['Language'] = parts[2];
+            }
+          }
+        } else {
+          // No registry mapping - use original fallback approach
+          Logger.logVerbose(
+            `\n${this.messages.getMessage('componentMappingNotFound', ['OmniScript', fullOmniScriptName])}`
+          );
+          updatedPropertySet['Type'] = this.cleanName(osType);
+          updatedPropertySet['Sub Type'] = this.cleanName(osSubType);
+        }
         break;
       case 'Integration Procedure Action':
-        const remoteOptions = propertySet['remoteOptions'] || {};
-        remoteOptions['preTransformBundle'] = this.cleanName(remoteOptions['preTransformBundle']);
-        remoteOptions['postTransformBundle'] = this.cleanName(remoteOptions['postTransformBundle']);
-        propertySet['remoteOptions'] = remoteOptions;
+        const remoteOptions = updatedPropertySet['remoteOptions'] || {};
+        // Use registry for DataMapper references with explicit fallback
+        const preTransformBundle = propertySet['remoteOptions']?.['preTransformBundle'];
+        if (preTransformBundle) {
+          if (this.nameRegistry.hasDataMapperMapping(preTransformBundle)) {
+            remoteOptions['preTransformBundle'] = this.nameRegistry.getDataMapperCleanedName(preTransformBundle);
+          } else {
+            Logger.logVerbose(
+              `\n${this.messages.getMessage('componentMappingNotFound', ['DataMapper', preTransformBundle])}`
+            );
+            remoteOptions['preTransformBundle'] = this.cleanName(preTransformBundle);
+          }
+        }
 
-        propertySet['preTransformBundle'] = this.cleanName(propertySet['preTransformBundle']);
-        propertySet['postTransformBundle'] = this.cleanName(propertySet['postTransformBundle']);
+        const postTransformBundle = propertySet['remoteOptions']?.['postTransformBundle'];
+        if (postTransformBundle) {
+          if (this.nameRegistry.hasDataMapperMapping(postTransformBundle)) {
+            remoteOptions['postTransformBundle'] = this.nameRegistry.getDataMapperCleanedName(postTransformBundle);
+          } else {
+            Logger.logVerbose(
+              `\n${this.messages.getMessage('componentMappingNotFound', ['DataMapper', postTransformBundle])}`
+            );
+            remoteOptions['postTransformBundle'] = this.cleanName(postTransformBundle);
+          }
+        }
+        updatedPropertySet['remoteOptions'] = remoteOptions;
 
-        // We can't update the IP references, we need to let the user know
+        const preBundle = propertySet['preTransformBundle'];
+        if (preBundle) {
+          if (this.nameRegistry.hasDataMapperMapping(preBundle)) {
+            updatedPropertySet['preTransformBundle'] = this.nameRegistry.getDataMapperCleanedName(preBundle);
+          } else {
+            Logger.logVerbose(`\n${this.messages.getMessage('componentMappingNotFound', ['DataMapper', preBundle])}`);
+            updatedPropertySet['preTransformBundle'] = this.cleanName(preBundle);
+          }
+        }
+
+        const postBundle = propertySet['postTransformBundle'];
+        if (postBundle) {
+          if (this.nameRegistry.hasDataMapperMapping(postBundle)) {
+            updatedPropertySet['postTransformBundle'] = this.nameRegistry.getDataMapperCleanedName(postBundle);
+          } else {
+            Logger.logVerbose(`\n${this.messages.getMessage('componentMappingNotFound', ['DataMapper', postBundle])}`);
+            updatedPropertySet['postTransformBundle'] = this.cleanName(postBundle);
+          }
+        }
+
+        // Use registry for Integration Procedure references
         const key: String = propertySet['integrationProcedureKey'] || '';
         if (key) {
-          const parts = key.split('_');
-          const newKey = parts.map((p) => this.cleanName(p, true)).join('_');
-          if (parts.length > 2) {
-            invalidIpReferences.set(mappedObject[ElementMappings.Name], key);
+          const hasRegistryMapping = this.nameRegistry.hasIntegrationProcedureMapping(key as string);
+          if (hasRegistryMapping) {
+            const cleanedIpName = this.nameRegistry.getIntegrationProcedureCleanedName(key as string);
+            updatedPropertySet['integrationProcedureKey'] = cleanedIpName;
+          } else {
+            Logger.logVerbose(
+              `\n${this.messages.getMessage('componentMappingNotFound', ['IntegrationProcedure', key as string])}`
+            );
+            const parts = key.split('_');
+            const newKey = parts.map((p) => this.cleanName(p, true)).join('_');
+            if (parts.length > 2) {
+              invalidIpReferences.set(mappedObject[ElementMappings.Name], key);
+            }
+            updatedPropertySet['integrationProcedureKey'] = newKey;
           }
-          propertySet['integrationProcedureKey'] = newKey;
         }
         break;
       case 'DataRaptor Turbo Action':
       case 'DataRaptor Transform Action':
       case 'DataRaptor Post Action':
       case 'DataRaptor Extract Action':
-        propertySet['bundle'] = this.cleanName(propertySet['bundle']);
+        // Use registry for DataMapper references with explicit fallback
+        const bundleName = propertySet['bundle'];
+        if (bundleName) {
+          if (this.nameRegistry.hasDataMapperMapping(bundleName)) {
+            updatedPropertySet['bundle'] = this.nameRegistry.getDataMapperCleanedName(bundleName);
+          } else {
+            Logger.logVerbose(`\n${this.messages.getMessage('componentMappingNotFound', ['DataMapper', bundleName])}`);
+            updatedPropertySet['bundle'] = this.cleanName(bundleName);
+          }
+        }
         break;
     }
 
-    mappedObject[ElementMappings.PropertySet__c] = JSON.stringify(propertySet);
+    mappedObject[ElementMappings.PropertySet__c] = JSON.stringify(updatedPropertySet);
 
     // BATCH framework requires that each record has an "attributes" property
     mappedObject['attributes'] = {
@@ -1430,8 +1553,6 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       }
     }
   }
-
-
 
   private sleep() {
     return new Promise((resolve) => {
