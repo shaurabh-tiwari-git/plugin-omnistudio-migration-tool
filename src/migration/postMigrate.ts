@@ -6,6 +6,7 @@ import { ExecuteAnonymousResult } from 'jsforce';
 import { Logger } from '../utils/logger';
 import { AnonymousApexRunner } from '../utils/apex/executor/AnonymousApexRunner';
 import { Constants } from '../utils/constants/stringContants';
+import { OmnistudioSettingsPrefManager } from '../utils/OmnistudioSettingsPrefManager';
 import { OrgPreferences } from '../utils/orgPreferences';
 import { BaseMigrationTool } from './base';
 import { Deployer } from './deployer';
@@ -17,6 +18,7 @@ export class PostMigrate extends BaseMigrationTool {
   private readonly relatedObjectsToProcess: string[];
   private readonly projectPath: string;
   private readonly deploymentConfig: { autoDeploy: boolean; authKey: string | undefined };
+  private settingsPrefManager: OmnistudioSettingsPrefManager;
 
   // Source Custom Object Names
   constructor(
@@ -35,6 +37,46 @@ export class PostMigrate extends BaseMigrationTool {
     this.relatedObjectsToProcess = relatedObjectsToProcess;
     this.deploymentConfig = deploymentConfig;
     this.projectPath = projectPath;
+    this.settingsPrefManager = new OmnistudioSettingsPrefManager(connection, messages);
+  }
+
+  /**
+   * Checks if OmniStudio designers are already using the standard data model for the specific package.
+   *
+   * This method queries the OmniInteractionConfig table to check for specific DeveloperName values
+   * that indicate whether the standard data model is enabled for the package.
+   *
+   * @param namespaceToModify The namespace of the package being checked
+   * @returns {Promise<boolean>} True if designers are already using standard data model, false otherwise
+   */
+  private async isStandardDesignerEnabled(namespaceToModify: string): Promise<boolean> {
+    try {
+      const query = `SELECT DeveloperName, Value FROM OmniInteractionConfig WHERE DeveloperName IN ('TheFirstInstalledOmniPackage', 'InstalledIndustryPackage')`;
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const result = await this.connection.query(query);
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      if (result?.totalSize > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        const records = result.records as Array<{ DeveloperName: string; Value: string }>;
+
+        for (const record of records) {
+          // Check if the package matches the one we're migrating
+          if (record.Value === namespaceToModify) {
+            return true;
+          }
+        }
+        return false;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      Logger.error(this.messages.getMessage('errorCheckingStandardDesigner', [namespaceToModify, errMsg]));
+      // Assume not enabled if query fails
+      return false;
+    }
   }
 
   public async setDesignersToUseStandardDataModel(
@@ -43,6 +85,20 @@ export class PostMigrate extends BaseMigrationTool {
   ): Promise<string[]> {
     try {
       Logger.logVerbose(this.messages.getMessage('settingDesignersToStandardModel'));
+
+      // First check if standard designer is already enabled for this package
+      Logger.logVerbose(this.messages.getMessage('checkingStandardDesignerStatus', [namespaceToModify]));
+      const isAlreadyEnabled = await this.isStandardDesignerEnabled(namespaceToModify);
+
+      if (isAlreadyEnabled) {
+        Logger.logVerbose(this.messages.getMessage('standardDesignerAlreadyEnabled', [namespaceToModify]));
+
+        // Even though designer is already enabled, we should still enable Standard Runtime
+        await this.enableStandardRuntimeIfNeeded(userActionMessage);
+
+        return userActionMessage;
+      }
+
       const apexCode = `
           ${namespaceToModify}.OmniStudioPostInstallClass.useStandardDataModel();
         `;
@@ -50,17 +106,67 @@ export class PostMigrate extends BaseMigrationTool {
       const result: ExecuteAnonymousResult = await AnonymousApexRunner.run(this.org, apexCode);
 
       if (result?.success === false) {
-        const message = result?.exceptionStackTrace;
+        const message = result?.exceptionStackTrace || result?.exceptionMessage || 'Unknown error';
+
         Logger.error(this.messages.getMessage('errorSettingDesignersToStandardModel', [message]));
+        Logger.logVerbose(this.messages.getMessage('skipStandardRuntimeDueToFailure'));
         userActionMessage.push(this.messages.getMessage('manuallySwitchDesignerToStandardDataModel'));
+
+        // Do NOT attempt to enable standard runtime when setup fails
+        return userActionMessage;
       } else if (result?.success === true) {
         Logger.logVerbose(this.messages.getMessage('designersSetToStandardModel'));
+        Logger.logVerbose(this.messages.getMessage('enableStandardRuntimeAfterDesigner'));
+
+        // Enable Standard OmniStudio Runtime after successful standard designer setup
+        await this.enableStandardRuntimeIfNeeded(userActionMessage);
+      } else {
+        // Handle unexpected result structure
+        Logger.error('Received unexpected response from Apex execution - unable to determine success status');
+        userActionMessage.push(this.messages.getMessage('manuallySwitchDesignerToStandardDataModel'));
+
+        // Do NOT attempt to enable standard runtime when result is unclear
+        return userActionMessage;
       }
     } catch (ex) {
-      Logger.error(this.messages.getMessage('exceptionSettingDesignersToStandardModel', [JSON.stringify(ex)]));
+      const errorDetails = ex instanceof Error ? ex.message : JSON.stringify(ex);
+      Logger.error(this.messages.getMessage('exceptionSettingDesignersToStandardModel', [errorDetails]));
+      Logger.logVerbose(this.messages.getMessage('skipStandardRuntimeDueToFailure'));
       userActionMessage.push(this.messages.getMessage('manuallySwitchDesignerToStandardDataModel'));
+
+      // Do NOT attempt to enable standard runtime when exception occurs
     }
     return userActionMessage;
+  }
+
+  /**
+   * Enables Standard OmniStudio Runtime if it's currently disabled.
+   *
+   * This method is called after successfully setting designers to use standard data model.
+   * It checks if Standard Runtime is already enabled and only enables it if disabled.
+   *
+   * @param userActionMessage Array to collect user action messages for manual intervention
+   */
+  private async enableStandardRuntimeIfNeeded(userActionMessage: string[]): Promise<void> {
+    try {
+      Logger.logVerbose(this.messages.getMessage('checkingStandardRuntimeStatus'));
+
+      const result = await this.settingsPrefManager.enableStandardRuntimeIfDisabled();
+
+      if (result === null) {
+        Logger.logVerbose(this.messages.getMessage('standardRuntimeAlreadyEnabled'));
+      } else if (result?.success === true) {
+        Logger.logVerbose(this.messages.getMessage('standardRuntimeEnabled'));
+      } else {
+        const errors = result?.errors?.join(', ') || 'Unknown error';
+        Logger.error(this.messages.getMessage('errorEnablingStandardRuntime', [errors]));
+        userActionMessage.push(this.messages.getMessage('manuallyEnableStandardRuntime'));
+      }
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      Logger.error(this.messages.getMessage('exceptionEnablingStandardRuntime', [errMsg]));
+      userActionMessage.push(this.messages.getMessage('manuallyEnableStandardRuntime'));
+    }
   }
 
   // If we processed exp sites and switched metadata api from off->on then only we revert it
