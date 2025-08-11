@@ -160,6 +160,7 @@ describe('PostMigrate', () => {
       // Arrange
       const error = new Error('Deployment failed');
       const deployerStub = sandbox.stub(Deployer.prototype, 'deploy').throws(error);
+      sandbox.stub(fs, 'existsSync').returns(true);
 
       // Mock the deploy method directly to test error handling
       postMigrate.deploy = function () {
@@ -189,6 +190,7 @@ describe('PostMigrate', () => {
     xit('should create Deployer with correct parameters', () => {
       // Arrange
       const deployerDeployStub = sandbox.stub(Deployer.prototype, 'deploy');
+      sandbox.stub(fs, 'existsSync').returns(true);
 
       // Mock the deploy method directly to test Deployer creation
       postMigrate.deploy = function () {
@@ -436,6 +438,7 @@ describe('PostMigrate', () => {
     xit('should handle complete post-migration workflow with auto-deploy enabled', async () => {
       // Arrange
       const deployerStub = sandbox.stub(Deployer.prototype, 'deploy');
+      sandbox.stub(fs, 'existsSync').returns(true);
       const anonymousApexRunnerStub = sandbox.stub(AnonymousApexRunner, 'run').resolves({
         success: true,
         compiled: true,
