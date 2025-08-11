@@ -11,7 +11,7 @@ This repository contains the code required to enable the OmniStudio Migration As
 5. In a new command line assistant, run the following command:
 
 ```
-bin/run omnistudio:migration:migrate -u agarcia-vertical238@na46.salesforce.com --namespace=agarciana46_238
+bin/run omnistudio:migration:migrate -u agarcia-vertical238@na46.salesforce.com
 ```
 
 ### Usage & parameters
@@ -22,8 +22,6 @@ USAGE
   trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 OPTIONS
-  -n, --namespace=namespace                                                         the namespace of the vertical package
-
   -u, --targetusername=targetusername                                               username or alias for the target
                                                                                     org; overrides default target org
 

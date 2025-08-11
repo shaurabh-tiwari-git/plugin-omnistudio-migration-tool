@@ -44,7 +44,7 @@ sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM
 
 
 // To migrate/assess specific components: FlexCards, DataMappers, Integration Procedures, OmniScripts, or Global Auto Numbers, add the following parameters:
---only=dr    // DataMappers (DataRaptors)
+--only=m    // DataMappers (DataRaptors)
 --only=ip    // Integration Procedures
 --only=os    // OmniScripts
 --only=fc    // FlexCards
@@ -56,8 +56,6 @@ sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM
 // To assess specific related objects:
 --relatedobjects=apex    // for Apex classes only
 
-// To specify the Velocity Namespace (Optional)
---namespace=VLOCITY_PACKAGE_NAMESPACE
 ```
 
 5. An HTML page will be open in your default browser with the results of your migration/assessment reports.
@@ -111,8 +109,6 @@ USAGE
   trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 OPTIONS
-  -n, --namespace=namespace                                                         the namespace of the vertical package
-
   -u, --targetusername=targetusername                                               username or alias for the target
                                                                                     org; overrides default target org
 
@@ -126,7 +122,7 @@ OPTIONS
                                                                                     and not just the active ones.
 
   --only=only                                                                       specify components to assess:
-                                                                                    dr (DataRaptors), ip (Integration Procedures),
+                                                                                    dm (DataMappers), ip (Integration Procedures),
                                                                                     os (OmniScripts), fc (FlexCards), autonumber (Global Auto Numbers)
 
   --relatedobjects=relatedobjects                                                   specify related objects to assess:
@@ -141,8 +137,6 @@ USAGE
   trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 OPTIONS
-  -n, --namespace=namespace                                                         the namespace of the vertical package
-
   -u, --targetusername=targetusername                                               username or alias for the target
                                                                                     org; overrides default target org
 
@@ -156,7 +150,7 @@ OPTIONS
                                                                                     and not just the active ones.
 
   --only=only                                                                       specify components to migrate:
-                                                                                    dr (DataRaptors), ip (Integration Procedures),
+                                                                                    dm (DataMappers), ip (Integration Procedures),
                                                                                     os (OmniScripts), fc (FlexCards)
 
   --relatedobjects=relatedobjects                                                   specify related objects to assess:
