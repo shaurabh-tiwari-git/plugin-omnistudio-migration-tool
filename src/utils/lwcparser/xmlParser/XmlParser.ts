@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/explicit-member-accessibility */
 import * as fs from 'fs';
-import { DOMParser, XMLSerializer } from 'xmldom';
+import { DOMParser, XMLSerializer, Document } from '@xmldom/xmldom';
 import { FileConstant } from '../fileutils/FileConstant';
 import { Logger } from '../../logger';
 
@@ -51,6 +51,8 @@ export class XmlParser {
       xmlContentMap.set(FileConstant.MODIFIED_CONTENT, xmlString);
       return xmlContentMap;
     }
+
+    return xmlContentMap;
   }
 
   public saveToFile(outputFilePath: string, xmlString: string): void {
