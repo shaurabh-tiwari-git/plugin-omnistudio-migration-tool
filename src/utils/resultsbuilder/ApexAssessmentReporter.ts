@@ -116,6 +116,10 @@ export class ApexAssessmentReporter {
   }
 
   private static getFilterGroupsForReport(apexAssessmentInfos: ApexAssessmentInfo[]): FilterGroupParam[] {
+    if (!apexAssessmentInfos || apexAssessmentInfos.length === 0) {
+      return [];
+    }
+
     return [
       createFilterGroupParam('Filter By Assessment Status', 'status', [
         'Can be Automated',

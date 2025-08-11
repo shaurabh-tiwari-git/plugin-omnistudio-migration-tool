@@ -13,6 +13,7 @@ import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
 import { OrgPreferences } from '../utils/orgPreferences';
 import { OmniGlobalAutoNumberPrefManager } from '../utils/OmniGlobalAutoNumberPrefManager';
+
 import { Constants } from '../utils/constants/stringContants';
 
 export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements MigrationTool {
@@ -202,6 +203,7 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
     Logger.logVerbose(
       this.messages.getMessage('foundGlobalAutoNumbersToMigrate', [this.globalAutoNumberSettings.length])
     );
+
     const progressBar = createProgressBar('Migrating', 'GlobalAutoNumber');
     progressBar.start(this.globalAutoNumberSettings.length, progressCounter);
 

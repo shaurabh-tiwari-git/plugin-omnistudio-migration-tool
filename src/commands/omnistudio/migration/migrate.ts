@@ -29,6 +29,7 @@ import { YES_SHORT, YES_LONG, NO_SHORT, NO_LONG } from '../../../utils/projectPa
 import { PostMigrate } from '../../../migration/postMigrate';
 import { PreMigrate } from '../../../migration/premigrate';
 import { GlobalAutoNumberMigrationTool } from '../../../migration/globalautonumber';
+import { NameMappingRegistry } from '../../../migration/NameMappingRegistry';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -139,17 +140,17 @@ export default class Migrate extends OmniStudioBaseCommand {
 
     let deploymentConfig = { autoDeploy: false, authKey: undefined };
     if (relatedObjects) {
-      const relatedObjectMigrationResult = await this.migrateRelatedObjects(
+      const relatedObjectProcessResult = await this.processRelatedObjects(
         relatedObjects,
         preMigrate,
         conn,
         isExperienceBundleMetadataAPIProgramaticallyEnabled,
         actionItems
       );
-      objectsToProcess = relatedObjectMigrationResult.objectsToProcess;
-      projectPath = relatedObjectMigrationResult.projectPath;
-      targetApexNamespace = relatedObjectMigrationResult.targetApexNamespace;
-      deploymentConfig = relatedObjectMigrationResult.deploymentConfig;
+      objectsToProcess = relatedObjectProcessResult.objectsToProcess;
+      projectPath = relatedObjectProcessResult.projectPath;
+      targetApexNamespace = relatedObjectProcessResult.targetApexNamespace;
+      deploymentConfig = relatedObjectProcessResult.deploymentConfig;
     }
 
     Logger.log(messages.getMessage('migrationInitialization', [String(namespace)]));
@@ -158,20 +159,31 @@ export default class Migrate extends OmniStudioBaseCommand {
     Logger.logVerbose(messages.getMessage('relatedObjectsInfo', [relatedObjects || 'none']));
     Logger.logVerbose(messages.getMessage('allVersionsFlagInfo', [String(allVersions)]));
 
-    // const includeLwc = this.flags.lwc ? await this.ux.confirm('Do you want to include LWC migration? (yes/no)') : false;
-    // Register the migration objects
+    // Initialize the name mapping registry and pre-process all components
+    const nameRegistry = NameMappingRegistry.getInstance();
+    nameRegistry.clear(); // Clear any previous mappings
+
+    Logger.log(messages.getMessage('startingComponentPreProcessing'));
+    await this.preProcessAllComponents(namespace, conn, migrateOnly);
+
+    // Register the migration objects with CORRECTED ORDER
     let migrationObjects: MigrationTool[] = [];
-    migrationObjects = this.getMigrationObjects(migrateOnly, migrationObjects, namespace, conn, allVersions);
+    migrationObjects = this.getMigrationObjectsInCorrectOrder(
+      migrateOnly,
+      migrationObjects,
+      namespace,
+      conn,
+      allVersions
+    );
+
     // Migrate individual objects
     const debugTimer = DebugTimer.getInstance();
-    // We need to truncate the standard objects first
-    let objectMigrationResults = await this.truncateObjects(migrationObjects, debugTimer);
-    objectMigrationResults = objectMigrationResults.filter(
-      (result) => result.name !== Constants.GlobalAutoNumberComponentName
-    );
+    // We need to truncate the standard objects first (in reverse order for cleanup)
+    let objectMigrationResults = await this.truncateObjects([...migrationObjects].reverse(), debugTimer);
     const allTruncateComplete = objectMigrationResults.length === 0;
 
     if (allTruncateComplete) {
+      // Migrate in correct dependency order (NOT reversed)
       objectMigrationResults = await this.migrateObjects(migrationObjects, debugTimer);
     }
 
@@ -186,7 +198,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     const relatedObjectMigrationResult = omnistudioRelatedObjectsMigration.migrateAll(objectsToProcess);
 
     // POST MIGRATION
-    
+
     const postMigrate: PostMigrate = new PostMigrate(
       this.org,
       namespace,
@@ -240,7 +252,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     return { objectMigrationResults: [] };
   }
 
-  private async migrateRelatedObjects(
+  private async processRelatedObjects(
     relatedObjects: string,
     preMigrate: PreMigrate,
     conn: Connection,
@@ -327,7 +339,8 @@ export default class Migrate extends OmniStudioBaseCommand {
 
   private async truncateObjects(migrationObjects: MigrationTool[], debugTimer: DebugTimer): Promise<MigratedObject[]> {
     const objectMigrationResults: MigratedObject[] = [];
-    for (const cls of migrationObjects.reverse()) {
+    // Truncate in reverse order (highest dependencies first) - this is correct for cleanup
+    for (const cls of migrationObjects) {
       try {
         Logger.log(messages.getMessage('cleaningComponent', [cls.getName()]));
         debugTimer.lap('Cleaning: ' + cls.getName());
@@ -348,7 +361,8 @@ export default class Migrate extends OmniStudioBaseCommand {
 
   private async migrateObjects(migrationObjects: MigrationTool[], debugTimer: DebugTimer): Promise<MigratedObject[]> {
     let objectMigrationResults: MigratedObject[] = [];
-    for (const cls of migrationObjects.reverse()) {
+    // Migrate in correct dependency order
+    for (const cls of migrationObjects) {
       try {
         Logger.log(messages.getMessage('migratingComponent', [cls.getName()]));
         debugTimer.lap('Migrating: ' + cls.getName());
@@ -385,18 +399,36 @@ export default class Migrate extends OmniStudioBaseCommand {
     return objectMigrationResults;
   }
 
-  private getMigrationObjects(
+  /**
+   * Get migration objects in the correct dependency order:
+   * 1. DataMappers (lowest dependencies)
+   * 2. Integration Procedures/ OmniScripts
+   * 3. FlexCards (highest dependencies)
+   * 4. GlobalAutoNumbers (independent)
+   */
+  private getMigrationObjectsInCorrectOrder(
     migrateOnly: string,
     migrationObjects: MigrationTool[],
     namespace: string,
-    conn,
+    conn: any,
     allVersions: any
   ): MigrationTool[] {
     if (!migrateOnly) {
       migrationObjects = [
         new DataRaptorMigrationTool(namespace, conn, this.logger, messages, this.ux),
+        // Integration Procedure
         new OmniScriptMigrationTool(
-          OmniScriptExportType.All,
+          OmniScriptExportType.IP,
+          namespace,
+          conn,
+          this.logger,
+          messages,
+          this.ux,
+          allVersions
+        ),
+        // OmniScript
+        new OmniScriptMigrationTool(
+          OmniScriptExportType.OS,
           namespace,
           conn,
           this.logger,
@@ -408,6 +440,8 @@ export default class Migrate extends OmniStudioBaseCommand {
         new GlobalAutoNumberMigrationTool(namespace, conn, this.logger, messages, this.ux),
       ];
     } else {
+      // For single component migration, the order doesn't matter as much
+      // but we still maintain consistency
       switch (migrateOnly) {
         case Constants.Omniscript:
           migrationObjects.push(
@@ -449,6 +483,137 @@ export default class Migrate extends OmniStudioBaseCommand {
       }
     }
     return migrationObjects;
+  }
+
+  /**
+   * Pre-process all components to register their name mappings
+   */
+  private async preProcessAllComponents(namespace: string, conn: any, migrateOnly: string): Promise<void> {
+    try {
+      const nameRegistry = NameMappingRegistry.getInstance();
+      // Query all components that will be migrated
+      const dataMappers = await this.queryDataMappers(conn, namespace);
+      const allOmniScripts = await this.queryOmniScripts(conn, namespace, false); // All OmniScripts (LWC + Angular)
+      const integrationProcedures = await this.queryOmniScripts(conn, namespace, true); // Integration Procedures only
+      const flexCards = await this.queryFlexCards(conn, namespace);
+
+      // Separate OmniScripts into LWC and Angular types
+      const { lwc: lwcOmniScripts, angular: angularOmniScripts } = this.separateOmniScriptsByType(
+        allOmniScripts,
+        namespace
+      );
+
+      // Filter based on migrateOnly flag if specified
+      const filteredData = this.filterComponentsByMigrateOnly(
+        migrateOnly,
+        dataMappers,
+        lwcOmniScripts, // Only LWC OmniScripts for migration
+        integrationProcedures,
+        flexCards
+      );
+
+      // Register all name mappings (including Angular OmniScripts for tracking)
+      nameRegistry.preProcessComponents(
+        filteredData.dataMappers,
+        filteredData.omniScripts, // LWC OmniScripts
+        angularOmniScripts, // Angular OmniScripts (for tracking)
+        filteredData.integrationProcedures,
+        filteredData.flexCards
+      );
+
+      const allMappings = nameRegistry.getAllNameMappings();
+      Logger.log(messages.getMessage('completeComponentMappingMessage', [allMappings.length]));
+    } catch (error) {
+      Logger.error(messages.getMessage('errorComponentMapping'), error);
+    }
+  }
+
+  /**
+   * Query DataMappers from the org
+   */
+  private async queryDataMappers(conn: any, namespace: string): Promise<any[]> {
+    const query = `SELECT Id, Name FROM ${namespace}__DRBundle__c WHERE ${namespace}__Type__c != 'Migration'`;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const result = await conn.query(query);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return result.records || [];
+  }
+
+  /**
+   * Query OmniScripts from the org (both LWC and Angular)
+   */
+  private async queryOmniScripts(conn: any, namespace: string, isProcedure: boolean): Promise<any[]> {
+    const procedureFilter = isProcedure ? 'true' : 'false';
+    // Query all OmniScripts (both LWC and Angular)
+    const query = `SELECT Id, Name, ${namespace}__Type__c, ${namespace}__SubType__c, ${namespace}__Language__c, ${namespace}__IsProcedure__c, ${namespace}__IsLwcEnabled__c FROM ${namespace}__OmniScript__c WHERE ${namespace}__IsProcedure__c = ${procedureFilter} and ${namespace}__IsActive__c = true`;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const result = await conn.query(query);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return result.records || [];
+  }
+
+  /**
+   * Separate OmniScripts into LWC and Angular based on IsLwcEnabled__c field
+   */
+  private separateOmniScriptsByType(omniscripts: any[], namespace: string): { lwc: any[]; angular: any[] } {
+    const lwc: any[] = [];
+    const angular: any[] = [];
+
+    for (const omniscript of omniscripts) {
+      const isLwcEnabled = omniscript[`${namespace}__IsLwcEnabled__c`];
+      if (isLwcEnabled) {
+        lwc.push(omniscript);
+      } else {
+        angular.push(omniscript);
+      }
+    }
+
+    return { lwc, angular };
+  }
+
+  /**
+   * Query FlexCards from the org
+   */
+  private async queryFlexCards(conn: any, namespace: string): Promise<any[]> {
+    const query = `SELECT Id, Name FROM ${namespace}__VlocityCard__c WHERE ${namespace}__CardType__c = 'flex' AND ${namespace}__Active__c = true`;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const result = await conn.query(query);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return result.records || [];
+  }
+
+  /**
+   * Filter components based on the migrateOnly flag
+   */
+  private filterComponentsByMigrateOnly(
+    migrateOnly: string,
+    dataMappers: any[],
+    omniScripts: any[],
+    integrationProcedures: any[],
+    flexCards: any[]
+  ): {
+    dataMappers: any[];
+    omniScripts: any[];
+    integrationProcedures: any[];
+    flexCards: any[];
+  } {
+    if (!migrateOnly) {
+      return { dataMappers, omniScripts, integrationProcedures, flexCards };
+    }
+
+    // Return only the components that match the migrateOnly filter
+    switch (migrateOnly) {
+      case Constants.DataMapper:
+        return { dataMappers, omniScripts: [], integrationProcedures: [], flexCards: [] };
+      case Constants.Omniscript:
+        return { dataMappers: [], omniScripts, integrationProcedures: [], flexCards: [] };
+      case Constants.IntegrationProcedure:
+        return { dataMappers: [], omniScripts: [], integrationProcedures, flexCards: [] };
+      case Constants.Flexcard:
+        return { dataMappers: [], omniScripts: [], integrationProcedures: [], flexCards };
+      default:
+        return { dataMappers: [], omniScripts: [], integrationProcedures: [], flexCards: [] };
+    }
   }
 
   private async getTargetApexNamespace(objectsToProcess: string[], targetApexNamespace: string): Promise<string> {
