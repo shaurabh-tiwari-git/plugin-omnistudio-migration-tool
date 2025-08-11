@@ -107,7 +107,7 @@ sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM --only=autonum
 
 ```
 USAGE
-  $ sf omnistudio:migration:assess [-n <string>] [-f] [-v <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel
+  $ sf omnistudio:migration:assess [-n <string>] [-f] [-v <string>] [-u <string>] [--loglevel
   trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 OPTIONS
@@ -118,11 +118,6 @@ OPTIONS
 
   -v, --targetdevhubusername=targetdevhubusername                                   username or alias for the dev hub
                                                                                     org; overrides default dev hub org
-
-  --apiversion=apiversion                                                           override the api version used for
-                                                                                    api requests made by this command
-
-  --json                                                                            format output as json
 
   --loglevel=(trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL)  [default: warn] logging level for
                                                                                     this command invocation
@@ -142,7 +137,7 @@ OPTIONS
 
 ```
 USAGE
-  $ sf omnistudio:migration:migrate [-n <string>] [-f] [-v <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel
+  $ sf omnistudio:migration:migrate [-n <string>] [-f] [-v <string>] [-u <string>] [--loglevel
   trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 OPTIONS
@@ -153,11 +148,6 @@ OPTIONS
 
   -v, --targetdevhubusername=targetdevhubusername                                   username or alias for the dev hub
                                                                                     org; overrides default dev hub org
-
-  --apiversion=apiversion                                                           override the api version used for
-                                                                                    api requests made by this command
-
-  --json                                                                            format output as json
 
   --loglevel=(trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL)  [default: warn] logging level for
                                                                                     this command invocation

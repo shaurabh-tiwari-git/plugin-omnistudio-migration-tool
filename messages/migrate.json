@@ -1,7 +1,7 @@
 {
   "examples": [
     "omnistudio:migration:migrate -u orguser@domain.com ",
-    "omnistudio:migration:migrate -u orguser@domain.com  --only=dr",
+    "omnistudio:migration:migrate -u orguser@domain.com  --only=dm",
     "omnistudio:migration:migrate -u orguser@domain.com  --only=ip",
     "omnistudio:migration:migrate -u orguser@domain.com  --only=os",
     "omnistudio:migration:migrate -u orguser@domain.com  --only=fc",
@@ -12,10 +12,9 @@
   ],
   "commandDescription": "Migrate omnistudio components from custom objects to standard objects",
   "namespaceFlagDescription": "The namespace of the package",
-  "apiVersionFlagDescription": "The Salesforce API version to use",
   "errorNoOrgResults": "No results found for the org '%s'.",
-  "onlyFlagDescription": "Migrate a single element: os | ip | fc | dr | autonumber",
-  "invalidOnlyFlag": "Invalid flag, valid options are: os | ip | fc | dr | autonumber",
+  "onlyFlagDescription": "Migrate a single element: os | ip | fc | dm | autonumber",
+  "invalidOnlyFlag": "Invalid flag, valid options are: os | ip | fc | dm | autonumber",
   "couldNotDeactivateOmniProcesses": "Could not deactivate current OmniProcesses",
   "couldNotTruncate": "Could not truncate %s",
   "couldNotTruncateOmnniProcess": "Could not truncate OmniProcess. Please make sure your OS/IP is not referenced in an OmniScrirpt or Flex Card.",

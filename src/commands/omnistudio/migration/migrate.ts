@@ -46,10 +46,6 @@ export default class Migrate extends OmniStudioBaseCommand {
   public static args = [{ name: 'file' }];
 
   protected static flagsConfig = {
-    namespace: flags.string({
-      char: 'n',
-      description: messages.getMessage('namespaceFlagDescription'),
-    }),
     only: flags.string({
       char: 'o',
       description: messages.getMessage('onlyFlagDescription'),
@@ -84,17 +80,13 @@ export default class Migrate extends OmniStudioBaseCommand {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async runMigration(): Promise<any> {
-    let apiVersion = this.flags.apiversion as string;
     const migrateOnly = (this.flags.only || '') as string;
     const allVersions = this.flags.allversions || (false as boolean);
     const relatedObjects = (this.flags.relatedobjects || '') as string;
     // this.org is guaranteed because requiresUsername=true, as opposed to supportsUsername
     const conn = this.org.getConnection();
-    if (apiVersion) {
-      conn.setApiVersion(apiVersion);
-    } else {
-      apiVersion = conn.getApiVersion();
-    }
+
+    const apiVersion = conn.getApiVersion();
 
     const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn, this.flags.namespace);
 
