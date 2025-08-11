@@ -288,7 +288,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     Logger.info(this.messages.getMessage('processingDataRaptor', [drName]));
     const warnings: string[] = [];
     const existingDRNameVal = new StringVal(drName, 'name');
-    let assessmentStatus = 'Can be Automated';
+    let assessmentStatus = 'Ready for migration';
 
     if (!existingDRNameVal.isNameCleaned()) {
       warnings.push(
@@ -298,7 +298,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
           existingDRNameVal.cleanName(),
         ])
       );
-      assessmentStatus = 'Has Warnings';
+      assessmentStatus = 'Warnings';
     }
     if (existingDataRaptorNames.has(existingDRNameVal.cleanName())) {
       warnings.push(this.messages.getMessage('duplicatedName') + '  ' + existingDRNameVal.cleanName());

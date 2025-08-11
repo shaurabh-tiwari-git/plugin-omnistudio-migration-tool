@@ -39,20 +39,21 @@ export class IPAssessmentReporter {
   public static getSummaryData(ipAssessmentInfos: IPAssessmentInfo[]): SummaryItemDetailParam[] {
     return [
       {
-        name: 'Can be Automated',
-        count: ipAssessmentInfos.filter((ipAssessmentInfo) => ipAssessmentInfo.migrationStatus === 'Can be Automated')
-          .length,
+        name: 'Ready for migration',
+        count: ipAssessmentInfos.filter(
+          (ipAssessmentInfo) => ipAssessmentInfo.migrationStatus === 'Ready for migration'
+        ).length,
         cssClass: 'text-success',
       },
       {
-        name: 'Has Warnings',
+        name: 'Warnings',
         count: ipAssessmentInfos.filter(
           (ipAssessmentInfo) => ipAssessmentInfo.warnings && ipAssessmentInfo.warnings.length > 0
         ).length,
         cssClass: 'text-warning',
       },
       {
-        name: 'Has Errors',
+        name: 'Failed',
         count: ipAssessmentInfos.filter(
           (ipAssessmentInfo) => ipAssessmentInfo.errors && ipAssessmentInfo.errors.length > 0
         ).length,
@@ -77,7 +78,7 @@ export class IPAssessmentReporter {
           false,
           undefined,
           undefined,
-          ipAssessmentInfo.migrationStatus === 'Can be Automated' ? 'text-success' : 'text-error'
+          ipAssessmentInfo.migrationStatus === 'Ready for migration' ? 'text-success' : 'text-error'
         ),
         createRowDataParam(
           'summary',
