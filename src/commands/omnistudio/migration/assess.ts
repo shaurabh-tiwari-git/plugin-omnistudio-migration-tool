@@ -178,9 +178,7 @@ export default class Assess extends OmniStudioBaseCommand {
       this.logger,
       messages,
       this.ux,
-      objectsToProcess,
-      undefined,
-      undefined
+      objectsToProcess
     );
 
     const userActionMessages: string[] = [];

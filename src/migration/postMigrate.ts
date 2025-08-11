@@ -27,8 +27,8 @@ export class PostMigrate extends BaseMigrationTool {
     messages: Messages,
     ux: UX,
     relatedObjectsToProcess: string[],
-    deploymentConfig: { autoDeploy: boolean; authKey: string | undefined },
-    projectPath: string
+    deploymentConfig?: { autoDeploy: boolean; authKey: string | undefined },
+    projectPath?: string
   ) {
     super(namespace, connection, logger, messages, ux);
     this.org = org;
