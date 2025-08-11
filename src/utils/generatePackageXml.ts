@@ -1,11 +1,13 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { Messages } from '@salesforce/core';
 import {
   ApexAssessmentInfo,
   ExperienceSiteAssessmentInfo,
   FlexiPageAssessmentInfo,
   LWCAssessmentInfo,
 } from './interfaces';
+import { Logger } from './logger';
 
 export class generatePackageXml {
   // Method to generate package.xml with additional types
@@ -13,8 +15,11 @@ export class generatePackageXml {
     apexAssementInfos: ApexAssessmentInfo[],
     lwcAssessmentInfos: LWCAssessmentInfo[],
     experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo[],
-    flexipageAssessmentInfos: FlexiPageAssessmentInfo[]
+    flexipageAssessmentInfos: FlexiPageAssessmentInfo[],
+    version: string,
+    messages: Messages
   ): void {
+    fs.rmSync(path.join(process.cwd(), 'package.xml'), { force: true });
     const apexXml = generatePackageXml.getXmlElementforMembers(this.getApexclasses(apexAssementInfos), 'ApexClass');
     const lwcXml = generatePackageXml.getXmlElementforMembers(
       this.getLwcs(lwcAssessmentInfos),
@@ -31,24 +36,10 @@ export class generatePackageXml {
       'FlexiPage'
     );
 
-    const additionalTypes = `
-    <types>
-        <members>*</members>
-        <name>OmniDataTransform</name>
-    </types>
-    <types>
-        <members>*</members>
-        <name>OmniIntegrationProcedure</name>
-    </types>
-    <types>
-        <members>*</members>
-        <name>OmniScript</name>
-    </types>
-    <types>
-        <members>*</members>
-        <name>OmniUiCard</name>
-    </types>
-  `;
+    if (!apexXml && !lwcXml && !expsiteXml && !flexipageXml) {
+      Logger.warn(messages.getMessage('noMetadataToDeploy'));
+      return;
+    }
 
     const packageXmlContent = `
 <?xml version="1.0" encoding="UTF-8"?>
@@ -57,12 +48,11 @@ export class generatePackageXml {
       ${lwcXml}
       ${expsiteXml}
       ${flexipageXml}
-      ${additionalTypes}
-    <version>57.0</version>
+    <version>${version}</version>
 </Package>
 `;
 
-    const filePath = path.join(__dirname, 'package.xml');
+    const filePath = path.join(process.cwd(), 'package.xml');
     fs.writeFileSync(filePath, packageXmlContent.trim());
   }
 

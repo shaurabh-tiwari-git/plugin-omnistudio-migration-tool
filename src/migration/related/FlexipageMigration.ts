@@ -7,9 +7,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import * as shell from 'shelljs';
 import { Messages, Org } from '@salesforce/core';
-import { sfProject } from '../../utils/sfcli/project/sfProject';
 import { Logger } from '../../utils/logger';
 import { Constants } from '../../utils/constants/stringContants';
 import { FlexiPageAssessmentInfo } from '../../utils/interfaces';
@@ -101,12 +99,9 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
    * @returns Array of FlexiPage assessment information
    */
   private process(mode: 'assess' | 'migrate'): FlexiPageAssessmentInfo[] {
-    Logger.logVerbose(this.messages.getMessage('retrievingFlexiPages'));
-    shell.cd(this.projectPath);
-    sfProject.retrieve(Constants.FlexiPage, this.org.getUsername());
     const flexiPageDir = path.join(this.projectPath, 'force-app', 'main', 'default', 'flexipages');
     const files = fs.readdirSync(flexiPageDir).filter((file) => file.endsWith('.xml'));
-    Logger.logVerbose(this.messages.getMessage('successfullyRetrievedFlexiPages', [files.length]));
+    Logger.logVerbose(this.messages.getMessage('foundFlexiPages', [files.length]));
     const progressBar = createProgressBar('Migrating', 'Flexipage');
     progressBar.setTotal(files.length);
     const flexPageAssessmentInfos: FlexiPageAssessmentInfo[] = [];

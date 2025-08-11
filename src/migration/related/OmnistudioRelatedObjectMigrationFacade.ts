@@ -86,6 +86,10 @@ export default class OmnistudioRelatedObjectMigrationFacade {
       sfProject.retrieve(APEXCLASS, this.org.getUsername());
     }
 
+    if (relatedObjects.includes(Constants.FlexiPage)) {
+      sfProject.retrieve(Constants.FlexiPage, this.org.getUsername());
+    }
+
     if (relatedObjects.includes(Constants.ExpSites)) {
       Logger.logVerbose(EXPERIENCEBUNDLE);
       sfProject.retrieve(EXPERIENCEBUNDLE, this.org.getUsername());

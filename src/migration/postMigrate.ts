@@ -8,10 +8,15 @@ import { AnonymousApexRunner } from '../utils/apex/executor/AnonymousApexRunner'
 import { Constants } from '../utils/constants/stringContants';
 import { OrgPreferences } from '../utils/orgPreferences';
 import { BaseMigrationTool } from './base';
+import { Deployer } from './deployer';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export class PostMigrate extends BaseMigrationTool {
   private readonly org: Org;
   private readonly relatedObjectsToProcess: string[];
+  private readonly projectPath: string;
+  private readonly deploymentConfig: { autoDeploy: boolean; authKey: string | undefined };
 
   // Source Custom Object Names
   constructor(
@@ -21,11 +26,15 @@ export class PostMigrate extends BaseMigrationTool {
     logger: Logger,
     messages: Messages,
     ux: UX,
-    relatedObjectsToProcess: string[]
+    relatedObjectsToProcess: string[],
+    deploymentConfig?: { autoDeploy: boolean; authKey: string | undefined },
+    projectPath?: string
   ) {
     super(namespace, connection, logger, messages, ux);
     this.org = org;
     this.relatedObjectsToProcess = relatedObjectsToProcess;
+    this.deploymentConfig = deploymentConfig;
+    this.projectPath = projectPath;
   }
 
   public async setDesignersToUseStandardDataModel(
@@ -75,6 +84,23 @@ export class PostMigrate extends BaseMigrationTool {
       } catch (error) {
         userActionMessage.push(this.messages.getMessage('errorRevertingExperienceBundleMetadataAPI'));
       }
+    }
+  }
+
+  public deploy(): void {
+    if (!this.deploymentConfig.autoDeploy || !fs.existsSync(path.join(process.cwd(), 'package.xml'))) {
+      return;
+    }
+    try {
+      const deployer = new Deployer(
+        this.projectPath,
+        this.messages,
+        this.org.getUsername(),
+        this.deploymentConfig.authKey
+      );
+      deployer.deploy();
+    } catch (error) {
+      Logger.error(this.messages.getMessage('errorDeployingComponents'), error);
     }
   }
 }

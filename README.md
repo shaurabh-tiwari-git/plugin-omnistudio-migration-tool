@@ -8,6 +8,8 @@ The Omnistudio Migration Assistant is a command-line interface (CLI) plugin that
 
 - Install Salesforce CLI on your computer. See : [Install Salesforce CLI](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_install_cli.htm).
 
+- To deploy LWC as part of auto-deployment process, environment variable 'OMA_AUTH_KEY' should be set with requested NPM repository access key from Salesforce Customer Support.
+
 ## Install and Run the Omnistudio Migration Assistant
 
 1. Install SF cli using the official documentation located [here](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_install_cli.htm).
@@ -168,12 +170,14 @@ OPTIONS
                                                                                     os (OmniScripts), fc (FlexCards)
 
   --relatedobjects=relatedobjects                                                   specify related objects to assess:
-                                                                                    'apex' for Apex classes
+                                                                                    'apex'       for Apex classes
+'lwc'        for LWC (Lightning Web Components)
+'expsites'   for Experience Sites
+'flexipage'  for Lightning record pages
+
 ```
 
-> **Note:** LWC (Lightning Web Components) assessment/migration functionality is temporarily disabled in the current version. LWC features will be re-enabled in a future releases.
-
-> Apex migration functionality remains fully available. The `--relatedobjects` flag only accepts values ('apex')
+> **Note:** LWC migration auto-deployment needs minimum node version of 18.17.1
 
 Terms:
 Notwithstanding anything stated in the terms and conditions agreed between Salesforce (‘SFDC’) and you (‘Customer’), the use of the OmniStudio Migration Assistant (‘Assistant’) is designed to facilitate the migration and it’s going to modify your custom code and by deploying and using the Assistant you hereby provide your consent to automate the migration process and enable a smooth transition. Customer shall access and use the Assistant only as permitted to the Customer and shall not compromise, break or circumvent any technical processes or security measures associated with the services provided by SFDC.

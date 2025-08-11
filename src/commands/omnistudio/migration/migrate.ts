@@ -130,11 +130,28 @@ export default class Migrate extends OmniStudioBaseCommand {
     const namespace = orgs.packageDetails.namespace;
     // Let's time every step
     DebugTimer.getInstance().start();
+    let projectPath: string;
+    let objectsToProcess: string[] = [];
+    let targetApexNamespace: string;
+    const preMigrate: PreMigrate = new PreMigrate(namespace, conn, this.logger, messages, this.ux);
+    const isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean } = { value: false };
 
-    // Handle related objects processing
-    const relatedObjectsResult = await this.processRelatedObjects(relatedObjects, conn, namespace);
-    const { projectPath, objectsToProcess, targetApexNamespace, isExperienceBundleMetadataAPIProgramaticallyEnabled } =
-      relatedObjectsResult;
+    let actionItems = [];
+
+    let deploymentConfig = { autoDeploy: false, authKey: undefined };
+    if (relatedObjects) {
+      const relatedObjectProcessResult = await this.processRelatedObjects(
+        relatedObjects,
+        preMigrate,
+        conn,
+        isExperienceBundleMetadataAPIProgramaticallyEnabled,
+        actionItems
+      );
+      objectsToProcess = relatedObjectProcessResult.objectsToProcess;
+      projectPath = relatedObjectProcessResult.projectPath;
+      targetApexNamespace = relatedObjectProcessResult.targetApexNamespace;
+      deploymentConfig = relatedObjectProcessResult.deploymentConfig;
+    }
 
     Logger.log(messages.getMessage('migrationInitialization', [String(namespace)]));
     Logger.log(messages.getMessage('apiVersionInfo', [apiVersion]));
@@ -181,7 +198,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     const relatedObjectMigrationResult = omnistudioRelatedObjectsMigration.migrateAll(objectsToProcess);
 
     // POST MIGRATION
-    let actionItems = [];
+
     const postMigrate: PostMigrate = new PostMigrate(
       this.org,
       namespace,
@@ -189,7 +206,9 @@ export default class Migrate extends OmniStudioBaseCommand {
       this.logger,
       messages,
       this.ux,
-      objectsToProcess
+      objectsToProcess,
+      deploymentConfig,
+      projectPath
     );
 
     if (!migrateOnly) {
@@ -206,10 +225,18 @@ export default class Migrate extends OmniStudioBaseCommand {
 
     generatePackageXml.createChangeList(
       relatedObjectMigrationResult.apexAssessmentInfos,
-      relatedObjectMigrationResult.lwcAssessmentInfos,
+      deploymentConfig.autoDeploy && deploymentConfig.authKey ? relatedObjectMigrationResult.lwcAssessmentInfos : [],
       relatedObjectMigrationResult.experienceSiteAssessmentInfos,
-      relatedObjectMigrationResult.flexipageAssessmentInfos
+      relatedObjectMigrationResult.flexipageAssessmentInfos,
+      this.org.getConnection().version,
+      messages
     );
+
+    try {
+      postMigrate.deploy();
+    } catch (error) {
+      Logger.error(messages.getMessage('errorDeployingComponents'), error);
+    }
 
     await ResultsBuilder.generateReport(
       objectMigrationResults,
@@ -222,52 +249,52 @@ export default class Migrate extends OmniStudioBaseCommand {
     );
 
     // Return results needed for --json flag
-    return { objectMigrationResults };
+    return { objectMigrationResults: [] };
   }
 
   private async processRelatedObjects(
     relatedObjects: string,
+    preMigrate: PreMigrate,
     conn: Connection,
-    namespace: string
+    isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean },
+    actionItems: string[]
   ): Promise<{
-    projectPath: string;
     objectsToProcess: string[];
+    projectPath: string;
     targetApexNamespace: string;
-    isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean };
+    deploymentConfig: { autoDeploy: boolean; authKey: string | undefined };
   }> {
-    let projectPath: string;
-    let objectsToProcess: string[] = [];
-    let targetApexNamespace: string;
-    const isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean } = { value: false };
-    if (relatedObjects) {
-      const validOptions = [Constants.Apex, Constants.ExpSites, Constants.FlexiPage, Constants.LWC];
-      objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
-      // Validate input
-      for (const obj of objectsToProcess) {
-        if (!validOptions.includes(obj)) {
-          Logger.error(messages.getMessage('invalidRelatedObjectsOption', [obj]));
-          process.exit(1);
-        }
+    const validOptions = [Constants.Apex, Constants.ExpSites, Constants.FlexiPage, Constants.LWC];
+    const objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
+    // Validate input
+    for (const obj of objectsToProcess) {
+      if (!validOptions.includes(obj)) {
+        Logger.error(messages.getMessage('invalidRelatedObjectsOption', [obj]));
+        process.exit(1);
       }
-      // Check for general consent to make modifications with OMT
-      const generalConsent = await this.getGeneralConsent();
-      if (generalConsent) {
-        // Use ProjectPathUtil for APEX project folder selection (matches assess.ts logic)
-        projectPath = await ProjectPathUtil.getProjectPath(messages, true);
-        targetApexNamespace = await this.getTargetApexNamespace(objectsToProcess, targetApexNamespace);
-        const preMigrate: PreMigrate = new PreMigrate(namespace, conn, this.logger, messages, this.ux);
-        await preMigrate.handleExperienceSitePrerequisites(
-          objectsToProcess,
-          conn,
-          isExperienceBundleMetadataAPIProgramaticallyEnabled
-        );
-        Logger.logVerbose(
-          'The objects to process after handleExpSitePrerequisite are ' + JSON.stringify(objectsToProcess)
-        );
-      } // TODO - What if general consent is no
     }
 
-    return { projectPath, objectsToProcess, targetApexNamespace, isExperienceBundleMetadataAPIProgramaticallyEnabled };
+    let deploymentConfig = { autoDeploy: false, authKey: undefined };
+    let projectPath: string;
+    let targetApexNamespace: string;
+    // Check for general consent to make modifications with OMT
+    const generalConsent = await this.getGeneralConsent();
+    if (generalConsent) {
+      // Use ProjectPathUtil for APEX project folder selection (matches assess.ts logic)
+      projectPath = await ProjectPathUtil.getProjectPath(messages, true);
+      targetApexNamespace = await this.getTargetApexNamespace(objectsToProcess, targetApexNamespace);
+      await preMigrate.handleExperienceSitePrerequisites(
+        objectsToProcess,
+        conn,
+        isExperienceBundleMetadataAPIProgramaticallyEnabled
+      );
+      deploymentConfig = await preMigrate.getAutoDeployConsent(objectsToProcess.includes(Constants.LWC), actionItems);
+      Logger.logVerbose(
+        'The objects to process after handleExpSitePrerequisite are ' + JSON.stringify(objectsToProcess)
+      );
+    }
+
+    return { objectsToProcess, projectPath, targetApexNamespace, deploymentConfig };
   }
 
   private async getMigrationConsent(): Promise<boolean> {
