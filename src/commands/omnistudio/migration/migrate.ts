@@ -135,13 +135,16 @@ export default class Migrate extends OmniStudioBaseCommand {
     const preMigrate: PreMigrate = new PreMigrate(namespace, conn, this.logger, messages, this.ux);
     const isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean } = { value: false };
 
+    let actionItems = [];
+
     let deploymentConfig = { autoDeploy: false, authKey: undefined };
     if (relatedObjects) {
       const relatedObjectMigrationResult = await this.migrateRelatedObjects(
         relatedObjects,
         preMigrate,
         conn,
-        isExperienceBundleMetadataAPIProgramaticallyEnabled
+        isExperienceBundleMetadataAPIProgramaticallyEnabled,
+        actionItems
       );
       objectsToProcess = relatedObjectMigrationResult.objectsToProcess;
       projectPath = relatedObjectMigrationResult.projectPath;
@@ -183,7 +186,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     const relatedObjectMigrationResult = omnistudioRelatedObjectsMigration.migrateAll(objectsToProcess);
 
     // POST MIGRATION
-    let actionItems = [];
+    
     const postMigrate: PostMigrate = new PostMigrate(
       this.org,
       namespace,
@@ -241,7 +244,8 @@ export default class Migrate extends OmniStudioBaseCommand {
     relatedObjects: string,
     preMigrate: PreMigrate,
     conn: Connection,
-    isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean }
+    isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean },
+    actionItems: string[]
   ): Promise<{
     objectsToProcess: string[];
     projectPath: string;
@@ -272,7 +276,7 @@ export default class Migrate extends OmniStudioBaseCommand {
         conn,
         isExperienceBundleMetadataAPIProgramaticallyEnabled
       );
-      deploymentConfig = await preMigrate.getAutoDeployConsent(objectsToProcess.includes(Constants.LWC));
+      deploymentConfig = await preMigrate.getAutoDeployConsent(objectsToProcess.includes(Constants.LWC), actionItems);
       Logger.logVerbose(
         'The objects to process after handleExpSitePrerequisite are ' + JSON.stringify(objectsToProcess)
       );

@@ -54,7 +54,8 @@ export class PreMigrate extends BaseMigrationTool {
   }
 
   public async getAutoDeployConsent(
-    includeLwc: boolean
+    includeLwc: boolean,
+    actionItems: string[]
   ): Promise<{ autoDeploy: boolean; authKey: string | undefined }> {
     const askWithTimeOut = PromptUtil.askWithTimeOut(this.messages);
     let validResponse = false;
@@ -91,6 +92,7 @@ export class PreMigrate extends BaseMigrationTool {
       deploymentConfig.authKey = process.env[authEnvKey];
       if (!deploymentConfig.authKey) {
         Logger.warn(this.messages.getMessage('authKeyEnvVarNotSet'));
+        actionItems.push(this.messages.getMessage('authKeyEnvVarNotSet'));
       }
     }
 

@@ -60,7 +60,8 @@ describe('Deployer', () => {
       expect((deployer as any).username).to.equal(testUsername);
       expect((deployer as any).authKey).to.equal(testAuthKey);
       expect((deployer as any).messages).to.equal(messages);
-      expect((deployer as any).requiredNodeDependency).to.equal('@omnistudio/omniscript_customization@250.0.0');
+      expect((deployer as any).omniscriptCustomizationPackage).to.equal('@omnistudio/omniscript_customization');
+      expect((deployer as any).omniscriptCustomizationPackageVersion).to.equal('250.0.0');
     });
   });
 
@@ -134,8 +135,9 @@ describe('Deployer', () => {
   });
 
   describe('private properties', () => {
-    it('should have correct requiredNodeDependency', () => {
-      expect((deployer as any).requiredNodeDependency).to.equal('@omnistudio/omniscript_customization@250.0.0');
+    it('should have correct omniscript customization package properties', () => {
+      expect((deployer as any).omniscriptCustomizationPackage).to.equal('@omnistudio/omniscript_customization');
+      expect((deployer as any).omniscriptCustomizationPackageVersion).to.equal('250.0.0');
     });
   });
 

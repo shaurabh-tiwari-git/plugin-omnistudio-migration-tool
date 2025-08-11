@@ -168,12 +168,14 @@ OPTIONS
                                                                                     os (OmniScripts), fc (FlexCards)
 
   --relatedobjects=relatedobjects                                                   specify related objects to assess:
-                                                                                    'apex' for Apex classes
+                                                                                    'apex'       for Apex classes
+'lwc'        for LWC (Lightning Web Components)
+'expsites'   for Experience Sites
+'flexipage'  for Lightning record pages
+
 ```
 
-> **Note:** LWC (Lightning Web Components) assessment/migration functionality is temporarily disabled in the current version. LWC features will be re-enabled in a future releases.
-
-> Apex migration functionality remains fully available. The `--relatedobjects` flag only accepts values ('apex')
+> **Note:** LWC migration auto-deployment needs minimum node version of 18.17.1
 
 Terms:
 Notwithstanding anything stated in the terms and conditions agreed between Salesforce (‘SFDC’) and you (‘Customer’), the use of the OmniStudio Migration Assistant (‘Assistant’) is designed to facilitate the migration and it’s going to modify your custom code and by deploying and using the Assistant you hereby provide your consent to automate the migration process and enable a smooth transition. Customer shall access and use the Assistant only as permitted to the Customer and shall not compromise, break or circumvent any technical processes or security measures associated with the services provided by SFDC.
