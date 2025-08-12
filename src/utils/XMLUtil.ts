@@ -50,13 +50,8 @@ export class XMLUtil {
 
   // Parse XML string to JSON
   public parse(xmlString: string): any {
-    try {
-      const doc = this.parser.parseFromString(xmlString, 'text/xml');
-      return this.xmlToJson(doc.documentElement as any);
-    } catch (error) {
-      // Return empty object for invalid XML instead of throwing
-      return {};
-    }
+    const doc = this.parser.parseFromString(xmlString, 'text/xml');
+    return this.xmlToJson(doc.documentElement as any);
   }
 
   // Convert JSON object to XML
