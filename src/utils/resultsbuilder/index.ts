@@ -43,6 +43,8 @@ export class ResultsBuilder {
   private static rowClass = 'data-row-';
   private static rowId = 0;
 
+  private static flexiPageFileSuffix = '.flexipage-meta.xml';
+
   public static async generateReport(
     results: MigratedObject[],
     relatedObjectMigrationResult: RelatedObjectAssesmentInfo,
@@ -387,8 +389,15 @@ export class ResultsBuilder {
       rows: result.map((item) => ({
         rowId: `${this.rowClass}${this.rowId++}`,
         data: [
-          createRowDataParam('name', item.name, true, 1, 1, false),
-          createRowDataParam('path', item.path, false, 1, 1, false),
+          createRowDataParam(
+            'name',
+            item.name.substring(0, item.name.length - this.flexiPageFileSuffix.length),
+            true,
+            1,
+            1,
+            false
+          ),
+          createRowDataParam('path', item.name, false, 1, 1, true, item.path),
           createRowDataParam(
             'status',
             item.status,

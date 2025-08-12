@@ -146,7 +146,7 @@ export default class Assess extends OmniStudioBaseCommand {
       // Validate input
       for (const obj of objectsToProcess) {
         if (!validOptions.includes(obj)) {
-          Logger.error(messages.getMessage('invalidRelatedObjectsOption', [String(obj)]));
+          Logger.error(messages.getMessage('invalidRelatedObjectsOptionGA', [String(obj)]));
           process.exit(1);
         }
       }

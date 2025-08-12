@@ -266,7 +266,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     // Validate input
     for (const obj of objectsToProcess) {
       if (!validOptions.includes(obj)) {
-        Logger.error(messages.getMessage('invalidRelatedObjectsOption', [obj]));
+        Logger.error(messages.getMessage('invalidRelatedObjectsOptionGA', [obj]));
         process.exit(1);
       }
     }

@@ -11,20 +11,16 @@ import { OmnistudioOrgDetails } from '../../../src/utils/orgUtils';
 
 describe('FlexipageAssessmentReporter', () => {
   let sandbox: sinon.SinonSandbox;
-  let mockFileDiffUtil: any;
+  let fileDiffUtilStub: sinon.SinonStub;
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
 
-    // Mock FileDiffUtil.getDiffHTML
-    mockFileDiffUtil = {
-      getDiffHTML: sandbox.stub().returns('<div>mock-diff-html</div>'),
-    };
-
-    // Stub the FileDiffUtil import
-    sandbox
-      .stub(require('../../../src/utils/lwcparser/fileutils/FileDiffUtil'), 'FileDiffUtil')
-      .value(mockFileDiffUtil);
+    // Stub the FileDiffUtil static method
+    fileDiffUtilStub = sandbox.stub().returns('<div>mock-diff-html</div>');
+    sandbox.stub(require('../../../src/utils/lwcparser/fileutils/FileDiffUtil'), 'FileDiffUtil').value({
+      getDiffHTML: fileDiffUtilStub,
+    });
   });
 
   afterEach(() => {
@@ -36,14 +32,14 @@ describe('FlexipageAssessmentReporter', () => {
       // Arrange
       const mockAssessmentInfos: FlexiPageAssessmentInfo[] = [
         {
-          name: 'TestPage1',
+          name: 'TestPage1.flexipage-meta.xml',
           path: '/test/path1',
           diff: 'mock-diff-1',
           errors: [],
           status: 'Can be Automated',
         },
         {
-          name: 'TestPage2',
+          name: 'TestPage2.flexipage-meta.xml',
           path: '/test/path2',
           diff: 'mock-diff-2',
           errors: ['Error 1', 'Error 2'],
@@ -174,14 +170,14 @@ describe('FlexipageAssessmentReporter', () => {
       // Arrange
       const mockAssessmentInfos: FlexiPageAssessmentInfo[] = [
         {
-          name: 'TestPage1',
+          name: 'TestPage1.flexipage-meta.xml',
           path: '/test/path1',
           diff: 'mock-diff-1',
           errors: [],
           status: 'Can be Automated',
         },
         {
-          name: 'TestPage2',
+          name: 'TestPage2.flexipage-meta.xml',
           path: '/test/path2',
           diff: 'mock-diff-2',
           errors: ['Error 1', 'Error 2'],
@@ -199,7 +195,7 @@ describe('FlexipageAssessmentReporter', () => {
       expect(result[0].rowId).to.match(/^flexipage-row-data-\d+$/);
       expect(result[0].data).to.have.length(5);
       expect(result[0].data[0].value).to.equal('TestPage1');
-      expect(result[0].data[1].value).to.equal('/test/path1');
+      expect(result[0].data[1].value).to.equal('TestPage1.flexipage-meta.xml');
       expect(result[0].data[2].value).to.equal('Can be Automated');
       expect(result[0].data[2].customClass).to.equal('text-success');
       expect(result[0].data[3].value).to.equal('');
@@ -207,7 +203,7 @@ describe('FlexipageAssessmentReporter', () => {
 
       // Check second row
       expect(result[1].data[0].value).to.equal('TestPage2');
-      expect(result[1].data[1].value).to.equal('/test/path2');
+      expect(result[1].data[1].value).to.equal('TestPage2.flexipage-meta.xml');
       expect(result[1].data[2].value).to.equal('Errors');
       expect(result[1].data[2].customClass).to.equal('text-error');
       expect(result[1].data[4].value).to.equal('Has Errors');
@@ -234,14 +230,14 @@ describe('FlexipageAssessmentReporter', () => {
       // Arrange
       const mockAssessmentInfos: FlexiPageAssessmentInfo[] = [
         {
-          name: 'TestPage1',
+          name: 'TestPage1.flexipage-meta.xml',
           path: '/test/path1',
           diff: 'mock-diff-1',
           errors: [],
           status: 'Can be Automated',
         },
         {
-          name: 'TestPage2',
+          name: 'TestPage2.flexipage-meta.xml',
           path: '/test/path2',
           diff: 'mock-diff-2',
           errors: ['Error 1'],
@@ -253,9 +249,9 @@ describe('FlexipageAssessmentReporter', () => {
       (FlexipageAssessmentReporter as any).getRowsForReport(mockAssessmentInfos);
 
       // Assert
-      expect(mockFileDiffUtil.getDiffHTML.calledTwice).to.be.true;
-      expect(mockFileDiffUtil.getDiffHTML.firstCall.args).to.deep.equal(['mock-diff-1', 'TestPage1']);
-      expect(mockFileDiffUtil.getDiffHTML.secondCall.args).to.deep.equal(['mock-diff-2', 'TestPage2']);
+      expect(fileDiffUtilStub.calledTwice).to.be.true;
+      expect(fileDiffUtilStub.firstCall.args).to.deep.equal(['mock-diff-1', 'TestPage1.flexipage-meta.xml']);
+      expect(fileDiffUtilStub.secondCall.args).to.deep.equal(['mock-diff-2', 'TestPage2.flexipage-meta.xml']);
     });
   });
 

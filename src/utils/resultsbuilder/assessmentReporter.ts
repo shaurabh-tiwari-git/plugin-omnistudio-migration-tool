@@ -55,7 +55,13 @@ export class AssessmentReporter {
       'utf8'
     );
     if (!assessOnly) {
-      reports.push(Constants.Omniscript, Constants.Flexcard, Constants.IntegrationProcedure, Constants.DataMapper);
+      reports.push(
+        Constants.Omniscript,
+        Constants.Flexcard,
+        Constants.IntegrationProcedure,
+        Constants.DataMapper,
+        Constants.GlobalAutoNumber
+      );
       this.createDocument(
         path.join(this.basePath, this.omniscriptAssessmentFileName),
         TemplateParser.generate(
@@ -78,44 +84,6 @@ export class AssessmentReporter {
             instanceUrl,
             omnistudioOrgDetails
           ),
-          messages
-        )
-      );
-      this.createDocument(
-        path.join(this.basePath, this.apexAssessmentFileName),
-        TemplateParser.generate(
-          assessmentReportTemplate,
-          ApexAssessmentReporter.getApexAssessmentData(result.apexAssessmentInfos, omnistudioOrgDetails),
-          messages
-        )
-      );
-
-      this.createDocument(
-        path.join(this.basePath, this.experienceSiteAssessmentFileName),
-        TemplateParser.generate(
-          assessmentReportTemplate,
-          ExperienceSiteAssessmentReporter.getExperienceSiteAssessmentData(
-            result.experienceSiteAssessmentInfos,
-            omnistudioOrgDetails
-          ),
-          messages
-        )
-      );
-
-      this.createDocument(
-        path.join(this.basePath, this.flexipageAssessmentFileName),
-        TemplateParser.generate(
-          assessmentReportTemplate,
-          FlexipageAssessmentReporter.getFlexipageAssessmentData(result.flexipageAssessmentInfos, omnistudioOrgDetails),
-          messages
-        )
-      );
-
-      this.createDocument(
-        path.join(this.basePath, this.lwcAssessmentFileName),
-        TemplateParser.generate(
-          assessmentReportTemplate,
-          LWCAssessmentReporter.getLwcAssessmentData(result.lwcAssessmentInfos, omnistudioOrgDetails),
           messages
         )
       );
