@@ -206,8 +206,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     flexCardAssessmentInfos: FlexCardAssessmentInfo[]
   ): Promise<OmniAssessmentInfo> {
     try {
-      const exportComponentType =
-        this.exportType === OmniScriptExportType.IP ? 'Integration Procedures' : 'Omniscripts';
+      const exportComponentType = this.getName() as ComponentType;
       Logger.log(this.messages.getMessage('startingOmniScriptAssessment', [exportComponentType]));
       const omniscripts = await this.getAllOmniScripts();
       Logger.log(this.messages.getMessage('foundOmniScriptsToAssess', [omniscripts.length, exportComponentType]));
@@ -242,8 +241,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     const existingDataRaptorNames = new Set(dataRaptorAssessmentInfos.map((info) => info.name));
     const existingFlexCardNames = new Set(flexCardAssessmentInfos.map((info) => info.name));
 
-    const progressBarType: ComponentType =
-      this.exportType === OmniScriptExportType.IP ? 'Integration Procedures' : 'Omniscripts';
+    const progressBarType: ComponentType = this.getName() as ComponentType;
     const progressBar = createProgressBar('Assessing', progressBarType);
     let progressCounter = 0;
     progressBar.start(omniscripts.length, progressCounter);
@@ -304,9 +302,6 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       }
       if (omniAssessmentInfo.type === 'OmniScript') {
         const type = omniscript[this.namespacePrefix + 'IsLwcEnabled__c'] ? 'LWC' : 'Angular';
-        if (type === 'Angular') {
-          omniAssessmentInfo.warnings.unshift(this.messages.getMessage('angularOSWarning'));
-        }
         const osAssessmentInfo: OSAssessmentInfo = {
           name: omniAssessmentInfo.name,
           type: type,
@@ -664,7 +659,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     // Variables to be returned After Migration
     let originalOsRecords = new Map<string, any>();
     let osUploadInfo = new Map<string, UploadRecordResult>();
-    const exportComponentType = this.exportType === OmniScriptExportType.IP ? 'Integration Procedures' : 'Omniscripts';
+    const exportComponentType = this.getName() as ComponentType;
     Logger.log(this.messages.getMessage('foundOmniScriptsToMigrate', [omniscripts.length, exportComponentType]));
     const progressBarType: ComponentType = exportComponentType;
     const progressBar = createProgressBar('Migrating', progressBarType);

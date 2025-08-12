@@ -79,7 +79,6 @@ export default class Migrate extends OmniStudioBaseCommand {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  // eslint-disable-next-line complexity
   public async runMigration(): Promise<any> {
     const migrateOnly = (this.flags.only || '') as string;
     const allVersions = this.flags.allversions || (false as boolean);
@@ -266,7 +265,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     // Validate input
     for (const obj of objectsToProcess) {
       if (!validOptions.includes(obj)) {
-        Logger.error(messages.getMessage('invalidRelatedObjectsOptionGA', [obj]));
+        Logger.error(messages.getMessage('invalidRelatedObjectsOption', [obj]));
         process.exit(1);
       }
     }

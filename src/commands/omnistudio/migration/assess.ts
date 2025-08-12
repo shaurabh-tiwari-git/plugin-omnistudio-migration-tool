@@ -76,7 +76,7 @@ export default class Assess extends OmniStudioBaseCommand {
     const apiVersion = conn.getApiVersion();
     const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn);
 
-    if (!orgs.hasValidNamespace && this.flags.namespace) {
+    if (!orgs.hasValidNamespace) {
       Logger.warn(messages.getMessage('invalidNamespace') + orgs.packageDetails.namespace);
     }
 
@@ -146,7 +146,7 @@ export default class Assess extends OmniStudioBaseCommand {
       // Validate input
       for (const obj of objectsToProcess) {
         if (!validOptions.includes(obj)) {
-          Logger.error(messages.getMessage('invalidRelatedObjectsOptionGA', [String(obj)]));
+          Logger.error(messages.getMessage('invalidRelatedObjectsOption', [String(obj)]));
           process.exit(1);
         }
       }
