@@ -122,7 +122,7 @@ OPTIONS
                                                                                     and not just the active ones.
 
   --only=only                                                                       specify components to assess:
-                                                                                    dr (DataRaptors), ip (Integration Procedures),
+                                                                                    dm (DataMappers), ip (Integration Procedures),
                                                                                     os (OmniScripts), fc (FlexCards), autonumber (Global Auto Numbers)
 
   --relatedobjects=relatedobjects                                                   specify related objects to assess:

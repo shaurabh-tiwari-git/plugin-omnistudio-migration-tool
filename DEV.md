@@ -18,7 +18,7 @@ bin/run omnistudio:migration:migrate -u agarcia-vertical238@na46.salesforce.com
 
 ```
 USAGE
-  $ sfdx omnistudio:migration:migrate [-n <string>] [-f] [-v <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel
+  $ sfdx omnistudio:migration:migrate [-f] [-v <string>] [-u <string>] [--loglevel
   trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 OPTIONS

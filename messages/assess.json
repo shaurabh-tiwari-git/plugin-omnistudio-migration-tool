@@ -1,15 +1,13 @@
 {
   "examples": [
     "omnistudio:migration:assess -u orguser@domain.com ",
-    "omnistudio:migration:assess -u orguser@domain.com  --only=dr",
+    "omnistudio:migration:assess -u orguser@domain.com  --only=dm",
     "omnistudio:migration:assess -u orguser@domain.com  --only=ip",
     "omnistudio:migration:assess -u orguser@domain.com  --only=os",
     "omnistudio:migration:assess -u orguser@domain.com  --only=fc",
     "omnistudio:migration:assess -u orguser@domain.com  --only=autonumber"
   ],
   "commandDescription": "Assess migration of omnistudio components from custom objects to standard objects",
-  "namespaceFlagDescription": "The namespaced of the package",
-  "apiVersionFlagDescription": "The Salesforce API version to use",
   "errorNoOrgResults": "No results found for the org '%s'.",
   "onlyFlagDescription": "Migrate a single element: os | ip | fc | dm | autonumber",
   "invalidOnlyFlag": "Invalid flag, valid options are: os | ip | fc | dm | autonumber",
