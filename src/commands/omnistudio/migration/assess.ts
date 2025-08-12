@@ -29,10 +29,6 @@ export default class Assess extends OmniStudioBaseCommand {
   public static args = [{ name: 'file' }];
 
   protected static flagsConfig = {
-    namespace: flags.string({
-      char: 'n',
-      description: messages.getMessage('namespaceFlagDescription'),
-    }),
     only: flags.string({
       char: 'o',
       description: messages.getMessage('onlyFlagDescription'),
@@ -67,7 +63,6 @@ export default class Assess extends OmniStudioBaseCommand {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async runAssess(): Promise<any> {
     DebugTimer.getInstance().start();
-    let apiVersion = this.flags.apiversion as string;
     const allVersions = (this.flags.allversions || false) as boolean;
     const assessOnly = (this.flags.only || '') as string;
     const relatedObjects = (this.flags.relatedobjects || '') as string;
@@ -76,11 +71,9 @@ export default class Assess extends OmniStudioBaseCommand {
     let objectsToProcess: string[];
     // To-Do: Add LWC to valid options when GA is released
     const validOptions = [Constants.Apex, Constants.ExpSites, Constants.FlexiPage, Constants.LWC];
-    if (apiVersion) {
-      conn.setApiVersion(apiVersion);
-    } else {
-      apiVersion = conn.getApiVersion();
-    }
+
+    const apiVersion = conn.getApiVersion();
+
     const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn, this.flags.namespace);
 
     if (!orgs.hasValidNamespace && this.flags.namespace) {

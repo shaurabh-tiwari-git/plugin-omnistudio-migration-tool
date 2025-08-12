@@ -11,29 +11,22 @@ This repository contains the code required to enable the OmniStudio Migration As
 5. In a new command line assistant, run the following command:
 
 ```
-bin/run omnistudio:migration:migrate -u agarcia-vertical238@na46.salesforce.com --namespace=agarciana46_238 --json
+bin/run omnistudio:migration:migrate -u agarcia-vertical238@na46.salesforce.com
 ```
 
 ### Usage & parameters
 
 ```
 USAGE
-  $ sfdx omnistudio:migration:migrate [-n <string>] [-f] [-v <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel
+  $ sfdx omnistudio:migration:migrate [-f] [-v <string>] [-u <string>] [--loglevel
   trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 OPTIONS
-  -n, --namespace=namespace                                                         the namespace of the vertical package
-
   -u, --targetusername=targetusername                                               username or alias for the target
                                                                                     org; overrides default target org
 
   -v, --targetdevhubusername=targetdevhubusername                                   username or alias for the dev hub
                                                                                     org; overrides default dev hub org
-
-  --apiversion=apiversion                                                           override the api version used for
-                                                                                    api requests made by this command
-
-  --json                                                                            format output as json
 
   --loglevel=(trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL)  [default: warn] logging level for
                                                                                     this command invocation
