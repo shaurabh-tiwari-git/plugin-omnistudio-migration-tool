@@ -206,7 +206,8 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     flexCardAssessmentInfos: FlexCardAssessmentInfo[]
   ): Promise<OmniAssessmentInfo> {
     try {
-      const exportComponentType = this.getName() as ComponentType;
+      const exportComponentType =
+        this.exportType === OmniScriptExportType.IP ? 'Integration Procedures' : 'Omniscripts';
       Logger.log(this.messages.getMessage('startingOmniScriptAssessment', [exportComponentType]));
       const omniscripts = await this.getAllOmniScripts();
       Logger.log(this.messages.getMessage('foundOmniScriptsToAssess', [omniscripts.length, exportComponentType]));
@@ -241,7 +242,8 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     const existingDataRaptorNames = new Set(dataRaptorAssessmentInfos.map((info) => info.name));
     const existingFlexCardNames = new Set(flexCardAssessmentInfos.map((info) => info.name));
 
-    const progressBarType: ComponentType = this.getName() as ComponentType;
+    const progressBarType: ComponentType =
+      this.exportType === OmniScriptExportType.IP ? 'Integration Procedures' : 'Omniscripts';
     const progressBar = createProgressBar('Assessing', progressBarType);
     let progressCounter = 0;
     progressBar.start(omniscripts.length, progressCounter);
@@ -302,6 +304,9 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       }
       if (omniAssessmentInfo.type === 'OmniScript') {
         const type = omniscript[this.namespacePrefix + 'IsLwcEnabled__c'] ? 'LWC' : 'Angular';
+        if (type === 'Angular') {
+          omniAssessmentInfo.warnings.unshift(this.messages.getMessage('angularOSWarning'));
+        }
         const osAssessmentInfo: OSAssessmentInfo = {
           name: omniAssessmentInfo.name,
           type: type,
@@ -470,7 +475,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     const existingSubTypeVal = new StringVal(existingSubType, 'sub type');
     const omniScriptName = omniscript[this.namespacePrefix + 'Name'];
     const existingOmniScriptNameVal = new StringVal(omniScriptName, 'name');
-    let assessmentStatus = 'Can be Automated';
+    let assessmentStatus = 'Ready for migration';
 
     const warnings: string[] = [];
 
@@ -510,7 +515,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           existingTypeVal.cleanName(),
         ])
       );
-      assessmentStatus = 'Has Warnings';
+      assessmentStatus = 'Warnings';
     }
     if (!existingSubTypeVal.isNameCleaned()) {
       warnings.push(
@@ -520,7 +525,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           existingSubTypeVal.cleanName(),
         ])
       );
-      assessmentStatus = 'Has Warnings';
+      assessmentStatus = 'Warnings';
     }
     if (!existingOmniScriptNameVal.isNameCleaned()) {
       warnings.push(
@@ -530,11 +535,11 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           existingOmniScriptNameVal.cleanName(),
         ])
       );
-      assessmentStatus = 'Has Warnings';
+      assessmentStatus = 'Warnings';
     }
     if (existingOmniscriptNames.has(recordName)) {
       warnings.push(this.messages.getMessage('duplicatedName') + '  ' + recordName);
-      assessmentStatus = 'Has Warnings';
+      assessmentStatus = 'Warnings';
     } else {
       existingOmniscriptNames.add(recordName);
     }
@@ -659,7 +664,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     // Variables to be returned After Migration
     let originalOsRecords = new Map<string, any>();
     let osUploadInfo = new Map<string, UploadRecordResult>();
-    const exportComponentType = this.getName() as ComponentType;
+    const exportComponentType = this.exportType === OmniScriptExportType.IP ? 'Integration Procedures' : 'Omniscripts';
     Logger.log(this.messages.getMessage('foundOmniScriptsToMigrate', [omniscripts.length, exportComponentType]));
     const progressBarType: ComponentType = exportComponentType;
     const progressBar = createProgressBar('Migrating', progressBarType);

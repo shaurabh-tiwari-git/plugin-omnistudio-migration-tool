@@ -117,7 +117,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
     Logger.log(`${this.messages.getMessage('flexCardMigrationProcessingMessage', [cards.length, skippedCards.size])}`);
 
-    const progressBar = createProgressBar('Migrating', 'Flexcard');
+    const progressBar = createProgressBar('Migrating', 'Flexcards');
     // Save the Vlocity Cards in OmniUiCard
     const cardUploadResponse = await this.uploadAllCards(cards, progressBar);
 
@@ -160,7 +160,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   public async processCardComponents(flexCards: AnyJson[]): Promise<FlexCardAssessmentInfo[]> {
     const flexCardAssessmentInfos: FlexCardAssessmentInfo[] = [];
     let progressCounter = 0;
-    const progressBar = createProgressBar('Assessing', 'Flexcard');
+    const progressBar = createProgressBar('Assessing', 'Flexcards');
     progressBar.start(flexCards.length, progressCounter);
     const uniqueNames = new Set<string>();
 
@@ -217,13 +217,13 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     // Check for name changes due to API naming requirements
     const originalName: string = flexCardName;
     const cleanedName: string = this.cleanName(originalName);
-    let assessmentStatus = 'Can be Automated';
+    let assessmentStatus = 'Ready for migration';
     flexCardAssessmentInfo.name = this.allVersions ? `${cleanedName}_${version}` : cleanedName;
     if (cleanedName !== originalName) {
       flexCardAssessmentInfo.warnings.push(
         this.messages.getMessage('cardNameChangeMessage', [originalName, cleanedName])
       );
-      assessmentStatus = 'Has Warnings';
+      assessmentStatus = 'Warnings';
     }
 
     // Check for duplicate names
@@ -241,7 +241,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         flexCardAssessmentInfo.warnings.push(
           this.messages.getMessage('authordNameChangeMessage', [originalAuthor, cleanedAuthor])
         );
-        assessmentStatus = 'Has Warnings';
+        assessmentStatus = 'Warnings';
       }
     }
 
@@ -277,7 +277,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           flexCardAssessmentInfo.warnings.push(
             this.messages.getMessage('dataRaptorNameChangeMessage', [originalBundle, cleanedBundle])
           );
-          flexCardAssessmentInfo.migrationStatus = 'Has Warnings';
+          flexCardAssessmentInfo.migrationStatus = 'Warnings';
         }
       }
     } else if (dataSource.type === Constants.IntegrationProcedurePluralName) {
@@ -294,7 +294,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           flexCardAssessmentInfo.warnings.push(
             this.messages.getMessage('integrationProcedureNameChangeMessage', [originalIpMethod, cleanedIpMethod])
           );
-          flexCardAssessmentInfo.migrationStatus = 'Has Warnings';
+          flexCardAssessmentInfo.migrationStatus = 'Warnings';
         }
 
         // Add warning for IP references with more than 2 parts (which potentially need manual updates)
@@ -389,7 +389,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
                     flexCardAssessmentInfo.warnings.push(
                       this.messages.getMessage('omniScriptNameChangeMessage', [parts[i], cleanedParts[i]])
                     );
-                    flexCardAssessmentInfo.migrationStatus = 'Has Warnings';
+                    flexCardAssessmentInfo.migrationStatus = 'Warnings';
                   }
                 }
               }
@@ -420,7 +420,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
                     flexCardAssessmentInfo.warnings.push(
                       this.messages.getMessage('omniScriptNameChangeMessage', [parts[i], cleanedParts[i]])
                     );
-                    flexCardAssessmentInfo.migrationStatus = 'Has Warnings';
+                    flexCardAssessmentInfo.migrationStatus = 'Warnings';
                   }
                 }
               }

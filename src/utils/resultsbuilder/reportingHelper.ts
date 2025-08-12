@@ -53,7 +53,7 @@ export class reportingHelper {
   }
 
   public static decorateStatus(status: string): string {
-    if (status === 'Can be Automated' || status === 'Complete') {
+    if (status === 'Ready for migration' || status === 'Complete') {
       return '<div class="slds-text-color_success">' + status + '</div>';
     }
     if (status === 'Skipped') {

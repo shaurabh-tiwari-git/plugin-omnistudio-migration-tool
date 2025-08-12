@@ -101,8 +101,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
       (dr) => dr[this.namespacePrefix + 'Type__c'] !== 'Migration'
     ).length;
     Logger.log(this.messages.getMessage('foundDataRaptorsToMigrate', [nonMigrationDataRaptors]));
-
-    const progressBar = createProgressBar('Migrating', 'Data Mapper');
+    const progressBar = createProgressBar('Migrating', 'DataMappers');
     progressBar.start(nonMigrationDataRaptors, progressCounter);
     for (let dr of dataRaptors) {
       // Skip if Type is "Migration"
@@ -238,7 +237,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     const existingDataRaptorNames = new Set<string>();
     const dataRaptorItemsMap = await this.getAllDRToItemsMap();
 
-    const progressBar = createProgressBar('Assessing', 'Data Mapper');
+    const progressBar = createProgressBar('Assessing', 'DataMappers');
     let progressCounter = 0;
     let nonMigrationDataRaptors = dataRaptors.filter(
       (dr) => dr[this.namespacePrefix + 'Type__c'] !== 'Migration'
@@ -289,7 +288,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     Logger.info(this.messages.getMessage('processingDataRaptor', [drName]));
     const warnings: string[] = [];
     const existingDRNameVal = new StringVal(drName, 'name');
-    let assessmentStatus = 'Can be Automated';
+    let assessmentStatus = 'Ready for migration';
 
     if (!existingDRNameVal.isNameCleaned()) {
       warnings.push(
@@ -299,7 +298,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
           existingDRNameVal.cleanName(),
         ])
       );
-      assessmentStatus = 'Has Warnings';
+      assessmentStatus = 'Warnings';
     }
     if (existingDataRaptorNames.has(existingDRNameVal.cleanName())) {
       warnings.push(this.messages.getMessage('duplicatedName') + '  ' + existingDRNameVal.cleanName());

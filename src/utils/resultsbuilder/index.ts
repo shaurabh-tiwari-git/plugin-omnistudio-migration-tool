@@ -111,7 +111,7 @@ export class ResultsBuilder {
       assessmentDate: new Date().toLocaleString(),
       total: result.data?.length || 0,
       filterGroups: [
-        createFilterGroupParam('Filter By Status', 'status', ['Successfully Completed', 'Failed', 'Skipped']),
+        createFilterGroupParam('Filter By Status', 'status', ['Successfully migrated', 'Failed', 'Skipped']),
       ],
       headerGroups: [
         {
@@ -178,7 +178,7 @@ export class ResultsBuilder {
             createRowDataParam('migratedName', item.migratedName, false, 1, 1, false),
             createRowDataParam(
               'status',
-              item.status === 'Complete' ? 'Successfully Completed' : item.status,
+              item.status === 'Complete' ? 'Successfully migrated' : item.status,
               false,
               1,
               1,
@@ -188,7 +188,7 @@ export class ResultsBuilder {
             ),
             createRowDataParam(
               'errors',
-              item.errors ? 'Has Errors' : 'Has No Errors',
+              item.errors ? 'Failed' : 'Has No Errors',
               false,
               1,
               1,
@@ -198,7 +198,7 @@ export class ResultsBuilder {
             ),
             createRowDataParam(
               'summary',
-              item.warnings ? 'Has Warnings' : 'Has No Warnings',
+              item.warnings ? 'Warnings' : 'Has No Warnings',
               false,
               1,
               1,
@@ -708,7 +708,7 @@ export class ResultsBuilder {
       if (item.status === 'Skipped') skip++;
     });
     return [
-      { name: 'Successfully Completed', count: complete, cssClass: 'text-success' },
+      { name: 'Successfully migrated', count: complete, cssClass: 'text-success' },
       { name: 'Failed', count: error, cssClass: 'text-error' },
       { name: 'Skipped', count: skip, cssClass: 'text-warning' },
     ];
@@ -724,7 +724,7 @@ export class ResultsBuilder {
       else error++;
     });
     return [
-      { name: 'Successfully Completed', count: complete, cssClass: 'text-success' },
+      { name: 'Successfully migrated', count: complete, cssClass: 'text-success' },
       { name: 'Failed', count: error, cssClass: 'text-error' },
     ];
   }
