@@ -41,13 +41,18 @@ export class PostMigrate extends BaseMigrationTool {
   }
 
   /**
+   * Execute post migration tasks with dependency handling.
+   */
+  public async executeTasks(namespaceToModify: string, userActionMessage: string[]): Promise<string[]> {
+    const designerOk = await this.enableDesignersToUseStandardDataModelIfNeeded(namespaceToModify, userActionMessage);
+    if (designerOk) {
+      await this.enableStandardRuntimeIfNeeded(userActionMessage);
+    }
+    return userActionMessage;
+  }
+
+  /**
    * Checks if OmniStudio designers are already using the standard data model for the specific package.
-   *
-   * This method queries the OmniInteractionConfig table to check for specific DeveloperName values
-   * that indicate whether the standard data model is enabled for the package.
-   *
-   * @param namespaceToModify The namespace of the package being checked
-   * @returns {Promise<boolean>} True if designers are already using standard data model, false otherwise
    */
   private async isStandardDesignerEnabled(namespaceToModify: string): Promise<boolean> {
     try {
@@ -62,7 +67,6 @@ export class PostMigrate extends BaseMigrationTool {
         const records = result.records as Array<{ DeveloperName: string; Value: string }>;
 
         for (const record of records) {
-          // Check if the package matches the one we're migrating
           if (record.Value === namespaceToModify) {
             return true;
           }
@@ -74,15 +78,14 @@ export class PostMigrate extends BaseMigrationTool {
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : String(error);
       Logger.error(this.messages.getMessage('errorCheckingStandardDesigner', [namespaceToModify, errMsg]));
-      // Assume not enabled if query fails
       return false;
     }
   }
 
-  public async setDesignersToUseStandardDataModel(
+  public async enableDesignersToUseStandardDataModelIfNeeded(
     namespaceToModify: string,
     userActionMessage: string[]
-  ): Promise<string[]> {
+  ): Promise<boolean> {
     try {
       Logger.logVerbose(this.messages.getMessage('settingDesignersToStandardModel'));
 
@@ -92,11 +95,7 @@ export class PostMigrate extends BaseMigrationTool {
 
       if (isAlreadyEnabled) {
         Logger.logVerbose(this.messages.getMessage('standardDesignerAlreadyEnabled', [namespaceToModify]));
-
-        // Even though designer is already enabled, we should still enable Standard Runtime
-        await this.enableStandardRuntimeIfNeeded(userActionMessage);
-
-        return userActionMessage;
+        return true;
       }
 
       const apexCode = `
@@ -113,39 +112,27 @@ export class PostMigrate extends BaseMigrationTool {
         userActionMessage.push(this.messages.getMessage('manuallySwitchDesignerToStandardDataModel'));
 
         // Do NOT attempt to enable standard runtime when setup fails
-        return userActionMessage;
+        return false;
       } else if (result?.success === true) {
         Logger.logVerbose(this.messages.getMessage('designersSetToStandardModel'));
-        Logger.logVerbose(this.messages.getMessage('enableStandardRuntimeAfterDesigner'));
-
-        // Enable Standard OmniStudio Runtime after successful standard designer setup
-        await this.enableStandardRuntimeIfNeeded(userActionMessage);
+        return true;
       } else {
         // Handle unexpected result structure
         Logger.error('Received unexpected response from Apex execution - unable to determine success status');
         userActionMessage.push(this.messages.getMessage('manuallySwitchDesignerToStandardDataModel'));
-
-        // Do NOT attempt to enable standard runtime when result is unclear
-        return userActionMessage;
+        return false;
       }
     } catch (ex) {
       const errorDetails = ex instanceof Error ? ex.message : JSON.stringify(ex);
-      Logger.error(this.messages.getMessage('exceptionSettingDesignersToStandardModel', [errorDetails]));
+      Logger.error(this.messages.getMessage('exceptionSettingDesignersToStandardDataModel', [errorDetails]));
       Logger.logVerbose(this.messages.getMessage('skipStandardRuntimeDueToFailure'));
       userActionMessage.push(this.messages.getMessage('manuallySwitchDesignerToStandardDataModel'));
-
-      // Do NOT attempt to enable standard runtime when exception occurs
+      return false;
     }
-    return userActionMessage;
   }
 
   /**
    * Enables Standard OmniStudio Runtime if it's currently disabled.
-   *
-   * This method is called after successfully setting designers to use standard data model.
-   * It checks if Standard Runtime is already enabled and only enables it if disabled.
-   *
-   * @param userActionMessage Array to collect user action messages for manual intervention
    */
   private async enableStandardRuntimeIfNeeded(userActionMessage: string[]): Promise<void> {
     try {

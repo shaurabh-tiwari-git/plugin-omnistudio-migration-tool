@@ -208,7 +208,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     );
 
     if (!migrateOnly) {
-      await postMigrate.setDesignersToUseStandardDataModel(namespace, actionItems);
+      await postMigrate.executeTasks(namespace, actionItems);
     }
     // From here also actionItems need to be collected
     await postMigrate.restoreExperienceAPIMetadataSettings(
@@ -437,7 +437,7 @@ export default class Migrate extends OmniStudioBaseCommand {
           allVersions
         ),
         new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions),
-        new GlobalAutoNumberMigrationTool(namespace, conn, this.logger, messages, this.ux),
+        // new GlobalAutoNumberMigrationTool(namespace, conn, this.logger, messages, this.ux),
       ];
     } else {
       // For single component migration, the order doesn't matter as much
