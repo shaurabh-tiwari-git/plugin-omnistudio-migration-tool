@@ -470,7 +470,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     const existingSubTypeVal = new StringVal(existingSubType, 'sub type');
     const omniScriptName = omniscript[this.namespacePrefix + 'Name'];
     const existingOmniScriptNameVal = new StringVal(omniScriptName, 'name');
-    let assessmentStatus = 'Can be Automated';
+    let assessmentStatus = 'Ready for migration';
 
     const warnings: string[] = [];
 
@@ -510,7 +510,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           existingTypeVal.cleanName(),
         ])
       );
-      assessmentStatus = 'Has Warnings';
+      assessmentStatus = 'Warnings';
     }
     if (!existingSubTypeVal.isNameCleaned()) {
       warnings.push(
@@ -520,7 +520,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           existingSubTypeVal.cleanName(),
         ])
       );
-      assessmentStatus = 'Has Warnings';
+      assessmentStatus = 'Warnings';
     }
     if (!existingOmniScriptNameVal.isNameCleaned()) {
       warnings.push(
@@ -530,11 +530,11 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           existingOmniScriptNameVal.cleanName(),
         ])
       );
-      assessmentStatus = 'Has Warnings';
+      assessmentStatus = 'Warnings';
     }
     if (existingOmniscriptNames.has(recordName)) {
       warnings.push(this.messages.getMessage('duplicatedName') + '  ' + recordName);
-      assessmentStatus = 'Has Warnings';
+      assessmentStatus = 'Warnings';
     } else {
       existingOmniscriptNames.add(recordName);
     }

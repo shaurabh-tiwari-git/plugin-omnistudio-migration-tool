@@ -73,7 +73,7 @@ export default class Migrate extends OmniStudioBaseCommand {
       return await this.runMigration();
     } catch (e) {
       const error = e as Error;
-      Logger.error(messages.getMessage('errorRunningMigrate'), error);
+      Logger.error(messages.getMessage('errorRunningMigrate', [error.message]));
       process.exit(1);
     }
   }
@@ -85,12 +85,11 @@ export default class Migrate extends OmniStudioBaseCommand {
     const relatedObjects = (this.flags.relatedobjects || '') as string;
     // this.org is guaranteed because requiresUsername=true, as opposed to supportsUsername
     const conn = this.org.getConnection();
-
     const apiVersion = conn.getApiVersion();
 
-    const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn, this.flags.namespace);
+    const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn);
 
-    if (!orgs.hasValidNamespace && this.flags.namespace) {
+    if (!orgs.hasValidNamespace) {
       Logger.warn(messages.getMessage('invalidNamespace') + orgs.packageDetails.namespace);
     }
 
@@ -174,9 +173,14 @@ export default class Migrate extends OmniStudioBaseCommand {
     let objectMigrationResults = await this.truncateObjects([...migrationObjects].reverse(), debugTimer);
     const allTruncateComplete = objectMigrationResults.length === 0;
 
+    // Log truncation errors if any exist
+    if (!allTruncateComplete) {
+      this.logTruncationErrors(objectMigrationResults);
+      return;
+    }
+
     if (allTruncateComplete) {
-      // Migrate in correct dependency order (NOT reversed)
-      objectMigrationResults = await this.migrateObjects(migrationObjects, debugTimer);
+      objectMigrationResults = await this.migrateObjects(migrationObjects, debugTimer, namespace);
     }
 
     const omnistudioRelatedObjectsMigration = new OmnistudioRelatedObjectMigrationFacade(
@@ -351,7 +355,11 @@ export default class Migrate extends OmniStudioBaseCommand {
     return objectMigrationResults;
   }
 
-  private async migrateObjects(migrationObjects: MigrationTool[], debugTimer: DebugTimer): Promise<MigratedObject[]> {
+  private async migrateObjects(
+    migrationObjects: MigrationTool[],
+    debugTimer: DebugTimer,
+    namespace: string
+  ): Promise<MigratedObject[]> {
     let objectMigrationResults: MigratedObject[] = [];
     // Migrate in correct dependency order
     for (const cls of migrationObjects) {
@@ -375,7 +383,7 @@ export default class Migrate extends OmniStudioBaseCommand {
         );
       } catch (ex: any) {
         if (ex instanceof InvalidEntityTypeError) {
-          Logger.error(ex.message);
+          Logger.error(messages.getMessage('invalidTypeMigrateErrorMessage', [namespace]));
           process.exit(1);
         }
         const errMsg = ex instanceof Error ? ex.message : String(ex);
@@ -671,5 +679,13 @@ export default class Migrate extends OmniStudioBaseCommand {
     }
 
     return mergedResults;
+  }
+
+  private logTruncationErrors(objectMigrationResults: MigratedObject[]): void {
+    objectMigrationResults.forEach((result) => {
+      if (result.errors && result.errors.length > 0) {
+        Logger.error(messages.getMessage('truncationFailed', [result.name, result.errors.join(', ')]));
+      }
+    });
   }
 }

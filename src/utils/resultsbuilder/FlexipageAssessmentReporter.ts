@@ -34,6 +34,8 @@ export class FlexipageAssessmentReporter {
   /** Prefix for row ID generation */
   private static rowIdPrefix = 'flexipage-row-data-';
 
+  private static flexiPageFileSuffix = '.flexipage-meta.xml';
+
   /**
    * Generates comprehensive assessment data for Flexipage migration reports.
    *
@@ -90,8 +92,18 @@ export class FlexipageAssessmentReporter {
     }
     return flexipageAssessmentInfos.map((flexipageAssessmentInfo) => ({
       data: [
-        createRowDataParam('name', flexipageAssessmentInfo.name, true, 1, 1, false),
-        createRowDataParam('path', flexipageAssessmentInfo.path, true, 1, 1, false),
+        createRowDataParam(
+          'name',
+          flexipageAssessmentInfo.name.substring(
+            0,
+            flexipageAssessmentInfo.name.length - this.flexiPageFileSuffix.length
+          ),
+          true,
+          1,
+          1,
+          false
+        ),
+        createRowDataParam('path', flexipageAssessmentInfo.name, true, 1, 1, true, flexipageAssessmentInfo.path),
         createRowDataParam(
           'status',
           flexipageAssessmentInfo.status,

@@ -36,14 +36,14 @@ export class ApexAssessmentReporter {
   public static getSummaryData(apexAssessmentInfos: ApexAssessmentInfo[]): SummaryItemDetailParam[] {
     return [
       {
-        name: 'Can be Automated',
+        name: 'Ready for migration',
         count: apexAssessmentInfos.filter(
           (apexAssessmentInfo) => !apexAssessmentInfo.warnings || apexAssessmentInfo.warnings.length === 0
         ).length,
         cssClass: 'text-success',
       },
       {
-        name: 'Has Warnings',
+        name: 'Warnings',
         count: apexAssessmentInfos.filter((info) => info.warnings && info.warnings.length > 0).length,
         cssClass: 'text-warning',
       },
@@ -72,7 +72,7 @@ export class ApexAssessmentReporter {
         ),
         createRowDataParam(
           'status',
-          apexAssessmentInfo.warnings.length > 0 ? 'Has Warnings' : 'Can be Automated',
+          apexAssessmentInfo.warnings.length > 0 ? 'Warnings' : 'Ready for migration',
           false,
           1,
           1,

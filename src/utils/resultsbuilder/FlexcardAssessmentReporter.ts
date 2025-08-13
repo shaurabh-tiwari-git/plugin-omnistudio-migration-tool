@@ -35,21 +35,21 @@ export class FlexcardAssessmentReporter {
   public static getSummaryData(flexCardAssessmentInfos: FlexCardAssessmentInfo[]): SummaryItemDetailParam[] {
     return [
       {
-        name: 'Can be Automated',
+        name: 'Ready for migration',
         count: flexCardAssessmentInfos.filter(
           (flexCardAssessmentInfo) => !flexCardAssessmentInfo.warnings || flexCardAssessmentInfo.warnings.length === 0
         ).length,
         cssClass: 'text-success',
       },
       {
-        name: 'Has Warnings',
+        name: 'Warnings',
         count: flexCardAssessmentInfos.filter(
           (flexCardAssessmentInfo) => flexCardAssessmentInfo.warnings && flexCardAssessmentInfo.warnings.length > 0
         ).length,
         cssClass: 'text-warning',
       },
       {
-        name: 'Has Errors',
+        name: 'Failed',
         count: flexCardAssessmentInfos.filter(
           (flexCardAssessmentInfo) => flexCardAssessmentInfo.errors && flexCardAssessmentInfo.errors.length > 0
         ).length,
@@ -172,7 +172,7 @@ export class FlexcardAssessmentReporter {
           false,
           undefined,
           undefined,
-          flexCardAssessmentInfo.migrationStatus === 'Can be Automated' ? 'text-success' : 'text-error'
+          flexCardAssessmentInfo.migrationStatus === 'Ready for migration' ? 'text-success' : 'text-error'
         ),
         createRowDataParam(
           'summary',

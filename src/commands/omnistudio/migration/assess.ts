@@ -5,6 +5,7 @@ import OmniStudioBaseCommand from '../../basecommand';
 import { AssessmentInfo } from '../../../utils/interfaces';
 import { AssessmentReporter } from '../../../utils/resultsbuilder/assessmentReporter';
 import { OmniScriptExportType, OmniScriptMigrationTool } from '../../../migration/omniscript';
+import { InvalidEntityTypeError } from '../../../migration/interfaces';
 import { CardMigrationTool } from '../../../migration/flexcard';
 import { DataRaptorMigrationTool } from '../../../migration/dataraptor';
 import { GlobalAutoNumberMigrationTool } from '../../../migration/globalautonumber';
@@ -54,8 +55,9 @@ export default class Assess extends OmniStudioBaseCommand {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return await this.runAssess();
-    } catch (error) {
-      Logger.error(messages.getMessage('errorRunningAssess'), error);
+    } catch (e) {
+      const error = e as Error;
+      Logger.error(messages.getMessage('errorRunningAssess', [error.message]), error);
       process.exit(1);
     }
   }
@@ -71,12 +73,10 @@ export default class Assess extends OmniStudioBaseCommand {
     let objectsToProcess: string[];
     // To-Do: Add LWC to valid options when GA is released
     const validOptions = [Constants.Apex, Constants.ExpSites, Constants.FlexiPage, Constants.LWC];
-
     const apiVersion = conn.getApiVersion();
+    const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn);
 
-    const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn, this.flags.namespace);
-
-    if (!orgs.hasValidNamespace && this.flags.namespace) {
+    if (!orgs.hasValidNamespace) {
       Logger.warn(messages.getMessage('invalidNamespace') + orgs.packageDetails.namespace);
     }
 
@@ -126,9 +126,17 @@ export default class Assess extends OmniStudioBaseCommand {
     try {
       // Assess OmniStudio components
       await this.assessOmniStudioComponents(assesmentInfo, assessOnly, namespace, conn, allVersions);
-    } catch (error) {
-      Logger.error(`Cannot assess OmniStudio components within ${namespace}`);
-      process.exit(1);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (ex: any) {
+      if (ex instanceof InvalidEntityTypeError) {
+        Logger.error(messages.getMessage('invalidTypeAssessErrorMessage', [namespace]));
+        process.exit(1);
+      }
+
+      if (ex instanceof Error) {
+        Logger.error(messages.getMessage('errorRunningAssess', [ex.message]));
+        process.exit(1);
+      }
     }
 
     // Assess related objects if specified

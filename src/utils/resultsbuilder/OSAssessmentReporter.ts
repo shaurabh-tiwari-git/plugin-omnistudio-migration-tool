@@ -39,9 +39,10 @@ export class OSAssessmentReporter {
   public static getSummaryData(osAssessmentInfos: OSAssessmentInfo[]): SummaryItemDetailParam[] {
     return [
       {
-        name: 'Can be Automated',
-        count: osAssessmentInfos.filter((osAssessmentInfo) => osAssessmentInfo.migrationStatus === 'Can be Automated')
-          .length,
+        name: 'Ready for migration',
+        count: osAssessmentInfos.filter(
+          (osAssessmentInfo) => osAssessmentInfo.migrationStatus === 'Ready for migration'
+        ).length,
         cssClass: 'text-success',
       },
       {
@@ -52,10 +53,10 @@ export class OSAssessmentReporter {
         cssClass: 'text-warning',
       },
       {
-        name: 'Has Errors',
+        name: 'Failed',
         count: osAssessmentInfos.filter(
           (osAssessmentInfo) =>
-            osAssessmentInfo.migrationStatus !== 'Can be Automated' &&
+            osAssessmentInfo.migrationStatus !== 'Ready for migration' &&
             osAssessmentInfo.migrationStatus !== 'Need Manual Intervention'
         ).length,
         cssClass: 'text-error',
@@ -76,7 +77,7 @@ export class OSAssessmentReporter {
           false,
           undefined,
           undefined,
-          info.migrationStatus !== 'Can be Automated' ? 'invalid-icon' : ''
+          info.migrationStatus !== 'Ready for migration' ? 'invalid-icon' : ''
         ),
         createRowDataParam('recordId', info.id, false, 1, 1, true, `${instanceUrl}/${info.id}`),
         createRowDataParam('newName', info.name || '', false, 1, 1, false),
@@ -90,7 +91,7 @@ export class OSAssessmentReporter {
           false,
           undefined,
           undefined,
-          info.migrationStatus === 'Can be Automated' ? 'text-success' : 'text-error'
+          info.migrationStatus === 'Ready for migration' ? 'text-success' : 'text-error'
         ),
         createRowDataParam(
           'summary',

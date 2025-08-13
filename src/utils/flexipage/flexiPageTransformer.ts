@@ -61,8 +61,8 @@ export function transformFlexipageBundle(
     }
     for (const item of region.itemInstances) {
       if (
-        item.componentInstance.componentName?.split(':')[0] !== namespace ||
-        item.componentInstance.componentName?.split(':')[1] !== lookupComponentName
+        item?.componentInstance?.componentName?.split(':')[0] !== namespace ||
+        item?.componentInstance?.componentName?.split(':')[1] !== lookupComponentName
       ) {
         continue;
       }

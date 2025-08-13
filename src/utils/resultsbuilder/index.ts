@@ -43,6 +43,8 @@ export class ResultsBuilder {
   private static rowClass = 'data-row-';
   private static rowId = 0;
 
+  private static flexiPageFileSuffix = '.flexipage-meta.xml';
+
   public static async generateReport(
     results: MigratedObject[],
     relatedObjectMigrationResult: RelatedObjectAssesmentInfo,
@@ -111,7 +113,7 @@ export class ResultsBuilder {
       assessmentDate: new Date().toLocaleString(),
       total: result.data?.length || 0,
       filterGroups: [
-        createFilterGroupParam('Filter By Status', 'status', ['Successfully Completed', 'Failed', 'Skipped']),
+        createFilterGroupParam('Filter By Status', 'status', ['Successfully migrated', 'Failed', 'Skipped']),
       ],
       headerGroups: [
         {
@@ -178,7 +180,7 @@ export class ResultsBuilder {
             createRowDataParam('migratedName', item.migratedName, false, 1, 1, false),
             createRowDataParam(
               'status',
-              item.status === 'Complete' ? 'Successfully Completed' : item.status,
+              item.status === 'Complete' ? 'Successfully migrated' : item.status,
               false,
               1,
               1,
@@ -188,7 +190,7 @@ export class ResultsBuilder {
             ),
             createRowDataParam(
               'errors',
-              item.errors ? 'Has Errors' : 'Has No Errors',
+              item.errors ? 'Failed' : 'Has No Errors',
               false,
               1,
               1,
@@ -198,7 +200,7 @@ export class ResultsBuilder {
             ),
             createRowDataParam(
               'summary',
-              item.warnings ? 'Has Warnings' : 'Has No Warnings',
+              item.warnings ? 'Warnings' : 'Has No Warnings',
               false,
               1,
               1,
@@ -387,8 +389,15 @@ export class ResultsBuilder {
       rows: result.map((item) => ({
         rowId: `${this.rowClass}${this.rowId++}`,
         data: [
-          createRowDataParam('name', item.name, true, 1, 1, false),
-          createRowDataParam('path', item.path, false, 1, 1, false),
+          createRowDataParam(
+            'name',
+            item.name.substring(0, item.name.length - this.flexiPageFileSuffix.length),
+            true,
+            1,
+            1,
+            false
+          ),
+          createRowDataParam('path', item.name, false, 1, 1, true, item.path),
           createRowDataParam(
             'status',
             item.status,
@@ -708,7 +717,7 @@ export class ResultsBuilder {
       if (item.status === 'Skipped') skip++;
     });
     return [
-      { name: 'Successfully Completed', count: complete, cssClass: 'text-success' },
+      { name: 'Successfully migrated', count: complete, cssClass: 'text-success' },
       { name: 'Failed', count: error, cssClass: 'text-error' },
       { name: 'Skipped', count: skip, cssClass: 'text-warning' },
     ];
@@ -724,7 +733,7 @@ export class ResultsBuilder {
       else error++;
     });
     return [
-      { name: 'Successfully Completed', count: complete, cssClass: 'text-success' },
+      { name: 'Successfully migrated', count: complete, cssClass: 'text-success' },
       { name: 'Failed', count: error, cssClass: 'text-error' },
     ];
   }
