@@ -53,6 +53,7 @@ describe('PostMigrate', () => {
       tooling: {
         executeAnonymous: sandbox.stub(),
       },
+      query: sandbox.stub(),
     } as unknown as Connection;
 
     // Mock logger
@@ -92,6 +93,10 @@ describe('PostMigrate', () => {
       .withArgs('errorRevertingExperienceBundleMetadataAPI')
       .returns('Error reverting Experience Bundle Metadata API');
     getMessageStub.withArgs('errorDeployingComponents').returns('Error deploying components');
+    // New messages referenced by implementation
+    getMessageStub.withArgs('checkingStandardDesignerStatus', [testNamespace]).returns('Checking designer status');
+    getMessageStub.withArgs('standardDesignerAlreadyEnabled', [testNamespace]).returns('Designer already enabled');
+    getMessageStub.withArgs('skipStandardRuntimeDueToFailure').returns('Skip runtime due to failure');
 
     // Mock Logger static methods
     sandbox.stub(Logger, 'logVerbose');
@@ -156,10 +161,11 @@ describe('PostMigrate', () => {
       expect(deployerStub.called).to.be.false;
     });
 
-    xit('should handle deployment errors gracefully', () => {
+    it('should handle deployment errors gracefully', () => {
       // Arrange
       const error = new Error('Deployment failed');
       const deployerStub = sandbox.stub(Deployer.prototype, 'deploy').throws(error);
+      sandbox.stub(fs, 'existsSync').returns(true);
 
       // Mock the deploy method directly to test error handling
       postMigrate.deploy = function () {
@@ -189,6 +195,7 @@ describe('PostMigrate', () => {
     xit('should create Deployer with correct parameters', () => {
       // Arrange
       const deployerDeployStub = sandbox.stub(Deployer.prototype, 'deploy');
+      sandbox.stub(fs, 'existsSync').returns(true);
 
       // Mock the deploy method directly to test Deployer creation
       postMigrate.deploy = function () {
@@ -227,7 +234,10 @@ describe('PostMigrate', () => {
       const logVerboseStub = Logger.logVerbose as sinon.SinonStub;
 
       // Act
-      const result = await postMigrate.setDesignersToUseStandardDataModel(namespaceToModify, userActionMessage);
+      const result = await postMigrate.enableDesignersToUseStandardDataModelIfNeeded(
+        namespaceToModify,
+        userActionMessage
+      );
 
       // Assert
       expect(anonymousApexRunnerStub.calledOnce).to.be.true;
@@ -237,7 +247,8 @@ describe('PostMigrate', () => {
       );
       expect(logVerboseStub.calledWith('Setting designers to standard model...')).to.be.true;
       expect(logVerboseStub.calledWith('Designers set to standard model')).to.be.true;
-      expect(result).to.deep.equal(userActionMessage);
+      expect(result).to.equal(true);
+      expect(userActionMessage).to.deep.equal([]);
     });
 
     it('should handle unsuccessful anonymous apex execution', async () => {
@@ -256,12 +267,16 @@ describe('PostMigrate', () => {
       const anonymousApexRunnerStub = sandbox.stub(AnonymousApexRunner, 'run').resolves(mockResult);
 
       // Act
-      const result = await postMigrate.setDesignersToUseStandardDataModel(namespaceToModify, userActionMessage);
+      const result = await postMigrate.enableDesignersToUseStandardDataModelIfNeeded(
+        namespaceToModify,
+        userActionMessage
+      );
 
       // Assert
       expect(anonymousApexRunnerStub.calledOnce).to.be.true;
       expect(logErrorStub.called).to.be.true;
-      expect(result).to.include('Please manually switch designer to standard data model');
+      expect(result).to.equal(false);
+      expect(userActionMessage).to.include('Please manually switch designer to standard data model');
     });
 
     it('should handle exceptions during execution', async () => {
@@ -272,12 +287,78 @@ describe('PostMigrate', () => {
       const anonymousApexRunnerStub = sandbox.stub(AnonymousApexRunner, 'run').rejects(error);
 
       // Act
-      const result = await postMigrate.setDesignersToUseStandardDataModel(namespaceToModify, userActionMessage);
+      const result = await postMigrate.enableDesignersToUseStandardDataModelIfNeeded(
+        namespaceToModify,
+        userActionMessage
+      );
 
       // Assert
       expect(anonymousApexRunnerStub.calledOnce).to.be.true;
       expect(logErrorStub.called).to.be.true;
-      expect(result).to.include('Please manually switch designer to standard data model');
+      expect(result).to.equal(false);
+      expect(userActionMessage).to.include('Please manually switch designer to standard data model');
+    });
+
+    it('should return true when standard designer already enabled and skip Apex', async () => {
+      // Arrange
+      const namespaceToModify = 'test_namespace';
+      const userActionMessage: string[] = [];
+      // Stub SOQL query to indicate designer already enabled for this namespace
+      (connection.query as unknown as sinon.SinonStub).resolves({
+        totalSize: 2,
+        records: [
+          { DeveloperName: 'TheFirstInstalledOmniPackage', Value: namespaceToModify },
+          { DeveloperName: 'InstalledIndustryPackage', Value: 'other' },
+        ],
+      });
+      const anonymousApexRunnerStub = sandbox.stub(AnonymousApexRunner, 'run');
+
+      // Act
+      const result = await (postMigrate as any).enableDesignersToUseStandardDataModelIfNeeded(
+        namespaceToModify,
+        userActionMessage
+      );
+
+      // Assert
+      expect(result).to.equal(true);
+      expect(anonymousApexRunnerStub.called).to.be.false;
+      expect(userActionMessage).to.deep.equal([]);
+    });
+  });
+
+  describe('executeTasks', () => {
+    it('should enable runtime when designer step succeeds', async () => {
+      // Arrange
+      const enableDesignerStub = sandbox
+        .stub(postMigrate as any, 'enableDesignersToUseStandardDataModelIfNeeded')
+        .resolves(true);
+      const enableRuntimeSpy = sandbox.stub(postMigrate as any, 'enableStandardRuntimeIfNeeded').resolves();
+      const actionItems: string[] = [];
+
+      // Act
+      const res = await (postMigrate as any).executeTasks(testNamespace, actionItems);
+
+      // Assert
+      expect(enableDesignerStub.calledOnce).to.be.true;
+      expect(enableRuntimeSpy.calledOnce).to.be.true;
+      expect(res).to.equal(actionItems);
+    });
+
+    it('should not enable runtime when designer step fails', async () => {
+      // Arrange
+      const enableDesignerStub = sandbox
+        .stub(postMigrate as any, 'enableDesignersToUseStandardDataModelIfNeeded')
+        .resolves(false);
+      const enableRuntimeSpy = sandbox.stub(postMigrate as any, 'enableStandardRuntimeIfNeeded').resolves();
+      const actionItems: string[] = [];
+
+      // Act
+      const res = await (postMigrate as any).executeTasks(testNamespace, actionItems);
+
+      // Assert
+      expect(enableDesignerStub.calledOnce).to.be.true;
+      expect(enableRuntimeSpy.called).to.be.false;
+      expect(res).to.equal(actionItems);
     });
   });
 
@@ -436,6 +517,7 @@ describe('PostMigrate', () => {
     xit('should handle complete post-migration workflow with auto-deploy enabled', async () => {
       // Arrange
       const deployerStub = sandbox.stub(Deployer.prototype, 'deploy');
+      sandbox.stub(fs, 'existsSync').returns(true);
       const anonymousApexRunnerStub = sandbox.stub(AnonymousApexRunner, 'run').resolves({
         success: true,
         compiled: true,
@@ -462,7 +544,7 @@ describe('PostMigrate', () => {
 
       // Act
       postMigrate.deploy();
-      await postMigrate.setDesignersToUseStandardDataModel('test_namespace', []);
+      await (postMigrate as any).enableDesignersToUseStandardDataModelIfNeeded('test_namespace', []);
       await postMigrate.restoreExperienceAPIMetadataSettings({ value: true }, []);
 
       // Assert
@@ -497,7 +579,7 @@ describe('PostMigrate', () => {
 
       // Act
       postMigrateNoDeploy.deploy();
-      await postMigrateNoDeploy.setDesignersToUseStandardDataModel('test_namespace', []);
+      await (postMigrateNoDeploy as any).enableDesignersToUseStandardDataModelIfNeeded('test_namespace', []);
 
       // Assert
       expect(deployerStub.called).to.be.false;
