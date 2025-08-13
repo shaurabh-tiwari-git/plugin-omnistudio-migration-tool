@@ -309,7 +309,7 @@ export class AssessmentReporter {
       const fileName = totalPages > 1 ? `customlabel_assessment_Page_${page}_of_${totalPages}.html` : this.customLabelAssessmentFileName;
       fs.writeFileSync(path.join(this.basePath, fileName), html);
 
-      Logger.logVerbose(`Generated custom label assessment report page ${page} of ${totalPages} with ${data.rows.length} labels`);
+      Logger.logVerbose(messages.getMessage('generatedCustomLabelAssessmentReportPage', [page, totalPages, data.rows.length]));
     }
   }
 

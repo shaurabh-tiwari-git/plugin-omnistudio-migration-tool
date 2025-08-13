@@ -239,7 +239,6 @@ export class ResultsBuilder {
     const customLabelMigrationInfos: CustomLabelMigrationInfo[] = [];
 
     if (result.data) {
-      Logger.log(`Processing ${result.data.length} custom label records`);
       result.data.forEach((record: any, index: number) => {
         // Handle both old and new data formats
         const labelName = record.name || record.labelName;
@@ -255,15 +254,6 @@ export class ResultsBuilder {
         const errors = record.errors || [];
         const warnings = record.warnings || [];
 
-        // Debug first few records
-        if (index < 3) {
-          Logger.log(
-            `Record ${index}: labelName=${labelName}, cloneStatus=${cloneStatus}, localizationStatus=${JSON.stringify(
-              localizationStatus
-            )}`
-          );
-        }
-
         customLabelMigrationInfos.push({
           labelName,
           cloneStatus,
@@ -278,9 +268,7 @@ export class ResultsBuilder {
     const totalLabels = customLabelMigrationInfos.length;
     const totalPages = Math.ceil(totalLabels / pageSize);
 
-    Logger.logVerbose(
-      `Generating custom labels migration report with ${totalLabels} labels (all statuses) across ${totalPages} pages of ${pageSize} each`
-    );
+    Logger.logVerbose(messages.getMessage('generatingCustomLabelsReport', [totalLabels, totalPages, pageSize]));
 
     // Generate paginated reports
     for (let page = 1; page <= totalPages; page++) {
@@ -306,7 +294,7 @@ export class ResultsBuilder {
       const fileName = totalPages > 1 ? `Custom_Labels_Page_${page}_of_${totalPages}.html` : 'Custom_Labels.html';
       fs.writeFileSync(path.join(resultsDir, fileName), html);
 
-      Logger.log(`Generated custom labels report page ${page} of ${totalPages} with ${data.rows.length} labels`);
+      Logger.logVerbose(messages.getMessage('generatedCustomLabelsReportPage', [page, totalPages, data.rows.length]));
     }
   }
 
@@ -847,7 +835,7 @@ export class ResultsBuilder {
     });
     return [
       { name: 'Created', count: created, cssClass: 'text-success' },
-      { name: 'Error', count: error, cssClass: 'text-error' },
+      { name: 'Failed', count: error, cssClass: 'text-error' },
       { name: 'Duplicate', count: duplicate, cssClass: 'text-warning' },
     ];
   }

@@ -2,6 +2,7 @@ import { UX } from '@salesforce/command';
 import { Connection, Messages } from '@salesforce/core';
 import { NetUtils, RequestMethod } from '../utils/net';
 import { Logger } from '../utils/logger';
+import { Constants } from '../utils/constants/stringContants';
 import { BaseMigrationTool } from './base';
 import { MigrationTool, MigrationResult, ObjectMapping } from './interfaces';
 
@@ -60,13 +61,13 @@ export class CustomLabelsMigrationTool extends BaseMigrationTool implements Migr
 
   public async truncate(): Promise<void> {
     // Custom labels don't need truncation as they are created via API
-    Logger.log('Skipping truncation for Custom Labels');
+    Logger.log(this.messages.getMessage('skippingCustomLabelTruncation'));
     await Promise.resolve();
   }
 
   public async migrate(): Promise<MigrationResult[]> {
     try {
-      Logger.log('Starting Custom Labels migration...');
+      Logger.log(this.messages.getMessage('startingCustomLabelMigration'));
 
       const results = new Map<string, any>();
       const records = new Map<string, any>();
@@ -94,7 +95,8 @@ export class CustomLabelsMigrationTool extends BaseMigrationTool implements Migr
           warnings: label.warnings || [],
           hasErrors,
           success: label.cloneStatus === 'created',
-          type: 'Custom Label',
+          skipped: label.cloneStatus === 'duplicate',
+          type: Constants.CustomLabelComponentName,
         });
 
         records.set(key, {
@@ -107,7 +109,7 @@ export class CustomLabelsMigrationTool extends BaseMigrationTool implements Migr
       });
 
       const totalLabels = cloneLabelsResponse.results ? cloneLabelsResponse.results.length : 0;
-      Logger.log(`Custom Labels migration completed. ${allLabels.length} labels processed out of ${totalLabels} total`);
+      Logger.log(this.messages.getMessage('customLabelMigrationCompleted', [allLabels.length, totalLabels]));
 
       return [
         {
@@ -118,7 +120,7 @@ export class CustomLabelsMigrationTool extends BaseMigrationTool implements Migr
         },
       ];
     } catch (error) {
-      Logger.error(`Error during Custom Labels migration: ${String(error)}`);
+      Logger.error(this.messages.getMessage('errorDuringCustomLabelMigration', [(error as Error).message]));
       return [
         {
           name: this.getName(),
@@ -137,18 +139,20 @@ export class CustomLabelsMigrationTool extends BaseMigrationTool implements Migr
         namespace: this.namespace,
       };
 
-      Logger.logVerbose(`Calling clone-custom-labels API for namespace: ${this.namespace}`);
+      Logger.logVerbose(this.messages.getMessage('callingCloneCustomLabelsAPI', [this.namespace]));
 
       const response = await NetUtils.request(this.connection, url, body, RequestMethod.POST);
 
       const typedResponse = response as CustomLabelMigrationResponse;
       Logger.logVerbose(
-        `Clone custom labels API response summary: ${typedResponse.results ? typedResponse.results.length : 0} results`
+        this.messages.getMessage('cloneCustomLabelsAPIResponse', [
+          typedResponse.results ? typedResponse.results.length : 0,
+        ])
       );
 
       return response as CustomLabelMigrationResponse;
     } catch (error) {
-      Logger.error(`Error calling clone-custom-labels API: ${String(error)}`);
+      Logger.error(this.messages.getMessage('errorCallingCloneCustomLabelsAPI', [String(error)]));
       throw error;
     }
   }
@@ -160,20 +164,20 @@ export class CustomLabelsMigrationTool extends BaseMigrationTool implements Migr
         namespace: this.namespace,
       };
 
-      Logger.logVerbose(`Calling clone-custom-label-localizations API for namespace: ${this.namespace}`);
+      Logger.logVerbose(this.messages.getMessage('callingCloneCustomLabelLocalizationsAPI', [this.namespace]));
 
       const response = await NetUtils.request(this.connection, url, body, RequestMethod.POST);
 
       const typedResponse = response as CustomLabelLocalizationResponse;
       Logger.logVerbose(
-        `Clone custom label localizations API response summary: ${
-          typedResponse.results ? Object.keys(typedResponse.results).length : 0
-        } labels with localizations`
+        this.messages.getMessage('cloneCustomLabelLocalizationsAPIResponse', [
+          typedResponse.results ? Object.keys(typedResponse.results).length : 0,
+        ])
       );
 
       return response as CustomLabelLocalizationResponse;
     } catch (error) {
-      Logger.error(`Error calling clone-custom-label-localizations API: ${String(error)}`);
+      Logger.error(this.messages.getMessage('errorCallingCloneCustomLabelLocalizationsAPI', [String(error)]));
       throw error;
     }
   }
@@ -198,9 +202,9 @@ export class CustomLabelsMigrationTool extends BaseMigrationTool implements Migr
         // Check if clone status needs attention
         if (labelResult.status !== 'created') {
           if (labelResult.status === 'duplicate') {
-            labelInfo.warnings.push(`Label already exists with status: ${labelResult.status}`);
+            labelInfo.warnings.push(this.messages.getMessage('labelAlreadyExistsWarning', ['Duplicate']));
           } else if (labelResult.status === 'error') {
-            labelInfo.errors.push(`Failed to clone label with status: ${labelResult.status}`);
+            labelInfo.errors.push(this.messages.getMessage('failedToCloneLabelError', ['Failed']));
           }
         }
 
@@ -213,9 +217,9 @@ export class CustomLabelsMigrationTool extends BaseMigrationTool implements Migr
           Object.entries(localizations).forEach(([languageCode, status]) => {
             if (status !== 'created') {
               if (status === 'duplicate') {
-                labelInfo.warnings.push(`Localization for ${languageCode} already exists`);
+                labelInfo.warnings.push(this.messages.getMessage('localizationAlreadyExistsWarning', [languageCode]));
               } else if (status === 'error') {
-                labelInfo.errors.push(`Failed to create localization for ${languageCode}`);
+                labelInfo.errors.push(this.messages.getMessage('failedToCreateLocalizationError', [languageCode]));
               }
             }
           });
@@ -240,7 +244,7 @@ export class CustomLabelsMigrationTool extends BaseMigrationTool implements Migr
       case 'created':
         return { mappedStatus: 'Complete', hasErrors: false };
       case 'error':
-        return { mappedStatus: 'Error', hasErrors: true };
+        return { mappedStatus: 'Failed', hasErrors: true };
       case 'duplicate':
         return { mappedStatus: 'Skipped', hasErrors: false };
       default:

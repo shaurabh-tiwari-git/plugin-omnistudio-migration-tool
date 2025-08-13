@@ -676,12 +676,7 @@ export default class Migrate extends OmniStudioBaseCommand {
         } else {
           obj.status = 'Complete';
         }
-        // Handle Custom Labels specially - preserve the original status
-        if (migrationTool.getName() === 'Custom Labels') {
-          obj.status = record['status'] || 'Skipped'; // Use the status we set in the record
-        } else {
-          obj.status = !recordResults || recordResults.hasErrors ? 'Error' : 'Complete';
-        }
+
         obj.errors = errors;
         obj.migratedId = recordResults.id;
         obj.warnings = recordResults.warnings;

@@ -326,7 +326,7 @@ export default class Assess extends OmniStudioBaseCommand {
   private async assessCustomLabels(assesmentInfo: AssessmentInfo, namespace: string, conn: Connection): Promise<void> {
     try {
       Logger.log(messages.getMessage('startingCustomLabelAssessment'));
-      const customLabelResult = await CustomLabelsUtil.fetchCustomLabels(conn, namespace);
+      const customLabelResult = await CustomLabelsUtil.fetchCustomLabels(conn, namespace, messages);
       assesmentInfo.customLabelAssessmentInfos = customLabelResult.labels;
       assesmentInfo.customLabelStatistics = customLabelResult.statistics;
       Logger.logVerbose(
@@ -334,8 +334,7 @@ export default class Assess extends OmniStudioBaseCommand {
       );
       Logger.log(messages.getMessage('customLabelAssessmentCompleted'));
     } catch (error) {
-      Logger.error(messages.getMessage('errorDuringCustomLabelAssessment'));
-      Logger.error(error);
+      Logger.error(messages.getMessage('errorDuringCustomLabelAssessment', [(error as Error).message]));
       assesmentInfo.customLabelAssessmentInfos = [];
       assesmentInfo.customLabelStatistics = { totalLabels: 0, canBeAutomated: 0, needManualIntervention: 0 };
     }

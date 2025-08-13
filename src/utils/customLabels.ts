@@ -1,4 +1,4 @@
-import { Connection } from '@salesforce/core';
+import { Connection, Messages } from '@salesforce/core';
 import { Logger } from './logger';
 
 export interface ExternalStringRecord {
@@ -33,9 +33,13 @@ export interface CustomLabelResult {
 }
 
 export class CustomLabelsUtil {
-  public static async fetchCustomLabels(connection: Connection, namespace: string): Promise<CustomLabelResult> {
+  public static async fetchCustomLabels(
+    connection: Connection,
+    namespace: string,
+    messages: Messages
+  ): Promise<CustomLabelResult> {
     try {
-      const customLabels = await this.fetchExternalStringsFromTooling(connection, namespace);
+      const customLabels = await this.fetchExternalStringsFromTooling(connection, namespace, messages);
 
       if (!customLabels || customLabels.length === 0) {
         return {
@@ -44,7 +48,7 @@ export class CustomLabelsUtil {
         };
       }
 
-      const externalStrings = await this.fetchExternalStringsFromTooling(connection, '');
+      const externalStrings = await this.fetchExternalStringsFromTooling(connection, '', messages);
 
       const processedLabels = customLabels.map((label) => {
         const name = label.Name;
@@ -57,8 +61,7 @@ export class CustomLabelsUtil {
 
         if (externalString && externalString.Value !== value) {
           assessmentStatus = 'Need Manual Intervention';
-          summary =
-            'Custom Label with same name and different value is already exist without namespace. If value contains same html tags, then it can be ignored.';
+          summary = messages.getMessage('customLabelAssessmentSummary');
         }
 
         return {
@@ -94,7 +97,7 @@ export class CustomLabelsUtil {
         },
       };
     } catch (error) {
-      Logger.error(`Error fetching custom labels: ${String(error)}`);
+      Logger.error(messages.getMessage('errorFetchingCustomLabels', [String(error)]));
       return {
         labels: [],
         statistics: { totalLabels: 0, canBeAutomated: 0, needManualIntervention: 0 },
@@ -104,7 +107,8 @@ export class CustomLabelsUtil {
 
   private static async fetchExternalStringsFromTooling(
     connection: Connection,
-    namespace: string
+    namespace: string,
+    messages: Messages
   ): Promise<ExternalStringRecord[]> {
     try {
       const query = `SELECT Id, Name, NamespacePrefix, Value FROM ExternalString WHERE NamespacePrefix = '${namespace}'`;
@@ -133,7 +137,7 @@ export class CustomLabelsUtil {
 
       return allRecords;
     } catch (error) {
-      Logger.error(`Error fetching custom labels: ${String(error)}`);
+      Logger.error(messages.getMessage('errorFetchingCustomLabels', [String(error)]));
       return [];
     }
   }

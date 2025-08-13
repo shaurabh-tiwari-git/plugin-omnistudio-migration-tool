@@ -25,6 +25,6 @@ export const Constants = {
   ApexRemoteComponentName: 'ApexRemote',
   LWCComponentName: 'Lightning Web Component',
   ApexComponentName: 'Apex Classes',
-  CustomLabelComponentName: 'CustomLabel',
-  CustomLabelPluralName: 'CustomLabels',
+  CustomLabelComponentName: 'Custom Label',
+  CustomLabelPluralName: 'Custom Labels',
 };
