@@ -46,8 +46,13 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
   }
 
   public async truncate(): Promise<void> {
-    // Perform pre-migration checks before truncation
-    await this.performPreMigrationChecks();
+    try {
+      // Perform pre-migration checks before truncation
+      await this.performPreMigrationChecks();
+    } catch (error) {
+      Logger.logVerbose(error);
+      return;
+    }
     this.globalAutoNumberSettings = await this.getAllGlobalAutoNumberSettings();
     if (this.globalAutoNumberSettings.length > 0) {
       await super.truncate(GlobalAutoNumberMigrationTool.OMNI_GLOBAL_AUTO_NUMBER_NAME);
