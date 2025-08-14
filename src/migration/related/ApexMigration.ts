@@ -74,7 +74,7 @@ export class ApexMigration extends BaseRelatedObjectMigration {
     Logger.logVerbose(assessMessages.getMessage('startingApexAssessment', [this.projectPath]));
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
-    sfProject.retrieve(APEXCLASS, this.org.getUsername());
+    sfProject.retrieve(APEXCLASS, this.org.getUsername(), this.projectPath);
     Logger.info(assessMessages.getMessage('processingApexFilesForAssessment'));
     const apexAssessmentInfos = this.processApexFiles(this.projectPath, 'assessment');
     Logger.info(assessMessages.getMessage('successfullyProcessedApexFilesForAssessment', [apexAssessmentInfos.length]));
@@ -191,7 +191,10 @@ export class ApexMigration extends BaseRelatedObjectMigration {
       tokenUpdates.push(new RangeTokenUpdate(CALLABLE, tokens[0], tokens[1]));
       tokenUpdates.push(new InsertAfterTokenUpdate(this.callMethodBody(), parser.classDeclaration));
     } else if (implementsInterface.has(this.vlocityOpenInterface)) {
-      Logger.error(assessMessages.getMessage('fileImplementsVlocityOpenInterface', [file.name]));
+      Logger.logger.info(assessMessages.getMessage('apexFileImplementsVlocityOpenInterface', [file.name]));
+      const tokens = implementsInterface.get(this.vlocityOpenInterface);
+      tokenUpdates.push(new RangeTokenUpdate(CALLABLE, tokens[0], tokens[1]));
+      tokenUpdates.push(new InsertAfterTokenUpdate(this.callMethodBody(), parser.classDeclaration));
     }
     return tokenUpdates;
   }

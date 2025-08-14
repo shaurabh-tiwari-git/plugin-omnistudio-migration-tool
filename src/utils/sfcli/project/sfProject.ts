@@ -13,8 +13,8 @@ export class sfProject {
     Logger.log(messages.getMessage('projectCreated', [name]));
   }
 
-  public static retrieve(metadataName: string, username: string): void {
-    Logger.log(messages.getMessage('retrievingMetadata', [metadataName, username]));
+  public static retrieve(metadataName: string, username: string, projectPath: string): void {
+    Logger.log(messages.getMessage('retrievingMetadata', [metadataName, projectPath]));
     const cmd = `sf project retrieve start --metadata ${metadataName} --target-org ${username}`;
     sfProject.executeCommand(cmd);
     Logger.log(messages.getMessage('metadataRetrieved', [metadataName, username]));
