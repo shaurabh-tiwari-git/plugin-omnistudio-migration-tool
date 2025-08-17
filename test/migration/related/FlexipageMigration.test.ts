@@ -51,7 +51,7 @@ interface MockShell {
 }
 
 interface MockCreateProgressBar {
-  setTotal: sinon.SinonStub;
+  start: sinon.SinonStub;
   increment: sinon.SinonStub;
   stop: sinon.SinonStub;
 }
@@ -192,7 +192,7 @@ describe('FlexipageMigration', () => {
       };
 
       mockCreateProgressBar = {
-        setTotal: sandbox.stub(),
+        start: sandbox.stub(),
         increment: sandbox.stub(),
         stop: sandbox.stub(),
       };
