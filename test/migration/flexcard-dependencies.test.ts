@@ -543,4 +543,127 @@ describe('FlexCard Dependency Updates with NameMappingRegistry', () => {
       expect(definition.states[0].omniscripts[0].subtype).to.equal('UnknownSubType');
     });
   });
+
+  describe('Omni-Flyout Element Updates', () => {
+    it('should update omni-flyout flyoutOmniScript.osName using registry', () => {
+      const testCard: any = {
+        Id: 'card1',
+        Name: 'Test Card',
+        vlocity_ins__Definition__c: JSON.stringify({
+          states: [
+            {
+              components: {
+                comp1: {
+                  element: 'omni-flyout',
+                  property: {
+                    flyoutOmniScript: {
+                      osName: 'Customer-Profile/Account-View/English',
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        }),
+      };
+
+      const result = (cardTool as any).mapVlocityCardRecord(testCard, new Map(), new Map());
+      const definition = JSON.parse(result['PropertySetConfig']);
+
+      expect(definition.states[0].components.comp1.property.flyoutOmniScript.osName).to.equal(
+        'CustomerProfile/AccountView/English'
+      );
+    });
+
+    it('should update omni-flyout flyoutOmniScript.osName using fallback when registry has no mapping', () => {
+      const testCard: any = {
+        Id: 'card1',
+        Name: 'Test Card',
+        vlocity_ins__Definition__c: JSON.stringify({
+          states: [
+            {
+              components: {
+                comp1: {
+                  element: 'omni-flyout',
+                  property: {
+                    flyoutOmniScript: {
+                      osName: 'Unknown-OmniScript/Type-Test/English',
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        }),
+      };
+
+      const result = (cardTool as any).mapVlocityCardRecord(testCard, new Map(), new Map());
+      const definition = JSON.parse(result['PropertySetConfig']);
+
+      expect(definition.states[0].components.comp1.property.flyoutOmniScript.osName).to.equal(
+        'UnknownOmniScript/TypeTest/English'
+      );
+    });
+
+    it('should update nested omni-flyout elements in children', () => {
+      const testCard: any = {
+        Id: 'card1',
+        Name: 'Test Card',
+        vlocity_ins__Definition__c: JSON.stringify({
+          states: [
+            {
+              components: {
+                parent: {
+                  children: [
+                    {
+                      element: 'omni-flyout',
+                      property: {
+                        flyoutOmniScript: {
+                          osName: 'Customer-Profile/Account-View/English',
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        }),
+      };
+
+      const result = (cardTool as any).mapVlocityCardRecord(testCard, new Map(), new Map());
+      const definition = JSON.parse(result['PropertySetConfig']);
+
+      expect(definition.states[0].components.parent.children[0].property.flyoutOmniScript.osName).to.equal(
+        'CustomerProfile/AccountView/English'
+      );
+    });
+
+    it('should handle omni-flyout elements without flyoutOmniScript property gracefully', () => {
+      const testCard: any = {
+        Id: 'card1',
+        Name: 'Test Card',
+        vlocity_ins__Definition__c: JSON.stringify({
+          states: [
+            {
+              components: {
+                comp1: {
+                  element: 'omni-flyout',
+                  property: {
+                    someOtherProperty: 'value',
+                  },
+                },
+              },
+            },
+          ],
+        }),
+      };
+
+      const result = (cardTool as any).mapVlocityCardRecord(testCard, new Map(), new Map());
+      const definition = JSON.parse(result['PropertySetConfig']);
+
+      expect(definition.states[0].components.comp1.property.someOtherProperty).to.equal('value');
+      expect(definition.states[0].components.comp1.property.flyoutOmniScript).to.be.undefined;
+    });
+  });
 });

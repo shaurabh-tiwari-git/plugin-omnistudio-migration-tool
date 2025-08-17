@@ -119,7 +119,7 @@ describe('OmniScript Angular Dependency Validation', () => {
       expect(result.warnings).to.have.length(2);
       expect(result.warnings[0]).to.include('CustomerProfile_AngularView_English');
       expect(result.warnings[1]).to.include('ProductCatalog_Legacy_Spanish');
-      expect(result.migrationStatus).to.equal('Need Manual Intervention');
+      expect(result.migrationStatus).to.equal('Needs Manual Intervention');
     });
 
     it('should not add warnings for LWC OmniScript dependencies', async () => {

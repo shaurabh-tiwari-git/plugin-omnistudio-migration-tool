@@ -478,7 +478,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     for (const osDep of dependencyOS) {
       if (this.nameRegistry.isAngularOmniScript(osDep.name)) {
         warnings.push(this.messages.getMessage('angularOmniScriptDependencyWarning', [osDep.location, osDep.name]));
-        assessmentStatus = 'Need Manual Intervention';
+        assessmentStatus = 'Needs Manual Intervention';
       }
     }
 
@@ -534,7 +534,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     }
     if (existingOmniscriptNames.has(recordName)) {
       warnings.push(this.messages.getMessage('duplicatedName') + '  ' + recordName);
-      assessmentStatus = 'Warnings';
+      assessmentStatus = 'Needs Manual Intervention';
     } else {
       existingOmniscriptNames.add(recordName);
     }
@@ -557,7 +557,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       const type = omniscript[this.namespacePrefix + 'IsLwcEnabled__c'] ? 'LWC' : 'Angular';
       if (type === 'Angular') {
         warnings.unshift(this.messages.getMessage('angularOSWarning'));
-        assessmentStatus = 'Need Manual Intervention';
+        assessmentStatus = 'Needs Manual Intervention';
       }
     }
 
