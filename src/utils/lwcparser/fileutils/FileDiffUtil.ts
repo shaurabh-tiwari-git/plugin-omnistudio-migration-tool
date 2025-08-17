@@ -152,7 +152,7 @@ export class FileDiffUtil {
       const hasChanges = result.some((diff) => diff.old !== diff.new);
       return hasChanges ? result : [];
     } catch (error) {
-      Logger.error(`Error in FileDiffUtil: ${String(error)}`);
+      Logger.error('Error in FileDiffUtil', error);
       return [];
     }
   }

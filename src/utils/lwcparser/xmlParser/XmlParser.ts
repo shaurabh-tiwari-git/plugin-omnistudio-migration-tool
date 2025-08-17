@@ -52,7 +52,7 @@ export class XmlParser {
       return xmlContentMap;
     }
 
-    return xmlContentMap;
+    return undefined;
   }
 
   public saveToFile(outputFilePath: string, xmlString: string): void {
