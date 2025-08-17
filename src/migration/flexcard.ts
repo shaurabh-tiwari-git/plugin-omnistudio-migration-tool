@@ -410,7 +410,10 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
               if (parts.length >= 2) {
                 // Create both original and cleaned references for comparison
                 const originalOsRef = parts.join('_');
-                const cleanedParts = parts.map((p) => this.cleanName(p));
+                const cleanedParts =
+                  parts.length >= 3
+                    ? [this.cleanName(parts[0]), this.cleanName(parts[1]), parts[2]]
+                    : parts.map((p) => this.cleanName(p));
                 const cleanedOsRef = cleanedParts.join('_');
 
                 // Push original name for consistency
@@ -444,7 +447,10 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
             const parts = omniTypeName.split('/');
             if (parts.length >= 2) {
               const originalOsRef = parts.join('_');
-              const cleanedParts = parts.map((p) => this.cleanName(p));
+              const cleanedParts =
+                parts.length >= 3
+                  ? [this.cleanName(parts[0]), this.cleanName(parts[1]), parts[2]]
+                  : parts.map((p) => this.cleanName(p));
               const cleanedOsRef = cleanedParts.join('_');
 
               flexCardAssessmentInfo.dependenciesOS.push(originalOsRef);
@@ -473,7 +479,10 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
               if (parts.length >= 2) {
                 // Create both original and cleaned references for comparison
                 const originalOsRef = parts.join('_');
-                const cleanedParts = parts.map((p) => this.cleanName(p));
+                const cleanedParts =
+                  parts.length >= 3
+                    ? [this.cleanName(parts[0]), this.cleanName(parts[1]), parts[2]]
+                    : parts.map((p) => this.cleanName(p));
                 const cleanedOsRef = cleanedParts.join('_');
 
                 // Push original name for consistency
@@ -518,7 +527,10 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
             if (parts.length >= 2) {
               // Create both original and cleaned references for comparison
               const originalOsRef = parts.join('_');
-              const cleanedParts = parts.map((p) => this.cleanName(p));
+              const cleanedParts =
+                parts.length >= 3
+                  ? [this.cleanName(parts[0]), this.cleanName(parts[1]), parts[2]]
+                  : parts.map((p) => this.cleanName(p));
               const cleanedOsRef = cleanedParts.join('_');
 
               // Push original name for consistency
@@ -548,7 +560,10 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
           if (parts.length >= 2) {
             const originalOsRef = parts.join('_');
-            const cleanedParts = parts.map((p) => this.cleanName(p));
+            const cleanedParts =
+              parts.length >= 3
+                ? [this.cleanName(parts[0]), this.cleanName(parts[1]), parts[2]]
+                : parts.map((p) => this.cleanName(p));
             const cleanedOsRef = cleanedParts.join('_');
 
             flexCardAssessmentInfo.dependenciesOS.push(originalOsRef);
@@ -575,7 +590,10 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
           if (parts.length >= 2) {
             const originalOsRef = parts.join('_');
-            const cleanedParts = parts.map((p) => this.cleanName(p));
+            const cleanedParts =
+              parts.length >= 3
+                ? [this.cleanName(parts[0]), this.cleanName(parts[1]), parts[2]]
+                : parts.map((p) => this.cleanName(p));
             const cleanedOsRef = cleanedParts.join('_');
 
             flexCardAssessmentInfo.dependenciesOS.push(originalOsRef);
@@ -600,7 +618,10 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
           if (parts.length >= 2) {
             const originalOsRef = parts.join('_');
-            const cleanedParts = parts.map((p) => this.cleanName(p));
+            const cleanedParts =
+              parts.length >= 3
+                ? [this.cleanName(parts[0]), this.cleanName(parts[1]), parts[2]]
+                : parts.map((p) => this.cleanName(p));
             const cleanedOsRef = cleanedParts.join('_');
 
             flexCardAssessmentInfo.dependenciesOS.push(originalOsRef);
@@ -1230,7 +1251,10 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
               Logger.logVerbose(
                 `\n${this.messages.getMessage('componentMappingNotFound', ['OmniScript', originalOsRef])}`
               );
-              component.property.flyoutOmniScript.osName = parts.map((p) => this.cleanName(p)).join('/');
+              component.property.flyoutOmniScript.osName =
+                parts.length >= 3
+                  ? `${this.cleanName(parts[0])}/${this.cleanName(parts[1])}/${parts[2]}`
+                  : parts.map((p) => this.cleanName(p)).join('/');
             }
           }
         }
@@ -1269,7 +1293,10 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         Logger.logVerbose(
           `\n${this.messages.getMessage('componentMappingNotFound', ['OmniScript', fullOmniScriptName])}`
         );
-        omniType.Name = parts.map((p) => this.cleanName(p)).join('/');
+        omniType.Name =
+          parts.length >= 3
+            ? `${this.cleanName(parts[0])}/${this.cleanName(parts[1])}/${parts[2]}`
+            : parts.map((p) => this.cleanName(p)).join('/');
       }
     } else {
       // Fallback for unexpected format
@@ -1299,7 +1326,10 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       } else {
         // No registry mapping - use original fallback approach
         Logger.logVerbose(this.messages.getMessage('componentMappingNotFound', ['OmniScript', fullOmniScriptName]));
-        stateAction[fieldName] = parts.map((p) => this.cleanName(p)).join('/');
+        stateAction[fieldName] =
+          parts.length >= 3
+            ? `${this.cleanName(parts[0])}/${this.cleanName(parts[1])}/${parts[2]}`
+            : parts.map((p) => this.cleanName(p)).join('/');
       }
     } else {
       // Fallback for unexpected format
