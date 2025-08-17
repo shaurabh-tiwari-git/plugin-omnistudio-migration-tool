@@ -21,8 +21,8 @@ export class OSAssessmentReporter {
   ): ReportParam {
     Logger.captureVerboseData('OS data:', OSAssessmentInfos);
     return {
-      title: 'OmniScripts Assessment Report',
-      heading: 'OmniScripts Assessment Report',
+      title: 'Omniscripts Assessment Report',
+      heading: 'Omniscripts Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
       assessmentDate: new Date().toLocaleString(),
       total: OSAssessmentInfos?.length || 0,

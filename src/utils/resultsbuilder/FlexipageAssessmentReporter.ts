@@ -48,8 +48,8 @@ export class FlexipageAssessmentReporter {
     omnistudioOrgDetails: OmnistudioOrgDetails
   ): ReportParam {
     return {
-      title: 'Flexipages Assessment Report',
-      heading: 'Flexipages Assessment Report',
+      title: 'FlexiPages Assessment Report',
+      heading: 'FlexiPages Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
       assessmentDate: new Date().toString(),
       total: flexipageAssessmentInfos?.length || 0,

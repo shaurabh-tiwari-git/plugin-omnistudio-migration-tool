@@ -313,7 +313,7 @@ export class AssessmentReporter {
     }
     if (reports.includes(Constants.Omniscript)) {
       summaryItems.push({
-        name: 'OmniScripts',
+        name: 'Omniscripts',
         total: result.omniAssessmentInfo.osAssessmentInfos.length,
         data: OSAssessmentReporter.getSummaryData(result.omniAssessmentInfo.osAssessmentInfos),
         file: this.omniscriptAssessmentFileName,
