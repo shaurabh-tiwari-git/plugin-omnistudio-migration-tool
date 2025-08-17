@@ -10,7 +10,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { DOMParser, XMLSerializer } from 'xmldom';
+import { DOMParser, XMLSerializer } from '@xmldom/xmldom';
 
 /**
  * XMLUtil provides XML parsing and building functionality using the xmldom library.
@@ -51,14 +51,14 @@ export class XMLUtil {
   // Parse XML string to JSON
   public parse(xmlString: string): any {
     const doc = this.parser.parseFromString(xmlString, 'text/xml');
-    return this.xmlToJson(doc.documentElement);
+    return this.xmlToJson(doc.documentElement as any);
   }
 
   // Convert JSON object to XML
   public build(jsonObject: any, rootElement = 'root'): string {
     const doc = new DOMParser().parseFromString(`<${rootElement}></${rootElement}>`, 'text/xml');
     const rootNode = doc.documentElement;
-    this.jsonToXml(jsonObject, rootNode);
+    this.jsonToXml(jsonObject, rootNode as unknown as Node);
     return this.xmlHeader + this.prettyPrintXml(this.serializer.serializeToString(doc));
   }
 

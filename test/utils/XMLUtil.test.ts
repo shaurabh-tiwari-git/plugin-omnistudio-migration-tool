@@ -93,13 +93,13 @@ describe('XMLUtil', () => {
       });
     });
 
-    it('should handle invalid XML gracefully', () => {
+    it('should throw for invalid xml', () => {
       const invalidXml = '<root><unclosed>';
 
-      // xmldom doesn't throw errors, it returns a document with errors
+      // xmldom to throw error for mismatched tags after package update to @xmldom/xmldom.
       expect(() => {
         xmlUtil.parse(invalidXml);
-      }).to.not.throw();
+      }).to.throw();
     });
   });
 
