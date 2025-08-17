@@ -12,17 +12,16 @@ import { GlobalAutoNumberAssessmentInfo } from '../utils/interfaces';
 import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
 import { OrgPreferences } from '../utils/orgPreferences';
-import { OmniGlobalAutoNumberPrefManager } from '../utils/OmniGlobalAutoNumberPrefManager';
-
+import { OmnistudioSettingsPrefManager } from '../utils/OmnistudioSettingsPrefManager';
 import { Constants } from '../utils/constants/stringContants';
 
 export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements MigrationTool {
-  private prefManager: OmniGlobalAutoNumberPrefManager;
+  private prefManager: OmnistudioSettingsPrefManager;
   private globalAutoNumberSettings: AnyJson[] | null = null;
 
   constructor(namespace: string, connection: Connection, logger: Logger, messages: Messages, ux: UX) {
     super(namespace, connection, logger, messages, ux);
-    this.prefManager = new OmniGlobalAutoNumberPrefManager(this.connection, this.messages);
+    this.prefManager = new OmnistudioSettingsPrefManager(this.connection, this.messages);
   }
 
   static readonly GLOBAL_AUTO_NUMBER_SETTING_NAME = 'GlobalAutoNumberSetting__c';
@@ -47,8 +46,13 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
   }
 
   public async truncate(): Promise<void> {
-    // Perform pre-migration checks before truncation
-    await this.performPreMigrationChecks();
+    try {
+      // Perform pre-migration checks before truncation
+      await this.performPreMigrationChecks();
+    } catch (error) {
+      Logger.logVerbose(error);
+      return;
+    }
     this.globalAutoNumberSettings = await this.getAllGlobalAutoNumberSettings();
     if (this.globalAutoNumberSettings.length > 0) {
       await super.truncate(GlobalAutoNumberMigrationTool.OMNI_GLOBAL_AUTO_NUMBER_NAME);
@@ -101,7 +105,7 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
       await super.truncate(this.namespacePrefix + GlobalAutoNumberMigrationTool.GLOBAL_AUTO_NUMBER_SETTING_NAME);
       Logger.logVerbose(this.messages.getMessage('postMigrationCleanupCompleted'));
       // Enable the org preference after successful cleanup
-      const result = await this.prefManager.enable();
+      const result = await this.prefManager.enableGlobalAutoNumber();
       if (result?.success) {
         Logger.logVerbose(this.messages.getMessage('omniGlobalAutoNumberPrefEnabled'));
         return '';
@@ -171,7 +175,7 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
    */
   private async performPreMigrationChecks(): Promise<void> {
     // Check if Global Auto Number preference is already enabled
-    const isEnabled = await this.prefManager.isEnabled();
+    const isEnabled = await this.prefManager.isGlobalAutoNumberEnabled();
     if (isEnabled) {
       const errorMessage = this.messages.getMessage('globalAutoNumberPrefEnabledError');
       throw new Error(errorMessage);

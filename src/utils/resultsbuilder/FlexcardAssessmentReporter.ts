@@ -83,7 +83,7 @@ export class FlexcardAssessmentReporter {
             rowspan: 2,
           },
           {
-            name: 'OmniScript Dependencies',
+            name: 'Omniscript Dependencies',
             colspan: 1,
             rowspan: 2,
           },

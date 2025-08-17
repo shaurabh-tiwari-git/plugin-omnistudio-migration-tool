@@ -46,9 +46,9 @@ export class OSAssessmentReporter {
         cssClass: 'text-success',
       },
       {
-        name: 'Need Manual Intervention',
+        name: 'Needs Manual Intervention',
         count: osAssessmentInfos.filter(
-          (osAssessmentInfo) => osAssessmentInfo.migrationStatus === 'Need Manual Intervention'
+          (osAssessmentInfo) => osAssessmentInfo.migrationStatus === 'Needs Manual Intervention'
         ).length,
         cssClass: 'text-warning',
       },
@@ -57,7 +57,7 @@ export class OSAssessmentReporter {
         count: osAssessmentInfos.filter(
           (osAssessmentInfo) =>
             osAssessmentInfo.migrationStatus !== 'Ready for migration' &&
-            osAssessmentInfo.migrationStatus !== 'Need Manual Intervention'
+            osAssessmentInfo.migrationStatus !== 'Needs Manual Intervention'
         ).length,
         cssClass: 'text-error',
       },
@@ -189,7 +189,7 @@ export class OSAssessmentReporter {
             rowspan: 2,
           },
           {
-            name: 'OmniScript Dependencies',
+            name: 'Omniscript Dependencies',
             colspan: 1,
             rowspan: 2,
           },
@@ -204,12 +204,12 @@ export class OSAssessmentReporter {
             rowspan: 2,
           },
           {
-            name: 'Remote action Dependencies',
+            name: 'Remote Action Dependencies',
             colspan: 1,
             rowspan: 2,
           },
           {
-            name: 'Custom LWCs Dependencies',
+            name: 'Custom LWC Dependencies',
             colspan: 1,
             rowspan: 2,
           },
