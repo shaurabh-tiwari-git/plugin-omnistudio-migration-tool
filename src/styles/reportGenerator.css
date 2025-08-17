@@ -402,7 +402,7 @@ html {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  height: 14rem;
+  min-height: 14rem;
   min-width: 25rem;
   background-color: #fff;
 }
@@ -565,4 +565,12 @@ td {
   height: 2px;
   background-color: red;
   transform: translateY(-50%) rotate(45deg);
+}
+
+.highlight {
+  background-color: #f3f3f3;
+}
+
+.normal-td-padding {
+  padding-left: 0.5rem !important;
 }

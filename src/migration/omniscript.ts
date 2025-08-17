@@ -470,7 +470,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     const existingSubTypeVal = new StringVal(existingSubType, 'sub type');
     const omniScriptName = omniscript[this.namespacePrefix + 'Name'];
     const existingOmniScriptNameVal = new StringVal(omniScriptName, 'name');
-    let assessmentStatus = 'Ready for migration';
+    let assessmentStatus: 'Ready for migration' | 'Warnings' | 'Needs Manual Intervention' = 'Ready for migration';
 
     const warnings: string[] = [];
 
@@ -478,7 +478,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     for (const osDep of dependencyOS) {
       if (this.nameRegistry.isAngularOmniScript(osDep.name)) {
         warnings.push(this.messages.getMessage('angularOmniScriptDependencyWarning', [osDep.location, osDep.name]));
-        assessmentStatus = 'Need Manual Intervention';
+        assessmentStatus = 'Needs Manual Intervention';
       }
     }
 
@@ -557,7 +557,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       const type = omniscript[this.namespacePrefix + 'IsLwcEnabled__c'] ? 'LWC' : 'Angular';
       if (type === 'Angular') {
         warnings.unshift(this.messages.getMessage('angularOSWarning'));
-        assessmentStatus = 'Need Manual Intervention';
+        assessmentStatus = 'Needs Manual Intervention';
       }
     }
 
@@ -627,7 +627,9 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           value.migrationSuccess = true;
         }
 
-        let finalKey = `${nameMapping.oldType}${nameMapping.oldSubtype}${nameMapping.oldLanguage}`;
+        let finalKey = `${nameMapping.oldType}${nameMapping.oldSubtype}${this.cleanLanguageName(
+          nameMapping.oldLanguage
+        )}`;
 
         finalKey = finalKey.toLowerCase();
         if (storage.osStorage.has(finalKey)) {
@@ -645,6 +647,11 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     }
 
     StorageUtil.printAssessmentStorage();
+  }
+
+  private cleanLanguageName(language: string): string {
+    // replace -, ( and ) and space with _
+    return language.replace(/[-() ]/g, '');
   }
 
   async migrate(): Promise<MigrationResult[]> {
@@ -1039,7 +1046,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
           let finalKey = `${oldrecord[this.namespacePrefix + 'Type__c']}${
             oldrecord[this.namespacePrefix + 'SubType__c']
-          }${oldrecord[this.namespacePrefix + 'Language__c']}`;
+          }${this.cleanLanguageName(oldrecord[this.namespacePrefix + 'Language__c'])}`;
 
           finalKey = finalKey.toLowerCase();
           if (storage.osStorage.has(finalKey)) {

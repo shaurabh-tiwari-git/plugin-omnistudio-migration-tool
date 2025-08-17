@@ -21,8 +21,8 @@ export class ApexAssessmentReporter {
   ): ReportParam {
     Logger.captureVerboseData('apex data:', apexAssessmentInfos);
     return {
-      title: 'Apex File Assessment Report',
-      heading: 'Apex File Assessment Report',
+      title: 'Apex Classes Assessment Report',
+      heading: 'Apex Classes Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
       assessmentDate: new Date().toLocaleString(),
       total: apexAssessmentInfos?.length || 0,
@@ -38,18 +38,24 @@ export class ApexAssessmentReporter {
       {
         name: 'Ready for migration',
         count: apexAssessmentInfos.filter(
-          (apexAssessmentInfo) => !apexAssessmentInfo.warnings || apexAssessmentInfo.warnings.length === 0
+          (apexAssessmentInfo) => this.getMigrationStatus(apexAssessmentInfo) === 'Ready for migration'
         ).length,
         cssClass: 'text-success',
       },
       {
         name: 'Warnings',
-        count: apexAssessmentInfos.filter((info) => info.warnings && info.warnings.length > 0).length,
+        count: apexAssessmentInfos.filter((info) => this.getMigrationStatus(info) === 'Warnings').length,
         cssClass: 'text-warning',
       },
       {
-        name: 'Has Errrors',
-        count: apexAssessmentInfos.filter((info) => info.errors && info.errors.length > 0).length,
+        name: 'Needs Manual Intervention',
+        count: apexAssessmentInfos.filter((info) => this.getMigrationStatus(info) === 'Needs Manual Intervention')
+          .length,
+        cssClass: 'text-error',
+      },
+      {
+        name: 'Failed',
+        count: apexAssessmentInfos.filter((info) => this.getMigrationStatus(info) === 'Failed').length,
         cssClass: 'text-error',
       },
     ];
@@ -59,7 +65,20 @@ export class ApexAssessmentReporter {
     return apexAssessmentInfos.map((apexAssessmentInfo) => ({
       rowId: `${this.rowIdPrefix}${this.rowId++}`,
       data: [
-        createRowDataParam('name', apexAssessmentInfo.name, true, 1, 1, false),
+        createRowDataParam(
+          'name',
+          apexAssessmentInfo.name,
+          true,
+          1,
+          1,
+          false,
+          undefined,
+          undefined,
+          this.getMigrationStatus(apexAssessmentInfo) === 'Needs Manual Intervention' ||
+            this.getMigrationStatus(apexAssessmentInfo) === 'Failed'
+            ? 'invalid-icon'
+            : ''
+        ),
         createRowDataParam(
           'fileReference',
           apexAssessmentInfo.name,
@@ -72,14 +91,14 @@ export class ApexAssessmentReporter {
         ),
         createRowDataParam(
           'status',
-          apexAssessmentInfo.warnings.length > 0 ? 'Warnings' : 'Ready for migration',
+          this.getMigrationStatus(apexAssessmentInfo),
           false,
           1,
           1,
           false,
           undefined,
-          apexAssessmentInfo.warnings.length > 0 ? 'Has Warnings' : 'Can be Automated',
-          apexAssessmentInfo.warnings.length > 0 ? 'text-error' : 'text-success'
+          this.getMigrationStatus(apexAssessmentInfo),
+          this.getMigrationStatusCssClass(apexAssessmentInfo)
         ),
         createRowDataParam(
           'diff',
@@ -99,7 +118,8 @@ export class ApexAssessmentReporter {
           1,
           false,
           undefined,
-          apexAssessmentInfo.infos ? reportingHelper.decorateErrors(apexAssessmentInfo.infos) : []
+          apexAssessmentInfo.infos,
+          this.getMigrationStatusCssClass(apexAssessmentInfo, true)
         ),
         createRowDataParam(
           'errors',
@@ -109,10 +129,20 @@ export class ApexAssessmentReporter {
           1,
           false,
           undefined,
-          apexAssessmentInfo.warnings ? reportingHelper.decorateErrors(apexAssessmentInfo.warnings) : []
+          apexAssessmentInfo.warnings,
+          this.getMigrationStatusCssClass(apexAssessmentInfo, true)
         ),
       ],
     }));
+  }
+  private static getMigrationStatusCssClass(apexAssessmentInfo: ApexAssessmentInfo, noClassForSuccess = false): string {
+    if (apexAssessmentInfo.errors && apexAssessmentInfo.errors.length > 0) {
+      return 'text-error';
+    }
+    if (apexAssessmentInfo.warnings && apexAssessmentInfo.warnings.length > 0) {
+      return 'text-warning';
+    }
+    return noClassForSuccess ? '' : 'text-success';
   }
 
   private static getFilterGroupsForReport(apexAssessmentInfos: ApexAssessmentInfo[]): FilterGroupParam[] {
@@ -120,13 +150,13 @@ export class ApexAssessmentReporter {
       return [];
     }
 
-    return [
-      createFilterGroupParam('Filter By Assessment Status', 'status', [
-        'Can be Automated',
-        'Has Warnings',
-        'Has Errors',
-      ]),
-    ];
+    const distinctStatuses = [...new Set(apexAssessmentInfos.map((info) => this.getMigrationStatus(info)))];
+    const statusFilterGroupParam: FilterGroupParam[] =
+      distinctStatuses.length > 0 && distinctStatuses.filter((status) => status).length > 0
+        ? [createFilterGroupParam('Filter By Assessment Status', 'status', distinctStatuses)]
+        : [];
+
+    return [...statusFilterGroupParam];
   }
 
   private static getHeaderGroupsForReport(): ReportHeaderGroupParam[] {
@@ -166,5 +196,15 @@ export class ApexAssessmentReporter {
         ],
       },
     ];
+  }
+
+  private static getMigrationStatus(apexAssessmentInfo: ApexAssessmentInfo): string {
+    if (apexAssessmentInfo.errors && apexAssessmentInfo.errors.length > 0) {
+      return 'Failed';
+    }
+    if (apexAssessmentInfo.warnings && apexAssessmentInfo.warnings.length > 0) {
+      return 'Warnings';
+    }
+    return 'Ready for migration';
   }
 }

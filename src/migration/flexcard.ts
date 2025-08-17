@@ -211,13 +211,13 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       infos: [],
       warnings: [],
       errors: [],
-      migrationStatus: '',
+      migrationStatus: 'Ready for migration',
     };
 
     // Check for name changes due to API naming requirements
     const originalName: string = flexCardName;
     const cleanedName: string = this.cleanName(originalName);
-    let assessmentStatus = 'Ready for migration';
+    let assessmentStatus: 'Ready for migration' | 'Warnings' | 'Needs Manual Intervention' = 'Ready for migration';
     flexCardAssessmentInfo.name = this.allVersions ? `${cleanedName}_${version}` : cleanedName;
     if (cleanedName !== originalName) {
       flexCardAssessmentInfo.warnings.push(
@@ -229,7 +229,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     // Check for duplicate names
     if (uniqueNames.has(cleanedName)) {
       flexCardAssessmentInfo.warnings.push(this.messages.getMessage('duplicateCardNameMessage', [cleanedName]));
-      assessmentStatus = 'Need Manual Intervention';
+      assessmentStatus = 'Needs Manual Intervention';
     }
     uniqueNames.add(cleanedName);
 
@@ -302,7 +302,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           flexCardAssessmentInfo.warnings.push(
             this.messages.getMessage('integrationProcedureManualUpdateMessage', [originalIpMethod])
           );
-          flexCardAssessmentInfo.migrationStatus = 'Need Manual Intervention';
+          flexCardAssessmentInfo.migrationStatus = 'Needs Manual Intervention';
         }
       }
     } else if (dataSource.type === Constants.ApexRemoteComponentName) {

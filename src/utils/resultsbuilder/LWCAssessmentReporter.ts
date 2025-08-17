@@ -20,8 +20,8 @@ export class LWCAssessmentReporter {
   ): ReportParam {
     Logger.captureVerboseData('lwc data:', lwcAssessmentInfos);
     return {
-      title: 'LWC Assessment Report',
-      heading: 'LWC',
+      title: 'Lightning Web Components Assessment Report',
+      heading: 'Lightning Web Components Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
       assessmentDate: new Date().toString(),
       total: lwcAssessmentInfos?.length || 0,
@@ -34,20 +34,26 @@ export class LWCAssessmentReporter {
   public static getSummaryData(lwcAssessmentInfos: LWCAssessmentInfo[]): SummaryItemDetailParam[] {
     return [
       {
-        name: 'Can be Automated',
+        name: 'Ready for migration',
         count: lwcAssessmentInfos.filter(
-          (lwcAssessmentInfo) => !lwcAssessmentInfo.errors || lwcAssessmentInfo.errors.length === 0
+          (lwcAssessmentInfo) => this.getMigrationStatus(lwcAssessmentInfo) === 'Ready for migration'
         ).length,
         cssClass: 'text-success',
       },
       {
-        name: 'Has Warnings',
-        count: lwcAssessmentInfos.filter((info) => info.warnings && info.warnings.length > 0).length,
+        name: 'Warnings',
+        count: lwcAssessmentInfos.filter((info) => this.getMigrationStatus(info) === 'Warnings').length,
         cssClass: 'text-warning',
       },
       {
-        name: 'Has Errors',
-        count: lwcAssessmentInfos.filter((info) => info.errors && info.errors.length > 0).length,
+        name: 'Needs Manual Intervention',
+        count: lwcAssessmentInfos.filter((info) => this.getMigrationStatus(info) === 'Needs Manual Intervention')
+          .length,
+        cssClass: 'text-error',
+      },
+      {
+        name: 'Failed',
+        count: lwcAssessmentInfos.filter((info) => this.getMigrationStatus(info) === 'Failed').length,
         cssClass: 'text-error',
       },
     ];
@@ -67,7 +73,22 @@ export class LWCAssessmentReporter {
           rowId: rId,
           data: [
             ...(fileIndex === 0
-              ? [createRowDataParam('name', lwcAssessmentInfo.name, true, changeInfosCount, 1, false)]
+              ? [
+                  createRowDataParam(
+                    'name',
+                    lwcAssessmentInfo.name,
+                    true,
+                    changeInfosCount,
+                    1,
+                    false,
+                    undefined,
+                    undefined,
+                    this.getMigrationStatus(lwcAssessmentInfo) === 'Needs Manual Intervention' ||
+                      this.getMigrationStatus(lwcAssessmentInfo) === 'Failed'
+                      ? 'invalid-icon'
+                      : ''
+                  ),
+                ]
               : []),
             createRowDataParam(
               'fileReference',
@@ -77,7 +98,8 @@ export class LWCAssessmentReporter {
               1,
               true,
               fileChangeInfo.path,
-              fileChangeInfo.name
+              fileChangeInfo.name,
+              'normal-td-padding'
             ),
             createRowDataParam(
               'diff',
@@ -92,19 +114,15 @@ export class LWCAssessmentReporter {
             ...(fileIndex === 0
               ? [
                   createRowDataParam(
-                    'comments',
-                    lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0
-                      ? 'Need Manual Intervention'
-                      : 'Can be Automated',
+                    'status',
+                    this.getMigrationStatus(lwcAssessmentInfo),
                     false,
                     changeInfosCount,
                     1,
                     false,
                     undefined,
-                    lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0
-                      ? 'Need Manual Intervention'
-                      : 'Can be Automated',
-                    lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0 ? 'text-error' : 'text-success'
+                    this.getMigrationStatus(lwcAssessmentInfo),
+                    this.getMigrationStatusCssClass(lwcAssessmentInfo)
                   ),
                   createRowDataParam(
                     'errors',
@@ -115,7 +133,7 @@ export class LWCAssessmentReporter {
                     false,
                     undefined,
                     lwcAssessmentInfo.errors,
-                    lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0 ? 'text-error' : 'text-success'
+                    this.getMigrationStatusCssClass(lwcAssessmentInfo, true)
                   ),
                 ]
               : []),
@@ -132,12 +150,13 @@ export class LWCAssessmentReporter {
       return [];
     }
 
-    return [
-      createFilterGroupParam('Filter By Assessment Status', 'comments', [
-        'Can be Automated',
-        'Needs Manual Intervention',
-      ]),
-    ];
+    const distinctStatuses = [...new Set(lwcAssessmentInfos.map((info) => this.getMigrationStatus(info)))];
+    const statusFilterGroupParam: FilterGroupParam[] =
+      distinctStatuses.length > 0 && distinctStatuses.filter((status) => status).length > 0
+        ? [createFilterGroupParam('Filter By Assessment Status', 'status', distinctStatuses)]
+        : [];
+
+    return [...statusFilterGroupParam];
   }
 
   private static getHeaderGroupsForReport(): ReportHeaderGroupParam[] {
@@ -172,5 +191,25 @@ export class LWCAssessmentReporter {
         ],
       },
     ];
+  }
+
+  private static getMigrationStatus(lwcAssessmentInfo: LWCAssessmentInfo): string {
+    if (lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0) {
+      return 'Failed';
+    }
+    if (lwcAssessmentInfo.warnings && lwcAssessmentInfo.warnings.length > 0) {
+      return 'Warnings';
+    }
+    return 'Ready for migration';
+  }
+
+  private static getMigrationStatusCssClass(lwcAssessmentInfo: LWCAssessmentInfo, noClassForSuccess = false): string {
+    if (lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0) {
+      return 'text-error';
+    }
+    if (lwcAssessmentInfo.warnings && lwcAssessmentInfo.warnings.length > 0) {
+      return 'text-warning';
+    }
+    return noClassForSuccess ? '' : 'text-success';
   }
 }

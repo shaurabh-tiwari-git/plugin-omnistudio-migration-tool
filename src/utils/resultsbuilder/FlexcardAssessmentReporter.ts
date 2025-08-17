@@ -9,7 +9,6 @@ import {
   SummaryItemDetailParam,
 } from '../reportGenerator/reportInterfaces';
 import { createFilterGroupParam, createRowDataParam, getOrgDetailsForReport } from '../reportGenerator/reportUtil';
-import { reportingHelper } from './reportingHelper';
 
 export class FlexcardAssessmentReporter {
   private static rowId = 0;
@@ -21,8 +20,8 @@ export class FlexcardAssessmentReporter {
   ): ReportParam {
     Logger.captureVerboseData('fc data:', flexCardAssessmentInfos);
     return {
-      title: 'Flexcard Assessment Report',
-      heading: 'Flexcard Assessment Report',
+      title: 'Flexcards Assessment Report',
+      heading: 'Flexcards Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
       assessmentDate: new Date().toLocaleString(),
       total: flexCardAssessmentInfos?.length || 0,
@@ -37,21 +36,28 @@ export class FlexcardAssessmentReporter {
       {
         name: 'Ready for migration',
         count: flexCardAssessmentInfos.filter(
-          (flexCardAssessmentInfo) => !flexCardAssessmentInfo.warnings || flexCardAssessmentInfo.warnings.length === 0
+          (flexCardAssessmentInfo) => flexCardAssessmentInfo.migrationStatus === 'Ready for migration'
         ).length,
         cssClass: 'text-success',
       },
       {
         name: 'Warnings',
         count: flexCardAssessmentInfos.filter(
-          (flexCardAssessmentInfo) => flexCardAssessmentInfo.warnings && flexCardAssessmentInfo.warnings.length > 0
+          (flexCardAssessmentInfo) => flexCardAssessmentInfo.migrationStatus === 'Warnings'
         ).length,
         cssClass: 'text-warning',
       },
       {
+        name: 'Needs Manual Intervention',
+        count: flexCardAssessmentInfos.filter(
+          (flexCardAssessmentInfo) => flexCardAssessmentInfo.migrationStatus === 'Needs Manual Intervention'
+        ).length,
+        cssClass: 'text-error',
+      },
+      {
         name: 'Failed',
         count: flexCardAssessmentInfos.filter(
-          (flexCardAssessmentInfo) => flexCardAssessmentInfo.errors && flexCardAssessmentInfo.errors.length > 0
+          (flexCardAssessmentInfo) => flexCardAssessmentInfo.migrationStatus === 'Failed'
         ).length,
         cssClass: 'text-error',
       },
@@ -152,7 +158,20 @@ export class FlexcardAssessmentReporter {
     return flexCardAssessmentInfos.map((flexCardAssessmentInfo) => ({
       rowId: `${this.rowIdPrefix}${this.rowId++}`,
       data: [
-        createRowDataParam('name', flexCardAssessmentInfo.oldName, true, 1, 1, false),
+        createRowDataParam(
+          'name',
+          flexCardAssessmentInfo.oldName,
+          true,
+          1,
+          1,
+          false,
+          undefined,
+          undefined,
+          flexCardAssessmentInfo.migrationStatus === 'Needs Manual Intervention' ||
+            flexCardAssessmentInfo.migrationStatus === 'Failed'
+            ? 'invalid-icon'
+            : ''
+        ),
         createRowDataParam(
           'recordId',
           flexCardAssessmentInfo.id,
@@ -172,7 +191,11 @@ export class FlexcardAssessmentReporter {
           false,
           undefined,
           undefined,
-          flexCardAssessmentInfo.migrationStatus === 'Ready for migration' ? 'text-success' : 'text-error'
+          flexCardAssessmentInfo.migrationStatus === 'Ready for migration'
+            ? 'text-success'
+            : flexCardAssessmentInfo.migrationStatus === 'Warnings'
+            ? 'text-warning'
+            : 'text-error'
         ),
         createRowDataParam(
           'summary',
@@ -182,7 +205,12 @@ export class FlexcardAssessmentReporter {
           1,
           false,
           undefined,
-          flexCardAssessmentInfo.warnings ? reportingHelper.decorateErrors(flexCardAssessmentInfo.warnings) : []
+          flexCardAssessmentInfo.warnings,
+          flexCardAssessmentInfo.migrationStatus === 'Warnings'
+            ? 'text-warning'
+            : flexCardAssessmentInfo.migrationStatus === 'Ready for migration'
+            ? ''
+            : 'text-error'
         ),
         createRowDataParam(
           'omniScriptDependencies',

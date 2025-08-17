@@ -21,8 +21,8 @@ export class IPAssessmentReporter {
   ): ReportParam {
     Logger.captureVerboseData('IP data', ipAssessmentInfos);
     return {
-      title: 'Integration Procedure Assessment Report',
-      heading: 'Integration Procedure Assessment Report',
+      title: 'Integration Procedures Assessment Report',
+      heading: 'Integration Procedures Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
       assessmentDate: new Date().toLocaleString(),
       total: ipAssessmentInfos?.length || 0,
@@ -47,16 +47,19 @@ export class IPAssessmentReporter {
       },
       {
         name: 'Warnings',
-        count: ipAssessmentInfos.filter(
-          (ipAssessmentInfo) => ipAssessmentInfo.warnings && ipAssessmentInfo.warnings.length > 0
-        ).length,
+        count: ipAssessmentInfos.filter((ipAssessmentInfo) => ipAssessmentInfo.migrationStatus === 'Warnings').length,
         cssClass: 'text-warning',
       },
       {
-        name: 'Failed',
+        name: 'Needs Manual Intervention',
         count: ipAssessmentInfos.filter(
-          (ipAssessmentInfo) => ipAssessmentInfo.errors && ipAssessmentInfo.errors.length > 0
+          (ipAssessmentInfo) => ipAssessmentInfo.migrationStatus === 'Needs Manual Intervention'
         ).length,
+        cssClass: 'text-error',
+      },
+      {
+        name: 'Failed',
+        count: ipAssessmentInfos.filter((ipAssessmentInfo) => ipAssessmentInfo.migrationStatus === 'Failed').length,
         cssClass: 'text-error',
       },
     ];
@@ -66,7 +69,20 @@ export class IPAssessmentReporter {
     return ipAssessmentInfos.map((ipAssessmentInfo) => ({
       rowId: `${this.rowIdPrefix}${this.rowId++}`,
       data: [
-        createRowDataParam('name', ipAssessmentInfo.oldName, true, 1, 1, false),
+        createRowDataParam(
+          'name',
+          ipAssessmentInfo.oldName,
+          true,
+          1,
+          1,
+          false,
+          undefined,
+          undefined,
+          ipAssessmentInfo.migrationStatus === 'Needs Manual Intervention' ||
+            ipAssessmentInfo.migrationStatus === 'Failed'
+            ? 'invalid-icon'
+            : ''
+        ),
         createRowDataParam('id', ipAssessmentInfo.id, false, 1, 1, true, `${instanceUrl}/${ipAssessmentInfo.id}`),
         createRowDataParam('newName', ipAssessmentInfo.name, false, 1, 1, false),
         createRowDataParam(
@@ -78,7 +94,11 @@ export class IPAssessmentReporter {
           false,
           undefined,
           undefined,
-          ipAssessmentInfo.migrationStatus === 'Ready for migration' ? 'text-success' : 'text-error'
+          ipAssessmentInfo.migrationStatus === 'Ready for migration'
+            ? 'text-success'
+            : ipAssessmentInfo.migrationStatus === 'Warnings'
+            ? 'text-warning'
+            : 'text-error'
         ),
         createRowDataParam(
           'summary',
@@ -88,7 +108,12 @@ export class IPAssessmentReporter {
           1,
           false,
           undefined,
-          ipAssessmentInfo.warnings ? reportingHelper.decorateErrors(ipAssessmentInfo.warnings) : []
+          ipAssessmentInfo.warnings,
+          ipAssessmentInfo.migrationStatus === 'Warnings'
+            ? 'text-warning'
+            : ipAssessmentInfo.migrationStatus === 'Ready for migration'
+            ? ''
+            : 'text-error'
         ),
         createRowDataParam(
           'integrationProcedureDependencies',

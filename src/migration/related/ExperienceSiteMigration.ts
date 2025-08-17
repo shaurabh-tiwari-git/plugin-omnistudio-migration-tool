@@ -120,7 +120,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       path: file.location,
       diff: JSON.stringify([]),
       hasOmnistudioContent: false,
-      status: 'Can be Automated',
+      status: 'Ready for migration',
     };
 
     const lookupComponentName = `${this.namespace}:vlocityLWCOmniWrapper`;
@@ -179,7 +179,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
         path: file.location,
         diff: JSON.stringify([]),
         hasOmnistudioContent: false,
-        status: 'Errors',
+        status: 'Failed',
       };
 
       experienceSiteAssessmentInfos.push(experienceSiteAssessmentInfo);
@@ -256,7 +256,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       experienceSiteAssessmentInfo.warnings.push(
         'Target exists as empty string. Please check experience site configuration'
       );
-      experienceSiteAssessmentInfo.status = 'Errors';
+      experienceSiteAssessmentInfo.status = 'Needs Manual Intervention';
       return;
     }
 
@@ -287,7 +287,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     if (this.shouldAddWarning(targetDataFromStorageFC)) {
       const warningMsg: string = this.getWarningMessage(flexcardName, targetDataFromStorageFC);
       experienceSiteAssessmentInfo.warnings.push(warningMsg);
-      experienceSiteAssessmentInfo.status = 'Errors';
+      experienceSiteAssessmentInfo.status = 'Needs Manual Intervention';
     } else {
       component.componentName = TARGET_COMPONENT_NAME_FC;
 
@@ -316,7 +316,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     if (this.shouldAddWarning(targetDataFromStorage)) {
       const warningMsg: string = this.getWarningMessage(targetName, targetDataFromStorage);
       experienceSiteAssessmentInfo.warnings.push(warningMsg);
-      experienceSiteAssessmentInfo.status = 'Errors';
+      experienceSiteAssessmentInfo.status = 'Needs Manual Intervention';
     } else {
       component.componentName = TARGET_COMPONENT_NAME_OS;
 
