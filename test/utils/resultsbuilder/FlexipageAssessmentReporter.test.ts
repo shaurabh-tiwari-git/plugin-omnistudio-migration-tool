@@ -65,8 +65,8 @@ describe('FlexipageAssessmentReporter', () => {
       const result = FlexipageAssessmentReporter.getFlexipageAssessmentData(mockAssessmentInfos, mockOrgDetails);
 
       // Assert
-      expect(result).to.have.property('title', 'Flexipages Assessment Report');
-      expect(result).to.have.property('heading', 'Flexipages Assessment Report');
+      expect(result).to.have.property('title', 'FlexiPages Assessment Report');
+      expect(result).to.have.property('heading', 'FlexiPages Assessment Report');
       expect(result).to.have.property('total', 2);
       expect(result).to.have.property('assessmentDate');
       expect(result).to.have.property('org');
