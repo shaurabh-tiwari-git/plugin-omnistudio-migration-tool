@@ -48,7 +48,7 @@ export class OSAssessmentReporter {
       {
         name: 'Warnings',
         count: osAssessmentInfos.filter((osAssessmentInfo) => osAssessmentInfo.migrationStatus === 'Warnings').length,
-        cssClass: 'text-error',
+        cssClass: 'text-warning',
       },
       {
         name: 'Needs Manual Intervention',
@@ -60,7 +60,7 @@ export class OSAssessmentReporter {
       {
         name: 'Failed',
         count: osAssessmentInfos.filter((osAssessmentInfo) => osAssessmentInfo.migrationStatus === 'Failed').length,
-        cssClass: 'text-warning',
+        cssClass: 'text-error',
       },
     ];
   }
@@ -201,7 +201,7 @@ export class OSAssessmentReporter {
             rowspan: 2,
           },
           {
-            name: 'OmniScript Dependencies',
+            name: 'Omniscript Dependencies',
             colspan: 1,
             rowspan: 2,
           },
@@ -216,12 +216,12 @@ export class OSAssessmentReporter {
             rowspan: 2,
           },
           {
-            name: 'Remote action Dependencies',
+            name: 'Remote Action Dependencies',
             colspan: 1,
             rowspan: 2,
           },
           {
-            name: 'Custom LWCs Dependencies',
+            name: 'Custom LWC Dependencies',
             colspan: 1,
             rowspan: 2,
           },

@@ -534,7 +534,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     }
     if (existingOmniscriptNames.has(recordName)) {
       warnings.push(this.messages.getMessage('duplicatedName') + '  ' + recordName);
-      assessmentStatus = 'Warnings';
+      assessmentStatus = 'Needs Manual Intervention';
     } else {
       existingOmniscriptNames.add(recordName);
     }

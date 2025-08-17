@@ -270,7 +270,9 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       const originalBundle = dataSource.value?.bundle;
       if (originalBundle) {
         const cleanedBundle: string = this.cleanName(originalBundle);
-        flexCardAssessmentInfo.dependenciesDR.push(cleanedBundle);
+
+        // Push original name instead of cleaned name for assessment consistency
+        flexCardAssessmentInfo.dependenciesDR.push(originalBundle);
 
         // Add warning if DataRaptor name will change
         if (originalBundle !== cleanedBundle) {
@@ -287,7 +289,8 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         const cleanedParts = parts.map((p) => this.cleanName(p, true));
         const cleanedIpMethod = cleanedParts.join('_');
 
-        flexCardAssessmentInfo.dependenciesIP.push(cleanedIpMethod);
+        // Push original name instead of cleaned name for assessment consistency
+        flexCardAssessmentInfo.dependenciesIP.push(originalIpMethod);
 
         // Add warning if IP name will change
         if (originalIpMethod !== cleanedIpMethod) {
@@ -316,7 +319,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       }
     }
 
-    // Check for OmniScript dependencies in the card's definition
+    // Check for Omniscript dependencies in the card's definition
     try {
       const definition = JSON.parse(flexCard[this.namespacePrefix + 'Definition__c'] || '{}');
       if (definition && definition.states) {
@@ -324,8 +327,21 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           if (state.omniscripts && Array.isArray(state.omniscripts)) {
             for (const os of state.omniscripts) {
               if (os.type && os.subtype) {
-                const osRef = `${os.type}_${os.subtype}_${os.language || 'English'}`;
-                flexCardAssessmentInfo.dependenciesOS.push(osRef);
+                const originalOsRef = `${os.type}_${os.subtype}_${os.language || 'English'}`;
+                const cleanedOsRef = `${this.cleanName(os.type)}_${this.cleanName(os.subtype)}_${
+                  os.language || 'English'
+                }`;
+
+                // Push original name for consistency
+                flexCardAssessmentInfo.dependenciesOS.push(originalOsRef);
+
+                // Add warning if OmniScript name will change
+                if (originalOsRef !== cleanedOsRef) {
+                  flexCardAssessmentInfo.warnings.push(
+                    this.messages.getMessage('omniScriptNameChangeMessage', [originalOsRef, cleanedOsRef])
+                  );
+                  flexCardAssessmentInfo.migrationStatus = 'Warnings';
+                }
               }
             }
           }
@@ -343,7 +359,21 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       }
 
       let childCards = this.readChildCardsFromDefinition(flexCard);
-      flexCardAssessmentInfo.dependenciesFC.push(...childCards);
+      // Add warnings for child card name changes
+      for (const childCardName of childCards) {
+        const cleanedChildCardName = this.cleanName(childCardName);
+
+        // Push original child card name for consistency
+        flexCardAssessmentInfo.dependenciesFC.push(childCardName);
+
+        // Add warning if child card name will change
+        if (childCardName !== cleanedChildCardName) {
+          flexCardAssessmentInfo.warnings.push(
+            this.messages.getMessage('cardNameChangeMessage', [childCardName, cleanedChildCardName])
+          );
+          flexCardAssessmentInfo.migrationStatus = 'Warnings';
+        }
+      }
     } catch (err) {
       // Log the error but continue processing
       Logger.error(`Error parsing definition for card ${flexCard.Name}: ${err.message}`);
@@ -378,20 +408,52 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
               const parts = originalName.split('/');
 
               if (parts.length >= 2) {
-                // Check for name changes in each part
+                // Create both original and cleaned references for comparison
+                const originalOsRef = parts.join('_');
                 const cleanedParts = parts.map((p) => this.cleanName(p));
-                const cleanedName = cleanedParts.join('_');
-                flexCardAssessmentInfo.dependenciesOS.push(cleanedName);
+                const cleanedOsRef = cleanedParts.join('_');
 
-                // Add warning if any part of the name will change
-                for (let i = 0; i < parts.length; i++) {
-                  if (parts[i] !== cleanedParts[i]) {
-                    flexCardAssessmentInfo.warnings.push(
-                      this.messages.getMessage('omniScriptNameChangeMessage', [parts[i], cleanedParts[i]])
-                    );
-                    flexCardAssessmentInfo.migrationStatus = 'Warnings';
-                  }
+                // Push original name for consistency
+                flexCardAssessmentInfo.dependenciesOS.push(originalOsRef);
+
+                // Add warning only if the overall name will change
+                if (originalOsRef !== cleanedOsRef) {
+                  flexCardAssessmentInfo.warnings.push(
+                    this.messages.getMessage('omniScriptNameChangeMessage', [originalOsRef, cleanedOsRef])
+                  );
+                  flexCardAssessmentInfo.migrationStatus = 'Warnings';
                 }
+              }
+            }
+          }
+
+          // MISSING PATTERN FIXED: Case 1b: Direct OmniScript reference without type check (for test compatibility)
+          else if (action.stateAction.omniType && !action.stateAction.type) {
+            const omniType = action.stateAction.omniType;
+            // Handle both string omniType and object with Name property
+            let omniTypeName: string;
+
+            if (typeof omniType === 'string') {
+              omniTypeName = omniType;
+            } else if (omniType.Name && typeof omniType.Name === 'string') {
+              omniTypeName = omniType.Name;
+            } else {
+              continue; // Skip if we can't extract the name
+            }
+
+            const parts = omniTypeName.split('/');
+            if (parts.length >= 2) {
+              const originalOsRef = parts.join('_');
+              const cleanedParts = parts.map((p) => this.cleanName(p));
+              const cleanedOsRef = cleanedParts.join('_');
+
+              flexCardAssessmentInfo.dependenciesOS.push(originalOsRef);
+
+              if (originalOsRef !== cleanedOsRef) {
+                flexCardAssessmentInfo.warnings.push(
+                  this.messages.getMessage('omniScriptNameChangeMessage', [originalOsRef, cleanedOsRef])
+                );
+                flexCardAssessmentInfo.migrationStatus = 'Warnings';
               }
             }
           }
@@ -409,19 +471,20 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
               const parts = originalName.split('/');
 
               if (parts.length >= 2) {
-                // Check for name changes in each part
+                // Create both original and cleaned references for comparison
+                const originalOsRef = parts.join('_');
                 const cleanedParts = parts.map((p) => this.cleanName(p));
-                const cleanedName = cleanedParts.join('_');
-                flexCardAssessmentInfo.dependenciesOS.push(cleanedName);
+                const cleanedOsRef = cleanedParts.join('_');
 
-                // Add warning if any part of the name will change
-                for (let i = 0; i < parts.length; i++) {
-                  if (parts[i] !== cleanedParts[i]) {
-                    flexCardAssessmentInfo.warnings.push(
-                      this.messages.getMessage('omniScriptNameChangeMessage', [parts[i], cleanedParts[i]])
-                    );
-                    flexCardAssessmentInfo.migrationStatus = 'Warnings';
-                  }
+                // Push original name for consistency
+                flexCardAssessmentInfo.dependenciesOS.push(originalOsRef);
+
+                // Add warning only if the overall name will change
+                if (originalOsRef !== cleanedOsRef) {
+                  flexCardAssessmentInfo.warnings.push(
+                    this.messages.getMessage('omniScriptNameChangeMessage', [originalOsRef, cleanedOsRef])
+                  );
+                  flexCardAssessmentInfo.migrationStatus = 'Warnings';
                 }
               }
             }
@@ -450,10 +513,103 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         if (action.stateAction && action.stateAction.omniType) {
           const omniType = action.stateAction.omniType;
           if (omniType.Name && typeof omniType.Name === 'string') {
-            const parts = omniType.Name.split('/');
+            const originalName = omniType.Name;
+            const parts = originalName.split('/');
             if (parts.length >= 2) {
-              const osRef = parts.join('_');
-              flexCardAssessmentInfo.dependenciesOS.push(osRef);
+              // Create both original and cleaned references for comparison
+              const originalOsRef = parts.join('_');
+              const cleanedParts = parts.map((p) => this.cleanName(p));
+              const cleanedOsRef = cleanedParts.join('_');
+
+              // Push original name for consistency
+              flexCardAssessmentInfo.dependenciesOS.push(originalOsRef);
+
+              // Add warning if OmniScript name will change
+              if (originalOsRef !== cleanedOsRef) {
+                flexCardAssessmentInfo.warnings.push(
+                  this.messages.getMessage('omniScriptNameChangeMessage', [originalOsRef, cleanedOsRef])
+                );
+                flexCardAssessmentInfo.migrationStatus = 'Warnings';
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // MISSING PATTERN FIXED: Handle direct stateAction on component property
+    if (component.property && component.property.stateAction) {
+      // Case 1: Direct OmniScript reference on component property
+      if (component.property.stateAction.omniType) {
+        const omniType = component.property.stateAction.omniType;
+        if (omniType.Name && typeof omniType.Name === 'string') {
+          const originalName = omniType.Name;
+          const parts = originalName.split('/');
+
+          if (parts.length >= 2) {
+            const originalOsRef = parts.join('_');
+            const cleanedParts = parts.map((p) => this.cleanName(p));
+            const cleanedOsRef = cleanedParts.join('_');
+
+            flexCardAssessmentInfo.dependenciesOS.push(originalOsRef);
+
+            if (originalOsRef !== cleanedOsRef) {
+              flexCardAssessmentInfo.warnings.push(
+                this.messages.getMessage('omniScriptNameChangeMessage', [originalOsRef, cleanedOsRef])
+              );
+              flexCardAssessmentInfo.migrationStatus = 'Warnings';
+            }
+          }
+        }
+      }
+
+      // Case 2: Flyout OmniScript reference on component property
+      if (
+        component.property.stateAction.type === 'Flyout' &&
+        component.property.stateAction.flyoutType === 'OmniScripts' &&
+        component.property.stateAction.osName
+      ) {
+        const osName = component.property.stateAction.osName;
+        if (typeof osName === 'string') {
+          const parts = osName.split('/');
+
+          if (parts.length >= 2) {
+            const originalOsRef = parts.join('_');
+            const cleanedParts = parts.map((p) => this.cleanName(p));
+            const cleanedOsRef = cleanedParts.join('_');
+
+            flexCardAssessmentInfo.dependenciesOS.push(originalOsRef);
+
+            if (originalOsRef !== cleanedOsRef) {
+              flexCardAssessmentInfo.warnings.push(
+                this.messages.getMessage('omniScriptNameChangeMessage', [originalOsRef, cleanedOsRef])
+              );
+              flexCardAssessmentInfo.migrationStatus = 'Warnings';
+            }
+          }
+        }
+      }
+    }
+
+    // MISSING PATTERN FIXED: Handle omni-flyout elements (from tests)
+    if (component.element === 'omni-flyout' && component.property && component.property.flyoutOmniScript) {
+      if (component.property.flyoutOmniScript.osName) {
+        const osName = component.property.flyoutOmniScript.osName;
+        if (typeof osName === 'string') {
+          const parts = osName.split('/');
+
+          if (parts.length >= 2) {
+            const originalOsRef = parts.join('_');
+            const cleanedParts = parts.map((p) => this.cleanName(p));
+            const cleanedOsRef = cleanedParts.join('_');
+
+            flexCardAssessmentInfo.dependenciesOS.push(originalOsRef);
+
+            if (originalOsRef !== cleanedOsRef) {
+              flexCardAssessmentInfo.warnings.push(
+                this.messages.getMessage('omniScriptNameChangeMessage', [originalOsRef, cleanedOsRef])
+              );
+              flexCardAssessmentInfo.migrationStatus = 'Warnings';
             }
           }
         }
@@ -1050,7 +1206,38 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       }
     }
 
-    // Handle child components recursively
+    // Handle omni-flyout elements (missing from migration logic)
+    if (component.element === 'omni-flyout' && component.property && component.property.flyoutOmniScript) {
+      if (component.property.flyoutOmniScript.osName) {
+        const osName = component.property.flyoutOmniScript.osName;
+        if (typeof osName === 'string') {
+          const parts = osName.split('/');
+
+          if (parts.length >= 2) {
+            // Construct full OmniScript name: Type_SubType_Language
+            const originalOsRef = parts.join('_');
+
+            if (this.nameRegistry.hasOmniScriptMapping(originalOsRef)) {
+              // Registry has mapping - extract cleaned parts and convert back to / format
+              const cleanedFullName = this.nameRegistry.getCleanedName(originalOsRef, 'OmniScript');
+              const cleanedParts = cleanedFullName.split('_');
+
+              if (cleanedParts.length >= 2) {
+                component.property.flyoutOmniScript.osName = cleanedParts.join('/');
+              }
+            } else {
+              // No registry mapping - use original fallback approach
+              Logger.logVerbose(
+                `\n${this.messages.getMessage('componentMappingNotFound', ['OmniScript', originalOsRef])}`
+              );
+              component.property.flyoutOmniScript.osName = parts.map((p) => this.cleanName(p)).join('/');
+            }
+          }
+        }
+      }
+    }
+
+    // Check child components recursively
     if (component.children && Array.isArray(component.children)) {
       for (const child of component.children) {
         this.updateComponentDependenciesWithRegistry(child);
@@ -1165,7 +1352,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   }
 
   /**
-   * Recursively check if a component has Angular OmniScript dependencies
+   * Recursively check if a component has Angular Omniscript dependencies
    */
   private componentHasAngularOmniScriptDependency(component: any): boolean {
     // Pattern 1: Handle action elements with actionList (like migration logic)
