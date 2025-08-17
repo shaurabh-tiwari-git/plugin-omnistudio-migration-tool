@@ -51,7 +51,7 @@ export class FlexipageAssessmentReporter {
       title: 'FlexiPages Assessment Report',
       heading: 'FlexiPages Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
-      assessmentDate: new Date().toString(),
+      assessmentDate: new Date().toLocaleString(),
       total: flexipageAssessmentInfos?.length || 0,
       filterGroups: this.getFilterGroupsForReport(flexipageAssessmentInfos || []),
       headerGroups: this.getHeaderGroupsForReport(),

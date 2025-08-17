@@ -25,7 +25,7 @@ export class GlobalAutoNumberAssessmentReporter {
       title: 'Global Auto Numbers Assessment Report',
       heading: 'Global Auto Numbers Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
-      assessmentDate: new Date().toString(),
+      assessmentDate: new Date().toLocaleString(),
       total: globalAutoNumberAssessmentInfos?.length || 0,
       filterGroups: this.getFilterGroupsForReport(globalAutoNumberAssessmentInfos),
       headerGroups: this.getHeaderGroupsForReport(),
