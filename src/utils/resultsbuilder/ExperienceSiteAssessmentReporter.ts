@@ -31,7 +31,7 @@ export class ExperienceSiteAssessmentReporter {
       title: 'Experience Sites Assessment Report',
       heading: 'Experience Sites Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
-      assessmentDate: new Date().toString(),
+      assessmentDate: new Date().toLocaleString(),
       total: experienceSiteAssessmentInfos?.length || 0,
       filterGroups: this.getFilterGroupsForReport(experienceSiteAssessmentInfos),
       headerGroups: this.getHeaderGroupsForReport(),

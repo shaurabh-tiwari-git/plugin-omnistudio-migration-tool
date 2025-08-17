@@ -256,7 +256,7 @@ export class ResultsBuilder {
         namespace: orgDetails.packageDetails.namespace,
         dataModel: orgDetails.dataModel,
       },
-      assessmentDate: new Date().toString(),
+      assessmentDate: new Date().toLocaleString(),
       total: result.length,
       filterGroups: [createFilterGroupParam('Filter by Status', 'status', ['Complete', 'Failed'])],
       headerGroups: [
@@ -352,7 +352,7 @@ export class ResultsBuilder {
         namespace: orgDetails.packageDetails.namespace,
         dataModel: orgDetails.dataModel,
       },
-      assessmentDate: new Date().toString(),
+      assessmentDate: new Date().toLocaleString(),
       total: result.length,
       filterGroups: [createFilterGroupParam('Filter by Status', 'status', ['Complete', 'Failed'])],
       headerGroups: [

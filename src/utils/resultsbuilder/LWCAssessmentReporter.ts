@@ -23,7 +23,7 @@ export class LWCAssessmentReporter {
       title: 'Lightning Web Components Assessment Report',
       heading: 'Lightning Web Components Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
-      assessmentDate: new Date().toString(),
+      assessmentDate: new Date().toLocaleString(),
       total: lwcAssessmentInfos?.length || 0,
       filterGroups: this.getFilterGroupsForReport(lwcAssessmentInfos),
       headerGroups: this.getHeaderGroupsForReport(),
