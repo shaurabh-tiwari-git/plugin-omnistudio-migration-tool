@@ -36,14 +36,14 @@ describe('FlexipageAssessmentReporter', () => {
           path: '/test/path1',
           diff: 'mock-diff-1',
           errors: [],
-          status: 'Can be Automated',
+          status: 'Ready for migration',
         },
         {
           name: 'TestPage2.flexipage-meta.xml',
           path: '/test/path2',
           diff: 'mock-diff-2',
           errors: ['Error 1', 'Error 2'],
-          status: 'Errors',
+          status: 'Needs Manual Intervention',
         },
       ];
 
@@ -65,8 +65,8 @@ describe('FlexipageAssessmentReporter', () => {
       const result = FlexipageAssessmentReporter.getFlexipageAssessmentData(mockAssessmentInfos, mockOrgDetails);
 
       // Assert
-      expect(result).to.have.property('title', 'Flexipage Migration Assessment');
-      expect(result).to.have.property('heading', 'FlexiPage');
+      expect(result).to.have.property('title', 'FlexiPages Assessment Report');
+      expect(result).to.have.property('heading', 'FlexiPages Assessment Report');
       expect(result).to.have.property('total', 2);
       expect(result).to.have.property('assessmentDate');
       expect(result).to.have.property('org');
@@ -129,28 +129,38 @@ describe('FlexipageAssessmentReporter', () => {
     it('should return correct summary counts for different statuses', () => {
       // Arrange
       const mockAssessmentInfos: FlexiPageAssessmentInfo[] = [
-        { name: 'Page1', path: '/path1', diff: '', errors: [], status: 'No Changes' },
-        { name: 'Page2', path: '/path2', diff: '', errors: [], status: 'Can be Automated' },
-        { name: 'Page3', path: '/path3', diff: '', errors: ['Error'], status: 'Errors' },
-        { name: 'Page4', path: '/path4', diff: '', errors: [], status: 'No Changes' },
-        { name: 'Page5', path: '/path5', diff: '', errors: [], status: 'Can be Automated' },
+        { name: 'Page1', path: '/path1', diff: '', errors: [], status: 'Warnings' },
+        { name: 'Page2', path: '/path2', diff: '', errors: [], status: 'Ready for migration' },
+        { name: 'Page3', path: '/path3', diff: '', errors: ['Error'], status: 'Needs Manual Intervention' },
+        { name: 'Page4', path: '/path4', diff: '', errors: [], status: 'Warnings' },
+        { name: 'Page5', path: '/path5', diff: '', errors: [], status: 'Ready for migration' },
       ];
 
       // Act
       const result = FlexipageAssessmentReporter.getSummaryData(mockAssessmentInfos);
 
       // Assert
-      expect(result).to.have.length(2);
+      expect(result).to.have.length(4);
 
-      const canBeAutomated = result.find((item) => item.name === 'Can be Automated');
-      expect(canBeAutomated).to.exist;
-      expect(canBeAutomated.count).to.equal(2);
-      expect(canBeAutomated.cssClass).to.equal('text-success');
+      const readyForMigration = result.find((item) => item.name === 'Ready for migration');
+      expect(readyForMigration).to.exist;
+      expect(readyForMigration.count).to.equal(2);
+      expect(readyForMigration.cssClass).to.equal('text-success');
 
-      const hasErrors = result.find((item) => item.name === 'Has Errors');
-      expect(hasErrors).to.exist;
-      expect(hasErrors.count).to.equal(1);
-      expect(hasErrors.cssClass).to.equal('text-error');
+      const warnings = result.find((item) => item.name === 'Warnings');
+      expect(warnings).to.exist;
+      expect(warnings.count).to.equal(2);
+      expect(warnings.cssClass).to.equal('text-warning');
+
+      const needManualIntervention = result.find((item) => item.name === 'Needs Manual Intervention');
+      expect(needManualIntervention).to.exist;
+      expect(needManualIntervention.count).to.equal(1);
+      expect(needManualIntervention.cssClass).to.equal('text-error');
+
+      const failed = result.find((item) => item.name === 'Failed');
+      expect(failed).to.exist;
+      expect(failed.count).to.equal(0);
+      expect(failed.cssClass).to.equal('text-error');
     });
 
     it('should handle empty assessment infos', () => {
@@ -158,7 +168,7 @@ describe('FlexipageAssessmentReporter', () => {
       const result = FlexipageAssessmentReporter.getSummaryData([]);
 
       // Assert
-      expect(result).to.have.length(2);
+      expect(result).to.have.length(4);
       result.forEach((item) => {
         expect(item.count).to.equal(0);
       });
@@ -174,14 +184,14 @@ describe('FlexipageAssessmentReporter', () => {
           path: '/test/path1',
           diff: 'mock-diff-1',
           errors: [],
-          status: 'Can be Automated',
+          status: 'Ready for migration',
         },
         {
           name: 'TestPage2.flexipage-meta.xml',
           path: '/test/path2',
           diff: 'mock-diff-2',
           errors: ['Error 1', 'Error 2'],
-          status: 'Errors',
+          status: 'Needs Manual Intervention',
         },
       ];
 
@@ -196,17 +206,17 @@ describe('FlexipageAssessmentReporter', () => {
       expect(result[0].data).to.have.length(5);
       expect(result[0].data[0].value).to.equal('TestPage1');
       expect(result[0].data[1].value).to.equal('TestPage1.flexipage-meta.xml');
-      expect(result[0].data[2].value).to.equal('Can be Automated');
+      expect(result[0].data[2].value).to.equal('Ready for migration');
       expect(result[0].data[2].customClass).to.equal('text-success');
       expect(result[0].data[3].value).to.equal('');
-      expect(result[0].data[4].value).to.equal('Has No Errors');
+      expect(result[0].data[4].value).to.equal('No Errors');
 
       // Check second row
       expect(result[1].data[0].value).to.equal('TestPage2');
       expect(result[1].data[1].value).to.equal('TestPage2.flexipage-meta.xml');
-      expect(result[1].data[2].value).to.equal('Errors');
+      expect(result[1].data[2].value).to.equal('Needs Manual Intervention');
       expect(result[1].data[2].customClass).to.equal('text-error');
-      expect(result[1].data[4].value).to.equal('Has Errors');
+      expect(result[1].data[4].value).to.equal('Errors');
       expect(result[1].data[4].title).to.deep.equal(['Error 1', 'Error 2']);
     });
 
@@ -234,14 +244,14 @@ describe('FlexipageAssessmentReporter', () => {
           path: '/test/path1',
           diff: 'mock-diff-1',
           errors: [],
-          status: 'Can be Automated',
+          status: 'Ready for migration',
         },
         {
           name: 'TestPage2.flexipage-meta.xml',
           path: '/test/path2',
           diff: 'mock-diff-2',
           errors: ['Error 1'],
-          status: 'Errors',
+          status: 'Needs Manual Intervention',
         },
       ];
 
@@ -265,7 +275,7 @@ describe('FlexipageAssessmentReporter', () => {
       expect(result[0].header).to.have.length(5);
 
       const headers = result[0].header;
-      expect(headers[0].name).to.equal('Page Name');
+      expect(headers[0].name).to.equal('FlexiPage Name');
       expect(headers[1].name).to.equal('File Reference');
       expect(headers[2].name).to.equal('Assessment Status');
       expect(headers[3].name).to.equal('Differences');
@@ -280,25 +290,26 @@ describe('FlexipageAssessmentReporter', () => {
 
   describe('getFilterGroupsForReport', () => {
     it('should return correct filter options', () => {
+      // Arrange
+      const mockAssessmentInfos: FlexiPageAssessmentInfo[] = [
+        { name: 'Page1', path: '/path1', diff: '', errors: [], status: 'Ready for migration' },
+        { name: 'Page2', path: '/path2', diff: '', errors: [], status: 'Warnings' },
+        { name: 'Page3', path: '/path3', diff: '', errors: ['Error'], status: 'Needs Manual Intervention' },
+      ];
+
       // Act
-      const result = (FlexipageAssessmentReporter as any).getFilterGroupsForReport();
+      const result = (FlexipageAssessmentReporter as any).getFilterGroupsForReport(mockAssessmentInfos);
 
       // Assert
-      expect(result).to.have.length(2);
+      expect(result).to.have.length(1);
 
-      const errorsFilter = result.find((filter) => filter.label === 'Filter by Errors');
-      expect(errorsFilter).to.exist;
-      expect(errorsFilter.key).to.equal('errors');
-      expect(errorsFilter.filters).to.have.length(2);
-      expect(errorsFilter.filters[0].label).to.equal('Has Errors');
-      expect(errorsFilter.filters[1].label).to.equal('Has No Errors');
-
-      const statusFilter = result.find((filter) => filter.label === 'Filter by Status');
+      const statusFilter = result.find((filter) => filter.label === 'Filter By Assessment Status');
       expect(statusFilter).to.exist;
       expect(statusFilter.key).to.equal('status');
-      expect(statusFilter.filters).to.have.length(2);
-      expect(statusFilter.filters[0].label).to.equal('Can be Automated');
-      expect(statusFilter.filters[1].label).to.equal('Errors');
+      expect(statusFilter.filters).to.have.length(3);
+      expect(statusFilter.filters[0].label).to.equal('Ready for migration');
+      expect(statusFilter.filters[1].label).to.equal('Warnings');
+      expect(statusFilter.filters[2].label).to.equal('Needs Manual Intervention');
     });
   });
 
@@ -306,9 +317,9 @@ describe('FlexipageAssessmentReporter', () => {
     it('should generate unique row IDs', () => {
       // Arrange
       const mockAssessmentInfos: FlexiPageAssessmentInfo[] = [
-        { name: 'Page1', path: '/path1', diff: '', errors: [], status: 'No Changes' },
-        { name: 'Page2', path: '/path2', diff: '', errors: [], status: 'Can be Automated' },
-        { name: 'Page3', path: '/path3', diff: '', errors: [], status: 'Errors' },
+        { name: 'Page1', path: '/path1', diff: '', errors: [], status: 'Warnings' },
+        { name: 'Page2', path: '/path2', diff: '', errors: [], status: 'Ready for migration' },
+        { name: 'Page3', path: '/path3', diff: '', errors: [], status: 'Needs Manual Intervention' },
       ];
 
       // Act

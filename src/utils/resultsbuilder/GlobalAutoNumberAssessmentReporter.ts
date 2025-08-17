@@ -22,8 +22,8 @@ export class GlobalAutoNumberAssessmentReporter {
   ): ReportParam {
     Logger.captureVerboseData('GAN data', globalAutoNumberAssessmentInfos);
     return {
-      title: 'Global Auto Number Migration Assessment',
-      heading: 'Global Auto Number',
+      title: 'Global Auto Numbers Assessment Report',
+      heading: 'Global Auto Numbers Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
       assessmentDate: new Date().toString(),
       total: globalAutoNumberAssessmentInfos?.length || 0,
@@ -46,24 +46,30 @@ export class GlobalAutoNumberAssessmentReporter {
   ): SummaryItemDetailParam[] {
     return [
       {
-        name: 'Can be Automated',
+        name: 'Ready for migration',
         count: globalAutoNumberAssessmentInfos.filter(
           (globalAutoNumberAssessmentInfo) =>
-            (!globalAutoNumberAssessmentInfo.warnings || globalAutoNumberAssessmentInfo.warnings.length === 0) &&
-            (!globalAutoNumberAssessmentInfo.errors || globalAutoNumberAssessmentInfo.errors.length === 0)
+            this.getMigrationStatus(globalAutoNumberAssessmentInfo) === 'Ready for migration'
         ).length,
         cssClass: 'text-success',
       },
       {
-        name: 'Has Warnings',
+        name: 'Warnings',
         count: globalAutoNumberAssessmentInfos.filter(
-          (globalAutoNumberAssessmentInfo) =>
-            globalAutoNumberAssessmentInfo.warnings && globalAutoNumberAssessmentInfo.warnings.length > 0
+          (globalAutoNumberAssessmentInfo) => this.getMigrationStatus(globalAutoNumberAssessmentInfo) === 'Warnings'
         ).length,
         cssClass: 'text-warning',
       },
       {
-        name: 'Has Errors',
+        name: 'Needs Manual Intervention',
+        count: globalAutoNumberAssessmentInfos.filter(
+          (globalAutoNumberAssessmentInfo) =>
+            this.getMigrationStatus(globalAutoNumberAssessmentInfo) === 'Needs Manual Intervention'
+        ).length,
+        cssClass: 'text-error',
+      },
+      {
+        name: 'Failed',
         count: globalAutoNumberAssessmentInfos.filter(
           (globalAutoNumberAssessmentInfo) =>
             globalAutoNumberAssessmentInfo.errors && globalAutoNumberAssessmentInfo.errors.length > 0
@@ -154,7 +160,20 @@ export class GlobalAutoNumberAssessmentReporter {
       return {
         rowId: `${this.rowIdPrefix}${this.rowId++}`,
         data: [
-          createRowDataParam('name', globalAutoNumberAssessmentInfo.oldName, true, 1, 1, false),
+          createRowDataParam(
+            'name',
+            globalAutoNumberAssessmentInfo.oldName,
+            true,
+            1,
+            1,
+            false,
+            undefined,
+            undefined,
+            this.getMigrationStatus(globalAutoNumberAssessmentInfo) === 'Needs Manual Intervention' ||
+              this.getMigrationStatus(globalAutoNumberAssessmentInfo) === 'Failed'
+              ? 'invalid-icon'
+              : ''
+          ),
           createRowDataParam(
             'id',
             globalAutoNumberAssessmentInfo.id,
@@ -184,7 +203,8 @@ export class GlobalAutoNumberAssessmentReporter {
             1,
             false,
             undefined,
-            allMessages.length > 0 ? reportingHelper.decorateErrors(allMessages) : []
+            allMessages,
+            this.getMigrationStatusCssClass(globalAutoNumberAssessmentInfo)
           ),
         ],
       };
@@ -193,12 +213,12 @@ export class GlobalAutoNumberAssessmentReporter {
 
   private static getMigrationStatus(globalAutoNumberAssessmentInfo: GlobalAutoNumberAssessmentInfo): string {
     if (globalAutoNumberAssessmentInfo.errors && globalAutoNumberAssessmentInfo.errors.length > 0) {
-      return 'Has Errors';
+      return 'Needs Manual Intervention';
     }
     if (globalAutoNumberAssessmentInfo.warnings && globalAutoNumberAssessmentInfo.warnings.length > 0) {
-      return 'Has Warnings';
+      return 'Warnings';
     }
-    return 'Can be Automated';
+    return 'Ready for migration';
   }
 
   private static getMigrationStatusCssClass(globalAutoNumberAssessmentInfo: GlobalAutoNumberAssessmentInfo): string {

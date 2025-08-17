@@ -167,7 +167,7 @@ describe('ExperienceSiteMigration', () => {
         path: '/test/path/site1.json',
         diff: '[]',
         errors: [],
-        status: 'Can be Automated',
+        status: 'Ready for migration',
       });
       processFileStub.onCall(1).returns({
         name: 'site3.json',
@@ -177,7 +177,7 @@ describe('ExperienceSiteMigration', () => {
         path: '/test/path/site3.json',
         diff: '[]',
         errors: [],
-        status: 'Can be Automated',
+        status: 'Ready for migration',
       });
 
       // Act
@@ -205,7 +205,7 @@ describe('ExperienceSiteMigration', () => {
       // Assert
       expect(result).to.be.an('array').that.has.length(1);
       expect(result[0].name).to.equal('error.json');
-      expect(result[0].status).to.equal('Errors');
+      expect(result[0].status).to.equal('Failed');
       expect(result[0].warnings).to.include('Unknown error occurred');
       expect(result[0].hasOmnistudioContent).to.be.false;
       expect((Logger.error as sinon.SinonStub).called).to.be.true;
@@ -672,7 +672,7 @@ describe('ExperienceSiteMigration', () => {
       expect(result.hasOmnistudioContent).to.be.true;
       expect(result.warnings).to.have.length(1);
       expect(result.warnings[0]).to.include('needs manual intervention');
-      expect(result.status).to.equal('Errors');
+      expect(result.status).to.equal('Needs Manual Intervention');
     });
   });
 });

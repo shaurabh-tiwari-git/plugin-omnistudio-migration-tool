@@ -197,6 +197,7 @@ export class ElementNode {
    * @returns Boolean result of the expression evaluation
    */
   private evaluateExpression(expression: string, props: Map<string, any>): boolean {
+    Logger.captureVerboseData('initial expression', expression);
     props.forEach((value, key) => {
       expression = expression.replace(`$${key}`, JSON.stringify(value));
     });
@@ -208,7 +209,10 @@ export class ElementNode {
       });
     }
     try {
-      return eval(expression) as boolean;
+      const res: boolean = eval(expression) as boolean;
+      Logger.captureVerboseData('expression', expression);
+      Logger.captureVerboseData('result', res);
+      return res;
     } catch (error) {
       Logger.error(this.messages.getMessage('errorEvaluatingExpression', [expression, error]));
       return false;

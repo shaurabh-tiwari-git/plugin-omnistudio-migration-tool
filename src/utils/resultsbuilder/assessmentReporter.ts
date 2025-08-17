@@ -297,7 +297,7 @@ export class AssessmentReporter {
     const summaryItems = [];
     if (reports.includes(Constants.DataMapper)) {
       summaryItems.push({
-        name: 'DataMapper',
+        name: 'DataMappers',
         total: result.dataRaptorAssessmentInfos.length,
         data: DRAssessmentReporter.getSummaryData(result.dataRaptorAssessmentInfos),
         file: this.dataMapperAssessmentFileName,
@@ -305,7 +305,7 @@ export class AssessmentReporter {
     }
     if (reports.includes(Constants.IntegrationProcedure)) {
       summaryItems.push({
-        name: 'Integration Procedure',
+        name: 'Integration Procedures',
         total: result.omniAssessmentInfo.ipAssessmentInfos.length,
         data: IPAssessmentReporter.getSummaryData(result.omniAssessmentInfo.ipAssessmentInfos),
         file: this.integrationProcedureAssessmentFileName,
@@ -313,7 +313,7 @@ export class AssessmentReporter {
     }
     if (reports.includes(Constants.Omniscript)) {
       summaryItems.push({
-        name: 'OmniScript',
+        name: 'Omniscripts',
         total: result.omniAssessmentInfo.osAssessmentInfos.length,
         data: OSAssessmentReporter.getSummaryData(result.omniAssessmentInfo.osAssessmentInfos),
         file: this.omniscriptAssessmentFileName,
@@ -321,7 +321,7 @@ export class AssessmentReporter {
     }
     if (reports.includes(Constants.Flexcard)) {
       summaryItems.push({
-        name: 'Flexcard',
+        name: 'Flexcards',
         total: result.flexCardAssessmentInfos.length,
         data: FlexcardAssessmentReporter.getSummaryData(result.flexCardAssessmentInfos),
         file: this.flexcardAssessmentFileName,
@@ -329,7 +329,7 @@ export class AssessmentReporter {
     }
     if (reports.includes(Constants.GlobalAutoNumber)) {
       summaryItems.push({
-        name: 'Global Auto Number',
+        name: 'Global Auto Numbers',
         total: result.globalAutoNumberAssessmentInfos.length,
         data: GlobalAutoNumberAssessmentReporter.getSummaryData(result.globalAutoNumberAssessmentInfos),
         file: this.globalAutoNumberAssessmentFileName,
@@ -337,7 +337,7 @@ export class AssessmentReporter {
     }
     if (reports.includes(Constants.Apex)) {
       summaryItems.push({
-        name: 'Apex',
+        name: 'Apex Classes',
         total: result.apexAssessmentInfos.length,
         data: ApexAssessmentReporter.getSummaryData(result.apexAssessmentInfos),
         file: this.apexAssessmentFileName,
@@ -345,7 +345,7 @@ export class AssessmentReporter {
     }
     if (reports.includes(Constants.FlexiPage)) {
       summaryItems.push({
-        name: 'FlexiPage',
+        name: 'FlexiPages',
         total: result.flexipageAssessmentInfos.length,
         data: FlexipageAssessmentReporter.getSummaryData(result.flexipageAssessmentInfos),
         file: this.flexipageAssessmentFileName,
@@ -354,7 +354,7 @@ export class AssessmentReporter {
     if (reports.includes(Constants.ExpSites)) {
       // TODO - Experience Sites
       summaryItems.push({
-        name: 'ExperienceSite',
+        name: 'Experience Sites',
         total: result.experienceSiteAssessmentInfos.length,
         data: ExperienceSiteAssessmentReporter.getSummaryData(result.experienceSiteAssessmentInfos),
         file: this.experienceSiteAssessmentFileName,

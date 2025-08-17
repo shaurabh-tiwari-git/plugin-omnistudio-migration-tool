@@ -86,7 +86,7 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
   }
 
   /**
-   * Processes FlexiPage files in either assessment or migration mode.
+   * Processes FlexiPages in either assessment or migration mode.
    *
    * This method:
    * - Retrieves FlexiPage metadata from the Salesforce org
@@ -111,6 +111,9 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
       const filePath = path.join(flexiPageDir, file);
       try {
         const flexPageAssessmentInfo: FlexiPageAssessmentInfo = this.processFlexiPage(file, filePath, mode);
+        if (!flexPageAssessmentInfo) {
+          continue;
+        }
         flexPageAssessmentInfos.push(flexPageAssessmentInfo);
         Logger.logVerbose(
           this.messages.getMessage('completedProcessingFlexiPage', [
@@ -119,37 +122,39 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
           ])
         );
       } catch (error) {
+        let status: 'Failed' | 'Needs Manual Intervention' = 'Failed';
         if (error instanceof KeyNotFoundInStorageError) {
           Logger.error(`${error.componentType} ${error.key} can't be migrated`);
+          status = 'Needs Manual Intervention';
         } else if (error instanceof TargetPropertyNotFoundError) {
           Logger.error(error.message);
+          status = 'Needs Manual Intervention';
         } else if (error instanceof DuplicateKeyError) {
           Logger.error(`${error.componentType} ${error.key} is duplicate`);
+          status = 'Needs Manual Intervention';
         } else {
           Logger.error(this.messages.getMessage('errorProcessingFlexiPage', [file, error]));
           Logger.error(error);
+          status = 'Failed';
         }
         flexPageAssessmentInfos.push({
           name: file,
           errors: [error instanceof Error ? error.message : JSON.stringify(error)],
           path: filePath,
           diff: '',
-          status: mode === 'assess' ? 'Errors' : 'Failed',
+          status,
         });
       }
       progressBar.increment();
     }
     progressBar.stop();
     Logger.logVerbose(this.messages.getMessage('completedProcessingAllFlexiPages', [flexPageAssessmentInfos.length]));
-    const filteredResults = flexPageAssessmentInfos.filter(
-      (flexPageAssessmentInfo) => flexPageAssessmentInfo.status !== 'No Changes'
-    );
-    Logger.log(this.messages.getMessage('flexipagesWithChanges', [filteredResults.length]));
-    return filteredResults;
+    Logger.log(this.messages.getMessage('flexipagesWithChanges', [flexPageAssessmentInfos.length]));
+    return flexPageAssessmentInfos;
   }
 
   /**
-   * Processes a single FlexiPage file for assessment or migration.
+   * Processes a single FlexiPage for assessment or migration.
    *
    * This method:
    * - Reads the FlexiPage XML file content
@@ -159,8 +164,8 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
    * - Writes transformed content back to file in migration mode
    * - Handles errors and provides detailed error information
    *
-   * @param fileName - The name of the FlexiPage file
-   * @param filePath - The full path to the FlexiPage file
+   * @param fileName - The name of the FlexiPage
+   * @param filePath - The full path to the FlexiPage
    * @param mode - The processing mode: 'assess' or 'migrate'
    * @returns FlexiPage assessment information with status and error details
    */
@@ -172,13 +177,8 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
     const json = this.xmlUtil.parse(fileContent) as Flexipage;
     const transformedFlexiPage = transformFlexipageBundle(json, this.namespace, mode);
     if (transformedFlexiPage === false) {
-      return {
-        name: fileName,
-        errors: [],
-        path: filePath,
-        diff: '',
-        status: 'No Changes',
-      };
+      Logger.logVerbose(`No transformation needed on ${fileName}`);
+      return null;
     }
     const modifiedContent = this.xmlUtil.build(transformedFlexiPage, 'FlexiPage');
 
@@ -195,7 +195,7 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
       name: fileName,
       diff: JSON.stringify(diff),
       errors: [],
-      status: mode === 'assess' ? 'Can be Automated' : 'Complete',
+      status: mode === 'assess' ? 'Ready for migration' : 'Complete',
     };
   }
 }

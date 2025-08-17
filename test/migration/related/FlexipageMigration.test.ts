@@ -208,7 +208,7 @@ describe('FlexipageMigration', () => {
         .value(sandbox.stub().returns(mockCreateProgressBar));
     });
 
-    it('should process flexipage files successfully in assess mode', () => {
+    it('should process flexipages successfully in assess mode', () => {
       // Arrange
       const testFiles = ['test1.xml', 'test2.xml'];
       const testFilePath = '/test/path/file.xml';
@@ -258,12 +258,12 @@ describe('FlexipageMigration', () => {
         errors: ['Processing error'],
         path: testFilePath,
         diff: '',
-        status: 'Errors',
+        status: 'Failed',
       });
       expect(mockLogger.error.called).to.be.true;
     });
 
-    it('should process flexipage files in migrate mode and write files', () => {
+    it('should process flexipages in migrate mode and write files', () => {
       // Arrange
       const testFiles = ['test1.xml'];
       const testFilePath = '/test/path/file.xml';
@@ -281,7 +281,7 @@ describe('FlexipageMigration', () => {
         errors: [],
         path: testFilePath,
         diff: 'mock-diff',
-        status: 'Can be Automated',
+        status: 'Ready for migration',
       });
 
       // Act
@@ -326,7 +326,7 @@ describe('FlexipageMigration', () => {
         name: fileName,
         diff: JSON.stringify('mock-diff'),
         errors: [],
-        status: 'Can be Automated',
+        status: 'Ready for migration',
       });
     });
 
@@ -373,13 +373,7 @@ describe('FlexipageMigration', () => {
       const result = (flexipageMigration as any).processFlexiPage(fileName, filePath, 'assess');
 
       // Assert
-      expect(result).to.deep.include({
-        name: fileName,
-        errors: [],
-        path: filePath,
-        diff: '',
-        status: 'No Changes',
-      });
+      expect(result).to.be.null;
     });
 
     it('should handle errors during processing', () => {

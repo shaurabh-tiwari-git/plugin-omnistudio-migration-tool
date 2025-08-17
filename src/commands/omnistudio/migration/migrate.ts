@@ -646,10 +646,10 @@ export default class Migrate extends OmniStudioBaseCommand {
     const mergedResults: MigratedRecordInfo[] = [];
 
     for (const record of Array.from(migrationResults.records.values())) {
-      const obj = {
+      const obj: MigratedRecordInfo = {
         id: record['Id'],
         name: migrationTool.getRecordName(record),
-        status: messages.getMessage('labelStatusSkipped'),
+        status: 'Skipped',
         errors: record['errors'],
         migratedId: undefined,
         warnings: [],
@@ -663,11 +663,11 @@ export default class Migrate extends OmniStudioBaseCommand {
         errors = errors.concat(recordResults.errors || []);
 
         if (recordResults?.skipped) {
-          obj.status = messages.getMessage('labelStatusSkipped');
+          obj.status = 'Skipped';
         } else if (!recordResults || recordResults.hasErrors) {
-          obj.status = messages.getMessage('labelStatusFailed');
+          obj.status = 'Failed';
         } else {
-          obj.status = messages.getMessage('labelStatusComplete');
+          obj.status = 'Complete';
         }
         obj.errors = errors;
         obj.migratedId = recordResults.id;

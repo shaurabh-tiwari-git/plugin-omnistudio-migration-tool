@@ -470,7 +470,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     const existingSubTypeVal = new StringVal(existingSubType, 'sub type');
     const omniScriptName = omniscript[this.namespacePrefix + 'Name'];
     const existingOmniScriptNameVal = new StringVal(omniScriptName, 'name');
-    let assessmentStatus = 'Ready for migration';
+    let assessmentStatus: 'Ready for migration' | 'Warnings' | 'Needs Manual Intervention' = 'Ready for migration';
 
     const warnings: string[] = [];
 
@@ -627,7 +627,9 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           value.migrationSuccess = true;
         }
 
-        let finalKey = `${nameMapping.oldType}${nameMapping.oldSubtype}${nameMapping.oldLanguage}`;
+        let finalKey = `${nameMapping.oldType}${nameMapping.oldSubtype}${this.cleanLanguageName(
+          nameMapping.oldLanguage
+        )}`;
 
         finalKey = finalKey.toLowerCase();
         if (storage.osStorage.has(finalKey)) {
@@ -645,6 +647,11 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     }
 
     StorageUtil.printAssessmentStorage();
+  }
+
+  private cleanLanguageName(language: string): string {
+    // replace -, ( and ) and space with ''
+    return language.replace(/[-() ]/g, '');
   }
 
   async migrate(): Promise<MigrationResult[]> {
@@ -1039,7 +1046,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
           let finalKey = `${oldrecord[this.namespacePrefix + 'Type__c']}${
             oldrecord[this.namespacePrefix + 'SubType__c']
-          }${oldrecord[this.namespacePrefix + 'Language__c']}`;
+          }${this.cleanLanguageName(oldrecord[this.namespacePrefix + 'Language__c'])}`;
 
           finalKey = finalKey.toLowerCase();
           if (storage.osStorage.has(finalKey)) {

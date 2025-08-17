@@ -102,8 +102,11 @@ function filterAndSearchTable(tableId) {
   const visibleRows = Array.from(table.rows).filter(
     (row) => row.style.display !== 'none' && row.id !== 'no-rows-message'
   );
-  reportTable.querySelector('#row-count').textContent = `Showing ${visibleRows.length} record${
-    visibleRows.length !== 1 ? 's' : ''
+
+  // filter only distinct classes from visibleRows
+  const distinctClasses = [...new Set(visibleRows.map((row) => row.classList[0]))];
+  reportTable.querySelector('#row-count').textContent = `Showing ${distinctClasses.length} record${
+    distinctClasses.length !== 1 ? 's' : ''
   }`;
 }
 
@@ -152,6 +155,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.querySelectorAll('.rpt-table-container').forEach((tableContainer) => {
     filterAndSearchTable(tableContainer.id);
+  });
+
+  document.querySelectorAll('tr').forEach((row) => {
+    row.addEventListener('mouseover', (event) => {
+      const className = event.currentTarget.classList[0];
+      document.querySelectorAll(`.${className}`).forEach((r) => {
+        r.classList.add('highlight');
+      });
+    });
+    row.addEventListener('mouseout', (event) => {
+      const className = event.currentTarget.classList[0];
+      document.querySelectorAll(`.${className}`).forEach((r) => {
+        r.classList.remove('highlight');
+      });
+    });
   });
 });
 

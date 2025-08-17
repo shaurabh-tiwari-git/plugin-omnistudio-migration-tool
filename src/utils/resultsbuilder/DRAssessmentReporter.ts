@@ -21,8 +21,8 @@ export class DRAssessmentReporter {
   ): ReportParam {
     Logger.captureVerboseData('DM data', dataRaptorAssessmentInfos);
     return {
-      title: 'Data Mapper Assessment Report',
-      heading: 'Data Mapper Assessment Report',
+      title: 'DataMappers Assessment Report',
+      heading: 'DataMappers Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
       assessmentDate: new Date().toLocaleString(),
       total: dataRaptorAssessmentInfos?.length || 0,
@@ -41,23 +41,28 @@ export class DRAssessmentReporter {
       {
         name: 'Ready for migration',
         count: dataRaptorAssessmentInfos.filter(
-          (dataRaptorAssessmentInfo) =>
-            !dataRaptorAssessmentInfo.warnings || dataRaptorAssessmentInfo.warnings.length === 0
+          (dataRaptorAssessmentInfo) => dataRaptorAssessmentInfo.migrationStatus === 'Ready for migration'
         ).length,
         cssClass: 'text-success',
       },
       {
         name: 'Warnings',
         count: dataRaptorAssessmentInfos.filter(
-          (dataRaptorAssessmentInfo) =>
-            dataRaptorAssessmentInfo.warnings && dataRaptorAssessmentInfo.warnings.length > 0
+          (dataRaptorAssessmentInfo) => dataRaptorAssessmentInfo.migrationStatus === 'Warnings'
         ).length,
         cssClass: 'text-warning',
       },
       {
+        name: 'Needs Manual Intervention',
+        count: dataRaptorAssessmentInfos.filter(
+          (dataRaptorAssessmentInfo) => dataRaptorAssessmentInfo.migrationStatus === 'Needs Manual Intervention'
+        ).length,
+        cssClass: 'text-error',
+      },
+      {
         name: 'Failed',
         count: dataRaptorAssessmentInfos.filter(
-          (dataRaptorAssessmentInfo) => dataRaptorAssessmentInfo.errors && dataRaptorAssessmentInfo.errors.length > 0
+          (dataRaptorAssessmentInfo) => dataRaptorAssessmentInfo.migrationStatus === 'Failed'
         ).length,
         cssClass: 'text-error',
       },
@@ -154,7 +159,20 @@ export class DRAssessmentReporter {
     return dataRaptorAssessmentInfos.map((dataRaptorAssessmentInfo) => ({
       rowId: `${this.rowIdPrefix}${this.rowId++}`,
       data: [
-        createRowDataParam('name', dataRaptorAssessmentInfo.oldName, true, 1, 1, false),
+        createRowDataParam(
+          'name',
+          dataRaptorAssessmentInfo.oldName,
+          true,
+          1,
+          1,
+          false,
+          undefined,
+          undefined,
+          dataRaptorAssessmentInfo.migrationStatus === 'Needs Manual Intervention' ||
+            dataRaptorAssessmentInfo.migrationStatus === 'Failed'
+            ? 'invalid-icon'
+            : ''
+        ),
         createRowDataParam(
           'id',
           dataRaptorAssessmentInfo.id,
@@ -175,7 +193,11 @@ export class DRAssessmentReporter {
           false,
           undefined,
           undefined,
-          dataRaptorAssessmentInfo.migrationStatus === 'Ready for migration' ? 'text-success' : 'text-error'
+          dataRaptorAssessmentInfo.migrationStatus === 'Ready for migration'
+            ? 'text-success'
+            : dataRaptorAssessmentInfo.migrationStatus === 'Warnings'
+            ? 'text-warning'
+            : 'text-error'
         ),
         createRowDataParam(
           'summary',
@@ -185,7 +207,12 @@ export class DRAssessmentReporter {
           1,
           false,
           undefined,
-          dataRaptorAssessmentInfo.warnings ? reportingHelper.decorateErrors(dataRaptorAssessmentInfo.warnings) : []
+          dataRaptorAssessmentInfo.warnings,
+          dataRaptorAssessmentInfo.migrationStatus === 'Warnings'
+            ? 'text-warning'
+            : dataRaptorAssessmentInfo.migrationStatus === 'Ready for migration'
+            ? ''
+            : 'text-error'
         ),
         createRowDataParam(
           'customFunctionDependencies',

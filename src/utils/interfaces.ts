@@ -9,7 +9,7 @@ export interface MigratedObject {
 export interface MigratedRecordInfo {
   id: string;
   name: string;
-  status: string;
+  status: 'Ready for migration' | 'Failed' | 'Skipped' | 'Complete' | 'Needs Manual Intervention' | 'Warnings';
   errors: string[];
   migratedId?: string;
   migratedName?: string;
@@ -36,7 +36,7 @@ export interface OSAssessmentInfo {
   missingIP: string[];
   dependenciesDR: nameLocation[];
   missingDR: string[];
-  migrationStatus: string;
+  migrationStatus: 'Ready for migration' | 'Failed' | 'Skipped' | 'Complete' | 'Needs Manual Intervention' | 'Warnings';
   dependenciesOS: nameLocation[];
   missingOS: string[];
   dependenciesRemoteAction: nameLocation[];
@@ -74,7 +74,7 @@ export interface IPAssessmentInfo {
   warnings: string[];
   errors: string[];
   path: string;
-  migrationStatus: string;
+  migrationStatus: 'Ready for migration' | 'Failed' | 'Skipped' | 'Complete' | 'Needs Manual Intervention' | 'Warnings';
 }
 export interface FileChangeInfo {
   path: string;
@@ -125,7 +125,7 @@ export interface FlexCardAssessmentInfo {
   infos: string[];
   warnings: string[];
   errors: string[];
-  migrationStatus: string;
+  migrationStatus: 'Ready for migration' | 'Failed' | 'Skipped' | 'Complete' | 'Needs Manual Intervention' | 'Warnings';
   nameMapping?: FlexcardNameMapping;
 }
 
@@ -144,7 +144,7 @@ export interface DataRaptorAssessmentInfo {
   warnings: string[];
   errors: string[];
   apexDependencies: string[];
-  migrationStatus: string;
+  migrationStatus: 'Ready for migration' | 'Failed' | 'Skipped' | 'Complete' | 'Needs Manual Intervention' | 'Warnings';
 }
 
 export interface GlobalAutoNumberAssessmentInfo {
@@ -182,7 +182,7 @@ export interface ExperienceSiteAssessmentInfo extends FileChangeInfo {
   infos: string[];
   hasOmnistudioContent: boolean;
   errors: string[];
-  status: 'Can be Automated' | 'Errors' | 'No Changes' | 'Complete' | 'Failed';
+  status: 'Ready for migration' | 'Failed' | 'Complete' | 'Needs Manual Intervention';
 }
 
 export interface FileProcessor {
@@ -244,5 +244,5 @@ export interface QueryResult {
 
 export interface FlexiPageAssessmentInfo extends FileChangeInfo {
   errors: string[];
-  status: 'Can be Automated' | 'Errors' | 'No Changes' | 'Complete' | 'Failed';
+  status: 'Ready for migration' | 'Failed' | 'Warnings' | 'Complete' | 'Needs Manual Intervention';
 }

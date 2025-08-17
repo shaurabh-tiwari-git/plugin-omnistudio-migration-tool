@@ -21,8 +21,8 @@ export class OSAssessmentReporter {
   ): ReportParam {
     Logger.captureVerboseData('OS data:', OSAssessmentInfos);
     return {
-      title: 'OmniScript Assessment Report',
-      heading: 'OmniScript Assessment Report',
+      title: 'Omniscripts Assessment Report',
+      heading: 'Omniscripts Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
       assessmentDate: new Date().toLocaleString(),
       total: OSAssessmentInfos?.length || 0,
@@ -46,19 +46,20 @@ export class OSAssessmentReporter {
         cssClass: 'text-success',
       },
       {
+        name: 'Warnings',
+        count: osAssessmentInfos.filter((osAssessmentInfo) => osAssessmentInfo.migrationStatus === 'Warnings').length,
+        cssClass: 'text-warning',
+      },
+      {
         name: 'Needs Manual Intervention',
         count: osAssessmentInfos.filter(
           (osAssessmentInfo) => osAssessmentInfo.migrationStatus === 'Needs Manual Intervention'
         ).length,
-        cssClass: 'text-warning',
+        cssClass: 'text-error',
       },
       {
         name: 'Failed',
-        count: osAssessmentInfos.filter(
-          (osAssessmentInfo) =>
-            osAssessmentInfo.migrationStatus !== 'Ready for migration' &&
-            osAssessmentInfo.migrationStatus !== 'Needs Manual Intervention'
-        ).length,
+        count: osAssessmentInfos.filter((osAssessmentInfo) => osAssessmentInfo.migrationStatus === 'Failed').length,
         cssClass: 'text-error',
       },
     ];
@@ -77,7 +78,9 @@ export class OSAssessmentReporter {
           false,
           undefined,
           undefined,
-          info.migrationStatus !== 'Ready for migration' ? 'invalid-icon' : ''
+          info.migrationStatus === 'Needs Manual Intervention' || info.migrationStatus === 'Failed'
+            ? 'invalid-icon'
+            : ''
         ),
         createRowDataParam('recordId', info.id, false, 1, 1, true, `${instanceUrl}/${info.id}`),
         createRowDataParam('newName', info.name || '', false, 1, 1, false),
@@ -91,7 +94,11 @@ export class OSAssessmentReporter {
           false,
           undefined,
           undefined,
-          info.migrationStatus === 'Ready for migration' ? 'text-success' : 'text-error'
+          info.migrationStatus === 'Ready for migration'
+            ? 'text-success'
+            : info.migrationStatus === 'Warnings'
+            ? 'text-warning'
+            : 'text-error'
         ),
         createRowDataParam(
           'summary',
@@ -101,7 +108,12 @@ export class OSAssessmentReporter {
           1,
           false,
           undefined,
-          info.warnings ? reportingHelper.decorateErrors(info.warnings) : []
+          info.warnings,
+          info.migrationStatus === 'Warnings'
+            ? 'text-warning'
+            : info.migrationStatus === 'Ready for migration'
+            ? ''
+            : 'text-error'
         ),
         createRowDataParam(
           'omniScriptDependencies',

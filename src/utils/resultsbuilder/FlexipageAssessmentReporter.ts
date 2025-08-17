@@ -48,12 +48,12 @@ export class FlexipageAssessmentReporter {
     omnistudioOrgDetails: OmnistudioOrgDetails
   ): ReportParam {
     return {
-      title: 'Flexipage Migration Assessment',
-      heading: 'FlexiPage',
+      title: 'FlexiPages Assessment Report',
+      heading: 'FlexiPages Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
       assessmentDate: new Date().toString(),
       total: flexipageAssessmentInfos?.length || 0,
-      filterGroups: this.getFilterGroupsForReport(),
+      filterGroups: this.getFilterGroupsForReport(flexipageAssessmentInfos || []),
       headerGroups: this.getHeaderGroupsForReport(),
       rows: this.getRowsForReport(flexipageAssessmentInfos),
     };
@@ -68,13 +68,23 @@ export class FlexipageAssessmentReporter {
   public static getSummaryData(flexipageAssessmentInfos: FlexiPageAssessmentInfo[]): SummaryItemDetailParam[] {
     return [
       {
-        name: 'Can be Automated',
-        count: flexipageAssessmentInfos.filter((info) => info.status === 'Can be Automated').length,
+        name: 'Ready for migration',
+        count: flexipageAssessmentInfos.filter((info) => info.status === 'Ready for migration').length,
         cssClass: 'text-success',
       },
       {
-        name: 'Has Errors',
-        count: flexipageAssessmentInfos.filter((info) => info.status === 'Errors').length,
+        name: 'Warnings',
+        count: flexipageAssessmentInfos.filter((info) => info.status === 'Warnings').length,
+        cssClass: 'text-warning',
+      },
+      {
+        name: 'Needs Manual Intervention',
+        count: flexipageAssessmentInfos.filter((info) => info.status === 'Needs Manual Intervention').length,
+        cssClass: 'text-error',
+      },
+      {
+        name: 'Failed',
+        count: flexipageAssessmentInfos.filter((info) => info.status === 'Failed').length,
         cssClass: 'text-error',
       },
     ];
@@ -101,7 +111,12 @@ export class FlexipageAssessmentReporter {
           true,
           1,
           1,
-          false
+          false,
+          undefined,
+          undefined,
+          flexipageAssessmentInfo.status === 'Needs Manual Intervention' || flexipageAssessmentInfo.status === 'Failed'
+            ? 'invalid-icon'
+            : ''
         ),
         createRowDataParam('path', flexipageAssessmentInfo.name, true, 1, 1, true, flexipageAssessmentInfo.path),
         createRowDataParam(
@@ -113,7 +128,11 @@ export class FlexipageAssessmentReporter {
           false,
           undefined,
           undefined,
-          flexipageAssessmentInfo.status === 'Errors' ? 'text-error' : 'text-success'
+          flexipageAssessmentInfo.status === 'Needs Manual Intervention'
+            ? 'text-error'
+            : flexipageAssessmentInfo.status === 'Warnings'
+            ? 'text-warning'
+            : 'text-success'
         ),
         createRowDataParam(
           'diff',
@@ -127,14 +146,18 @@ export class FlexipageAssessmentReporter {
         ),
         createRowDataParam(
           'errors',
-          flexipageAssessmentInfo.errors?.length > 0 ? 'Has Errors' : 'Has No Errors',
+          flexipageAssessmentInfo.errors?.length > 0 ? 'Errors' : 'No Errors',
           false,
           1,
           1,
           false,
           undefined,
           flexipageAssessmentInfo.errors,
-          'text-error'
+          flexipageAssessmentInfo.status === 'Needs Manual Intervention'
+            ? 'text-error'
+            : flexipageAssessmentInfo.status === 'Warnings'
+            ? 'text-warning'
+            : 'text-success'
         ),
       ],
       rowId: `${this.rowIdPrefix}${this.rowId++}`,
@@ -151,7 +174,7 @@ export class FlexipageAssessmentReporter {
       {
         header: [
           {
-            name: 'Page Name',
+            name: 'FlexiPage Name',
             colspan: 1,
             rowspan: 1,
           },
@@ -184,10 +207,13 @@ export class FlexipageAssessmentReporter {
    *
    * @returns Array of filter group parameters for filtering by errors and status
    */
-  private static getFilterGroupsForReport(): FilterGroupParam[] {
-    return [
-      createFilterGroupParam('Filter by Errors', 'errors', ['Has Errors', 'Has No Errors']),
-      createFilterGroupParam('Filter by Status', 'status', ['Can be Automated', 'Errors']),
-    ];
+  private static getFilterGroupsForReport(flexipageAssessmentInfos: FlexiPageAssessmentInfo[]): FilterGroupParam[] {
+    const distinctStatuses = [...new Set(flexipageAssessmentInfos.map((info) => info.status))];
+    const statusFilterGroupParam: FilterGroupParam[] =
+      distinctStatuses.length > 0 && distinctStatuses.filter((status) => status).length > 0
+        ? [createFilterGroupParam('Filter By Assessment Status', 'status', distinctStatuses)]
+        : [];
+
+    return [...statusFilterGroupParam];
   }
 }
