@@ -437,7 +437,7 @@ export default class Migrate extends OmniStudioBaseCommand {
           allVersions
         ),
         new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions),
-        // new GlobalAutoNumberMigrationTool(namespace, conn, this.logger, messages, this.ux),
+        new GlobalAutoNumberMigrationTool(namespace, conn, this.logger, messages, this.ux),
       ];
     } else {
       // For single component migration, the order doesn't matter as much
