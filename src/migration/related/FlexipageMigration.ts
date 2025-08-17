@@ -103,8 +103,10 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
     const files = fs.readdirSync(flexiPageDir).filter((file) => file.endsWith('.xml'));
     Logger.logVerbose(this.messages.getMessage('foundFlexiPages', [files.length]));
     const progressBar = createProgressBar('Migrating', 'Flexipage');
-    progressBar.setTotal(files.length);
+    progressBar.start(files.length, 0);
     const flexPageAssessmentInfos: FlexiPageAssessmentInfo[] = [];
+
+    const errors: Set<string> = new Set();
 
     for (const file of files) {
       Logger.logVerbose(this.messages.getMessage('processingFlexiPage', [file]));
@@ -112,6 +114,7 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
       try {
         const flexPageAssessmentInfo: FlexiPageAssessmentInfo = this.processFlexiPage(file, filePath, mode);
         if (!flexPageAssessmentInfo) {
+          progressBar.increment();
           continue;
         }
         flexPageAssessmentInfos.push(flexPageAssessmentInfo);
@@ -124,17 +127,16 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
       } catch (error) {
         let status: 'Failed' | 'Needs Manual Intervention' = 'Failed';
         if (error instanceof KeyNotFoundInStorageError) {
-          Logger.error(`${error.componentType} ${error.key} can't be migrated`);
+          errors.add(`${error.componentType} ${error.key} can't be migrated`);
           status = 'Needs Manual Intervention';
         } else if (error instanceof TargetPropertyNotFoundError) {
-          Logger.error(error.message);
+          errors.add(error.message);
           status = 'Needs Manual Intervention';
         } else if (error instanceof DuplicateKeyError) {
-          Logger.error(`${error.componentType} ${error.key} is duplicate`);
+          errors.add(`${error.componentType} ${error.key} is duplicate`);
           status = 'Needs Manual Intervention';
         } else {
-          Logger.error(this.messages.getMessage('errorProcessingFlexiPage', [file, error]));
-          Logger.error(error);
+          errors.add(this.messages.getMessage('errorProcessingFlexiPage', [file, error]));
           status = 'Failed';
         }
         flexPageAssessmentInfos.push({
@@ -148,6 +150,9 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
       progressBar.increment();
     }
     progressBar.stop();
+    if (errors.size > 0) {
+      errors.forEach((error) => Logger.error(error));
+    }
     Logger.logVerbose(this.messages.getMessage('completedProcessingAllFlexiPages', [flexPageAssessmentInfos.length]));
     Logger.log(this.messages.getMessage('flexipagesWithChanges', [flexPageAssessmentInfos.length]));
     return flexPageAssessmentInfos;
