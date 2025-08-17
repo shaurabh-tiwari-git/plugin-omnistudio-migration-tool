@@ -94,7 +94,7 @@ export class LWCAssessmentReporter {
                   createRowDataParam(
                     'comments',
                     lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0
-                      ? 'Need Manual Intervention'
+                      ? 'Needs Manual Intervention'
                       : 'Can be Automated',
                     false,
                     changeInfosCount,
@@ -102,7 +102,7 @@ export class LWCAssessmentReporter {
                     false,
                     undefined,
                     lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0
-                      ? 'Need Manual Intervention'
+                      ? 'Needs Manual Intervention'
                       : 'Can be Automated',
                     lwcAssessmentInfo.errors && lwcAssessmentInfo.errors.length > 0 ? 'text-error' : 'text-success'
                   ),
