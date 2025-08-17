@@ -650,7 +650,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
   }
 
   private cleanLanguageName(language: string): string {
-    // replace -, ( and ) and space with _
+    // replace -, ( and ) and space with ''
     return language.replace(/[-() ]/g, '');
   }
 
