@@ -91,7 +91,7 @@ export class OrgPreferences {
   public static async isExperienceBundleMetadataAPIEnabled(connection: Connection): Promise<boolean> {
     try {
       const result = await connection.metadata.read('ExperienceBundleSettings', ['ExperienceBundle']);
-      Logger.logVerbose(`The api is returning ${JSON.stringify(result)}`);
+      Logger.logVerbose(`ExperienceBundle metadata API response: ${JSON.stringify(result)}`);
 
       // Check if the result is valid and contains the expected property
       let settings: ExperienceBundleSettingsReadMetadata = {
@@ -116,7 +116,7 @@ export class OrgPreferences {
       return false;
     } catch (error) {
       // If the metadata type doesn't exist or there's an error, assume it's disabled
-      Logger.error('Unable to check ExperienceBundle Metadata API status');
+      Logger.error('We couldn’t check the ExperienceBundle metadata API status.');
       return false;
     }
   }

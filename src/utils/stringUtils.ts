@@ -40,3 +40,23 @@ export function getMigrationHeading(name: string): string {
     return name;
   }
 }
+
+/**
+ * Escapes HTML special characters to prevent XSS and ensure content is displayed as plain text.
+ * Converts characters like <, >, &, ", ' to their HTML entity equivalents.
+ *
+ * @param text - The text to escape
+ * @returns The escaped HTML string
+ */
+export function escapeHtml(text: string): string {
+  if (!text) {
+    return '';
+  }
+
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
