@@ -84,7 +84,7 @@ export class CustomLabelsUtil {
 
       const canBeAutomated = processedLabels.filter((label) => label.assessmentStatus === 'Can be Automated').length;
 
-      Logger.log(
+      Logger.logVerbose(
         `Found ${labelsNeedingManualIntervention.length} labels that need manual intervention out of ${processedLabels.length} total`
       );
 

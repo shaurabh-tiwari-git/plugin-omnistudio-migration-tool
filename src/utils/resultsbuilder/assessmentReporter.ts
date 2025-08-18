@@ -64,7 +64,8 @@ export class AssessmentReporter {
         Constants.Flexcard,
         Constants.IntegrationProcedure,
         Constants.DataMapper,
-        Constants.GlobalAutoNumber
+        Constants.GlobalAutoNumber,
+        Constants.CustomLabel
       );
       this.createDocument(
         path.join(this.basePath, this.omniscriptAssessmentFileName),

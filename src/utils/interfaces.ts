@@ -15,6 +15,7 @@ export interface MigratedRecordInfo {
   migratedId?: string;
   migratedName?: string;
   warnings: string[];
+  localizationStatus?: Record<string, string>;
 }
 
 export interface DiffPair {

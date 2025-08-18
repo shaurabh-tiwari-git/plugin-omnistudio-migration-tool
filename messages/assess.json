@@ -184,5 +184,8 @@
   "nameMappingUndefined": "Undefined name mapping found",
   "experienceSiteException": "We’ve encountered an exception while processing Experience Cloud sites.",
   "reservedKeysFoundInPropertySet": "Reserved keys found in any of output response transformation fields: %s.",
-  "invalidTypeAssessErrorMessage": "We couldn't assess your Omnistudio components in the %s namespace. Select the correct namespace and try again"
+  "invalidTypeAssessErrorMessage": "We couldn't assess your Omnistudio components in the %s namespace. Select the correct namespace and try again",
+  "errorFetchingCustomLabels": "Error fetching custom labels: %s",
+  "customLabelAssessmentSummary": "Custom Label with same name and different value is already exist without namespace.",
+  "generatedCustomLabelAssessmentReportPage": "Generated custom label assessment report page %s of %s with %s labels"
 }
