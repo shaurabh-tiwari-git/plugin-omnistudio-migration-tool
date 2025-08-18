@@ -120,7 +120,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       path: file.location,
       diff: JSON.stringify([]),
       hasOmnistudioContent: false,
-      status: 'Ready for migration',
+      status: type === this.ASSESS ? 'Ready for migration' : 'Complete',
     };
 
     const lookupComponentName = `${this.namespace}:vlocityLWCOmniWrapper`;
@@ -166,6 +166,12 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     }
 
     experienceSiteAssessmentInfo.diff = JSON.stringify(difference);
+
+    experienceSiteAssessmentInfo.status =
+      experienceSiteAssessmentInfo.warnings && experienceSiteAssessmentInfo.warnings.length > 0
+        ? 'Needs Manual Intervention'
+        : experienceSiteAssessmentInfo.status;
+
     return experienceSiteAssessmentInfo;
   }
 
