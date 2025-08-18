@@ -285,9 +285,10 @@ export default class Migrate extends OmniStudioBaseCommand {
         isExperienceBundleMetadataAPIProgramaticallyEnabled
       );
       deploymentConfig = await preMigrate.getAutoDeployConsent(objectsToProcess.includes(Constants.LWC), actionItems);
-      Logger.logVerbose(
-        'The objects to process after handleExpSitePrerequisite are ' + JSON.stringify(objectsToProcess)
-      );
+    } else {
+      objectsToProcess.length = 0;
+      Logger.warn(messages.getMessage('relatedObjectsConsentNotGiven'));
+      Logger.logVerbose(messages.getMessage('relatedObjectsToProcess', [JSON.stringify(objectsToProcess)]));
     }
 
     return { objectsToProcess, projectPath, targetApexNamespace, deploymentConfig };
