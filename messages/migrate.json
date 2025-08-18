@@ -231,5 +231,5 @@
   "enableStandardRuntimeAfterDesigner": "Standard designer setup successful, proceeding with Standard Runtime enablement",
   "skipStandardRuntimeDueToFailure": "Skipping Standard Runtime enablement due to designer setup failure",
   "errorCheckingStandardDesigner": "Failed to check standard designer status for package %s: %s",
-  "relatedObjectsConsentNotGiven": "Since user consent is not given, related objects will not be processed"
+  "relatedObjectsConsentNotGiven": "The related objects will not be processed because the user declined consent."
 }
