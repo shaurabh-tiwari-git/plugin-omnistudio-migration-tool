@@ -101,6 +101,9 @@ describe('ExperienceSiteMigration', () => {
       .callsFake((key: string, args: string[]) => {
         return `${args[0]} needs manual intervention as duplicated key found`;
       });
+    getMessageStub
+      .withArgs('emptyTargetData')
+      .returns('The Target Name is empty. Check your Experience Cloud site configuration');
     getMessageStub.returns('Mock message'); // fallback for any other message keys
 
     mockMessages = {
@@ -393,7 +396,7 @@ describe('ExperienceSiteMigration', () => {
       // Assert
       expect(result.hasOmnistudioContent).to.be.true;
       expect(result.warnings).to.have.length(1);
-      expect(result.warnings[0]).to.include('Target exists as empty string');
+      expect(result.warnings[0]).to.include('The Target Name is empty. Check your Experience Cloud site configuration');
     });
 
     it('should handle components array with undefined components gracefully', () => {
