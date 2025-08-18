@@ -257,9 +257,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     }
 
     if (currentAttribute.target === undefined || currentAttribute.target === '') {
-      experienceSiteAssessmentInfo.warnings.push(
-        'Target exists as empty string. Please check experience site configuration'
-      );
+      experienceSiteAssessmentInfo.warnings.push(this.messages.getMessage('emptyTargetData'));
       experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs Manual Intervention' : 'Skipped';
       return;
     }

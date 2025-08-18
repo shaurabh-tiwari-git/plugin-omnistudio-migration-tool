@@ -48,11 +48,9 @@ export class FileUtil {
         const name = path.parse(filename).name;
 
         if (reqExt === undefined) {
-          Logger.logVerbose('Non extension file');
           count.total++;
           currentDirFiles.push(new File(name, fullPath, ext));
         } else if (reqExt !== undefined && ext === reqExt) {
-          Logger.logVerbose('Required extension file');
           count.total++;
           currentDirFiles.push(new File(name, fullPath, ext));
         }
