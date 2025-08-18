@@ -27,6 +27,7 @@ import { Logger } from '../logger';
 import { getMigrationHeading } from '../stringUtils';
 import { Constants } from '../constants/stringContants';
 import { reportingHelper } from './reportingHelper';
+import { CustomLabelMigrationReporter, CustomLabelMigrationInfo } from './CustomLabelMigrationReporter';
 const resultsDir = path.join(process.cwd(), 'migration_report');
 const migrationReportHTMLfileName = 'dashboard.html';
 const flexipageFileName = 'flexipage.html';
@@ -89,6 +90,13 @@ export class ResultsBuilder {
     messages: Messages
   ): void {
     Logger.captureVerboseData(`${result.name} data`, result);
+
+    // Handle Custom Labels migration specifically
+    if (result.name.toLowerCase().includes('custom labels')) {
+      this.generateCustomLabelsMigrationReport(result, instanceUrl, orgDetails, messages);
+      return;
+    }
+
     // Determine which rollback flag to use based on component type
     let rollbackFlagNames: string[] = [];
     const componentName = result.name.toLowerCase();
@@ -217,6 +225,77 @@ export class ResultsBuilder {
     const reportTemplate = fs.readFileSync(reportTemplateFilePath, 'utf8');
     const html = TemplateParser.generate(reportTemplate, data, messages);
     fs.writeFileSync(path.join(resultsDir, result.name.replace(/ /g, '_').replace(/\//g, '_') + '.html'), html);
+  }
+
+  private static generateCustomLabelsMigrationReport(
+    result: MigratedObject,
+    instanceUrl: string,
+    orgDetails: OmnistudioOrgDetails,
+    messages: Messages
+  ): void {
+    Logger.captureVerboseData(`${result.name} data`, result);
+
+    // Convert migration results to CustomLabelMigrationInfo format
+    const customLabelMigrationInfos: CustomLabelMigrationInfo[] = [];
+
+    if (result.data) {
+      result.data.forEach((record: any, index: number) => {
+        // Handle both old and new data formats
+        const labelName = record.name || record.labelName;
+        const cloneStatus =
+          record.status === 'Complete'
+            ? 'created'
+            : record.status === 'Error'
+            ? 'error'
+            : record.status === 'Skipped'
+            ? 'duplicate'
+            : record.status || 'duplicate';
+        const localizationStatus = record.localizationStatus || {};
+        const errors = record.errors || [];
+        const warnings = record.warnings || [];
+
+        customLabelMigrationInfos.push({
+          labelName,
+          cloneStatus,
+          localizationStatus,
+          errors,
+          warnings,
+        });
+      });
+    }
+
+    const pageSize = 1000; // Smaller page size for better performance
+    const totalLabels = customLabelMigrationInfos.length;
+    const totalPages = Math.ceil(totalLabels / pageSize);
+
+    Logger.logVerbose(messages.getMessage('generatingCustomLabelsReport', [totalLabels, totalPages, pageSize]));
+
+    // Generate paginated reports
+    for (let page = 1; page <= totalPages; page++) {
+      const data = CustomLabelMigrationReporter.getCustomLabelMigrationData(
+        customLabelMigrationInfos,
+        instanceUrl,
+        orgDetails,
+        page,
+        pageSize
+      );
+
+      const reportTemplate = fs.readFileSync(reportTemplateFilePath, 'utf8');
+
+      // Replace the pagination section with custom generated HTML
+      const customPaginationHtml = CustomLabelMigrationReporter.generateCustomTemplateForPage(page, totalPages);
+      const modifiedTemplate = reportTemplate.replace(
+        /<!-- Pagination Navigation -->[\s\S]*?<\/div>\s*<\/div>\s*<\/c:if>/,
+        customPaginationHtml
+      );
+
+      const html = TemplateParser.generate(modifiedTemplate, data, messages);
+
+      const fileName = totalPages > 1 ? `Custom_Labels_Page_${page}_of_${totalPages}.html` : 'Custom_Labels.html';
+      fs.writeFileSync(path.join(resultsDir, fileName), html);
+
+      Logger.logVerbose(messages.getMessage('generatedCustomLabelsReportPage', [page, totalPages, data.rows.length]));
+    }
   }
 
   private static generateReportForRelatedObject(
@@ -410,7 +489,7 @@ export class ResultsBuilder {
             item.status === 'Failed' ? 'text-error' : 'text-success'
           ),
           createRowDataParam('diff', '', false, 1, 1, false, undefined, FileDiffUtil.getDiffHTML(item.diff, item.name)),
-          createRowDataParam('error', 'error', false, 1, 1, false, undefined, item.errors, 'text-error'),
+          createRowDataParam('error', 'error', false, 1, 1, false, undefined, item.errors, 'text-error', true),
         ],
       })),
     };
@@ -493,7 +572,9 @@ export class ResultsBuilder {
             1,
             false,
             undefined,
-            item.infos
+            item.infos,
+            undefined,
+            true
           ),
           createRowDataParam(
             'warnings',
@@ -688,12 +769,28 @@ export class ResultsBuilder {
       },
       assessmentDate: new Date().toLocaleString(),
       summaryItems: [
-        ...results.map((result) => ({
-          name: `${getMigrationHeading(result.name)} Migration`,
-          total: result.data?.length || 0,
-          data: this.getDifferentStatusDataForResult(result.data),
-          file: result.name.replace(/ /g, '_').replace(/\//g, '_') + '.html',
-        })),
+        ...results.map((result) => {
+          // Handle custom labels specially for pagination and status calculation
+          if (result.name.toLowerCase().includes('custom labels')) {
+            const totalLabels = result.data?.length || 0;
+            const totalPages = Math.ceil(totalLabels / 1000);
+            const fileName = totalPages > 1 ? `Custom_Labels_Page_1_of_${totalPages}.html` : 'Custom_Labels.html';
+
+            return {
+              name: result.name,
+              total: totalLabels,
+              data: this.getCustomLabelStatusData(result.data),
+              file: fileName,
+            };
+          }
+
+          return {
+            name: `${getMigrationHeading(result.name)} Migration`,
+            total: result.data?.length || 0,
+            data: this.getDifferentStatusDataForResult(result.data),
+            file: result.name.replace(/ /g, '_').replace(/\//g, '_') + '.html',
+          };
+        }),
         ...relatedObjectSummaryItems,
       ],
       actionItems,
@@ -720,6 +817,26 @@ export class ResultsBuilder {
       { name: 'Successfully migrated', count: complete, cssClass: 'text-success' },
       { name: 'Failed', count: error, cssClass: 'text-error' },
       { name: 'Skipped', count: skip, cssClass: 'text-warning' },
+    ];
+  }
+
+  private static getCustomLabelStatusData(
+    data: MigratedRecordInfo[]
+  ): Array<{ name: string; count: number; cssClass: string }> {
+    let created = 0;
+    let error = 0;
+    let duplicate = 0;
+    data.forEach((item) => {
+      // Handle both old and new status formats
+      const status = item.status || (item as any).cloneStatus;
+      if (status === 'created' || status === 'Complete') created++;
+      else if (status === 'error' || status === 'Error') error++;
+      else if (status === 'duplicate' || status === 'Skipped') duplicate++;
+    });
+    return [
+      { name: 'Created', count: created, cssClass: 'text-success' },
+      { name: 'Failed', count: error, cssClass: 'text-error' },
+      { name: 'Duplicate', count: duplicate, cssClass: 'text-warning' },
     ];
   }
 
