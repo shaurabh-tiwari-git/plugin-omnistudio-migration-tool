@@ -8,6 +8,8 @@ import { YES_SHORT, YES_LONG, NO_SHORT, NO_LONG } from '../utils/projectPathUtil
 import { BaseMigrationTool } from './base';
 
 const authEnvKey = 'OMA_AUTH_KEY';
+const lwcManualDeploymentGuide =
+  'https://help.salesforce.com/s/articleView?id=xcloud.os_standard_set_up_your_environment_for_customizing_omniscript_elements.htm&type=5';
 
 export class PreMigrate extends BaseMigrationTool {
   // Source Custom Object Names
@@ -94,6 +96,15 @@ export class PreMigrate extends BaseMigrationTool {
         Logger.warn(this.messages.getMessage('authKeyEnvVarNotSet'));
         actionItems.push(this.messages.getMessage('authKeyEnvVarNotSet'));
       }
+    }
+
+    if (!consent) {
+      Logger.warn(this.messages.getMessage('deploymentConsentNotGiven'));
+      actionItems.push(this.messages.getMessage('deploymentConsentNotGiven'));
+    }
+
+    if (!consent || (includeLwc && !deploymentConfig.authKey)) {
+      actionItems.push(this.messages.getMessage('manualDeploymentSteps', [lwcManualDeploymentGuide]));
     }
 
     return deploymentConfig;

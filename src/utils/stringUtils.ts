@@ -27,16 +27,32 @@ export function formatUnicorn(
 
 export function getMigrationHeading(name: string): string {
   if (name.toLowerCase().includes('data')) {
-    return 'Data Mapper';
+    return 'DataMappers';
   } else if (name.toLowerCase().includes('flexcard')) {
-    return 'Flexcard';
+    return 'Flexcards';
   } else if (name.toLowerCase().includes('omniscript')) {
-    return 'OmniScript';
+    return 'Omniscripts';
   } else if (name.toLowerCase().includes('integration')) {
-    return 'Integration Procedure';
-  } else if (name.toLowerCase().includes('apex')) {
-    return 'Apex File';
+    return 'Integration Procedures';
+  } else if (name.toLowerCase().includes('autonumber')) {
+    return 'Global Auto Numbers';
   } else {
     return name;
   }
+}
+
+const AssessmentStatusPriority = {
+  Failed: 0,
+  'Needs Manual Intervention': 1,
+  Warnings: 2,
+  'Ready for migration': 3,
+};
+
+export function getUpdatedAssessmentStatus(
+  currentStatus: 'Warnings' | 'Needs Manual Intervention' | 'Ready for migration' | 'Failed',
+  newStatus: 'Warnings' | 'Needs Manual Intervention' | 'Ready for migration' | 'Failed'
+): 'Warnings' | 'Needs Manual Intervention' | 'Ready for migration' | 'Failed' {
+  const currentPriority = AssessmentStatusPriority[currentStatus];
+  const newPriority = AssessmentStatusPriority[newStatus];
+  return currentPriority > newPriority ? newStatus : currentStatus;
 }

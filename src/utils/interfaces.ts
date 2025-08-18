@@ -9,7 +9,13 @@ export interface MigratedObject {
 export interface MigratedRecordInfo {
   id: string;
   name: string;
-  status: 'Ready for migration' | 'Failed' | 'Skipped' | 'Complete' | 'Needs Manual Intervention' | 'Warnings';
+  status:
+    | 'Ready for migration'
+    | 'Failed'
+    | 'Skipped'
+    | 'Successfully migrated'
+    | 'Needs Manual Intervention'
+    | 'Warnings';
   errors: string[];
   migratedId?: string;
   migratedName?: string;
@@ -182,7 +188,7 @@ export interface ExperienceSiteAssessmentInfo extends FileChangeInfo {
   infos: string[];
   hasOmnistudioContent: boolean;
   errors: string[];
-  status: 'Ready for migration' | 'Failed' | 'Complete' | 'Needs Manual Intervention';
+  status: 'Ready for migration' | 'Failed' | 'Successfully migrated' | 'Needs Manual Intervention' | 'Skipped';
 }
 
 export interface FileProcessor {
@@ -244,5 +250,11 @@ export interface QueryResult {
 
 export interface FlexiPageAssessmentInfo extends FileChangeInfo {
   errors: string[];
-  status: 'Ready for migration' | 'Failed' | 'Warnings' | 'Complete' | 'Needs Manual Intervention';
+  status:
+    | 'Ready for migration'
+    | 'Failed'
+    | 'Warnings'
+    | 'Successfully migrated'
+    | 'Needs Manual Intervention'
+    | 'Skipped';
 }

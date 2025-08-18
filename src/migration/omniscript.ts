@@ -79,9 +79,9 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
   getName(): string {
     if (this.exportType === OmniScriptExportType.IP) {
-      return 'Integration Procedures';
+      return 'Integration Procedure';
     } else if (this.exportType === OmniScriptExportType.OS) {
-      return 'OmniScripts';
+      return 'OmniScript';
     }
   }
 
@@ -829,17 +829,18 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       }
 
       if (duplicatedNames.has(mappedOsName)) {
-        this.setRecordErrors(omniscript, this.messages.getMessage('duplicatedOSName'));
+        // this.setRecordErrors(omniscript, this.messages.getMessage('duplicatedOSName', [this.getName(), mappedOsName]));
         originalOsRecords.set(recordId, omniscript);
-        const warningMessage = this.messages.getMessage('duplicatedOSName');
+        const warningMessage = this.messages.getMessage('duplicatedOSName', [this.getName(), mappedOsName]);
         const skippedResponse: UploadRecordResult = {
           referenceId: recordId,
           id: '',
           success: false,
-          hasErrors: true,
-          errors: [warningMessage],
-          warnings: [],
+          hasErrors: false,
+          errors: [],
+          warnings: [warningMessage],
           newName: '',
+          skipped: true,
         };
         osUploadInfo.set(recordId, skippedResponse);
         continue;
@@ -895,7 +896,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         // Only add warning if the name was actually modified
         if (originalOsName !== mappedOsName) {
           osUploadResponse.warnings.unshift(
-            'WARNING: OmniScript name has been modified to fit naming rules: ' + mappedOsName
+            `${this.getName()} name has been modified to fit naming rules: ${mappedOsName}`
           );
         }
 
@@ -932,7 +933,9 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
               osUploadResponse.hasErrors = true;
               osUploadResponse.errors = osUploadResponse.errors || [];
 
-              osUploadResponse.errors.push(this.messages.getMessage('errorWhileActivatingOs') + updateResult.errors);
+              osUploadResponse.errors.push(
+                this.messages.getMessage('errorWhileActivatingOs', [this.getName()]) + updateResult.errors
+              );
             }
           }
         } catch (e) {
@@ -955,7 +958,9 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
             }
           }
 
-          osUploadResponse.errors.push(this.messages.getMessage('errorWhileCreatingElements') + error);
+          osUploadResponse.errors.push(
+            this.messages.getMessage('errorWhileCreatingElements', [this.getName()]) + error
+          );
         } finally {
           // Create the return records and response which have been processed
           osUploadInfo.set(recordId, osUploadResponse);
@@ -979,7 +984,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       );
     }
     if (this.exportType === OmniScriptExportType.All || this.exportType === OmniScriptExportType.OS) {
-      objectMigrationResults.push(this.getMigratedRecordsByType('OmniScripts', osUploadInfo, originalOsRecords));
+      objectMigrationResults.push(this.getMigratedRecordsByType('Omniscripts', osUploadInfo, originalOsRecords));
     }
 
     return objectMigrationResults;
@@ -998,7 +1003,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     for (let record of Array.from(records.values())) {
       if (
         (type === 'Integration Procedures' && record[`${this.namespacePrefix}IsProcedure__c`]) ||
-        (type === 'OmniScripts' && !record[`${this.namespacePrefix}IsProcedure__c`])
+        (type === 'Omniscripts' && !record[`${this.namespacePrefix}IsProcedure__c`])
       ) {
         recordMap.set(record['Id'], records.get(record['Id']));
         if (results.get(record['Id'])) {
