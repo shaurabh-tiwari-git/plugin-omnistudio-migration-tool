@@ -215,12 +215,20 @@ export class ApexMigration extends BaseRelatedObjectMigration {
       Logger.logger.info(assessMessages.getMessage('apexFileImplementsVlocityOpenInterface2', [file.name]));
       const tokens = implementsInterface.get(this.vlocityOpenInterface2);
       tokenUpdates.push(new RangeTokenUpdate(CALLABLE, tokens[0], tokens[1]));
-      tokenUpdates.push(new InsertAfterTokenUpdate(this.callMethodBody(), parser.classDeclaration));
+      if (!parser.hasCallMethodImplemented) {
+        tokenUpdates.push(new InsertAfterTokenUpdate(this.callMethodBody(), parser.classDeclaration));
+      } else {
+        Logger.logger.info(assessMessages.getMessage('apexFileAlreadyHasCallMethod', [file.name]));
+      }
     } else if (implementsInterface.has(this.vlocityOpenInterface)) {
       Logger.logger.info(assessMessages.getMessage('fileImplementsVlocityOpenInterface', [file.name]));
       const tokens = implementsInterface.get(this.vlocityOpenInterface);
       tokenUpdates.push(new RangeTokenUpdate(CALLABLE, tokens[0], tokens[1]));
-      tokenUpdates.push(new InsertAfterTokenUpdate(this.callMethodBody(), parser.classDeclaration));
+      if (!parser.hasCallMethodImplemented) {
+        tokenUpdates.push(new InsertAfterTokenUpdate(this.callMethodBody(), parser.classDeclaration));
+      } else {
+        Logger.logger.info(assessMessages.getMessage('apexFileAlreadyHasCallMethod', [file.name]));
+      }
     }
     return tokenUpdates;
   }

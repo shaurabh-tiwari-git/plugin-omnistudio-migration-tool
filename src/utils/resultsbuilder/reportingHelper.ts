@@ -1,4 +1,5 @@
 import { Messages } from '@salesforce/core';
+import { FlexCardAssessmentInfo, LWCAssessmentInfo } from '../interfaces';
 import { CTASummary } from '../reportGenerator/reportInterfaces';
 import {
   IPAssessmentInfo,
@@ -20,7 +21,9 @@ export class reportingHelper {
       | OSAssessmentInfo
       | DataRaptorAssessmentInfo
       | ApexAssessmentInfo
+      | LWCAssessmentInfo
       | GlobalAutoNumberAssessmentInfo
+      | FlexCardAssessmentInfo
     >
   ): CTASummary[] {
     const callToAction = [];
