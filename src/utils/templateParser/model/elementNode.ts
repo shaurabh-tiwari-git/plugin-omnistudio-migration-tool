@@ -144,7 +144,11 @@ export class ElementNode {
    * @returns The substituted value as a string
    */
   public placeholderToHtml(props: Map<string, any>): string {
-    return props.get(this.name) as string;
+    const value = props.get(this.name);
+    if (value == null) {
+      return '';
+    }
+    return String(value).replace(/\n/g, '<br>');
   }
 
   /**
