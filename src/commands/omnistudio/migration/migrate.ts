@@ -17,6 +17,7 @@ import { InvalidEntityTypeError, MigrationResult, MigrationTool } from '../../..
 import { ResultsBuilder } from '../../../utils/resultsbuilder';
 import { CardMigrationTool } from '../../../migration/flexcard';
 import { OmniScriptExportType, OmniScriptMigrationTool } from '../../../migration/omniscript';
+import { CustomLabelsMigrationTool } from '../../../migration/customLabels';
 import { Logger } from '../../../utils/logger';
 import OmnistudioRelatedObjectMigrationFacade from '../../../migration/related/OmnistudioRelatedObjectMigrationFacade';
 import { generatePackageXml } from '../../../utils/generatePackageXml';
@@ -286,9 +287,10 @@ export default class Migrate extends OmniStudioBaseCommand {
         isExperienceBundleMetadataAPIProgramaticallyEnabled
       );
       deploymentConfig = await preMigrate.getAutoDeployConsent(objectsToProcess.includes(Constants.LWC), actionItems);
-      Logger.logVerbose(
-        'The objects to process after handleExpSitePrerequisite are ' + JSON.stringify(objectsToProcess)
-      );
+    } else {
+      objectsToProcess.length = 0;
+      Logger.warn(messages.getMessage('relatedObjectsConsentNotGiven'));
+      Logger.logVerbose(messages.getMessage('relatedObjectsToProcess', [JSON.stringify(objectsToProcess)]));
     }
 
     return { objectsToProcess, projectPath, targetApexNamespace, deploymentConfig };
@@ -439,6 +441,7 @@ export default class Migrate extends OmniStudioBaseCommand {
         ),
         new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions),
         new GlobalAutoNumberMigrationTool(namespace, conn, this.logger, messages, this.ux),
+        new CustomLabelsMigrationTool(namespace, conn, this.logger, messages, this.ux),
       ];
     } else {
       // For single component migration, the order doesn't matter as much
@@ -478,6 +481,9 @@ export default class Migrate extends OmniStudioBaseCommand {
           break;
         case Constants.GlobalAutoNumber:
           migrationObjects.push(new GlobalAutoNumberMigrationTool(namespace, conn, this.logger, messages, this.ux));
+          break;
+        case Constants.CustomLabel:
+          migrationObjects.push(new CustomLabelsMigrationTool(namespace, conn, this.logger, messages, this.ux));
           break;
         default:
           throw new Error(messages.getMessage('invalidOnlyFlag'));
@@ -655,6 +661,7 @@ export default class Migrate extends OmniStudioBaseCommand {
         migratedId: undefined,
         warnings: [],
         migratedName: '',
+        localizationStatus: record['localizationStatus'] || {},
       };
 
       if (migrationResults.results.has(record['Id'])) {
@@ -668,8 +675,9 @@ export default class Migrate extends OmniStudioBaseCommand {
         } else if (!recordResults || recordResults.hasErrors) {
           obj.status = 'Failed';
         } else {
-          obj.status = 'Complete';
+          obj.status = 'Successfully migrated';
         }
+
         obj.errors = errors;
         obj.migratedId = recordResults.id;
         obj.warnings = recordResults.warnings;
