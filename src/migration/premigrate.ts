@@ -5,11 +5,10 @@ import { Constants } from '../utils/constants/stringContants';
 import { OrgPreferences } from '../utils/orgPreferences';
 import { askStringWithTimeout, PromptUtil } from '../utils/promptUtil';
 import { YES_SHORT, YES_LONG, NO_SHORT, NO_LONG } from '../utils/projectPathUtil';
+import { documentRegistry } from '../utils/constants/documentRegistry';
 import { BaseMigrationTool } from './base';
 
 const authEnvKey = 'OMA_AUTH_KEY';
-const lwcManualDeploymentGuide =
-  'https://help.salesforce.com/s/articleView?id=xcloud.os_standard_set_up_your_environment_for_customizing_omniscript_elements.htm&type=5';
 
 export class PreMigrate extends BaseMigrationTool {
   // Source Custom Object Names
@@ -104,7 +103,7 @@ export class PreMigrate extends BaseMigrationTool {
     }
 
     if (!consent || (includeLwc && !deploymentConfig.authKey)) {
-      actionItems.push(this.messages.getMessage('manualDeploymentSteps', [lwcManualDeploymentGuide]));
+      actionItems.push(this.messages.getMessage('manualDeploymentSteps', [documentRegistry.manualDeploymentSteps]));
     }
 
     return deploymentConfig;

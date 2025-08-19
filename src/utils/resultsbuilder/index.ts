@@ -42,7 +42,7 @@ const lwcFileName = 'lwc.html';
 export class ResultsBuilder {
   private static rowClass = 'data-row-';
   private static rowId = 0;
-  private static experienceSiteFileSuffix = '.josn';
+  private static experienceSiteFileSuffix = '.json';
 
   private static flexiPageFileSuffix = '.flexipage-meta.xml';
 

@@ -77,11 +77,13 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     this.allVersions = allVersions;
   }
 
-  getName(): string {
+  getName(
+    singular: boolean = false
+  ): 'Integration Procedures' | 'Integration Procedure' | 'Omniscripts' | 'Omniscript' {
     if (this.exportType === OmniScriptExportType.IP) {
-      return 'Integration Procedure';
+      return singular ? 'Integration Procedure' : 'Integration Procedures';
     } else if (this.exportType === OmniScriptExportType.OS) {
-      return 'OmniScript';
+      return singular ? 'Omniscript' : 'Omniscripts';
     }
   }
 
@@ -668,7 +670,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     let osUploadInfo = new Map<string, UploadRecordResult>();
     const exportComponentType = this.getName() as ComponentType;
     Logger.log(this.messages.getMessage('foundOmniScriptsToMigrate', [omniscripts.length, exportComponentType]));
-    const progressBarType: ComponentType = exportComponentType;
+    const progressBarType = exportComponentType;
     const progressBar = createProgressBar('Migrating', progressBarType);
     let progressCounter = 0;
     progressBar.start(omniscripts.length, progressCounter);
@@ -829,9 +831,8 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       }
 
       if (duplicatedNames.has(mappedOsName)) {
-        // this.setRecordErrors(omniscript, this.messages.getMessage('duplicatedOSName', [this.getName(), mappedOsName]));
         originalOsRecords.set(recordId, omniscript);
-        const warningMessage = this.messages.getMessage('duplicatedOSName', [this.getName(), mappedOsName]);
+        const warningMessage = this.messages.getMessage('duplicatedOSName', [this.getName(true), mappedOsName]);
         const skippedResponse: UploadRecordResult = {
           referenceId: recordId,
           id: '',
@@ -896,7 +897,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         // Only add warning if the name was actually modified
         if (originalOsName !== mappedOsName) {
           osUploadResponse.warnings.unshift(
-            `${this.getName()} name has been modified to fit naming rules: ${mappedOsName}`
+            `${this.getName(true)} name has been modified to fit naming rules: ${mappedOsName}`
           );
         }
 
@@ -934,7 +935,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
               osUploadResponse.errors = osUploadResponse.errors || [];
 
               osUploadResponse.errors.push(
-                this.messages.getMessage('errorWhileActivatingOs', [this.getName()]) + updateResult.errors
+                this.messages.getMessage('errorWhileActivatingOs', [this.getName(true)]) + updateResult.errors
               );
             }
           }
@@ -959,7 +960,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           }
 
           osUploadResponse.errors.push(
-            this.messages.getMessage('errorWhileCreatingElements', [this.getName()]) + error
+            this.messages.getMessage('errorWhileCreatingElements', [this.getName(true)]) + error
           );
         } finally {
           // Create the return records and response which have been processed
