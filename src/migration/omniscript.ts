@@ -475,6 +475,19 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     let assessmentStatus: 'Ready for migration' | 'Warnings' | 'Needs Manual Intervention' = 'Ready for migration';
 
     const warnings: string[] = [];
+    const errors: string[] = [];
+
+    // Check for missing mandatory fields for Integration Procedures
+    if (omniProcessType === 'Integration Procedure') {
+      if (!existingType || existingType.trim() === '') {
+        errors.push(this.messages.getMessage('missingMandatoryField', ['Type', 'Integration Procedure']));
+        assessmentStatus = 'Needs Manual Intervention';
+      }
+      if (!existingSubType || existingSubType.trim() === '') {
+        errors.push(this.messages.getMessage('missingMandatoryField', ['SubType', 'Integration Procedure']));
+        assessmentStatus = 'Needs Manual Intervention';
+      }
+    }
 
     // Check for Angular OmniScript dependencies
     for (const osDep of dependencyOS) {
@@ -505,25 +518,36 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       `_${omniscript[this.namespacePrefix + 'Version__c']}`;
 
     if (!existingTypeVal.isNameCleaned()) {
-      warnings.push(
-        this.messages.getMessage('changeMessage', [
-          existingTypeVal.type,
-          existingTypeVal.val,
-          existingTypeVal.cleanName(),
-        ])
-      );
-      assessmentStatus = 'Warnings';
+      if (omniProcessType === 'Integration Procedure' && (!newType || newType.trim() === '')) {
+        warnings.push(this.messages.getMessage('integrationProcedureTypeEmptyAfterCleaning', [existingTypeVal.val]));
+        assessmentStatus = 'Needs Manual Intervention';
+      } else {
+        warnings.push(
+          this.messages.getMessage('changeMessage', [
+            existingTypeVal.type,
+            existingTypeVal.val,
+            existingTypeVal.cleanName(),
+          ])
+        );
+        assessmentStatus = 'Warnings';
+      }
     }
     if (!existingSubTypeVal.isNameCleaned()) {
-      warnings.push(
-        this.messages.getMessage('changeMessage', [
-          existingSubTypeVal.type,
-          existingSubTypeVal.val,
-          existingSubTypeVal.cleanName(),
-        ])
-      );
-      assessmentStatus = 'Warnings';
+      if (omniProcessType === 'Integration Procedure' && (!newSubType || newSubType.trim() === '')) {
+        warnings.push(this.messages.getMessage('integrationProcedureSubtypeEmptyAfterCleaning', [existingSubTypeVal.val]));
+        assessmentStatus = 'Needs Manual Intervention';
+      } else {
+        warnings.push(
+          this.messages.getMessage('changeMessage', [
+            existingSubTypeVal.type,
+            existingSubTypeVal.val,
+            existingSubTypeVal.cleanName(),
+          ])
+        );
+        assessmentStatus = 'Warnings';
+      }
     }
+
     if (!existingOmniScriptNameVal.isNameCleaned()) {
       warnings.push(
         this.messages.getMessage('changeMessage', [
@@ -751,6 +775,42 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       }
 
       if (omniscript[`${this.namespacePrefix}IsProcedure__c`] === true) {
+        // Check for missing mandatory fields for Integration Procedures
+        const existingType = omniscript[this.namespacePrefix + 'Type__c'];
+        const existingSubType = omniscript[this.namespacePrefix + 'SubType__c'];
+
+        if (!existingType || existingType.trim() === '') {
+          const skippedResponse: UploadRecordResult = {
+            referenceId: recordId,
+            id: '',
+            success: false,
+            hasErrors: true,
+            errors: [this.messages.getMessage('missingMandatoryField', ['Type', 'Integration Procedure'])],
+            warnings: [],
+            newName: '',
+            skipped: true,
+          };
+          osUploadInfo.set(recordId, skippedResponse);
+          originalOsRecords.set(recordId, omniscript);
+          continue;
+        }
+
+        if (!existingSubType || existingSubType.trim() === '') {
+          const skippedResponse: UploadRecordResult = {
+            referenceId: recordId,
+            id: '',
+            success: false,
+            hasErrors: true,
+            errors: [this.messages.getMessage('missingMandatoryField', ['SubType', 'Integration Procedure'])],
+            warnings: [],
+            newName: '',
+            skipped: true,
+          };
+          osUploadInfo.set(recordId, skippedResponse);
+          originalOsRecords.set(recordId, omniscript);
+          continue;
+        }
+
         // Check for reserved keys in PropertySet for Integration Procedures
         const foundReservedKeys = new Set<string>();
 
@@ -805,6 +865,44 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       // Clean type, subtype
       mappedOmniScript[OmniScriptMappings.Type__c] = this.cleanName(mappedOmniScript[OmniScriptMappings.Type__c]);
       mappedOmniScript[OmniScriptMappings.SubType__c] = this.cleanName(mappedOmniScript[OmniScriptMappings.SubType__c]);
+
+      // Check if Type or SubType becomes empty after cleaning for Integration Procedures
+      if (omniscript[`${this.namespacePrefix}IsProcedure__c`]) {
+        const originalType = omniscript[this.namespacePrefix + 'Type__c'];
+        const originalSubType = omniscript[this.namespacePrefix + 'SubType__c'];
+
+        if (!mappedOmniScript[OmniScriptMappings.Type__c] || mappedOmniScript[OmniScriptMappings.Type__c].trim() === '') {
+          const skippedResponse: UploadRecordResult = {
+            referenceId: recordId,
+            id: '',
+            success: false,
+            hasErrors: true,
+            errors: [this.messages.getMessage('integrationProcedureTypeEmptyAfterCleaning', [originalType])],
+            warnings: [],
+            newName: '',
+            skipped: true,
+          };
+          osUploadInfo.set(recordId, skippedResponse);
+          originalOsRecords.set(recordId, omniscript);
+          continue;
+        }
+
+        if (!mappedOmniScript[OmniScriptMappings.SubType__c] || mappedOmniScript[OmniScriptMappings.SubType__c].trim() === '') {
+          const skippedResponse: UploadRecordResult = {
+            referenceId: recordId,
+            id: '',
+            success: false,
+            hasErrors: true,
+            errors: [this.messages.getMessage('integrationProcedureSubtypeEmptyAfterCleaning', [originalSubType])],
+            warnings: [],
+            newName: '',
+            skipped: true,
+          };
+          osUploadInfo.set(recordId, skippedResponse);
+          originalOsRecords.set(recordId, omniscript);
+          continue;
+        }
+      }
 
       // Check duplicated name
       let mappedOsName;

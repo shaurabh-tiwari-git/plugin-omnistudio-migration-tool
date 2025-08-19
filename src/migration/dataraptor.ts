@@ -162,6 +162,13 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
         originalDrRecords.set(recordId, dr);
         continue;
       }
+
+      if (transformedDataRaptor['Name'] && /^[0-9]/.test(transformedDataRaptor['Name'])) {
+        this.setRecordErrors(dr, this.messages.getMessage('dataMapperNameStartsWithNumber', [transformedDataRaptor['Name'], 'DM' + transformedDataRaptor['Name']]));
+        originalDrRecords.set(recordId, dr);
+        continue;
+      }
+
       duplicatedNames.add(transformedDataRaptor['Name']);
 
       // Create a map of the original records
@@ -169,13 +176,14 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
 
       // Save the data raptors
       // const drUploadResponse = await this.uploadTransformedData(DataRaptorMigrationTool.OMNIDATATRANSFORM_NAME, { mappedRecords, originalRecords });
-      const drUploadResponse = await NetUtils.createOne(
+      let drUploadResponse = await NetUtils.createOne(
         this.connection,
         DataRaptorMigrationTool.OMNIDATATRANSFORM_NAME,
         recordId,
         transformedDataRaptor
       );
 
+      // Always add the response to track success/failure
       if (drUploadResponse && drUploadResponse.success === true) {
         const items = await this.getItemsForDataRaptor(dataRaptorItemsData, name, drUploadResponse.id);
 
@@ -183,9 +191,22 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
 
         // Move the items
         await this.uploadTransformedData(DataRaptorMigrationTool.OMNIDATATRANSFORMITEM_NAME, items);
-
-        drUploadInfo.set(recordId, drUploadResponse);
+      } else {
+        // Handle failed migration - add error information
+        if (!drUploadResponse) {
+          drUploadResponse = {
+            referenceId: recordId,
+            id: '',
+            success: false,
+            hasErrors: true,
+            errors: [this.messages.getMessage('dataMapperMigrationFailed', [name])],
+            warnings: [],
+            newName: '',
+          };
+        }
       }
+
+      drUploadInfo.set(recordId, drUploadResponse);
     }
     progressBar.stop();
 
@@ -297,6 +318,13 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
       );
       assessmentStatus = 'Warnings';
     }
+    // Check if name starts with a number (which can cause migration issues)
+    if (drName && /^[0-9]/.test(drName)) {
+      const proposedName = 'DM' + this.cleanName(drName);
+      warnings.push(this.messages.getMessage('dataMapperNameStartsWithNumber', [drName, proposedName]));
+      assessmentStatus = 'Needs Manual Intervention';
+    }
+
     if (existingDataRaptorNames.has(existingDRNameVal.cleanName())) {
       warnings.push(this.messages.getMessage('duplicatedName') + '  ' + existingDRNameVal.cleanName());
       assessmentStatus = 'Needs Manual Intervention';
