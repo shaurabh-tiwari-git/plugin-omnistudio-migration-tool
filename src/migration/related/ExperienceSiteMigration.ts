@@ -166,6 +166,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     }
 
     experienceSiteAssessmentInfo.diff = JSON.stringify(difference);
+
     return experienceSiteAssessmentInfo;
   }
 

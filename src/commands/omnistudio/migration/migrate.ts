@@ -233,6 +233,7 @@ export default class Migrate extends OmniStudioBaseCommand {
       postMigrate.deploy();
     } catch (error) {
       Logger.error(messages.getMessage('errorDeployingComponents'), error);
+      Logger.logVerbose(error);
     }
 
     await ResultsBuilder.generateReport(

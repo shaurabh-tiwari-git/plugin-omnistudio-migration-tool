@@ -28,7 +28,7 @@ export class generatePackageXml {
 
     const expsiteXml = generatePackageXml.getXmlElementforMembers(
       this.getExperienceSiteXml(experienceSiteAssessmentInfo),
-      'ExperienceSite'
+      'ExperienceBundle'
     );
 
     const flexipageXml = generatePackageXml.getXmlElementforMembers(
@@ -86,11 +86,7 @@ export class generatePackageXml {
 
   private static getExperienceSiteXml(experienceSiteAssessmentInfos: ExperienceSiteAssessmentInfo[]): string[] {
     if (!experienceSiteAssessmentInfos || experienceSiteAssessmentInfos.length === 0) return [];
-    return experienceSiteAssessmentInfos
-      .filter((experienceSiteAssessmentInfo) => experienceSiteAssessmentInfo.status === 'Successfully migrated')
-      .map((experienceSiteAssessmentInfo) => {
-        return experienceSiteAssessmentInfo.name;
-      });
+    return ['*'];
   }
 
   private static getFlexipageXml(flexipageAssessmentInfos: FlexiPageAssessmentInfo[]): string[] {
