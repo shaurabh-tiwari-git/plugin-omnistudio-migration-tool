@@ -132,7 +132,7 @@ export class AssessmentReporter {
         )
       );
 
-      // Generate custom labels report with pagination (empty if no labels need manual intervention)
+      // Generate custom labels report with pagination
       const customLabels = result.customLabelAssessmentInfos || [];
       this.generateCustomLabelAssessmentReport(
         customLabels,
@@ -442,14 +442,24 @@ export class AssessmentReporter {
         total: result.customLabelStatistics.totalLabels,
         data: [
           {
-            name: 'Can be Automated',
-            count: result.customLabelStatistics.canBeAutomated,
+            name: 'Ready for migration',
+            count: result.customLabelStatistics.readyForMigration,
             cssClass: 'text-success',
           },
           {
-            name: 'Need Manual Intervention',
-            count: result.customLabelStatistics.needManualIntervention,
+            name: 'Warning',
+            count: result.customLabelStatistics.warnings,
             cssClass: 'text-warning',
+          },
+          {
+            name: 'Needs Manual Intervention',
+            count: result.customLabelStatistics.needManualIntervention,
+            cssClass: 'text-error',
+          },
+          {
+            name: 'Failed',
+            count: result.customLabelStatistics.failed,
+            cssClass: 'text-error',
           },
         ],
         file: this.getCustomLabelAssessmentFileName(result.customLabelStatistics.needManualIntervention),

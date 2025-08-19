@@ -117,7 +117,13 @@ export default class Assess extends OmniStudioBaseCommand {
       flexipageAssessmentInfos: [],
       experienceSiteAssessmentInfos: [],
       customLabelAssessmentInfos: [],
-      customLabelStatistics: { totalLabels: 0, canBeAutomated: 0, needManualIntervention: 0 },
+      customLabelStatistics: {
+        totalLabels: 0,
+        readyForMigration: 0,
+        needManualIntervention: 0,
+        warnings: 0,
+        failed: 0,
+      },
     };
 
     Logger.log(messages.getMessage('assessmentInitialization', [String(namespace)]));
@@ -329,14 +335,17 @@ export default class Assess extends OmniStudioBaseCommand {
       const customLabelResult = await CustomLabelsUtil.fetchCustomLabels(conn, namespace, messages);
       assesmentInfo.customLabelAssessmentInfos = customLabelResult.labels;
       assesmentInfo.customLabelStatistics = customLabelResult.statistics;
-      Logger.logVerbose(
-        messages.getMessage('assessedCustomLabelsCount', [assesmentInfo.customLabelAssessmentInfos.length])
-      );
       Logger.log(messages.getMessage('customLabelAssessmentCompleted'));
     } catch (error) {
       Logger.error(messages.getMessage('errorDuringCustomLabelAssessment', [(error as Error).message]));
       assesmentInfo.customLabelAssessmentInfos = [];
-      assesmentInfo.customLabelStatistics = { totalLabels: 0, canBeAutomated: 0, needManualIntervention: 0 };
+      assesmentInfo.customLabelStatistics = {
+        totalLabels: 0,
+        readyForMigration: 0,
+        needManualIntervention: 0,
+        warnings: 0,
+        failed: 0,
+      };
     }
   }
 }
