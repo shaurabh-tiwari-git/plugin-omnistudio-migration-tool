@@ -87,7 +87,7 @@ export class generatePackageXml {
   private static getExperienceSiteXml(experienceSiteAssessmentInfos: ExperienceSiteAssessmentInfo[]): string[] {
     if (!experienceSiteAssessmentInfos || experienceSiteAssessmentInfos.length === 0) return [];
     return experienceSiteAssessmentInfos
-      .filter((experienceSiteAssessmentInfo) => experienceSiteAssessmentInfo.status === 'Complete')
+      .filter((experienceSiteAssessmentInfo) => experienceSiteAssessmentInfo.status === 'Successfully migrated')
       .map((experienceSiteAssessmentInfo) => {
         return experienceSiteAssessmentInfo.name;
       });
@@ -96,7 +96,7 @@ export class generatePackageXml {
   private static getFlexipageXml(flexipageAssessmentInfos: FlexiPageAssessmentInfo[]): string[] {
     if (!flexipageAssessmentInfos || flexipageAssessmentInfos.length === 0) return [];
     return flexipageAssessmentInfos
-      .filter((flexipageAssessmentInfo) => flexipageAssessmentInfo.status === 'Complete')
+      .filter((flexipageAssessmentInfo) => flexipageAssessmentInfo.status === 'Successfully migrated')
       .map((flexipageAssessmentInfo) => {
         return flexipageAssessmentInfo.name.replace('.flexipage-meta.xml', '');
       });

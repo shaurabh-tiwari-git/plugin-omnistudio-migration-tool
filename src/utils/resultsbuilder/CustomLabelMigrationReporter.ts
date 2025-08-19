@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { OmnistudioOrgDetails } from '../orgUtils';
 import { createFilterGroupParam, createRowDataParam } from '../reportGenerator/reportUtil';
 import { ReportParam } from '../reportGenerator/reportInterfaces';

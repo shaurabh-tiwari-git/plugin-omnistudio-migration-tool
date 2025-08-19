@@ -674,7 +674,7 @@ export default class Migrate extends OmniStudioBaseCommand {
         } else if (!recordResults || recordResults.hasErrors) {
           obj.status = 'Failed';
         } else {
-          obj.status = 'Complete';
+          obj.status = 'Successfully migrated';
         }
 
         obj.errors = errors;

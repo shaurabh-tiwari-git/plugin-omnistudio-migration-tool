@@ -144,6 +144,7 @@ export class ElementNode {
    * @returns The substituted value as a string
    */
   public placeholderToHtml(props: Map<string, any>): string {
+    /* eslint-disable-next-line @typescript-eslint/no-unsafe-assignment */
     const value = props.get(this.name);
     if (value == null) {
       return '';

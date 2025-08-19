@@ -134,7 +134,13 @@ export class AssessmentReporter {
 
       // Generate custom labels report with pagination (empty if no labels need manual intervention)
       const customLabels = result.customLabelAssessmentInfos || [];
-      this.generateCustomLabelAssessmentReport(customLabels, instanceUrl, omnistudioOrgDetails, messages, assessmentReportTemplate);
+      this.generateCustomLabelAssessmentReport(
+        customLabels,
+        instanceUrl,
+        omnistudioOrgDetails,
+        messages,
+        assessmentReportTemplate
+      );
     } else {
       switch (assessOnly) {
         case Constants.Omniscript:
@@ -219,7 +225,13 @@ export class AssessmentReporter {
 
         case Constants.CustomLabel:
           reports.push(Constants.CustomLabel);
-          this.generateCustomLabelAssessmentReport(result.customLabelAssessmentInfos, instanceUrl, omnistudioOrgDetails, messages, assessmentReportTemplate);
+          this.generateCustomLabelAssessmentReport(
+            result.customLabelAssessmentInfos,
+            instanceUrl,
+            omnistudioOrgDetails,
+            messages,
+            assessmentReportTemplate
+          );
           break;
 
         default:
@@ -307,10 +319,15 @@ export class AssessmentReporter {
 
       const html = TemplateParser.generate(assessmentReportTemplate, data, messages);
 
-      const fileName = totalPages > 1 ? `customlabel_assessment_Page_${page}_of_${totalPages}.html` : this.customLabelAssessmentFileName;
+      const fileName =
+        totalPages > 1
+          ? `customlabel_assessment_Page_${page}_of_${totalPages}.html`
+          : this.customLabelAssessmentFileName;
       fs.writeFileSync(path.join(this.basePath, fileName), html);
 
-      Logger.logVerbose(messages.getMessage('generatedCustomLabelAssessmentReportPage', [page, totalPages, data.rows.length]));
+      Logger.logVerbose(
+        messages.getMessage('generatedCustomLabelAssessmentReportPage', [page, totalPages, data.rows.length])
+      );
     }
   }
 
