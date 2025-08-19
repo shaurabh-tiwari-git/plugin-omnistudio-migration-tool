@@ -120,7 +120,6 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       path: file.location,
       diff: JSON.stringify([]),
       hasOmnistudioContent: false,
-      status: type === this.ASSESS ? 'Ready for migration' : 'Complete',
       status: type === this.ASSESS ? 'Ready for migration' : 'Successfully migrated',
     };
 
@@ -167,11 +166,6 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     }
 
     experienceSiteAssessmentInfo.diff = JSON.stringify(difference);
-
-    experienceSiteAssessmentInfo.status =
-      experienceSiteAssessmentInfo.warnings && experienceSiteAssessmentInfo.warnings.length > 0
-        ? 'Needs Manual Intervention'
-        : experienceSiteAssessmentInfo.status;
 
     return experienceSiteAssessmentInfo;
   }
