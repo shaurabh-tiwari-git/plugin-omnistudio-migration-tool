@@ -1,4 +1,5 @@
 import { File } from '../utils/file/fileUtil';
+import { CustomLabelAssessmentInfo, CustomLabelStatistics } from './customLabels';
 
 export interface MigratedObject {
   name: string;
@@ -20,6 +21,7 @@ export interface MigratedRecordInfo {
   migratedId?: string;
   migratedName?: string;
   warnings: string[];
+  localizationStatus?: Record<string, string>;
 }
 
 export interface DiffPair {
@@ -110,6 +112,8 @@ export interface AssessmentInfo {
   experienceSiteAssessmentInfos: ExperienceSiteAssessmentInfo[];
   flexipageAssessmentInfos: FlexiPageAssessmentInfo[];
   globalAutoNumberAssessmentInfos: GlobalAutoNumberAssessmentInfo[];
+  customLabelAssessmentInfos: CustomLabelAssessmentInfo[];
+  customLabelStatistics: CustomLabelStatistics;
 }
 
 export interface RelatedObjectAssesmentInfo {
