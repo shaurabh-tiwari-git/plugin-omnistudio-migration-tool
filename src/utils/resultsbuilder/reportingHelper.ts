@@ -1,5 +1,5 @@
 import { Messages } from '@salesforce/core';
-import { nameLocation, oldNew } from '../interfaces';
+import { FlexCardAssessmentInfo, LWCAssessmentInfo, nameLocation, oldNew } from '../interfaces';
 import { CTASummary } from '../reportGenerator/reportInterfaces';
 import {
   IPAssessmentInfo,
@@ -68,7 +68,9 @@ export class reportingHelper {
       | OSAssessmentInfo
       | DataRaptorAssessmentInfo
       | ApexAssessmentInfo
+      | LWCAssessmentInfo
       | GlobalAutoNumberAssessmentInfo
+      | FlexCardAssessmentInfo
     >
   ): CTASummary[] {
     const callToAction = [];
