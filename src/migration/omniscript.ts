@@ -1142,8 +1142,9 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
             }
           }
 
-          let finalKey = `${oldrecord[this.namespacePrefix + 'Type__c']}${oldrecord[this.namespacePrefix + 'SubType__c']
-            }${oldrecord[this.namespacePrefix + 'Language__c']}`;
+          let finalKey = `${oldrecord[this.namespacePrefix + 'Type__c']}${
+            oldrecord[this.namespacePrefix + 'SubType__c']
+          }${this.cleanLanguageName(oldrecord[this.namespacePrefix + 'Language__c'])}`;
 
           finalKey = finalKey.toLowerCase();
           if (storage.osStorage.has(finalKey)) {
