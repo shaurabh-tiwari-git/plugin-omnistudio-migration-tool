@@ -188,5 +188,6 @@
   "apexFileAlreadyHasCallMethod": "File %s already has call method, thus keeping the existing call method intact",
   "errorFetchingCustomLabels": "Error fetching custom labels: %s",
   "customLabelAssessmentSummary": "Custom Label with same name and different value is already exist without namespace.",
-  "generatedCustomLabelAssessmentReportPage": "Generated custom label assessment report page %s of %s with %s labels"
+  "generatedCustomLabelAssessmentReportPage": "Generated custom label assessment report page %s of %s with %s labels",
+  "manualDeploymentSteps": "<a href='%s' target='_blank'>Please refer to this documentation for manual deployment process</a>"
 }
