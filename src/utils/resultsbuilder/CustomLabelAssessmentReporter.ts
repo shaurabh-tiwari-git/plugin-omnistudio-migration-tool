@@ -69,15 +69,29 @@ export class CustomLabelAssessmentReporter {
 
   public static getSummaryData(customLabelAssessmentInfos: CustomLabelAssessmentInfo[]): SummaryItemDetailParam[] {
     const safeCustomLabelInfos = customLabelAssessmentInfos || [];
-    const needManualIntervention = safeCustomLabelInfos.filter(
-      (label) => label.assessmentStatus === 'Need Manual Intervention'
+    const warnings = safeCustomLabelInfos.filter((label) => label.assessmentStatus === 'Warnings').length;
+
+    const needsManualIntervention = safeCustomLabelInfos.filter(
+      (label) => label.assessmentStatus === 'Needs Manual Intervention'
     ).length;
+
+    const failed = safeCustomLabelInfos.filter((label) => label.assessmentStatus === 'Failed').length;
 
     return [
       {
-        name: 'Need Manual Intervention',
-        count: needManualIntervention,
+        name: 'Warnings',
+        count: warnings,
         cssClass: 'text-warning',
+      },
+      {
+        name: 'Needs Manual Intervention',
+        count: needsManualIntervention,
+        cssClass: 'text-error',
+      },
+      {
+        name: 'Failed',
+        count: failed,
+        cssClass: 'text-error',
       },
     ];
   }
@@ -137,7 +151,7 @@ export class CustomLabelAssessmentReporter {
             false,
             undefined,
             undefined,
-            info.assessmentStatus === 'Need Manual Intervention' ? 'text-error' : 'text-success'
+            this.getStatusCssClass(info.assessmentStatus)
           ),
           createRowDataParam('summary', info.summary || '', false, 1, 1, false, undefined, undefined, undefined, true),
         ],
@@ -211,8 +225,28 @@ export class CustomLabelAssessmentReporter {
       {
         label: 'Assessment Status',
         key: 'assessmentStatus',
-        filters: [{ label: 'Can be Automated' }, { label: 'Need Manual Intervention' }],
+        filters: [
+          { label: 'Ready for migration' },
+          { label: 'Needs Manual Intervention' },
+          { label: 'Warnings' },
+          { label: 'Failed' },
+        ],
       },
     ];
+  }
+
+  private static getStatusCssClass(status: string): string {
+    switch (status) {
+      case 'Warnings':
+        return 'text-warning';
+      case 'Needs Manual Intervention':
+        return 'text-error';
+      case 'Failed':
+        return 'text-error';
+      case 'Ready for migration':
+        return 'text-success';
+      default:
+        return 'text-success';
+    }
   }
 }

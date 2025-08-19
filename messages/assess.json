@@ -101,7 +101,7 @@
   "integrationProcedureManualUpdateMessage": "Integration Procedure reference %s may need manual updates after migration.",
   "duplicateCardNameMessage": "Potential duplicate: Another card has the same name %s after name cleaning. This may cause conflicts during migration",
   "startingCustomLabelAssessment": "Starting Custom Label assessment",
-  "assessedCustomLabelsCount": "Assessed %s Custom Labels",
+  "assessedCustomLabelsCount": "Found %s labels that need attention out of %s total",
   "customLabelAssessmentCompleted": "Custom Label assessment completed",
   "errorDuringCustomLabelAssessment": "Error during Custom Label assessment: %s",
   "duplicateGlobalAutoNumberNameMessage": "Potential duplicate: Another Global Auto Number has the same name %s after name cleaning. This may cause conflicts during migration",
@@ -194,6 +194,9 @@
   "apexFileAlreadyHasCallMethod": "File %s already has call method, thus keeping the existing call method intact",
   "errorFetchingCustomLabels": "Error fetching custom labels: %s",
   "customLabelAssessmentSummary": "Custom Label with same name and different value is already exist without namespace.",
+  "customLabelWarningSummary": "Custom Label has potential conflicts that need review.",
+  "customLabelFailedSummary": "Custom Label assessment failed due to errors.",
+  "customLabelNeedsManualInterventionSummary": "Custom Label requires manual intervention for resolution.",
   "generatedCustomLabelAssessmentReportPage": "Generated custom label assessment report page %s of %s with %s labels",
   "manualDeploymentSteps": "<a href='%s' target='_blank'>Please refer to this documentation for manual deployment process</a>"
 }
