@@ -110,6 +110,7 @@
   "apexFileChangesIdentifiedNotApplied": "Changes identified for Apex class %s but not applied (assessment mode)",
   "apexFileHasMultipleInterfaces": "File %s has multiple interfaces including Callable, standardizing to System.Callable only",
   "apexFileImplementsVlocityOpenInterface2": "File %s implements VlocityOpenInterface2, replacing with System.Callable",
+  "apexFileImplementsVlocityOpenInterface": "File %s implements VlocityOpenInterface, replacing with System.Callable",
   "errorParsingHtmlTemplate": "Error while parsing template",
   "errorParsingData": "Error while parsing data for template",
   "errorGeneratingHTML": "Error while generating HTML from template for %s with properties %s",

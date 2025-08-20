@@ -1,4 +1,5 @@
 import { Messages } from '@salesforce/core';
+import * as shell from 'shelljs';
 import { Logger } from '../../logger';
 import { cli } from '../../shell/cli';
 
@@ -13,8 +14,8 @@ export class sfProject {
     Logger.log(messages.getMessage('projectCreated', [name]));
   }
 
-  public static retrieve(metadataName: string, username: string, projectPath: string): void {
-    Logger.log(messages.getMessage('retrievingMetadata', [metadataName, projectPath]));
+  public static retrieve(metadataName: string, username: string): void {
+    Logger.log(messages.getMessage('retrievingMetadata', [metadataName, shell.pwd().toString()]));
     const cmd = `sf project retrieve start --metadata ${metadataName} --target-org ${username}`;
     sfProject.executeCommand(cmd);
     Logger.log(messages.getMessage('metadataRetrieved', [metadataName, username]));

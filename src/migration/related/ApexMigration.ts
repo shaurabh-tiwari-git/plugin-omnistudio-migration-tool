@@ -74,7 +74,7 @@ export class ApexMigration extends BaseRelatedObjectMigration {
     Logger.logVerbose(assessMessages.getMessage('startingApexAssessment', [this.projectPath]));
     const pwd = shell.pwd();
     shell.cd(this.projectPath);
-    sfProject.retrieve(APEXCLASS, this.org.getUsername(), this.projectPath);
+    sfProject.retrieve(APEXCLASS, this.org.getUsername());
     Logger.info(assessMessages.getMessage('processingApexFilesForAssessment'));
     const apexAssessmentInfos = this.processApexFiles(this.projectPath, 'assessment');
     Logger.info(assessMessages.getMessage('successfullyProcessedApexFilesForAssessment', [apexAssessmentInfos.length]));
