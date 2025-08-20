@@ -191,7 +191,10 @@ export class ApexMigration extends BaseRelatedObjectMigration {
       tokenUpdates.push(new RangeTokenUpdate(CALLABLE, tokens[0], tokens[1]));
       tokenUpdates.push(new InsertAfterTokenUpdate(this.callMethodBody(), parser.classDeclaration));
     } else if (implementsInterface.has(this.vlocityOpenInterface)) {
-      Logger.error(assessMessages.getMessage('fileImplementsVlocityOpenInterface', [file.name]));
+      Logger.logger.info(assessMessages.getMessage('apexFileImplementsVlocityOpenInterface', [file.name]));
+      const tokens = implementsInterface.get(this.vlocityOpenInterface);
+      tokenUpdates.push(new RangeTokenUpdate(CALLABLE, tokens[0], tokens[1]));
+      tokenUpdates.push(new InsertAfterTokenUpdate(this.callMethodBody(), parser.classDeclaration));
     }
     return tokenUpdates;
   }
