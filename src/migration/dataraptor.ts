@@ -164,7 +164,13 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
       }
 
       if (transformedDataRaptor['Name'] && /^[0-9]/.test(transformedDataRaptor['Name'])) {
-        this.setRecordErrors(dr, this.messages.getMessage('dataMapperNameStartsWithNumber', [transformedDataRaptor['Name'], 'DM' + transformedDataRaptor['Name']]));
+        this.setRecordErrors(
+          dr,
+          this.messages.getMessage('dataMapperNameStartsWithNumber', [
+            transformedDataRaptor['Name'],
+            'DM' + transformedDataRaptor['Name'],
+          ])
+        );
         originalDrRecords.set(recordId, dr);
         continue;
       }
