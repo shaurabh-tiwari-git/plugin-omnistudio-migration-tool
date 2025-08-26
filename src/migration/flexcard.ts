@@ -89,6 +89,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   async migrate(): Promise<MigrationResult[]> {
     // Get All the Active VlocityCard__c records
     const allCards = await this.getAllActiveCards();
+
     Logger.log(this.messages.getMessage('foundFlexCardsToMigrate', [allCards.length]));
 
     // Filter out FlexCards with Angular OmniScript dependencies
@@ -1041,6 +1042,8 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       mappedObject[CardMappings.Datasource__c] = JSON.stringify(datasource);
     }
 
+    this.ensureCommunityTargets(mappedObject);
+
     // Update all dependencies comprehensively
     this.updateAllDependenciesWithRegistry(mappedObject, invalidIpNames);
 
@@ -1531,5 +1534,43 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     }
 
     return false;
+  }
+
+  /**
+   * Ensures that the FlexCard Definition includes required Lightning Community targets
+   * Adds "lightningCommunity__Page" and "lightningCommunity__Default" if missing
+   */
+  private ensureCommunityTargets(mappedObject: any): void {
+    const definition = JSON.parse(mappedObject[CardMappings.Definition__c] || '{}');
+
+    if (!definition || !definition.xmlObject) {
+      return;
+    }
+
+    // Initialize targets structure if it doesn't exist
+    if (!definition.xmlObject.targets) {
+      definition.xmlObject.targets = { target: [] };
+    }
+
+    // Ensure target is an array
+    // This also does not seem to be correct and may not be needed as the specified json structure would exist already
+    if (!Array.isArray(definition.xmlObject.targets.target)) {
+      definition.xmlObject.targets.target = [definition.xmlObject.targets.target];
+    }
+
+    const requiredTargets = ['lightningCommunity__Page', 'lightningCommunity__Default'];
+    const currentTargets = definition.xmlObject.targets.target;
+
+    // Add missing community targets
+    for (const requiredTarget of requiredTargets) {
+      if (!currentTargets.includes(requiredTarget)) {
+        currentTargets.push(requiredTarget);
+      }
+    }
+
+    Logger.logVerbose(`Targets processed`);
+
+    // Save the updated definition back to the mappedObject
+    mappedObject[CardMappings.Definition__c] = JSON.stringify(definition);
   }
 }
