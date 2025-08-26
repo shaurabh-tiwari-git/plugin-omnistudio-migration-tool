@@ -1753,6 +1753,12 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         propSetMap.integrationProcedureKey = this.nameRegistry.getIntegrationProcedureCleanedName(key);
       } else {
         const parts = key.split('_');
+        // Integration Procedures should have Type_SubType format (2 parts)
+        if (parts.length > 2) {
+          Logger.logVerbose(this.messages.getMessage('integrationProcedureInvalidUnderscoreFormat', [key]));
+          return;
+        }
+
         propSetMap.integrationProcedureKey = parts.map((p) => this.cleanName(p, true)).join('_');
       }
     }
@@ -1787,9 +1793,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
     if (this.nameRegistry.isAngularOmniScript(fullOmniScriptName)) {
       // Keep original reference as-is since Angular OmniScript won't be migrated
-      propSetMap['Type'] = osType;
-      propSetMap['Sub Type'] = osSubType;
-      propSetMap['Language'] = osLanguage;
+      return;
     } else if (this.nameRegistry.hasOmniScriptMapping(fullOmniScriptName)) {
       // Registry has mapping for this LWC OmniScript - extract cleaned parts
       const cleanedFullName = this.nameRegistry.getCleanedName(fullOmniScriptName, 'OmniScript');
@@ -1815,17 +1819,8 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
    * @param propSetMap Property set map from the element
    */
   private processStepAction(propSetMap: any): void {
-    // Handle remoteClass - typically references Apex classes
-    if (propSetMap.remoteClass && propSetMap.remoteClass.trim()) {
-      propSetMap.remoteClass = this.cleanName(propSetMap.remoteClass);
-    }
-
-    // Handle remoteMethod - typically references Apex methods
-    if (propSetMap.remoteMethod && propSetMap.remoteMethod.trim()) {
-      propSetMap.remoteMethod = this.cleanName(propSetMap.remoteMethod);
-    }
-
     // Handle remoteOptions pre/post transform bundles if they exist in Step elements
+    // Note: remoteClass and remoteMethod cleaning is not required for omniscript content step dependencies
     if (propSetMap.remoteOptions) {
       if (propSetMap.remoteOptions.preTransformBundle) {
         const bundleName = propSetMap.remoteOptions.preTransformBundle;

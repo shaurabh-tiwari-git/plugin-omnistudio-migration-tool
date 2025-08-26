@@ -161,6 +161,25 @@ describe('OmniScript Content Processing - Comprehensive Tests', () => {
 
       expect(propSetMap.integrationProcedureKey).to.equal('CustomerAPI_DataProcessorCleaned');
     });
+
+    it('should skip processing when integrationProcedureKey contains underscores (more than 2 parts)', () => {
+      const propSetMap = {
+        integrationProcedureKey: 'Complex_Integration_Procedure_With_Underscores',
+        label: 'Test IP Action',
+        timeout: 30000,
+      };
+
+      const originalKey = propSetMap.integrationProcedureKey;
+      const originalLabel = propSetMap.label;
+      const originalTimeout = propSetMap.timeout;
+
+      // Should skip processing and leave values unchanged
+      (omniScriptTool as any).processIntegrationProcedureAction(propSetMap);
+
+      expect(propSetMap.integrationProcedureKey).to.equal(originalKey);
+      expect(propSetMap.label).to.equal(originalLabel);
+      expect(propSetMap.timeout).to.equal(originalTimeout);
+    });
   });
 
   describe('DataRaptor Action Processing', () => {
@@ -276,22 +295,6 @@ describe('OmniScript Content Processing - Comprehensive Tests', () => {
   });
 
   describe('Step Action Processing', () => {
-    it('should clean remoteClass and remoteMethod', () => {
-      const propSetMap = {
-        label: 'Step 1',
-        remoteClass: 'MyCustom-Apex Class_Name',
-        remoteMethod: 'processData_Method Name',
-        validationRequired: true,
-      };
-
-      (omniScriptTool as any).processStepAction(propSetMap);
-
-      expect(propSetMap.remoteClass).to.equal('MyCustomApexClassName');
-      expect(propSetMap.remoteMethod).to.equal('processDataMethodName');
-      expect(propSetMap.label).to.equal('Step 1');
-      expect(propSetMap.validationRequired).to.equal(true);
-    });
-
     it('should handle remoteOptions transform bundles with registry mapping', () => {
       const propSetMap = {
         remoteOptions: {
@@ -333,6 +336,7 @@ describe('OmniScript Content Processing - Comprehensive Tests', () => {
       }).to.not.throw();
 
       expect(propSetMap.label).to.equal('Test Step');
+      // remoteClass and remoteMethod should remain unchanged (no cleaning)
       expect(propSetMap.remoteClass).to.equal('');
       expect(propSetMap.remoteMethod).to.equal(null);
     });
@@ -389,7 +393,7 @@ describe('OmniScript Content Processing - Comprehensive Tests', () => {
       expect(children[2].propSetMap['Sub Type']).to.equal('ProfileCleaned');
 
       // Verify Step Action
-      expect(children[3].propSetMap.remoteClass).to.equal('DataProcessorClass');
+      expect(children[3].propSetMap.remoteClass).to.equal('Data-Processor Class');
       expect(children[3].propSetMap.label).to.equal('Processing Step');
     });
 
@@ -439,7 +443,7 @@ describe('OmniScript Content Processing - Comprehensive Tests', () => {
       (omniScriptTool as any).processContentChildren(children);
 
       // Verify Step processing
-      expect(children[0].propSetMap.remoteClass).to.equal('StepHandlerClass');
+      expect(children[0].propSetMap.remoteClass).to.equal('Step-Handler Class');
 
       // Verify first nested eleArray
       const firstEleArray = children[0].children[0].eleArray;
@@ -481,7 +485,7 @@ describe('OmniScript Content Processing - Comprehensive Tests', () => {
         (omniScriptTool as any).processContentChildren(children);
       }).to.not.throw();
 
-      expect(children[0].children[0].eleArray[0].propSetMap.remoteClass).to.equal('InnerStepHandler');
+      expect(children[0].children[0].eleArray[0].propSetMap.remoteClass).to.equal('Inner-Step Handler');
     });
   });
 
@@ -679,7 +683,7 @@ describe('OmniScript Content Processing - Comprehensive Tests', () => {
         'CustomerDataLoaderCleaned'
       );
       expect(processedContent.children[1].propSetMap.bundle).to.equal('AccountDetailsExtract');
-      expect(processedContent.children[2].propSetMap.remoteClass).to.equal('StepHandler');
+      expect(processedContent.children[2].propSetMap.remoteClass).to.equal('Step-Handler');
 
       // Verify nested elements processed
       const nestedElement = processedContent.children[2].children[0].eleArray[0];

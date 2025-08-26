@@ -211,6 +211,7 @@
   "startingComponentPreProcessing": "Pre-processing components for name mapping",
   "completeComponentMappingMessage": "Registered name mappings for %s components",
   "componentMappingNotFound": "No registry mapping found for %s component: %s, using fallback cleaning",
+  "integrationProcedureInvalidUnderscoreFormat": "Integration Procedure reference '%s' contains underscores in Type/SubType names. Skipping reference update to avoid incorrect parsing.",
   "flexCardWithAngularOmniScriptWarning": "FlexCard has dependencies on Angular Omniscript(s) which are not migrated. Please convert Omniscript(s) to LWC before migrating this FlexCard.",
   "angularOmniScriptDependencyWarning": "Element '%s' references Angular Omniscript '%s' which will not be migrated. Consider converting the referenced Omniscript to LWC",
   "skipFlexcardAngularOmniScriptDependencyWarning": "Skipping FlexCard %s due to Angular Omniscript dependencies",
