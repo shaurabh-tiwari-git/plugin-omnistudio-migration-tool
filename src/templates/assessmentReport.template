@@ -39,7 +39,6 @@
           <div class="report-page-header">
             <div class="slds-text-heading_large">
               <span>{{heading}}</span>
-              <span>&nbsp;Assessment Report</span>
             </div>
           </div>
 

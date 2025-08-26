@@ -302,7 +302,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     }
     if (existingDataRaptorNames.has(existingDRNameVal.cleanName())) {
       warnings.push(this.messages.getMessage('duplicatedName') + '  ' + existingDRNameVal.cleanName());
-      assessmentStatus = 'Need Manual Intervention';
+      assessmentStatus = 'Needs Manual Intervention';
     } else {
       existingDataRaptorNames.add(existingDRNameVal.cleanName());
     }
