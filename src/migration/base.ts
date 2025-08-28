@@ -8,7 +8,12 @@ import { Logger } from '../utils/logger';
 import { TransformData, UploadRecordResult } from './interfaces';
 import { NameMappingRegistry } from './NameMappingRegistry';
 
-export type ComponentType = 'DataMappers' | 'Flexcards' | 'Omniscripts' | 'Integration Procedures' | 'GlobalAutoNumber';
+export type ComponentType =
+  | 'Data Mappers'
+  | 'Flexcards'
+  | 'Omniscripts'
+  | 'Integration Procedures'
+  | 'GlobalAutoNumber';
 export type RelatedObjectType = 'Flexipage' | 'ExperienceSites' | 'Lightning Web Components' | 'Apex Classes';
 
 /**

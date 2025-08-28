@@ -404,7 +404,7 @@ export default class Migrate extends OmniStudioBaseCommand {
 
   /**
    * Get migration objects in the correct dependency order:
-   * 1. DataMappers (lowest dependencies)
+   * 1. Data Mappers (lowest dependencies)
    * 2. Integration Procedures/ OmniScripts
    * 3. FlexCards (highest dependencies)
    * 4. GlobalAutoNumbers (independent)

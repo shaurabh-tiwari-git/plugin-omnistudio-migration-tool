@@ -534,7 +534,9 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     }
     if (!existingSubTypeVal.isNameCleaned()) {
       if (omniProcessType === 'Integration Procedure' && (!newSubType || newSubType.trim() === '')) {
-        warnings.push(this.messages.getMessage('integrationProcedureSubtypeEmptyAfterCleaning', [existingSubTypeVal.val]));
+        warnings.push(
+          this.messages.getMessage('integrationProcedureSubtypeEmptyAfterCleaning', [existingSubTypeVal.val])
+        );
         assessmentStatus = 'Needs Manual Intervention';
       } else {
         warnings.push(
@@ -871,7 +873,10 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         const originalType = omniscript[this.namespacePrefix + 'Type__c'];
         const originalSubType = omniscript[this.namespacePrefix + 'SubType__c'];
 
-        if (!mappedOmniScript[OmniScriptMappings.Type__c] || mappedOmniScript[OmniScriptMappings.Type__c].trim() === '') {
+        if (
+          !mappedOmniScript[OmniScriptMappings.Type__c] ||
+          mappedOmniScript[OmniScriptMappings.Type__c].trim() === ''
+        ) {
           const skippedResponse: UploadRecordResult = {
             referenceId: recordId,
             id: '',
@@ -887,7 +892,10 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           continue;
         }
 
-        if (!mappedOmniScript[OmniScriptMappings.SubType__c] || mappedOmniScript[OmniScriptMappings.SubType__c].trim() === '') {
+        if (
+          !mappedOmniScript[OmniScriptMappings.SubType__c] ||
+          mappedOmniScript[OmniScriptMappings.SubType__c].trim() === ''
+        ) {
           const skippedResponse: UploadRecordResult = {
             referenceId: recordId,
             id: '',
@@ -957,13 +965,17 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         mappedOmniScript
       );
 
+      if (!osUploadResponse?.success) {
+        osUploadResponse.errors = Array.isArray(osUploadResponse.errors)
+          ? osUploadResponse.errors
+          : [osUploadResponse.errors];
+
+        osUploadInfo.set(recordId, osUploadResponse);
+        continue;
+      }
+
       if (osUploadResponse.success) {
         // Fix errors
-        if (!osUploadResponse.success) {
-          osUploadResponse.errors = Array.isArray(osUploadResponse.errors)
-            ? osUploadResponse.errors
-            : [osUploadResponse.errors];
-        }
 
         osUploadResponse.warnings = osUploadResponse.warnings || [];
         osUploadResponse.type = mappedOmniScript[OmniScriptMappings.Type__c];
