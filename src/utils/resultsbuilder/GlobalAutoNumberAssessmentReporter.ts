@@ -23,7 +23,7 @@ export class GlobalAutoNumberAssessmentReporter {
     Logger.captureVerboseData('GAN data', globalAutoNumberAssessmentInfos);
     return {
       title: 'Omni Global Auto Numbers Assessment Report',
-heading: 'Omni Global Auto Numbers Assessment Report',
+      heading: 'Omni Global Auto Numbers Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
       assessmentDate: new Date().toLocaleString(),
       total: globalAutoNumberAssessmentInfos?.length || 0,

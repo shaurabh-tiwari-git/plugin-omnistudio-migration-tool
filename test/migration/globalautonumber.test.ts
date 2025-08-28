@@ -73,7 +73,7 @@ describe('GlobalAutoNumberMigrationTool', () => {
   describe('getName', () => {
     it('should return correct name', () => {
       const result = globalAutoNumberMigrationTool.getName();
-      expect(result).to.equal('GlobalAutoNumber');
+      expect(result).to.equal('Omni Global Auto Number');
     });
   });
 
@@ -255,7 +255,7 @@ describe('GlobalAutoNumberMigrationTool', () => {
 
       // Assert
       expect(result).to.be.an('array').with.length(1);
-      expect(result[0].name).to.equal('GlobalAutoNumber');
+      expect(result[0].name).to.equal('Omni Global Auto Number');
       expect(result[0].results.size).to.equal(1);
     });
 
@@ -346,7 +346,7 @@ describe('GlobalAutoNumberMigrationTool', () => {
 
       // Assert
       expect(result).to.be.an('array').with.length(1);
-      expect(result[0].name).to.equal('GlobalAutoNumber');
+      expect(result[0].name).to.equal('Omni Global Auto Number');
       expect(result[0].results.size).to.equal(2);
     });
 
