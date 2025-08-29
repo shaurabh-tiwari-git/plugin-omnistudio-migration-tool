@@ -974,7 +974,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         continue;
       }
 
-      if (osUploadResponse.success) {
+      if (osUploadResponse?.success) {
         // Fix errors
 
         osUploadResponse.warnings = osUploadResponse.warnings || [];
