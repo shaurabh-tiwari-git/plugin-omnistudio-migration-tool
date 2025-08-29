@@ -7,7 +7,8 @@
     "omnistudio:migration:migrate -u orguser@domain.com  --only=fc",
     "omnistudio:migration:migrate -u orguser@domain.com  --only=autonumber",
     "omnistudio:migration:migrate -u orguser@domain.com  --only=cl",
-    "omnistudio:migration:migrate -u orguser@domain.com  -r apex,lwc",
+    "omnistudio:migration:migrate -u orguser@domain.com  --relatedobjects apex,lwc,flexipage,expsites",
+    "omnistudio:migration:migrate -u orguser@domain.com  -r apex,lwc,flexipage,expsites",
     "omnistudio:migration:migrate -u orguser@domain.com  -r apex",
     "omnistudio:migration:migrate -u orguser@domain.com  -r lwc"
   ],
