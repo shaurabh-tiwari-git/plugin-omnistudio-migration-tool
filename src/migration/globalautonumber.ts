@@ -208,7 +208,7 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
       this.messages.getMessage('foundGlobalAutoNumbersToMigrate', [this.globalAutoNumberSettings.length])
     );
 
-    const progressBar = createProgressBar('Migrating', 'GlobalAutoNumber');
+    const progressBar = createProgressBar('Migrating', 'Omni Global Auto Numbers');
     progressBar.start(this.globalAutoNumberSettings.length, progressCounter);
 
     for (let autonumber of this.globalAutoNumberSettings) {
@@ -293,7 +293,7 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
   ): Promise<GlobalAutoNumberAssessmentInfo[]> {
     const globalAutoNumberAssessmentInfos: GlobalAutoNumberAssessmentInfo[] = [];
     let progressCounter = 0;
-    const progressBar = createProgressBar('Assessing', 'GlobalAutoNumber');
+    const progressBar = createProgressBar('Assessing', 'Omni Global Auto Numbers');
     progressBar.start(globalAutoNumbers.length, progressCounter);
     const uniqueNames = new Set<string>();
 

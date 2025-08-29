@@ -13,7 +13,7 @@ export type ComponentType =
   | 'Flexcards'
   | 'Omniscripts'
   | 'Integration Procedures'
-  | 'GlobalAutoNumber';
+  | 'Omni Global Auto Numbers';
 export type RelatedObjectType = 'Flexipage' | 'ExperienceSites' | 'Lightning Web Components' | 'Apex Classes';
 
 /**
