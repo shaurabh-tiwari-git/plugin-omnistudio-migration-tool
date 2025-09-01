@@ -18,7 +18,7 @@ import { DRAssessmentReporter } from './DRAssessmentReporter';
 import { FlexcardAssessmentReporter } from './FlexcardAssessmentReporter';
 
 export class AssessmentReporter {
-  private static basePath = path.join(process.cwd(), 'assessment_reports');
+  private static basePath = path.join(process.cwd(), Constants.AssessmentReportsFolderName);
   private static omniscriptAssessmentFileName = 'omniscript_assessment.html';
   private static flexcardAssessmentFileName = 'flexcard_assessment.html';
   private static integrationProcedureAssessmentFileName = 'integration_procedure_assessment.html';

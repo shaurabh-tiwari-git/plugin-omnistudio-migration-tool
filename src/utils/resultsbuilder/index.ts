@@ -13,7 +13,7 @@ import { Logger } from '../logger';
 import { getMigrationHeading } from '../stringUtils';
 import { Constants } from '../constants/stringContants';
 import { reportingHelper } from './reportingHelper';
-const resultsDir = path.join(process.cwd(), 'migration_report');
+const resultsDir = path.join(process.cwd(), Constants.MigrationReportsFolderName);
 // const lwcConstants = { componentName: 'lwc', title: 'LWC Components Migration Result' };
 const migrationReportHTMLfileName = 'dashboard.html';
 const templateDir = 'templates';

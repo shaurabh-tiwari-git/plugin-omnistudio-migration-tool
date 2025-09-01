@@ -202,7 +202,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     Logger.log(
       messages.getMessage('migrationSuccessfulMessage', [
         orgs.orgDetails?.Id,
-        path.join(process.cwd(), 'migration_report'),
+        path.join(process.cwd(), Constants.MigrationReportsFolderName),
       ])
     );
     // Return results needed for --json flag
