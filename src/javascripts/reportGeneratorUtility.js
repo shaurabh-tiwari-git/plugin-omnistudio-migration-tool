@@ -195,6 +195,9 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll(`.${className}`).forEach((r) => {
         r.classList.remove('highlight');
       });
+    });
+  });
+
   // Attach filter dropdown event listeners after DOM is loaded
   // Close panel and filter dropdown on escape key
   document.addEventListener('keydown', function (event) {

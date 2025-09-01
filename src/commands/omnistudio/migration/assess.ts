@@ -210,7 +210,7 @@ export default class Assess extends OmniStudioBaseCommand {
     Logger.log(
       messages.getMessage('assessmentSuccessfulMessage', [
         orgs.orgDetails?.Id,
-        path.join(process.cwd(), 'assessment_reports'),
+        path.join(process.cwd(), Constants.AssessmentReportsFolderName),
       ])
     );
 
