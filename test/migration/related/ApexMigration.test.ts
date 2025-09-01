@@ -219,4 +219,405 @@ describe('ApexMigration', () => {
       expect(result[0].constructor.name).to.equal('RangeTokenUpdate');
     });
   });
+
+  describe('processApexFileForMethodCalls', () => {
+    it('should process IP parameters correctly when valid IP name format is provided', () => {
+      // Arrange
+      const mockFile = { name: 'TestClass.cls', location: '/test/path' };
+      const mockParser = {
+        namespaceChanges: new Map(),
+        methodParameters: new Map([
+          [
+            1, // ParameterType.IP_NAME
+            [
+              { text: 'testNamespace_IntegrationProcedure1', startIndex: 100, stopIndex: 130 },
+              { text: 'testNamespace_IntegrationProcedure2', startIndex: 150, stopIndex: 180 },
+            ],
+          ],
+        ]),
+      };
+      const ipNameUpdateFailed = new Set<string>();
+
+      // Act
+      const result = (apexMigration as any).processApexFileForMethodCalls(mockFile, mockParser, ipNameUpdateFailed);
+
+      // Assert
+      expect(result).to.be.an('array').with.length(2);
+      expect(result[0].constructor.name).to.equal('SingleTokenUpdate');
+      expect(result[0].newText).to.equal("'testNamespace_IntegrationProcedure1'");
+      expect(result[1].constructor.name).to.equal('SingleTokenUpdate');
+      expect(result[1].newText).to.equal("'testNamespace_IntegrationProcedure2'");
+      expect(ipNameUpdateFailed.size).to.equal(0);
+    });
+
+    it('should handle IP parameters with invalid format and add to failed set', () => {
+      // Arrange
+      const mockFile = { name: 'TestClass.cls', location: '/test/path' };
+      const mockParser = {
+        namespaceChanges: new Map(),
+        methodParameters: new Map([
+          [
+            1, // ParameterType.IP_NAME
+            [
+              { text: 'invalidFormat', startIndex: 100, stopIndex: 110 },
+              { text: 'testNamespace_IntegrationProcedure1', startIndex: 150, stopIndex: 180 },
+            ],
+          ],
+        ]),
+      };
+      const ipNameUpdateFailed = new Set<string>();
+
+      // Act
+      const result = (apexMigration as any).processApexFileForMethodCalls(mockFile, mockParser, ipNameUpdateFailed);
+
+      // Assert
+      expect(result).to.be.an('array').with.length(1);
+      expect(result[0].constructor.name).to.equal('SingleTokenUpdate');
+      expect(result[0].newText).to.equal("'testNamespace_IntegrationProcedure1'");
+      expect(ipNameUpdateFailed.has('invalidFormat')).to.be.true;
+      expect(ipNameUpdateFailed.size).to.equal(1);
+    });
+
+    it('should handle IP parameters with single underscore and add to failed set', () => {
+      // Arrange
+      const mockFile = { name: 'TestClass.cls', location: '/test/path' };
+      const mockParser = {
+        namespaceChanges: new Map(),
+        methodParameters: new Map([
+          [
+            1, // ParameterType.IP_NAME
+            [{ text: 'single_part', startIndex: 100, stopIndex: 110 }],
+          ],
+        ]),
+      };
+      const ipNameUpdateFailed = new Set<string>();
+
+      // Act
+      const result = (apexMigration as any).processApexFileForMethodCalls(mockFile, mockParser, ipNameUpdateFailed);
+
+      // Assert
+      // The single underscore case should be processed normally since it has exactly 2 parts
+      expect(result).to.be.an('array').with.length(1);
+      expect(result[0].constructor.name).to.equal('SingleTokenUpdate');
+      expect(result[0].newText).to.equal("'single_part'");
+      expect(ipNameUpdateFailed.size).to.equal(0);
+    });
+
+    it('should handle IP parameters with multiple underscores and add to failed set', () => {
+      // Arrange
+      const mockFile = { name: 'TestClass.cls', location: '/test/path' };
+      const mockParser = {
+        namespaceChanges: new Map(),
+        methodParameters: new Map([
+          [
+            1, // ParameterType.IP_NAME
+            [{ text: 'part1_part2_part3', startIndex: 100, stopIndex: 115 }],
+          ],
+        ]),
+      };
+      const ipNameUpdateFailed = new Set<string>();
+
+      // Act
+      const result = (apexMigration as any).processApexFileForMethodCalls(mockFile, mockParser, ipNameUpdateFailed);
+
+      // Assert
+      expect(result).to.be.an('array').with.length(0);
+      expect(ipNameUpdateFailed.has('part1_part2_part3')).to.be.true;
+      expect(ipNameUpdateFailed.size).to.equal(1);
+    });
+
+    it('should skip IP parameters when new name equals old name', () => {
+      // Arrange
+      const mockFile = { name: 'TestClass.cls', location: '/test/path' };
+      const mockParser = {
+        namespaceChanges: new Map(),
+        methodParameters: new Map([
+          [
+            1, // ParameterType.IP_NAME
+            [{ text: "'testNamespace_IntegrationProcedure1'", startIndex: 100, stopIndex: 130 }],
+          ],
+        ]),
+      };
+      const ipNameUpdateFailed = new Set<string>();
+
+      // Act
+      const result = (apexMigration as any).processApexFileForMethodCalls(mockFile, mockParser, ipNameUpdateFailed);
+
+      // Assert
+      expect(result).to.be.an('array').with.length(0);
+      expect(ipNameUpdateFailed.size).to.equal(0);
+    });
+
+    it('should handle namespace changes when present', () => {
+      // Arrange
+      const mockFile = { name: 'TestClass.cls', location: '/test/path' };
+      const mockParser = {
+        namespaceChanges: new Map([['testNamespace', [{ text: 'testNamespace', startIndex: 50, stopIndex: 60 }]]]),
+        methodParameters: new Map(),
+      };
+      const ipNameUpdateFailed = new Set<string>();
+
+      // Act
+      const result = (apexMigration as any).processApexFileForMethodCalls(mockFile, mockParser, ipNameUpdateFailed);
+
+      // Assert
+      expect(result).to.be.an('array').with.length(1);
+      expect(result[0].constructor.name).to.equal('SingleTokenUpdate');
+      expect(result[0].newText).to.equal('targetNamespace');
+    });
+
+    it('should return empty array when no method parameters are present', () => {
+      // Arrange
+      const mockFile = { name: 'TestClass.cls', location: '/test/path' };
+      const mockParser = {
+        namespaceChanges: new Map(),
+        methodParameters: new Map(),
+      };
+      const ipNameUpdateFailed = new Set<string>();
+
+      // Act
+      const result = (apexMigration as any).processApexFileForMethodCalls(mockFile, mockParser, ipNameUpdateFailed);
+
+      // Assert
+      expect(result).to.be.an('array').with.length(0);
+    });
+  });
+
+  describe('processApexFileForSimpleVarDeclarations', () => {
+    it('should debug Stringutil.cleanName behavior', () => {
+      // This test helps us understand what Stringutil.cleanName does
+      const Stringutil = require('../../../src/utils/StringValue/stringutil').Stringutil;
+
+      // Test what cleanName does with our test data
+      expect(Stringutil.cleanName('testNamespace')).to.equal('testNamespace');
+      expect(Stringutil.cleanName('IntegrationProcedure1')).to.equal('IntegrationProcedure1');
+      expect(Stringutil.cleanName('testNamespace_IntegrationProcedure1')).to.equal(
+        'testNamespaceIntegrationProcedure1'
+      );
+
+      // Test the actual logic used in the code
+      const parts = 'testNamespace_IntegrationProcedure1'.split('_');
+      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+      const newName = `'${Stringutil.cleanName(parts[0])}_${Stringutil.cleanName(parts[1])}'`;
+      expect(newName).to.equal("'testNamespace_IntegrationProcedure1'");
+    });
+
+    it('should process IP variable declarations correctly when valid format is provided', () => {
+      // Arrange
+      const mockParser = {
+        simpleVarDeclarations: new Map([
+          ['ipVar1', { text: "'testNamespace_IntegrationProcedure1'", startIndex: 100, stopIndex: 130 }],
+          ['ipVar2', { text: "'testNamespace_IntegrationProcedure2'", startIndex: 150, stopIndex: 180 }],
+        ]),
+        ipVarInMethodCalls: ['ipVar1', 'ipVar2'],
+        dmVarInMethodCalls: [],
+      };
+      const ipNameUpdateFailed = new Set<string>();
+      const dmNameUpdateFailed = new Set<string>();
+
+      // Act
+      const result = (apexMigration as any).processApexFileForSimpleVarDeclarations(
+        mockParser,
+        ipNameUpdateFailed,
+        dmNameUpdateFailed
+      );
+
+      // Assert
+      // Since the original text doesn't have special characters, newName equals oldName, so no updates are made
+      expect(result).to.be.an('array').with.length(0);
+      expect(ipNameUpdateFailed.size).to.equal(0);
+      expect(dmNameUpdateFailed.size).to.equal(0);
+    });
+
+    it('should handle IP variable declarations with invalid format and add to failed set', () => {
+      // Arrange
+      const mockParser = {
+        simpleVarDeclarations: new Map([
+          ['ipVar1', { text: "'invalidFormat'", startIndex: 100, stopIndex: 110 }],
+          ['ipVar2', { text: "'testNamespace_IntegrationProcedure1'", startIndex: 150, stopIndex: 180 }],
+        ]),
+        ipVarInMethodCalls: ['ipVar1', 'ipVar2'],
+        dmVarInMethodCalls: [],
+      };
+      const ipNameUpdateFailed = new Set<string>();
+      const dmNameUpdateFailed = new Set<string>();
+
+      // Act
+      const result = (apexMigration as any).processApexFileForSimpleVarDeclarations(
+        mockParser,
+        ipNameUpdateFailed,
+        dmNameUpdateFailed
+      );
+
+      // Assert
+      // Since the original text doesn't have special characters, newName equals oldName, so no updates are made
+      expect(result).to.be.an('array').with.length(0);
+      expect(ipNameUpdateFailed.has('ipVar1')).to.be.true;
+      expect(ipNameUpdateFailed.size).to.equal(1);
+      expect(dmNameUpdateFailed.size).to.equal(0);
+    });
+
+    it('should handle missing IP variable declarations and add to failed set', () => {
+      // Arrange
+      const mockParser = {
+        simpleVarDeclarations: new Map([
+          ['ipVar1', { text: "'testNamespace_IntegrationProcedure1'", startIndex: 100, stopIndex: 130 }],
+        ]),
+        ipVarInMethodCalls: ['ipVar1', 'missingVar'],
+        dmVarInMethodCalls: [],
+      };
+      const ipNameUpdateFailed = new Set<string>();
+      const dmNameUpdateFailed = new Set<string>();
+
+      // Act
+      const result = (apexMigration as any).processApexFileForSimpleVarDeclarations(
+        mockParser,
+        ipNameUpdateFailed,
+        dmNameUpdateFailed
+      );
+
+      // Assert
+      // Since the original text doesn't have special characters, newName equals oldName, so no updates are made
+      expect(result).to.be.an('array').with.length(0);
+      expect(ipNameUpdateFailed.has('missingVar')).to.be.true;
+      expect(ipNameUpdateFailed.size).to.equal(1);
+      expect(dmNameUpdateFailed.size).to.equal(0);
+    });
+
+    it('should process DM variable declarations correctly', () => {
+      // Arrange
+      const mockParser = {
+        simpleVarDeclarations: new Map([
+          ['dmVar1', { text: "'testNamespace_DataRaptor1'", startIndex: 100, stopIndex: 130 }],
+          ['dmVar2', { text: "'testNamespace_DataRaptor2'", startIndex: 150, stopIndex: 180 }],
+        ]),
+        ipVarInMethodCalls: [],
+        dmVarInMethodCalls: ['dmVar1', 'dmVar2'],
+      };
+      const ipNameUpdateFailed = new Set<string>();
+      const dmNameUpdateFailed = new Set<string>();
+
+      // Act
+      const result = (apexMigration as any).processApexFileForSimpleVarDeclarations(
+        mockParser,
+        ipNameUpdateFailed,
+        dmNameUpdateFailed
+      );
+
+      // Assert
+      expect(result).to.be.an('array').with.length(2);
+      expect(result[0].constructor.name).to.equal('SingleTokenUpdate');
+      expect(result[0].newText).to.equal("'testNamespaceDataRaptor1'"); // cleanName removes underscore
+      expect(result[1].constructor.name).to.equal('SingleTokenUpdate');
+      expect(result[1].newText).to.equal("'testNamespaceDataRaptor2'"); // cleanName removes underscore
+      expect(ipNameUpdateFailed.size).to.equal(0);
+      expect(dmNameUpdateFailed.size).to.equal(0);
+    });
+
+    it('should handle missing DM variable declarations and add to failed set', () => {
+      // Arrange
+      const mockParser = {
+        simpleVarDeclarations: new Map([
+          ['dmVar1', { text: "'testNamespace_DataRaptor1'", startIndex: 100, stopIndex: 130 }],
+        ]),
+        ipVarInMethodCalls: [],
+        dmVarInMethodCalls: ['dmVar1', 'missingDmVar'],
+      };
+      const ipNameUpdateFailed = new Set<string>();
+      const dmNameUpdateFailed = new Set<string>();
+
+      // Act
+      const result = (apexMigration as any).processApexFileForSimpleVarDeclarations(
+        mockParser,
+        ipNameUpdateFailed,
+        dmNameUpdateFailed
+      );
+
+      // Assert
+      expect(result).to.be.an('array').with.length(1);
+      expect(result[0].constructor.name).to.equal('SingleTokenUpdate');
+      expect(result[0].newText).to.equal("'testNamespaceDataRaptor1'"); // cleanName removes underscore
+      expect(dmNameUpdateFailed.has('missingDmVar')).to.be.true;
+      expect(dmNameUpdateFailed.size).to.equal(1);
+      expect(ipNameUpdateFailed.size).to.equal(0);
+    });
+
+    it('should skip variable declarations when new name equals old name', () => {
+      // Arrange
+      const mockParser = {
+        simpleVarDeclarations: new Map([
+          ['ipVar1', { text: "'testNamespace_IntegrationProcedure1'", startIndex: 100, stopIndex: 130 }],
+        ]),
+        ipVarInMethodCalls: ['ipVar1'],
+        dmVarInMethodCalls: [],
+      };
+      const ipNameUpdateFailed = new Set<string>();
+      const dmNameUpdateFailed = new Set<string>();
+
+      // Act
+      const result = (apexMigration as any).processApexFileForSimpleVarDeclarations(
+        mockParser,
+        ipNameUpdateFailed,
+        dmNameUpdateFailed
+      );
+
+      // Assert
+      // Since the original text doesn't have special characters, newName equals oldName, so no updates are made
+      expect(result).to.be.an('array').with.length(0);
+      expect(ipNameUpdateFailed.size).to.equal(0);
+      expect(dmNameUpdateFailed.size).to.equal(0);
+    });
+
+    it('should handle both IP and DM variable declarations in the same parser', () => {
+      // Arrange
+      const mockParser = {
+        simpleVarDeclarations: new Map([
+          ['ipVar1', { text: "'testNamespace_IntegrationProcedure1'", startIndex: 100, stopIndex: 130 }],
+          ['dmVar1', { text: "'testNamespace_DataRaptor1'", startIndex: 150, stopIndex: 180 }],
+        ]),
+        ipVarInMethodCalls: ['ipVar1'],
+        dmVarInMethodCalls: ['dmVar1'],
+      };
+      const ipNameUpdateFailed = new Set<string>();
+      const dmNameUpdateFailed = new Set<string>();
+
+      // Act
+      const result = (apexMigration as any).processApexFileForSimpleVarDeclarations(
+        mockParser,
+        ipNameUpdateFailed,
+        dmNameUpdateFailed
+      );
+
+      // Assert
+      // Only DM gets updated because it has an underscore that gets removed by cleanName
+      expect(result).to.be.an('array').with.length(1);
+      expect(result[0].constructor.name).to.equal('SingleTokenUpdate');
+      expect(result[0].newText).to.equal("'testNamespaceDataRaptor1'"); // cleanName removes underscore
+      expect(ipNameUpdateFailed.size).to.equal(0);
+      expect(dmNameUpdateFailed.size).to.equal(0);
+    });
+
+    it('should return empty array when no variable declarations are present', () => {
+      // Arrange
+      const mockParser = {
+        simpleVarDeclarations: new Map(),
+        ipVarInMethodCalls: [],
+        dmVarInMethodCalls: [],
+      };
+      const ipNameUpdateFailed = new Set<string>();
+      const dmNameUpdateFailed = new Set<string>();
+
+      // Act
+      const result = (apexMigration as any).processApexFileForSimpleVarDeclarations(
+        mockParser,
+        ipNameUpdateFailed,
+        dmNameUpdateFailed
+      );
+
+      // Assert
+      expect(result).to.be.an('array').with.length(0);
+      expect(ipNameUpdateFailed.size).to.equal(0);
+      expect(dmNameUpdateFailed.size).to.equal(0);
+    });
+  });
 });

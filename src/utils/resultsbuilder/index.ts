@@ -728,7 +728,8 @@ export class ResultsBuilder {
               1,
               true,
               fileChangeInfo.path,
-              fileChangeInfo.name
+              fileChangeInfo.name,
+              'normal-td-padding'
             ),
             createRowDataParam(
               'diff',

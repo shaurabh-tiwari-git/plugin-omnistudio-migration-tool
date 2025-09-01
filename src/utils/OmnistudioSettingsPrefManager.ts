@@ -5,7 +5,7 @@ import { MetadataInfo } from './interfaces';
 export class OmnistudioSettingsPrefManager {
   public constructor(private connection: Connection, private messages: Messages) {}
 
-  // Global Auto Number methods
+  // Omni Global Auto Number methods
   public async isGlobalAutoNumberEnabled(): Promise<boolean> {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

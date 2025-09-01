@@ -21,8 +21,8 @@ export class DRAssessmentReporter {
   ): ReportParam {
     Logger.captureVerboseData('DM data', dataRaptorAssessmentInfos);
     return {
-      title: 'DataMappers Assessment Report',
-      heading: 'DataMappers Assessment Report',
+      title: 'Data Mappers Assessment Report',
+      heading: 'Data Mappers Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
       assessmentDate: new Date().toLocaleString(),
       total: dataRaptorAssessmentInfos?.length || 0,

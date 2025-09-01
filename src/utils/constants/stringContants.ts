@@ -20,7 +20,7 @@ export const Constants = {
   IntegrationProcedurePluralName: 'IntegrationProcedures',
   DataRaptorComponentName: 'DataRaptor',
   DataRaptorPluralName: 'DataRaptors',
-  GlobalAutoNumberComponentName: 'GlobalAutoNumber',
+  GlobalAutoNumberComponentName: 'Omni Global Auto Number',
   GlobalAutoNumberPluralName: 'GlobalAutoNumbers',
   ApexRemoteComponentName: 'ApexRemote',
   LWCComponentName: 'Lightning Web Component',

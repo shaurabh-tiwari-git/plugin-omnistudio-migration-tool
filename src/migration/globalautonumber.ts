@@ -63,7 +63,7 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
     // Perform pre-migration checks before migration
     await this.performPreMigrationChecks();
 
-    // Migrate Global Auto Number data
+    // Migrate Omni Global Auto Number data
     const migrationResult = await this.migrateGlobalAutoNumberData();
 
     // Validate migration success
@@ -86,11 +86,11 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
   }
 
   /**
-   * Performs post-migration cleanup operations after successful Global Auto Number migration.
+   * Performs post-migration cleanup operations after successful Omni Global Auto Number migration.
    *
    * Handles the final steps of the migration process:
    * 1. Deletes source GlobalAutoNumberSetting__c records from the managed package
-   * 2. Enables the Global Auto Number preference in the target org
+   * 2. Enables the Omni Global Auto Number preference in the target org
    *
    * Performs cleanup operations in sequence using truncate and metadata update APIs.
    * Ensures data integrity by removing old records and activating new functionality.
@@ -128,7 +128,7 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
   }
 
   /**
-   * Validate that all Global Auto Number objects are successfully migrated
+   * Validate that all Omni Global Auto Number objects are successfully migrated
    * before proceeding with source object truncation
    */
   private async validateMigrationSuccess(migrationResults: MigrationResult): Promise<string> {
@@ -160,21 +160,21 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
   }
 
   /**
-   * Performs pre-migration validation checks to ensure the environment is ready for Global Auto Number migration.
+   * Performs pre-migration validation checks to ensure the environment is ready for Omni Global Auto Number migration.
    *
    * Validates two critical conditions before allowing migration to proceed:
-   * 1. Global Auto Number preference must not be already enabled in the target org
+   * 1. Omni Global Auto Number preference must not be already enabled in the target org
    * 2. Rollback flags must not be enabled, as they can interfere with the migration process
    *
    * Queries the org's metadata to check preference status and rollback flag settings.
    * Prevents migration conflicts and ensures a clean migration environment.
    *
-   * @throws {Error} When Global Auto Number preference is already enabled
+   * @throws {Error} When Omni Global Auto Number preference is already enabled
    * @throws {Error} When rollback flags are enabled (RollbackIPChanges, RollbackDRChanges, or both)
    *
    */
   private async performPreMigrationChecks(): Promise<void> {
-    // Check if Global Auto Number preference is already enabled
+    // Check if Omni Global Auto Number preference is already enabled
     const isEnabled = await this.prefManager.isGlobalAutoNumberEnabled();
     if (isEnabled) {
       const errorMessage = this.messages.getMessage('globalAutoNumberPrefEnabledError');
@@ -208,7 +208,7 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
       this.messages.getMessage('foundGlobalAutoNumbersToMigrate', [this.globalAutoNumberSettings.length])
     );
 
-    const progressBar = createProgressBar('Migrating', 'GlobalAutoNumber');
+    const progressBar = createProgressBar('Migrating', 'Omni Global Auto Numbers');
     progressBar.start(this.globalAutoNumberSettings.length, progressCounter);
 
     for (let autonumber of this.globalAutoNumberSettings) {
@@ -231,7 +231,7 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
         }
         uniqueNames.add(transformedName);
 
-        // Create Global Auto Number record
+        // Create Omni Global Auto Number record
         const uploadResult = await NetUtils.createOne(
           this.connection,
           GlobalAutoNumberMigrationTool.OMNI_GLOBAL_AUTO_NUMBER_NAME,
@@ -293,7 +293,7 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
   ): Promise<GlobalAutoNumberAssessmentInfo[]> {
     const globalAutoNumberAssessmentInfos: GlobalAutoNumberAssessmentInfo[] = [];
     let progressCounter = 0;
-    const progressBar = createProgressBar('Assessing', 'GlobalAutoNumber');
+    const progressBar = createProgressBar('Assessing', 'Omni Global Auto Numbers');
     progressBar.start(globalAutoNumbers.length, progressCounter);
     const uniqueNames = new Set<string>();
 
