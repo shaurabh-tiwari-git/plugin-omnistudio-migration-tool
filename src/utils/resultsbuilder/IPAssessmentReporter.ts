@@ -21,8 +21,8 @@ export class IPAssessmentReporter {
   ): ReportParam {
     Logger.captureVerboseData('IP data', ipAssessmentInfos);
     return {
-      title: 'Integration Procedure Assessment Report',
-      heading: 'Integration Procedure Assessment Report',
+      title: 'Integration Procedures Assessment Report',
+      heading: 'Integration Procedures Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
       assessmentDate: new Date().toLocaleString(),
       total: ipAssessmentInfos?.length || 0,

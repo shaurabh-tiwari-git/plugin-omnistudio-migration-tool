@@ -21,8 +21,8 @@ export class FlexcardAssessmentReporter {
   ): ReportParam {
     Logger.captureVerboseData('fc data:', flexCardAssessmentInfos);
     return {
-      title: 'Flexcard Assessment Report',
-      heading: 'Flexcard Assessment Report',
+      title: 'Flexcards Assessment Report',
+      heading: 'Flexcards Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
       assessmentDate: new Date().toLocaleString(),
       total: flexCardAssessmentInfos?.length || 0,

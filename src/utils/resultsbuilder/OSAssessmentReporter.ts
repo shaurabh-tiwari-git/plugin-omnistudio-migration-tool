@@ -21,8 +21,8 @@ export class OSAssessmentReporter {
   ): ReportParam {
     Logger.captureVerboseData('OS data:', OSAssessmentInfos);
     return {
-      title: 'OmniScript Assessment Report',
-      heading: 'OmniScript Assessment Report',
+      title: 'Omniscripts Assessment Report',
+      heading: 'Omniscripts Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
       assessmentDate: new Date().toLocaleString(),
       total: OSAssessmentInfos?.length || 0,
@@ -46,9 +46,9 @@ export class OSAssessmentReporter {
         cssClass: 'text-success',
       },
       {
-        name: 'Need Manual Intervention',
+        name: 'Needs Manual Intervention',
         count: osAssessmentInfos.filter(
-          (osAssessmentInfo) => osAssessmentInfo.migrationStatus === 'Need Manual Intervention'
+          (osAssessmentInfo) => osAssessmentInfo.migrationStatus === 'Needs Manual Intervention'
         ).length,
         cssClass: 'text-warning',
       },
@@ -57,7 +57,7 @@ export class OSAssessmentReporter {
         count: osAssessmentInfos.filter(
           (osAssessmentInfo) =>
             osAssessmentInfo.migrationStatus !== 'Ready for migration' &&
-            osAssessmentInfo.migrationStatus !== 'Need Manual Intervention'
+            osAssessmentInfo.migrationStatus !== 'Needs Manual Intervention'
         ).length,
         cssClass: 'text-error',
       },
@@ -189,7 +189,7 @@ export class OSAssessmentReporter {
             rowspan: 2,
           },
           {
-            name: 'OmniScript Dependencies',
+            name: 'Omniscript Dependencies',
             colspan: 1,
             rowspan: 2,
           },
@@ -204,12 +204,12 @@ export class OSAssessmentReporter {
             rowspan: 2,
           },
           {
-            name: 'Remote action Dependencies',
+            name: 'Remote Action Dependencies',
             colspan: 1,
             rowspan: 2,
           },
           {
-            name: 'Custom LWCs Dependencies',
+            name: 'Custom LWC Dependencies',
             colspan: 1,
             rowspan: 2,
           },
@@ -251,7 +251,7 @@ export class OSAssessmentReporter {
     const distinctStatuses = [...new Set(OSAssessmentInfos.map((info) => info.migrationStatus))];
     const statusFilterGroupParam: FilterGroupParam[] =
       distinctStatuses.length > 0 && distinctStatuses.filter((status) => status).length > 0
-        ? [createFilterGroupParam('Filter By Status', 'status', distinctStatuses)]
+        ? [createFilterGroupParam('Filter By Assessment Status', 'status', distinctStatuses)]
         : [];
 
     return [...typeFilterGroupParam, ...statusFilterGroupParam];

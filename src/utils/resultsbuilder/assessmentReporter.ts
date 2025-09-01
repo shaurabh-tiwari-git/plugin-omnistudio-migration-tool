@@ -18,7 +18,7 @@ import { DRAssessmentReporter } from './DRAssessmentReporter';
 import { FlexcardAssessmentReporter } from './FlexcardAssessmentReporter';
 
 export class AssessmentReporter {
-  private static basePath = path.join(process.cwd(), 'assessment_reports');
+  private static basePath = path.join(process.cwd(), Constants.AssessmentReportsFolderName);
   private static omniscriptAssessmentFileName = 'omniscript_assessment.html';
   private static flexcardAssessmentFileName = 'flexcard_assessment.html';
   private static integrationProcedureAssessmentFileName = 'integration_procedure_assessment.html';
@@ -241,7 +241,7 @@ export class AssessmentReporter {
     const summaryItems = [];
     if (reports.includes(Constants.DataMapper)) {
       summaryItems.push({
-        name: 'DataMapper',
+        name: 'Data Mappers',
         total: result.dataRaptorAssessmentInfos.length,
         data: DRAssessmentReporter.getSummaryData(result.dataRaptorAssessmentInfos),
         file: this.dataMapperAssessmentFileName,
@@ -249,7 +249,7 @@ export class AssessmentReporter {
     }
     if (reports.includes(Constants.IntegrationProcedure)) {
       summaryItems.push({
-        name: 'Integration Procedure',
+        name: 'Integration Procedures',
         total: result.omniAssessmentInfo.ipAssessmentInfos.length,
         data: IPAssessmentReporter.getSummaryData(result.omniAssessmentInfo.ipAssessmentInfos),
         file: this.integrationProcedureAssessmentFileName,
@@ -257,7 +257,7 @@ export class AssessmentReporter {
     }
     if (reports.includes(Constants.Omniscript)) {
       summaryItems.push({
-        name: 'OmniScript',
+        name: 'Omniscripts',
         total: result.omniAssessmentInfo.osAssessmentInfos.length,
         data: OSAssessmentReporter.getSummaryData(result.omniAssessmentInfo.osAssessmentInfos),
         file: this.omniscriptAssessmentFileName,
@@ -265,7 +265,7 @@ export class AssessmentReporter {
     }
     if (reports.includes(Constants.Flexcard)) {
       summaryItems.push({
-        name: 'Flexcard',
+        name: 'Flexcards',
         total: result.flexCardAssessmentInfos.length,
         data: FlexcardAssessmentReporter.getSummaryData(result.flexCardAssessmentInfos),
         file: this.flexcardAssessmentFileName,

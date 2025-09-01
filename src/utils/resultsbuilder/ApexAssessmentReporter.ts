@@ -21,8 +21,8 @@ export class ApexAssessmentReporter {
   ): ReportParam {
     Logger.captureVerboseData('apex data:', apexAssessmentInfos);
     return {
-      title: 'Apex File Assessment Report',
-      heading: 'Apex File Assessment Report',
+      title: 'Apex Classes Assessment Report',
+      heading: 'Apex Classes Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
       assessmentDate: new Date().toLocaleString(),
       total: apexAssessmentInfos?.length || 0,
@@ -48,7 +48,7 @@ export class ApexAssessmentReporter {
         cssClass: 'text-warning',
       },
       {
-        name: 'Has Errrors',
+        name: 'Failed',
         count: apexAssessmentInfos.filter((info) => info.errors && info.errors.length > 0).length,
         cssClass: 'text-error',
       },

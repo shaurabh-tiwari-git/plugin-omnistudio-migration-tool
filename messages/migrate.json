@@ -1,20 +1,18 @@
 {
   "examples": [
-    "omnistudio:migration:migrate -u orguser@domain.com --namespace=YOUR_PACKAGE_NAMESPACE",
-    "omnistudio:migration:migrate -u orguser@domain.com --namespace=YOUR_PACKAGE_NAMESPACE --only=dr",
-    "omnistudio:migration:migrate -u orguser@domain.com --namespace=YOUR_PACKAGE_NAMESPACE --only=ip",
-    "omnistudio:migration:migrate -u orguser@domain.com --namespace=YOUR_PACKAGE_NAMESPACE --only=os",
-    "omnistudio:migration:migrate -u orguser@domain.com --namespace=YOUR_PACKAGE_NAMESPACE --only=fc",
-    "omnistudio:migration:migrate -u orguser@domain.com --namespace=YOUR_PACKAGE_NAMESPACE -r apex,lwc",
-    "omnistudio:migration:migrate -u orguser@domain.com --namespace=YOUR_PACKAGE_NAMESPACE -r apex",
-    "omnistudio:migration:migrate -u orguser@domain.com --namespace=YOUR_PACKAGE_NAMESPACE -r lwc"
+    "omnistudio:migration:migrate -u orguser@domain.com",
+    "omnistudio:migration:migrate -u orguser@domain.com --only=dm",
+    "omnistudio:migration:migrate -u orguser@domain.com --only=ip",
+    "omnistudio:migration:migrate -u orguser@domain.com --only=os",
+    "omnistudio:migration:migrate -u orguser@domain.com --only=fc",
+    "omnistudio:migration:migrate -u orguser@domain.com -r apex"
   ],
   "commandDescription": "Migrate omnistudio components from custom objects to standard objects",
   "namespaceFlagDescription": "The namespace of the package",
   "apiVersionFlagDescription": "The Salesforce API version to use",
   "errorNoOrgResults": "No results found for the org '%s'.",
-  "onlyFlagDescription": "Migrate a single element: os | ip | fc | dr",
-  "invalidOnlyFlag": "Invalid flag, valid options are: os | ip | fc | dr",
+  "onlyFlagDescription": "Migrate a single element: os | ip | fc | dm",
+  "invalidOnlyFlag": "Invalid flag, valid options are: os | ip | fc | dm",
   "couldNotDeactivateOmniProcesses": "Could not deactivate current OmniProcesses",
   "couldNotTruncate": "Could not truncate %s",
   "couldNotTruncateOmnniProcess": "Could not truncate OmniProcess. Please make sure your OS/IP is not referenced in an OmniScrirpt or Flex Card.",
@@ -114,7 +112,8 @@
   "labelStatusFailed": "Failed",
   "labelStatusComplete": "Complete",
   "migrationConsentNotGiven": "Couldn't confirm whether assessment errors are resolved",
-  "migrationConsentMessage": "Make sure that all records listed in the Assessment Status column in the Assessment Report are marked as Green before proceeding with the migration. Do you want to proceed? Yes or No?",
+  "migrationConsentMessage": "Make sure that all records listed in the Assessment Status column in the Assessment Report are marked as Ready for migration before proceeding with the migration. Do you want to proceed? Yes or No?",
   "truncationFailed": "Truncation failed for %s: %s",
-  "invalidTypeMigrateErrorMessage": "We couldn't migrate your Omnistudio components in the %s namespace. Select the correct namespace and try again"
+  "invalidTypeMigrateErrorMessage": "We couldn't migrate your Omnistudio components in the %s namespace. Select the correct namespace and try again",
+  "migrationSuccessfulMessage": "Migration process for org %s is complete and reports are ready for review in the folder %s"
 }

@@ -17,4 +17,8 @@ export const Constants = {
   DataRaptorComponentName: 'DataRaptor',
   DataRaptorPluralName: 'DataRaptors',
   ApexRemoteComponentName: 'ApexRemote',
+
+  // artifacts persistance folder names
+  AssessmentReportsFolderName: 'assessment_reports',
+  MigrationReportsFolderName: 'migration_report',
 };

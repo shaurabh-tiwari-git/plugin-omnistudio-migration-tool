@@ -291,7 +291,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         let migrationStatus = 'Ready for migration';
         if (type === 'Angular') {
           omniAssessmentInfo.warnings.unshift(this.messages.getMessage('angularOSWarning'));
-          migrationStatus = 'Need Manual Intervention';
+          migrationStatus = 'Needs Manual Intervention';
         }
         const osAssessmentInfo: OSAssessmentInfo = {
           name: omniAssessmentInfo.name,
