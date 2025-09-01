@@ -42,7 +42,7 @@
   "errorDuringOmniScriptAssessment": "Error during Omniscript assessment",
   "errorDuringGlobalAutoNumberAssessment": "Error during GlobalAutoNumber assessment",
   "processingFlexCard": "Processing FlexCards: %s",
-  "processingDataRaptor": "Processing DataMappers: %s",
+  "processingDataRaptor": "Processing Data Mappers: %s",
   "processingOmniScript": "Processing Omniscripts: %s",
   "processingGlobalAutoNumber": "Processing Omni Global Auto Numbers: %s",
   "foundDataRaptorsToAssess": "Found %s Data Mappers to assess",

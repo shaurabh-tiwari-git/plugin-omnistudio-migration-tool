@@ -17,9 +17,9 @@ import { FileUtil, File } from '../../utils/file/fileUtil';
 import { Logger } from '../../utils/logger';
 import { ApexAssessmentInfo } from '../../utils';
 import { FileDiffUtil } from '../../utils/lwcparser/fileutils/FileDiffUtil';
-import { Stringutil } from '../../utils/StringValue/stringutil';
 import { Constants } from '../../utils/constants/stringContants';
 import { ComponentType, createProgressBar } from '../base';
+import { NameMappingRegistry } from '../NameMappingRegistry';
 import { BaseRelatedObjectMigration } from './BaseRealtedObjectMigration';
 
 Messages.importMessagesDirectory(__dirname);
@@ -231,13 +231,16 @@ export class ApexMigration extends BaseRelatedObjectMigration {
     const tokenUpdates: TokenUpdater[] = [];
     // check and update for DM
     const dmVarInMethodCalls = parser.dmVarInMethodCalls;
+    const nameRegistry = NameMappingRegistry.getInstance();
     for (const varName of dmVarInMethodCalls) {
       const varToken = simpleVarDeclarations.get(varName);
       if (!varToken) {
         dmNameUpdateFailed.add(varName);
         continue;
       }
-      const newName = `'${Stringutil.cleanName(varToken.text.substring(1, varToken.text.length - 1))}'`;
+      const newName = `'${nameRegistry.getDataMapperCleanedName(
+        varToken.text.substring(1, varToken.text.length - 1)
+      )}'`;
       if (newName === varToken.text) {
         continue;
       }
@@ -257,7 +260,7 @@ export class ApexMigration extends BaseRelatedObjectMigration {
         ipNameUpdateFailed.add(varName);
         continue;
       }
-      const newName = `'${Stringutil.cleanName(parts[0])}_${Stringutil.cleanName(parts[1])}'`;
+      const newName = `'${nameRegistry.getIntegrationProcedureCleanedName(oldName)}'`;
       if (newName === varToken.text) {
         continue;
       }
@@ -370,9 +373,10 @@ export class ApexMigration extends BaseRelatedObjectMigration {
     const methodParameters = parser.methodParameters;
     if (methodParameters.size === 0) return tokenUpdates;
     const drParameters = methodParameters.get(ParameterType.DR_NAME);
+    const nameRegistry = NameMappingRegistry.getInstance();
     if (drParameters) {
       for (const token of drParameters) {
-        const newName = `'${Stringutil.cleanName(token.text)}'`;
+        const newName = `'${nameRegistry.getDataMapperCleanedName(token.text)}'`;
         if (token.text === newName) continue;
         Logger.info(assessMessages.getMessage('inApexDrNameWillBeUpdated', [file.name, token.text, newName]));
         tokenUpdates.push(new SingleTokenUpdate(newName, token));
@@ -388,7 +392,7 @@ export class ApexMigration extends BaseRelatedObjectMigration {
           ipNameUpdateFailed.add(oldName);
           continue;
         }
-        const newName = `'${Stringutil.cleanName(parts[0])}_${Stringutil.cleanName(parts[1])}'`;
+        const newName = `'${nameRegistry.getIntegrationProcedureCleanedName(oldName)}'`;
         if (newName === oldName) {
           continue;
         }
