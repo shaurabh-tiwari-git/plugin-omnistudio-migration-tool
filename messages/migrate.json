@@ -69,7 +69,7 @@
   "migrationFailed": "Migration failed: %s",
   "formulaSyntaxError": "There was some problem while updating the formula syntax, please check the all the formula's syntax once : %s",
   "foundDataRaptorsToMigrate": "Found %s Data Mappers to migrate",
-  "foundFlexCardsToMigrate": "Found %s FlexCards to migrate",
+  "foundFlexCardsToMigrate": "Found %s Flexcards to migrate",
   "foundOmniScriptsToMigrate": "Found %s %s to migrate",
   "foundGlobalAutoNumbersToMigrate": "Found %s GlobalAutoNumbers to migrate",
   "foundCustomLabelsToMigrate": "Found %s Custom Labels to migrate",
@@ -216,7 +216,7 @@
   "flexCardWithAngularOmniScriptWarning": "FlexCard has dependencies on Angular Omniscript(s) which are not migrated. Please convert Omniscript(s) to LWC before migrating this FlexCard.",
   "angularOmniScriptDependencyWarning": "Element '%s' references Angular Omniscript '%s' which will not be migrated. Consider converting the referenced Omniscript to LWC",
   "skipFlexcardAngularOmniScriptDependencyWarning": "Skipping FlexCard %s due to Angular Omniscript dependencies",
-  "flexCardMigrationProcessingMessage": "Processing %s FlexCards for migration (%s skipped due to Angular dependencies)",
+  "flexCardMigrationProcessingMessage": "Processing %s Flexcards for migration (%s skipped due to Angular dependencies)",
   "noMetadataToDeploy": "No metadata to deploy",
   "missingMandatoryField": "Missing mandatory field: %s for %s",
   "dataMapperMigrationFailed": "DataMapper migration failed for: %s",
@@ -267,5 +267,6 @@
   "errorFetchingCustomLabels": "Error fetching custom labels: %s",
   "customLabelAssessmentSummary": "Custom Label with same name and different value is already exist without namespace.",
   "generatedCustomLabelAssessmentReportPage": "Generated custom label assessment report page %s of %s with %s labels",
-  "varDeclarationUpdated": "Variable initialization has been updated for target name"
+  "varDeclarationUpdated": "Variable initialization has been updated for target name",
+  "migrationSuccessfulMessage": "Migration process for org %s is complete and reports are ready for review in the folder %s"
 }
