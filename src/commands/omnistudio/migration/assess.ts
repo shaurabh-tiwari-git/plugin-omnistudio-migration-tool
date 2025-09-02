@@ -1,3 +1,4 @@
+import path from 'path';
 import * as os from 'os';
 import { flags } from '@salesforce/command';
 import { Messages, Connection } from '@salesforce/core';
@@ -202,6 +203,13 @@ export default class Assess extends OmniStudioBaseCommand {
       messages,
       userActionMessages
     );
+    Logger.log(
+      messages.getMessage('assessmentSuccessfulMessage', [
+        orgs.orgDetails?.Id,
+        path.join(process.cwd(), Constants.AssessmentReportsFolderName),
+      ])
+    );
+
     return assesmentInfo;
   }
 

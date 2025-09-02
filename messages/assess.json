@@ -42,7 +42,7 @@
   "errorDuringFlexCardAssessment": "Error during FlexCard assessment",
   "errorDuringOmniScriptAssessment": "Error during Omniscript assessment",
   "errorDuringGlobalAutoNumberAssessment": "Error during GlobalAutoNumber assessment",
-  "processingFlexCard": "Processing FlexCards: %s",
+  "processingFlexCard": "Processing Flexcards: %s",
   "processingDataRaptor": "Processing Data Mappers: %s",
   "processingOmniScript": "Processing Omniscripts: %s",
   "processingGlobalAutoNumber": "Processing Omni Global Auto Numbers: %s",
@@ -60,9 +60,9 @@
   "allVersionsFlagInfo": "All versions: %s",
   "assessedDataRaptorsCount": "Assessed %s Data Mappers",
   "dataRaptorAssessmentCompleted": "Data Mappers assessment completed",
-  "flexCardAssessment": "FlexCard Assessment",
-  "assessedFlexCardsCount": "Assessed %s FlexCards",
-  "flexCardAssessmentCompleted": "FlexCard assessment completed",
+  "flexCardAssessment": "Flexcards Assessment",
+  "assessedFlexCardsCount": "Assessed %s Flexcards",
+  "flexCardAssessmentCompleted": "Flexcards assessment completed",
   "globalAutoNumberAssessment": "GlobalAutoNumber Assessment",
   "assessedGlobalAutoNumbersCount": "Assessed %s GlobalAutoNumbers",
   "globalAutoNumberAssessmentCompleted": "The assessment for Omni Global Auto Number is complete.",
@@ -195,7 +195,6 @@
   "dataMapperNamePrefixedWithDM": "DataMapper name '%s' starts with a number. Prefixing with 'DM_' to create valid name: %s",
   "integrationProcedureTypeEmptyAfterCleaning": "Integration Procedure Type '%s' becomes empty after name cleaning. Please provide a valid Type value.",
   "integrationProcedureSubtypeEmptyAfterCleaning": "Integration Procedure SubType '%s' becomes empty after name cleaning. Please provide a valid SubType value.",
-  "invalidTypeAssessErrorMessage": "We couldn't assess your Omnistudio components in the %s namespace. Select the correct namespace and try again",
   "apexFileAlreadyHasCallMethod": "File %s already has call method, thus keeping the existing call method intact",
   "errorFetchingCustomLabels": "Error fetching custom labels: %s",
   "customLabelAssessmentSummary": "Custom Label with same name and different value is already exist without namespace.",
@@ -206,5 +205,7 @@
   "manualDeploymentSteps": "<a href='%s' target='_blank'>Please refer to this documentation for manual deployment process</a>",
   "varDeclarationUpdated": "Variable initialization will be updated for target name",
   "ipNameUpdateFailed": "IP reference %s can’t be updated",
-  "dmNameUpdateFailed": "DM reference %s can’t be updated"
+  "dmNameUpdateFailed": "DM reference %s can’t be updated",
+  "invalidTypeAssessErrorMessage": "We couldn't assess your Omnistudio components in the %s namespace. Select the correct namespace and try again",
+  "assessmentSuccessfulMessage": "Migration assessment for org %s is complete and reports are ready for review in the folder %s"
 }

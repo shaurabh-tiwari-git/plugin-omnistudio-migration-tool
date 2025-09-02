@@ -70,7 +70,7 @@
   "migrationFailed": "Migration failed: %s",
   "formulaSyntaxError": "There was some problem while updating the formula syntax, please check the all the formula's syntax once : %s",
   "foundDataRaptorsToMigrate": "Found %s Data Mappers to migrate",
-  "foundFlexCardsToMigrate": "Found %s FlexCards to migrate",
+  "foundFlexCardsToMigrate": "Found %s Flexcards to migrate",
   "foundOmniScriptsToMigrate": "Found %s %s to migrate",
   "foundGlobalAutoNumbersToMigrate": "Found %s GlobalAutoNumbers to migrate",
   "foundCustomLabelsToMigrate": "Found %s Custom Labels to migrate",
@@ -133,7 +133,7 @@
   "flexipagesWithChanges": "Found %s FlexiPages with changes",
   "omniGlobalAutoNumberPrefEnabled": "Successfully enabled OmniGlobalAutoNumberPref org preference",
   "errorEnablingOmniGlobalAutoNumberPref": "We couldn't enable the Omni Global Auto Number setting. Turn on the Omni Global Auto Number setting manually, and try again. See <a href='https://help.salesforce.com/s/articleView?id=xcloud.os_standard_global_auto_number.htm&type=5' target='_blank'>Set Up Omni Global Auto Number</a>.",
-  "performingPreMigrationChecks": "Performing pre-migration checks for Omni Global Auto Number...",
+  "performingPreMigrationChecks": "Performing pre-migration checks for Omni Global Auto Number",
   "preMigrationChecksPassed": "Pre-migration checks passed. Proceeding with Omni Global Auto Number migration.",
   "preMigrationChecksFailed": "Pre-migration checks failed. Migration cannot proceed.",
   "globalAutoNumberPrefEnabledError": "The Omni Global Auto Number setting is enabled and global auto numbers have already been migrated.",
@@ -141,7 +141,7 @@
   "rollbackIPFlagEnabledError": "We couldn't turn on Omni Global Auto Number. Disable the RollBackIPChanges <a href='https://help.salesforce.com/s/articleView?id=xcloud.os_standard_global_auto_number.htm&type=5' target='_blank'>Omni Interaction Configurations</a> and try again.",
   "rollbackDRFlagEnabledError": "We couldn't turn on Omni Global Auto Number. Disable the RollBackDRChanges <a href='https://help.salesforce.com/s/articleView?id=xcloud.os_standard_global_auto_number.htm&type=5' target='_blank'>Omni Interaction Configurations</a> and try again.",
   "errorCheckingRollbackFlags": "Error checking rollback flags status.",
-  "startingPostMigrationCleanup": "Starting post-migration cleanup for Omni Global Auto Number...",
+  "startingPostMigrationCleanup": "Starting post-migration cleanup for Omni Global Auto Number",
   "postMigrationCleanupCompleted": "Post-migration cleanup completed successfully.",
   "errorDuringPostMigrationCleanup": "We’ve encountered an error during the post-migration cleanup. Try again later.",
   "duplicatedGlobalAutoNumberName": "Duplicated Omni Global Auto Number name",
@@ -217,7 +217,7 @@
   "flexCardWithAngularOmniScriptWarning": "FlexCard has dependencies on Angular Omniscript(s) which are not migrated. Please convert Omniscript(s) to LWC before migrating this FlexCard.",
   "angularOmniScriptDependencyWarning": "Element '%s' references Angular Omniscript '%s' which will not be migrated. Consider converting the referenced Omniscript to LWC",
   "skipFlexcardAngularOmniScriptDependencyWarning": "Skipping FlexCard %s due to Angular Omniscript dependencies",
-  "flexCardMigrationProcessingMessage": "Processing %s FlexCards for migration (%s skipped due to Angular dependencies)",
+  "flexCardMigrationProcessingMessage": "Processing %s Flexcards for migration (%s skipped due to Angular dependencies)",
   "noMetadataToDeploy": "No metadata to deploy",
   "missingMandatoryField": "Missing mandatory field: %s for %s",
   "dataMapperMigrationFailed": "DataMapper migration failed for: %s",
@@ -268,5 +268,6 @@
   "errorFetchingCustomLabels": "Error fetching custom labels: %s",
   "customLabelAssessmentSummary": "Custom Label with same name and different value is already exist without namespace.",
   "generatedCustomLabelAssessmentReportPage": "Generated custom label assessment report page %s of %s with %s labels",
-  "varDeclarationUpdated": "Variable initialization has been updated for target name"
+  "varDeclarationUpdated": "Variable initialization has been updated for target name",
+  "migrationSuccessfulMessage": "Migration process for org %s is complete and reports are ready for review in the folder %s"
 }

@@ -7,6 +7,7 @@
  * Licensed under the BSD 3-Clause license.
  * For full license text, see LICENSE.txt file in the repo root or https://opensource.org/licenses/BSD-3-Clause
  */
+import path from 'path';
 import * as os from 'os';
 import { flags } from '@salesforce/command';
 import { Connection, Messages } from '@salesforce/core';
@@ -241,7 +242,12 @@ export default class Migrate extends OmniStudioBaseCommand {
       actionItems,
       objectsToProcess
     );
-
+    Logger.log(
+      messages.getMessage('migrationSuccessfulMessage', [
+        orgs.orgDetails?.Id,
+        path.join(process.cwd(), Constants.MigrationReportsFolderName),
+      ])
+    );
     // Return results needed for --json flag
     return { objectMigrationResults: [] };
   }
