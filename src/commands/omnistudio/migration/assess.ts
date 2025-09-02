@@ -19,6 +19,7 @@ import { ProjectPathUtil } from '../../../utils/projectPathUtil';
 import { PreMigrate } from '../../../migration/premigrate';
 import { PostMigrate } from '../../../migration/postMigrate';
 import { CustomLabelsUtil } from '../../../utils/customLabels';
+import { ValidatorService } from '../../../utils/validatorService';
 
 Messages.importMessagesDirectory(__dirname);
 const messages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'assess');
@@ -77,16 +78,11 @@ export default class Assess extends OmniStudioBaseCommand {
     const apiVersion = conn.getApiVersion();
     const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn);
 
-    if (!orgs.hasValidNamespace) {
-      Logger.warn(messages.getMessage('invalidNamespace') + orgs.packageDetails.namespace);
-    }
+    // Perform comprehensive validation using ValidatorService
+    const validator = new ValidatorService(orgs, conn, messages);
+    const isValidationPassed = await validator.validate();
 
-    if (!orgs.packageDetails) {
-      Logger.error(messages.getMessage('noPackageInstalled'));
-      return;
-    }
-    if (orgs.omniStudioOrgPermissionEnabled) {
-      Logger.error(messages.getMessage('alreadyStandardModel'));
+    if (!isValidationPassed) {
       return;
     }
 

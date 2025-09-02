@@ -350,6 +350,15 @@ export class OrgUtils {
       const pkg = installedOmniPackages[0];
       packageDetails.version = `${pkg.MajorVersion}.${pkg.MinorVersion}`;
       packageDetails.namespace = pkg.NamespacePrefix;
+    } else {
+      // return to validate the org information
+      return {
+        packageDetails: undefined,
+        omniStudioOrgPermissionEnabled: false,
+        orgDetails: orgDetails[0],
+        dataModel: undefined,
+        hasValidNamespace: false,
+      };
     }
 
     //Execute apex rest resource to get omnistudio org permission
