@@ -131,7 +131,7 @@ OPTIONS
                                                                                     autonumber (Omni Global Auto Number),
                                                                                     cl (Custom Labels)
 
-  --relatedobjects=relatedobjects(comma separated)                                 specify one or more related objects to assess:
+  --relatedobjects=relatedobjects(comma separated)                                  specify one or more related objects to assess:
                                                                                     'apex'       for Apex classes
                                                                                     'lwc'        for LWC (Lightning Web Components)
                                                                                     'expsites'   for Experience Sites
@@ -166,7 +166,7 @@ OPTIONS
                                                                                     autonumber (Omni Global Auto Number),
                                                                                     cl (Custom Labels)
 
-  --relatedobjects=relatedobjects(comma separated)                                 specify one or more related objects to assess:
+  --relatedobjects=relatedobjects(comma separated)                                  specify one or more related objects to assess:
                                                                                     'apex'       for Apex classes
                                                                                     'lwc'        for LWC (Lightning Web Components)
                                                                                     'expsites'   for Experience Sites
