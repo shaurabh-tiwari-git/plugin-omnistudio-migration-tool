@@ -124,18 +124,18 @@ OPTIONS
                                                                                     and not just the active ones.
 
   --only=only                                                                       specify any single components to migrate:
-                                                                                    dm (DataMappers),
+                                                                                    dm (Data Mappers),
                                                                                     ip (Integration Procedures),
-                                                                                    os (OmniScripts),
-                                                                                    fc (FlexCards),
-                                                                                    autonumber (Omni Global Auto Number),
+                                                                                    os (Omniscripts),
+                                                                                    fc (Flexcards),
+                                                                                    autonumber (Omni Global Auto Numbers),
                                                                                     cl (Custom Labels)
 
   --relatedobjects=relatedobjects(comma separated)                                  specify one or more related objects to assess:
                                                                                     'apex'       for Apex classes
                                                                                     'lwc'        for LWC (Lightning Web Components)
                                                                                     'expsites'   for Experience Sites
-                                                                                    'flexipage'  for Lightning record pages
+                                                                                    'flexipage'  for FlexiPages
 ```
 
 ### Migrate Usage & parameters
@@ -159,19 +159,18 @@ OPTIONS
                                                                                     and not just the active ones.
 
   --only=only                                                                       specify any single components to migrate:
-                                                                                    dm (DataMappers),
+                                                                                    dm (Data Mappers),
                                                                                     ip (Integration Procedures),
-                                                                                    os (OmniScripts),
-                                                                                    fc (FlexCards),
-                                                                                    autonumber (Omni Global Auto Number),
+                                                                                    os (Omniscripts),
+                                                                                    fc (Flexcards),
+                                                                                    autonumber (Omni Global Auto Numbers),
                                                                                     cl (Custom Labels)
 
   --relatedobjects=relatedobjects(comma separated)                                  specify one or more related objects to assess:
                                                                                     'apex'       for Apex classes
                                                                                     'lwc'        for LWC (Lightning Web Components)
                                                                                     'expsites'   for Experience Sites
-                                                                                    'flexipage'  for Lightning record pages
-
+                                                                                    'flexipage'  for FlexiPages
 ```
 
 Terms:
