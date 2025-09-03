@@ -662,7 +662,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         finalKey = finalKey.toLowerCase();
         if (storage.osStorage.has(finalKey)) {
           // Key already exists - handle accordingly
-          Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', [finalKey]));
+          Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', ['Omniscript', finalKey]));
           value.isDuplicate = true;
           storage.osStorage.set(finalKey, value);
         } else {
@@ -1167,7 +1167,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           finalKey = finalKey.toLowerCase();
           if (storage.osStorage.has(finalKey)) {
             // Key already exists - handle accordingly
-            Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', [finalKey]));
+            Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', ['Omniscript', finalKey]));
             value.isDuplicate = true;
             storage.osStorage.set(finalKey, value);
           } else {

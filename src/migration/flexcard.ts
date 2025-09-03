@@ -882,7 +882,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         finalKey = finalKey.toLowerCase();
         if (storage.fcStorage.has(finalKey)) {
           // Key already exists - handle accordingly
-          Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', [finalKey]));
+          Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', ['Flexcard', finalKey]));
           value.isDuplicate = true;
           storage.fcStorage.set(finalKey, value);
         } else {
@@ -929,7 +929,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         finalKey = finalKey.toLowerCase();
         if (storage.fcStorage.has(finalKey)) {
           // Key already exists - handle accordingly
-          Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', [finalKey]));
+          Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', ['Flexcard', finalKey]));
           value.isDuplicate = true;
           storage.fcStorage.set(finalKey, value);
         } else {
@@ -1078,7 +1078,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
               if (c && this.nameRegistry.hasFlexCardMapping(c)) {
                 return this.nameRegistry.getFlexCardCleanedName(c);
               } else {
-                Logger.logVerbose(`\n${this.messages.getMessage('componentMappingNotFound', ['FlexCard', c])}`);
+                Logger.logVerbose(`\n${this.messages.getMessage('componentMappingNotFound', ['Flexcard', c])}`);
                 return this.cleanName(c);
               }
             });
@@ -1237,7 +1237,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           component.property.cardName = this.nameRegistry.getFlexCardCleanedName(originalCardName);
         } else {
           Logger.logVerbose(
-            `\n${this.messages.getMessage('componentMappingNotFound', ['FlexCard', originalCardName])}`
+            `\n${this.messages.getMessage('componentMappingNotFound', ['Flexcard', originalCardName])}`
           );
           component.property.cardName = this.cleanName(originalCardName);
         }

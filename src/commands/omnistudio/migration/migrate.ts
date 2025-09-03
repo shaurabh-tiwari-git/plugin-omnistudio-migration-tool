@@ -91,7 +91,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn);
 
     if (!orgs.hasValidNamespace) {
-      Logger.warn(messages.getMessage('invalidNamespace') + orgs.packageDetails.namespace);
+      Logger.warn(messages.getMessage('invalidNamespace', [orgs.packageDetails.namespace]));
     }
 
     if (!orgs.packageDetails) {
