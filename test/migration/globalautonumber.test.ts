@@ -73,7 +73,7 @@ describe('GlobalAutoNumberMigrationTool', () => {
   describe('getName', () => {
     it('should return correct name', () => {
       const result = globalAutoNumberMigrationTool.getName();
-      expect(result).to.equal('GlobalAutoNumber');
+      expect(result).to.equal('Omni Global Auto Number');
     });
   });
 
@@ -109,7 +109,7 @@ describe('GlobalAutoNumberMigrationTool', () => {
   });
 
   describe('assess', () => {
-    it('should successfully assess Global Auto Numbers', async () => {
+    it('should successfully assess Omni Global Auto Numbers', async () => {
       // Arrange
       const mockGlobalAutoNumbers = [
         {
@@ -136,7 +136,7 @@ describe('GlobalAutoNumberMigrationTool', () => {
 
       const queryAllStub = sandbox.stub(QueryTools, 'queryAll').resolves(mockGlobalAutoNumbers);
       getMessageStub.withArgs('startingGlobalAutoNumberAssessment').returns('Starting assessment...');
-      getMessageStub.withArgs('foundGlobalAutoNumbersToAssess', [2]).returns('Found 2 Global Auto Numbers');
+      getMessageStub.withArgs('foundGlobalAutoNumbersToAssess', [2]).returns('Found 2 Omni Global Auto Numbers');
       // No migration info message expected since it was removed
 
       // Act
@@ -177,7 +177,7 @@ describe('GlobalAutoNumberMigrationTool', () => {
 
       sandbox.stub(QueryTools, 'queryAll').resolves(mockGlobalAutoNumbers);
       getMessageStub.withArgs('startingGlobalAutoNumberAssessment').returns('Starting assessment...');
-      getMessageStub.withArgs('foundGlobalAutoNumbersToAssess', [1]).returns('Found 1 Global Auto Number');
+      getMessageStub.withArgs('foundGlobalAutoNumbersToAssess', [1]).returns('Found 1 Omni Global Auto Number');
 
       // Act
       const result = await globalAutoNumberMigrationTool.assess();
@@ -203,7 +203,7 @@ describe('GlobalAutoNumberMigrationTool', () => {
   });
 
   describe('migrate', () => {
-    it('should successfully migrate Global Auto Numbers when pre-checks pass', async () => {
+    it('should successfully migrate Omni Global Auto Numbers when pre-checks pass', async () => {
       // Arrange
       const mockGlobalAutoNumbers = [
         {
@@ -245,7 +245,7 @@ describe('GlobalAutoNumberMigrationTool', () => {
       sandbox.stub(NetUtils, 'delete').resolves(true);
 
       // Mock messages
-      getMessageStub.withArgs('foundGlobalAutoNumbersToMigrate', [1]).returns('Found 1 Global Auto Number');
+      getMessageStub.withArgs('foundGlobalAutoNumbersToMigrate', [1]).returns('Found 1 Omni Global Auto Number');
       getMessageStub.withArgs('startingPostMigrationCleanup').returns('Starting cleanup...');
       getMessageStub.withArgs('omniGlobalAutoNumberPrefEnabled').returns('Preference enabled');
       getMessageStub.withArgs('postMigrationCleanupCompleted').returns('Cleanup completed');
@@ -255,7 +255,7 @@ describe('GlobalAutoNumberMigrationTool', () => {
 
       // Assert
       expect(result).to.be.an('array').with.length(1);
-      expect(result[0].name).to.equal('GlobalAutoNumber');
+      expect(result[0].name).to.equal('Omni Global Auto Number');
       expect(result[0].results.size).to.equal(1);
     });
 
@@ -336,7 +336,7 @@ describe('GlobalAutoNumberMigrationTool', () => {
       sandbox.stub(NetUtils, 'delete').resolves(true);
 
       // Mock messages
-      getMessageStub.withArgs('foundGlobalAutoNumbersToMigrate', [2]).returns('Found 2 Global Auto Numbers');
+      getMessageStub.withArgs('foundGlobalAutoNumbersToMigrate', [2]).returns('Found 2 Omni Global Auto Numbers');
       getMessageStub.withArgs('startingPostMigrationCleanup').returns('Starting cleanup...');
       getMessageStub.withArgs('incompleteMigrationDetected', [2, 1]).returns('Incomplete migration detected');
       getMessageStub.withArgs('migrationValidationFailed').returns('Migration validation failed');
@@ -346,7 +346,7 @@ describe('GlobalAutoNumberMigrationTool', () => {
 
       // Assert
       expect(result).to.be.an('array').with.length(1);
-      expect(result[0].name).to.equal('GlobalAutoNumber');
+      expect(result[0].name).to.equal('Omni Global Auto Number');
       expect(result[0].results.size).to.equal(2);
     });
 
@@ -378,7 +378,7 @@ describe('GlobalAutoNumberMigrationTool', () => {
       sandbox.stub(NetUtils, 'createOne').rejects(uploadError);
 
       // Mock messages
-      getMessageStub.withArgs('foundGlobalAutoNumbersToMigrate', [1]).returns('Found 1 Global Auto Number');
+      getMessageStub.withArgs('foundGlobalAutoNumbersToMigrate', [1]).returns('Found 1 Omni Global Auto Number');
       getMessageStub.withArgs('errorWhileUploadingGlobalAutoNumber').returns('Error uploading: ');
       getMessageStub.withArgs('startingPostMigrationCleanup').returns('Starting cleanup...');
       getMessageStub.withArgs('incompleteMigrationDetected', [1, 0]).returns('Incomplete migration');
@@ -397,7 +397,7 @@ describe('GlobalAutoNumberMigrationTool', () => {
   });
 
   describe('processGlobalAutoNumberComponents', () => {
-    it('should process Global Auto Number components correctly', async () => {
+    it('should process Omni Global Auto Number components correctly', async () => {
       // Arrange
       const mockGlobalAutoNumbers = [
         {
@@ -413,7 +413,7 @@ describe('GlobalAutoNumberMigrationTool', () => {
       ];
       sandbox.stub(QueryTools, 'queryAll').resolves(mockGlobalAutoNumbers);
       getMessageStub.withArgs('startingGlobalAutoNumberAssessment').returns('Starting assessment...');
-      getMessageStub.withArgs('foundGlobalAutoNumbersToAssess', [1]).returns('Found 1 Global Auto Number');
+      getMessageStub.withArgs('foundGlobalAutoNumbersToAssess', [1]).returns('Found 1 Omni Global Auto Number');
       getMessageStub.withArgs('unexpectedError').returns('Unexpected error');
 
       // Act
@@ -431,7 +431,7 @@ describe('GlobalAutoNumberMigrationTool', () => {
   });
 
   describe('getAllGlobalAutoNumberSettings', () => {
-    it('should query Global Auto Number settings with correct parameters', async () => {
+    it('should query Omni Global Auto Number settings with correct parameters', async () => {
       // Arrange
       const mockSettings = [
         {
@@ -461,7 +461,7 @@ describe('GlobalAutoNumberMigrationTool', () => {
   });
 
   describe('mapGlobalAutoNumberRecord', () => {
-    it('should correctly map Global Auto Number record fields', () => {
+    it('should correctly map Omni Global Auto Number record fields', () => {
       // Arrange
       const sourceRecord = {
         Id: '001',

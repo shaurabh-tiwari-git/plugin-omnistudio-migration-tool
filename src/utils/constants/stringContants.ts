@@ -20,11 +20,15 @@ export const Constants = {
   IntegrationProcedurePluralName: 'IntegrationProcedures',
   DataRaptorComponentName: 'DataRaptor',
   DataRaptorPluralName: 'DataRaptors',
-  GlobalAutoNumberComponentName: 'GlobalAutoNumber',
+  GlobalAutoNumberComponentName: 'Omni Global Auto Number',
   GlobalAutoNumberPluralName: 'GlobalAutoNumbers',
   ApexRemoteComponentName: 'ApexRemote',
   LWCComponentName: 'Lightning Web Component',
   ApexComponentName: 'Apex Classes',
   CustomLabelComponentName: 'Custom Label',
   CustomLabelPluralName: 'Custom Labels',
+
+  // artifacts persistance folder names
+  AssessmentReportsFolderName: 'assessment_reports',
+  MigrationReportsFolderName: 'migration_report',
 };

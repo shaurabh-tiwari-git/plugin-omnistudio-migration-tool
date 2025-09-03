@@ -11,9 +11,35 @@ function toggleFilterDropdown(tableId) {
   }
 }
 
-function toggleDiffModal(name) {
-  const modal = document.getElementById(`myModal_${name}`);
-  modal.style.display = modal.style.display === 'none' ? 'flex' : 'none';
+function closeFilterDropdown(tableId) {
+  const reportTable = document.getElementById(tableId);
+  if (!reportTable) return;
+
+  const dropdown = reportTable.querySelector('#filter-dropdown');
+  const chevronUp = reportTable.querySelector('#chevron-up');
+  const chevronDown = reportTable.querySelector('#chevron-down');
+
+  if (dropdown && dropdown.classList.contains('show')) {
+    dropdown.classList.remove('show');
+    if (chevronUp) chevronUp.classList.add('hidden');
+    if (chevronDown) chevronDown.classList.remove('hidden');
+  }
+}
+
+function closeAllFilterDropdowns() {
+  const openDropdowns = document.querySelectorAll('.filter-dropdown.show');
+
+  openDropdowns.forEach((dropdown) => {
+    dropdown.classList.remove('show');
+    // Find and update chevron icons
+    const container = dropdown.closest('.filter-dropdown-container') || dropdown.parentElement;
+    if (container) {
+      const chevronUp = container.querySelector('#chevron-up');
+      const chevronDown = container.querySelector('#chevron-down');
+      if (chevronUp) chevronUp.classList.add('hidden');
+      if (chevronDown) chevronDown.classList.remove('hidden');
+    }
+  });
 }
 
 function toggleDiffModal(name) {
@@ -171,6 +197,40 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   });
+
+  // Attach filter dropdown event listeners after DOM is loaded
+  // Close panel and filter dropdown on escape key
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' || event.keyCode === 27) {
+      event.preventDefault();
+
+      try {
+        closeCtaPanel();
+      } catch (error) {
+        // Silently handle error if CTA panel elements don't exist
+      }
+
+      try {
+        closeAllFilterDropdowns();
+      } catch (error) {
+        // Silently handle error if filter dropdown elements don't exist
+      }
+    }
+  });
+
+  // Close filter dropdown when clicking outside
+  document.addEventListener('click', function (event) {
+    // Find all open filter dropdowns
+    document.querySelectorAll('.filter-dropdown.show').forEach((dropdown) => {
+      const reportTable = dropdown.closest('.rpt-table-container');
+      const filterButton = reportTable?.querySelector('.filter-toggle-button');
+
+      // Check if click was outside the dropdown and not on the filter button
+      if (reportTable && !dropdown.contains(event.target) && !filterButton?.contains(event.target)) {
+        closeFilterDropdown(reportTable.id);
+      }
+    });
+  });
 });
 
 function openReport(ele) {
@@ -182,11 +242,14 @@ function toggleCtaPanel() {
   const panel = document.getElementById('ctaPanel');
   const overlay = document.getElementById('overlay');
 
-  if (panel.classList.contains('open')) {
-    closeCtaPanel();
-  } else {
-    panel.classList.add('open');
-    overlay.classList.add('open');
+  // Only try to toggle if elements exist
+  if (panel && overlay) {
+    if (panel.classList.contains('open')) {
+      closeCtaPanel();
+    } else {
+      panel.classList.add('open');
+      overlay.classList.add('open');
+    }
   }
 }
 
@@ -194,18 +257,18 @@ function closeCtaPanel() {
   const panel = document.getElementById('ctaPanel');
   const overlay = document.getElementById('overlay');
 
-  panel.classList.remove('open');
-  overlay.classList.remove('open');
-}
-
-// Close panel on escape key
-document.addEventListener('keydown', function (event) {
-  if (event.key === 'Escape') {
-    closeCtaPanel();
+  // Only try to close if elements exist
+  if (panel) {
+    panel.classList.remove('open');
   }
-});
+  if (overlay) {
+    overlay.classList.remove('open');
+  }
+}
 
 // Expose globally so HTML inline event handlers can access them
 window.toggleFilterDropdown = toggleFilterDropdown;
+window.closeFilterDropdown = closeFilterDropdown;
+window.closeAllFilterDropdowns = closeAllFilterDropdowns;
 window.filterAndSearchTable = filterAndSearchTable;
 window.toggleCtaSummaryPanel = toggleCtaSummaryPanel;

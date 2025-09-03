@@ -43,12 +43,12 @@ sfdx omnistudio:migration:assess -u YOUR_ORG_USERNAME@DOMAIN.COM
 sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM
 
 
-// To migrate/assess specific components: FlexCards, DataMappers, Integration Procedures, OmniScripts, or Global Auto Numbers, add the following parameters:
---only=dm    // DataMappers
+// To migrate/assess specific components: FlexCards, Data Mappers, Integration Procedures, OmniScripts, or Omni Global Auto Numbers, add the following parameters:
+--only=dm    // Data Mappers
 --only=ip    // Integration Procedures
 --only=os    // OmniScripts
 --only=fc    // FlexCards
---only=autonumber   // Global Auto Numbers
+--only=autonumber   // Omni Global Auto Numbers
 
 // To migrate all versions of the components and not just the active ones:
 --allversions
@@ -60,28 +60,28 @@ sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM
 
 5. An HTML page will be open in your default browser with the results of your migration/assessment reports.
 
-## Global Auto Number Migration
+## Omni Global Auto Number Migration
 
-Global Auto Numbers are components that generate sequential numbers across your Omnistudio org. The migration tool supports both assessment and migration of these components.
+Omni Global Auto Numbers are components that generate sequential numbers across your Omnistudio org. The migration tool supports both assessment and migration of these components.
 
-### Prerequisites for Global Auto Number Migration
+### Prerequisites for Omni Global Auto Number Migration
 
-Before migrating Global Auto Numbers, ensure that:
+Before migrating Omni Global Auto Numbers, ensure that:
 
 1. **Org Preference is Disabled**: The `OmniGlobalAutoNumberPref` org preference must be disabled before migration
 2. **Rollback Flags are Disabled**: Both `RollbackIPChanges` and `RollbackDRChanges` flags must be disabled
 3. **Namespace is Specified**: Provide the correct namespace for your OmniStudio package
 
-### Global Auto Number Migration Process
+### Omni Global Auto Number Migration Process
 
-The migration process for Global Auto Numbers includes:
+The migration process for Omni Global Auto Numbers includes:
 
 1. **Pre-migration Checks**: Validates that org preferences and rollback flags are properly configured
-2. **Data Migration**: Transforms Global Auto Number settings from custom objects to standard Business Process Objects (BPO)
+2. **Data Migration**: Transforms Omni Global Auto Number settings from custom objects to standard Business Process Objects (BPO)
 3. **Post-migration Cleanup**: Removes source objects and enables the `OmniGlobalAutoNumberPref` org preference
 4. **Validation**: Ensures all records are successfully migrated before cleanup
 
-### Global Auto Number Assessment
+### Omni Global Auto Number Assessment
 
 Assessment provides detailed information about:
 
@@ -89,13 +89,13 @@ Assessment provides detailed information about:
 - **Migration Readiness**: Determines if components can be automatically migrated or require manual intervention
 - **Warnings**: Highlights potential issues that may affect migration success
 
-### Usage Examples for Global Auto Numbers
+### Usage Examples for Omni Global Auto Numbers
 
 ```bash
-# Assess Global Auto Numbers only
+# Assess Omni Global Auto Numbers only
 sfdx omnistudio:migration:assess -u YOUR_ORG_USERNAME@DOMAIN.COM --only=autonumber
 
-# Migrate Global Auto Numbers only
+# Migrate Omni Global Auto Numbers only
 sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM --only=autonumber
 ```
 
@@ -122,8 +122,8 @@ OPTIONS
                                                                                     and not just the active ones.
 
   --only=only                                                                       specify components to assess:
-                                                                                    dm (DataMappers), ip (Integration Procedures),
-                                                                                    os (OmniScripts), fc (FlexCards), autonumber (Global Auto Numbers)
+                                                                                    dm (Data Mappers), ip (Integration Procedures),
+                                                                                    os (OmniScripts), fc (FlexCards), autonumber (Omni Global Auto Numbers)
 
   --relatedobjects=relatedobjects                                                   specify related objects to assess:
                                                                                     'apex' for Apex classes

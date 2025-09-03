@@ -25,7 +25,7 @@ import { ExperienceSiteAssessmentReporter } from './ExperienceSiteAssessmentRepo
 import { CustomLabelAssessmentReporter } from './CustomLabelAssessmentReporter';
 
 export class AssessmentReporter {
-  private static basePath = path.join(process.cwd(), 'assessment_reports');
+  private static basePath = path.join(process.cwd(), Constants.AssessmentReportsFolderName);
   private static omniscriptAssessmentFileName = 'omniscript_assessment.html';
   private static flexcardAssessmentFileName = 'flexcard_assessment.html';
   private static integrationProcedureAssessmentFileName = 'integration_procedure_assessment.html';
@@ -364,7 +364,7 @@ export class AssessmentReporter {
     const summaryItems = [];
     if (reports.includes(Constants.DataMapper)) {
       summaryItems.push({
-        name: 'DataMappers',
+        name: 'Data Mappers',
         total: result.dataRaptorAssessmentInfos.length,
         data: DRAssessmentReporter.getSummaryData(result.dataRaptorAssessmentInfos),
         file: this.dataMapperAssessmentFileName,
@@ -396,7 +396,7 @@ export class AssessmentReporter {
     }
     if (reports.includes(Constants.GlobalAutoNumber)) {
       summaryItems.push({
-        name: 'Global Auto Numbers',
+        name: 'Omni Global Auto Numbers',
         total: result.globalAutoNumberAssessmentInfos.length,
         data: GlobalAutoNumberAssessmentReporter.getSummaryData(result.globalAutoNumberAssessmentInfos),
         file: this.globalAutoNumberAssessmentFileName,

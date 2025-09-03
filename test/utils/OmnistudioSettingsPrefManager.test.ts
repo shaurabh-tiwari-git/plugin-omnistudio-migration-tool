@@ -28,10 +28,10 @@ describe('OmnistudioSettingsPrefManager', () => {
     sandbox.restore();
   });
 
-  // Global Auto Number Tests
-  describe('Global Auto Number functionality', () => {
+  // Omni Global Auto Number Tests
+  describe('Omni Global Auto Number functionality', () => {
     describe('isGlobalAutoNumberEnabled()', () => {
-      it('should return true when global auto number is enabled', async () => {
+      it('should return true when omni global auto number is enabled', async () => {
         const readStub = connection.metadata.read as sinon.SinonStub;
         readStub.resolves({ enableOmniGlobalAutoNumberPref: 'true' });
 
@@ -43,7 +43,7 @@ describe('OmnistudioSettingsPrefManager', () => {
         expect(readStub.firstCall.args[1]).to.deep.equal(['OmniStudio']);
       });
 
-      it('should return false when global auto number is disabled', async () => {
+      it('should return false when omni global auto number is disabled', async () => {
         const readStub = connection.metadata.read as sinon.SinonStub;
         readStub.resolves({ enableOmniGlobalAutoNumberPref: 'false' });
 
@@ -52,7 +52,7 @@ describe('OmnistudioSettingsPrefManager', () => {
         expect(result).to.be.false;
       });
 
-      it('should return false when global auto number preference is not set', async () => {
+      it('should return false when omni global auto number preference is not set', async () => {
         const readStub = connection.metadata.read as sinon.SinonStub;
         readStub.resolves({});
 
@@ -81,7 +81,7 @@ describe('OmnistudioSettingsPrefManager', () => {
     });
 
     describe('enableGlobalAutoNumber()', () => {
-      it('should enable global auto number preference', async () => {
+      it('should enable omni global auto number preference', async () => {
         const updateStub = connection.metadata.update as sinon.SinonStub;
         const expectedResult = { success: true };
         updateStub.resolves(expectedResult);

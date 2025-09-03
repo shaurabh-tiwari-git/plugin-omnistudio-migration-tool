@@ -27,15 +27,15 @@ export function formatUnicorn(
 
 export function getMigrationHeading(name: string): string {
   if (name.toLowerCase().includes('data')) {
-    return 'DataMappers';
+    return 'Data Mappers';
   } else if (name.toLowerCase().includes('flexcard')) {
     return 'Flexcards';
   } else if (name.toLowerCase().includes('omniscript')) {
     return 'Omniscripts';
   } else if (name.toLowerCase().includes('integration')) {
     return 'Integration Procedures';
-  } else if (name.toLowerCase().includes('autonumber')) {
-    return 'Global Auto Numbers';
+  } else if (name.toLowerCase().includes('number')) {
+    return 'Omni Global Auto Numbers';
   } else {
     return name;
   }

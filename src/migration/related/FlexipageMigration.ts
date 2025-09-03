@@ -102,7 +102,7 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
     const flexiPageDir = path.join(this.projectPath, 'force-app', 'main', 'default', 'flexipages');
     const files = fs.readdirSync(flexiPageDir).filter((file) => file.endsWith('.xml'));
     Logger.logVerbose(this.messages.getMessage('foundFlexiPages', [files.length]));
-    const progressBar = createProgressBar('Migrating', 'Flexipage');
+    const progressBar = createProgressBar(mode === 'assess' ? 'Assessing' : 'Migrating', 'Flexipage');
     progressBar.start(files.length, 0);
     const flexPageAssessmentInfos: FlexiPageAssessmentInfo[] = [];
 
