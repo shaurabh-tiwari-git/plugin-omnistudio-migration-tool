@@ -108,12 +108,7 @@ export class OSAssessmentReporter {
           1,
           false,
           undefined,
-          info.warnings,
-          info.migrationStatus === 'Warnings'
-            ? 'text-warning'
-            : info.migrationStatus === 'Ready for migration'
-            ? ''
-            : 'text-error'
+          info.warnings
         ),
         createRowDataParam(
           'omniScriptDependencies',

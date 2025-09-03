@@ -207,12 +207,7 @@ export class DRAssessmentReporter {
           1,
           false,
           undefined,
-          dataRaptorAssessmentInfo.warnings,
-          dataRaptorAssessmentInfo.migrationStatus === 'Warnings'
-            ? 'text-warning'
-            : dataRaptorAssessmentInfo.migrationStatus === 'Ready for migration'
-            ? ''
-            : 'text-error'
+          dataRaptorAssessmentInfo.warnings
         ),
         createRowDataParam(
           'customFunctionDependencies',

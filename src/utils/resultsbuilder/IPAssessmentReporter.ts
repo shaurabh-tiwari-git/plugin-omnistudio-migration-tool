@@ -108,12 +108,7 @@ export class IPAssessmentReporter {
           1,
           false,
           undefined,
-          ipAssessmentInfo.warnings,
-          ipAssessmentInfo.migrationStatus === 'Warnings'
-            ? 'text-warning'
-            : ipAssessmentInfo.migrationStatus === 'Ready for migration'
-            ? ''
-            : 'text-error'
+          ipAssessmentInfo.warnings
         ),
         createRowDataParam(
           'integrationProcedureDependencies',
