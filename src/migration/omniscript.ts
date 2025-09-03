@@ -1620,8 +1620,14 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         content = JSON.parse(content);
         if (content && content['sOmniScriptId']) {
           content['sOmniScriptId'] = omniProcessId;
-          mappedObject[OmniScriptDefinitionMappings.Content__c] = JSON.stringify(content);
         }
+
+        // Process the nested JSON structure to update bundle/reference names
+        if (content && content['children']) {
+          this.processContentChildren(content['children']);
+        }
+
+        mappedObject[OmniScriptDefinitionMappings.Content__c] = JSON.stringify(content);
       } catch (ex) {
         // Log
       }
@@ -1634,6 +1640,210 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     };
 
     return mappedObject;
+  }
+
+  /**
+   * Recursively processes children elements in the content JSON to update bundle/reference names
+   * @param children Array of child elements from the content JSON
+   */
+  private processContentChildren(children: any[]): void {
+    if (!Array.isArray(children)) {
+      return;
+    }
+
+    children.forEach((child) => {
+      if (child && child.type && child.propSetMap) {
+        this.processContentElement(child);
+      }
+
+      // Process nested children in Step elements
+      if (child && child.children && Array.isArray(child.children)) {
+        child.children.forEach((nestedChild) => {
+          if (nestedChild && nestedChild.eleArray && Array.isArray(nestedChild.eleArray)) {
+            nestedChild.eleArray.forEach((element) => {
+              if (element && element.type && element.propSetMap) {
+                this.processContentElement(element);
+              }
+            });
+          }
+        });
+      }
+    });
+  }
+
+  /**
+   * Processes individual content element to update bundle/reference names based on type
+   * @param element Individual element from the content JSON
+   */
+  private processContentElement(element: any): void {
+    const elementType = element.type;
+    const propSetMap = element.propSetMap;
+
+    if (!elementType || !propSetMap) {
+      return;
+    }
+
+    switch (elementType) {
+      case 'Integration Procedure Action':
+        this.processIntegrationProcedureAction(propSetMap);
+        break;
+      case 'DataRaptor Turbo Action':
+      case 'DataRaptor Transform Action':
+      case 'DataRaptor Post Action':
+      case 'DataRaptor Extract Action':
+        this.processDataRaptorAction(propSetMap);
+        break;
+      case 'OmniScript':
+        this.processOmniScriptAction(propSetMap);
+        break;
+      case 'Step':
+        this.processStepAction(propSetMap);
+        break;
+      default:
+        // Handle other element types if needed
+        break;
+    }
+  }
+
+  /**
+   * Processes Integration Procedure Action elements to update reference names
+   * @param propSetMap Property set map from the element
+   */
+  private processIntegrationProcedureAction(propSetMap: any): void {
+    // Handle remoteOptions pre/post transform bundles
+    if (propSetMap.remoteOptions) {
+      if (propSetMap.remoteOptions.preTransformBundle) {
+        const bundleName = propSetMap.remoteOptions.preTransformBundle;
+        if (this.nameRegistry.hasDataMapperMapping(bundleName)) {
+          propSetMap.remoteOptions.preTransformBundle = this.nameRegistry.getDataMapperCleanedName(bundleName);
+        } else {
+          propSetMap.remoteOptions.preTransformBundle = this.cleanName(bundleName);
+        }
+      }
+
+      if (propSetMap.remoteOptions.postTransformBundle) {
+        const bundleName = propSetMap.remoteOptions.postTransformBundle;
+        if (this.nameRegistry.hasDataMapperMapping(bundleName)) {
+          propSetMap.remoteOptions.postTransformBundle = this.nameRegistry.getDataMapperCleanedName(bundleName);
+        } else {
+          propSetMap.remoteOptions.postTransformBundle = this.cleanName(bundleName);
+        }
+      }
+    }
+
+    // Handle direct pre/post transform bundles
+    if (propSetMap.preTransformBundle) {
+      const bundleName = propSetMap.preTransformBundle;
+      if (this.nameRegistry.hasDataMapperMapping(bundleName)) {
+        propSetMap.preTransformBundle = this.nameRegistry.getDataMapperCleanedName(bundleName);
+      } else {
+        propSetMap.preTransformBundle = this.cleanName(bundleName);
+      }
+    }
+
+    if (propSetMap.postTransformBundle) {
+      const bundleName = propSetMap.postTransformBundle;
+      if (this.nameRegistry.hasDataMapperMapping(bundleName)) {
+        propSetMap.postTransformBundle = this.nameRegistry.getDataMapperCleanedName(bundleName);
+      } else {
+        propSetMap.postTransformBundle = this.cleanName(bundleName);
+      }
+    }
+
+    // Handle integrationProcedureKey
+    if (propSetMap.integrationProcedureKey) {
+      const key = propSetMap.integrationProcedureKey;
+      if (this.nameRegistry.hasIntegrationProcedureMapping(key)) {
+        propSetMap.integrationProcedureKey = this.nameRegistry.getIntegrationProcedureCleanedName(key);
+      } else {
+        const parts = key.split('_');
+        // Integration Procedures should have Type_SubType format (2 parts)
+        if (parts.length > 2) {
+          Logger.logVerbose(this.messages.getMessage('integrationProcedureInvalidUnderscoreFormat', [key]));
+          return;
+        }
+
+        propSetMap.integrationProcedureKey = parts.map((p) => this.cleanName(p, true)).join('_');
+      }
+    }
+  }
+
+  /**
+   * Processes DataRaptor Action elements to update bundle names
+   * @param propSetMap Property set map from the element
+   */
+  private processDataRaptorAction(propSetMap: any): void {
+    if (propSetMap.bundle) {
+      const bundleName = propSetMap.bundle;
+      if (this.nameRegistry.hasDataMapperMapping(bundleName)) {
+        propSetMap.bundle = this.nameRegistry.getDataMapperCleanedName(bundleName);
+      } else {
+        propSetMap.bundle = this.cleanName(bundleName);
+      }
+    }
+  }
+
+  /**
+   * Processes OmniScript Action elements to update reference names
+   * @param propSetMap Property set map from the element
+   */
+  private processOmniScriptAction(propSetMap: any): void {
+    const osType = propSetMap['Type'] || '';
+    const osSubType = propSetMap['Sub Type'] || '';
+    const osLanguage = propSetMap['Language'] || 'English';
+
+    // Construct full OmniScript name to check registry
+    const fullOmniScriptName = `${osType}_${osSubType}_${osLanguage}`;
+
+    if (this.nameRegistry.isAngularOmniScript(fullOmniScriptName)) {
+      // Keep original reference as-is since Angular OmniScript won't be migrated
+      return;
+    } else if (this.nameRegistry.hasOmniScriptMapping(fullOmniScriptName)) {
+      // Registry has mapping for this LWC OmniScript - extract cleaned parts
+      const cleanedFullName = this.nameRegistry.getCleanedName(fullOmniScriptName, 'OmniScript');
+      const parts = cleanedFullName.split('_');
+
+      if (parts.length >= 2) {
+        propSetMap['Type'] = parts[0];
+        propSetMap['Sub Type'] = parts[1];
+        // Language doesn't typically change, but update if provided
+        if (parts.length >= 3) {
+          propSetMap['Language'] = parts[2];
+        }
+      }
+    } else {
+      // No registry mapping - use original fallback approach
+      propSetMap['Type'] = this.cleanName(osType);
+      propSetMap['Sub Type'] = this.cleanName(osSubType);
+    }
+  }
+
+  /**
+   * Processes Step elements to update reference names
+   * @param propSetMap Property set map from the element
+   */
+  private processStepAction(propSetMap: any): void {
+    // Handle remoteOptions pre/post transform bundles if they exist in Step elements
+    // Note: remoteClass and remoteMethod cleaning is not required for omniscript content step dependencies
+    if (propSetMap.remoteOptions) {
+      if (propSetMap.remoteOptions.preTransformBundle) {
+        const bundleName = propSetMap.remoteOptions.preTransformBundle;
+        if (this.nameRegistry.hasDataMapperMapping(bundleName)) {
+          propSetMap.remoteOptions.preTransformBundle = this.nameRegistry.getDataMapperCleanedName(bundleName);
+        } else {
+          propSetMap.remoteOptions.preTransformBundle = this.cleanName(bundleName);
+        }
+      }
+
+      if (propSetMap.remoteOptions.postTransformBundle) {
+        const bundleName = propSetMap.remoteOptions.postTransformBundle;
+        if (this.nameRegistry.hasDataMapperMapping(bundleName)) {
+          propSetMap.remoteOptions.postTransformBundle = this.nameRegistry.getDataMapperCleanedName(bundleName);
+        } else {
+          propSetMap.remoteOptions.postTransformBundle = this.cleanName(bundleName);
+        }
+      }
+    }
   }
 
   private getOmniScriptFields(): string[] {
