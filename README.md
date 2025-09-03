@@ -32,7 +32,7 @@ You can also authenticate using a consumer key (client ID) and secret key throug
 3. In a new terminal session, Install the Omnistudio Migration Assistant by running the `sf plugins install` command. For example
 
 ```
-sf plugins install @salesforce/plugin-omnistudio-migration-tool@2.0.0-rc.16
+sf plugins install @salesforce/plugin-omnistudio-migration-tool@2.0.0-rc.43
 ```
 
 4. Run the Omnistudio Migration Assistant from the Salesforce CLI:
@@ -45,18 +45,23 @@ sfdx omnistudio:migration:assess -u YOUR_ORG_USERNAME@DOMAIN.COM
 sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM
 
 
-// To migrate/assess specific components: FlexCards, Data Mappers, Integration Procedures, OmniScripts, or Omni Global Auto Numbers, add the following parameters:
---only=dm    // Data Mappers
---only=ip    // Integration Procedures
---only=os    // OmniScripts
---only=fc    // FlexCards
+// To migrate/assess specific components: Flexcards, Data Mappers, Integration Procedures, Omniscripts, Omni Global Auto Numbers or Custom Labels, add the following parameters:
+--only=dm           // Data Mappers
+--only=ip           // Integration Procedures
+--only=os           // Omniscripts
+--only=fc           // Flexcards
 --only=autonumber   // Omni Global Auto Numbers
+--only=cl           // Custom Labels
 
 // To migrate all versions of the components and not just the active ones:
 --allversions
 
-// To assess specific related objects:
---relatedobjects=apex    // for Apex classes only
+// To assess specific set of related objects:
+--relatedobjects=apex                             // for Apex classes only
+--relatedobjects=lwc                              // for Lightning Web Components only
+--relatedobjects=expsites                         // for Experience Sites only
+--relatedobjects=flexipage                        // for FlexiPages only
+--relatedobjects=apex,lwc,expsites,flexipage      // for all related objects
 
 ```
 
