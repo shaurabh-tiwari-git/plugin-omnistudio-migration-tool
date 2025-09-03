@@ -1,4 +1,5 @@
 import { expect } from '@salesforce/command/lib/test';
+import isEqual from 'lodash/isEqual.js';
 import { XMLUtil } from '../../src/utils/XMLUtil';
 import { FlexiPageRegion } from '../../src/migration/interfaces';
 
@@ -27,70 +28,89 @@ describe('XMLUtil', () => {
       const xmlString = '<root><name>test</name><value>123</value></root>';
       const result = xmlUtil.parse(xmlString);
 
-      expect(result).to.deep.equal({
-        name: 'test',
-        value: '123',
-      });
+      // expect(result).to.deep.equal({
+      //   name: 'test',
+      //   value: '123',
+      // });
+
+      expect(
+        isEqual(result, {
+          name: 'test',
+          value: '123',
+        })
+      ).to.be.true;
     });
 
     it('should parse XML with attributes', () => {
       const xmlString = '<root id="1" type="test"><name>value</name></root>';
       const result = xmlUtil.parse(xmlString);
 
-      expect(result).to.deep.equal({
-        '@attributes': {
-          id: '1',
-          type: 'test',
-        },
-        name: 'value',
-      });
+      expect(
+        isEqual(result, {
+          '@attributes': {
+            id: '1',
+            type: 'test',
+          },
+          name: 'value',
+        })
+      ).to.be.true;
     });
 
     it('should parse XML with nested elements', () => {
       const xmlString = '<root><parent><child>value</child></parent></root>';
       const result = xmlUtil.parse(xmlString);
 
-      expect(result).to.deep.equal({
-        parent: {
-          child: 'value',
-        },
-      });
+      expect(
+        isEqual(result, {
+          parent: {
+            child: 'value',
+          },
+        })
+      ).to.be.true;
     });
 
     it('should parse XML with multiple children of same type', () => {
       const xmlString = '<root><item>first</item><item>second</item></root>';
       const result = xmlUtil.parse(xmlString);
 
-      expect(result).to.deep.equal({
-        item: ['first', 'second'],
-      });
+      expect(
+        isEqual(result, {
+          item: ['first', 'second'],
+        })
+      ).to.be.true;
     });
 
     it('should parse XML with text content and elements', () => {
       const xmlString = '<root>Some text<element>value</element>More text</root>';
       const result = xmlUtil.parse(xmlString);
 
-      expect(result).to.deep.equal({
-        element: 'value',
-      });
+      expect(
+        isEqual(result, {
+          element: 'value',
+        })
+      ).to.be.true;
     });
 
     it('should handle empty elements', () => {
       const xmlString = '<root><empty></empty></root>';
       const result = xmlUtil.parse(xmlString);
 
-      expect(result).to.deep.equal({
-        empty: {},
-      });
+      expect(
+        isEqual(result, {
+          empty: {},
+        })
+      ).to.be.true;
     });
 
     it('should handle self-closing elements', () => {
       const xmlString = '<root><selfClosing /></root>';
       const result = xmlUtil.parse(xmlString);
 
-      expect(result).to.deep.equal({
-        selfClosing: {},
-      });
+      expect(
+        isEqual(result, {
+          selfClosing: {},
+        })
+      ).to.be.true;
     });
 
     it('should throw for invalid xml', () => {
@@ -269,9 +289,11 @@ describe('XMLUtil', () => {
 
       expect(result.flexiPageRegions).to.be.an('array');
       expect(result.flexiPageRegions).to.have.length(1);
-      expect(result.flexiPageRegions[0]).to.deep.equal({
-        region: 'test',
-      });
+      expect(
+        isEqual(result.flexiPageRegions[0], {
+          region: 'test',
+        })
+      ).to.be.true;
     });
 
     it('should handle multiple elements in alwaysArray fields', () => {
@@ -284,8 +306,8 @@ describe('XMLUtil', () => {
 
       expect(result.flexiPageRegions).to.be.an('array');
       expect(result.flexiPageRegions).to.have.length(2);
-      expect(result.flexiPageRegions[0]).to.deep.equal({ region: 'first' });
-      expect(result.flexiPageRegions[1]).to.deep.equal({ region: 'second' });
+      expect(isEqual(result.flexiPageRegions[0], { region: 'first' })).to.be.true;
+      expect(isEqual(result.flexiPageRegions[1], { region: 'second' })).to.be.true;
     });
   });
 
@@ -305,7 +327,7 @@ describe('XMLUtil', () => {
       const xml = xmlUtil.build(originalJson, 'root');
       const parsed = xmlUtil.parse(xml);
 
-      expect(parsed).to.deep.equal(originalJson);
+      expect(isEqual(parsed, originalJson)).to.be.true;
     });
 
     it('should handle complex nested structures', () => {
@@ -321,7 +343,7 @@ describe('XMLUtil', () => {
       const xml = xmlUtil.build(originalJson, 'root');
       const parsed = xmlUtil.parse(xml);
 
-      expect(parsed).to.deep.equal(originalJson);
+      expect(isEqual(parsed, originalJson)).to.be.true;
     });
   });
 
@@ -330,38 +352,44 @@ describe('XMLUtil', () => {
       const xmlString = '<root id="1" type="test"></root>';
       const result = xmlUtil.parse(xmlString);
 
-      expect(result).to.deep.equal({
-        '@attributes': {
-          id: '1',
-          type: 'test',
-        },
-      });
+      expect(
+        isEqual(result, {
+          '@attributes': {
+            id: '1',
+            type: 'test',
+          },
+        })
+      ).to.be.true;
     });
 
     it('should handle XML with mixed content', () => {
       const xmlString = '<root>Text before<element>value</element>Text after</root>';
       const result = xmlUtil.parse(xmlString);
 
-      expect(result).to.deep.equal({
-        element: 'value',
-      });
+      expect(
+        isEqual(result, {
+          element: 'value',
+        })
+      ).to.be.true;
     });
 
     it('should handle empty XML', () => {
       const xmlString = '<root></root>';
       const result = xmlUtil.parse(xmlString);
 
-      expect(result).to.deep.equal({});
+      expect(isEqual(result, {})).to.be.true;
     });
 
     it('should handle XML with special characters', () => {
       const xmlString = '<root><name>&lt;test&gt;</name><value>123 &amp; 456</value></root>';
       const result = xmlUtil.parse(xmlString);
 
-      expect(result).to.deep.equal({
-        name: '<test>',
-        value: '123 & 456',
-      });
+      expect(
+        isEqual(result, {
+          name: '<test>',
+          value: '123 & 456',
+        })
+      ).to.be.true;
     });
   });
 });

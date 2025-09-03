@@ -30,7 +30,7 @@ describe('StorageUtil', () => {
       const storage = StorageUtil.getOmnistudioMigrationStorage();
 
       // Assert
-      expect(storage).to.be.an('object');
+      expect(typeof storage).to.equal('object');
       expect(storage.osStorage).to.be.instanceOf(Map);
       expect(storage.fcStorage).to.be.instanceOf(Map);
       expect(storage.osStorage.size).to.equal(0);
@@ -110,7 +110,7 @@ describe('StorageUtil', () => {
       const storage = StorageUtil.getOmnistudioAssessmentStorage();
 
       // Assert
-      expect(storage).to.be.an('object');
+      expect(typeof storage).to.equal('object');
       expect(storage.osStorage).to.be.instanceOf(Map);
       expect(storage.fcStorage).to.be.instanceOf(Map);
     });
