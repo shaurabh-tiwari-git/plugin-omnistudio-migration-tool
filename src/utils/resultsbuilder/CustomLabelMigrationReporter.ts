@@ -11,7 +11,15 @@ export interface CustomLabelMigrationData extends ReportParam {
 export interface CustomLabelMigrationInfo {
   labelName: string;
   cloneStatus: string;
-  localizationStatus: Record<string, string>;
+  message: string;
+  coreInfo: {
+    id: string;
+    value: string;
+  };
+  packageInfo: {
+    id: string;
+    value: string;
+  };
   errors: string[];
   warnings: string[];
 }
@@ -46,7 +54,7 @@ export class CustomLabelMigrationReporter {
       assessmentDate: new Date().toString(),
       total: totalLabels,
       filterGroups: [
-        createFilterGroupParam('Filter by Clone Status', 'cloneStatus', ['created', 'duplicate', 'error']),
+        createFilterGroupParam('Filter by Status', 'status', ['Successfully migrated', 'Failed', 'Skipped']),
       ],
       rows: this.getRowsForReport(paginatedLabels),
       headerGroups: this.getHeaderGroupsForReport(),
@@ -218,66 +226,57 @@ export class CustomLabelMigrationReporter {
     let rowIndex = 0;
 
     customLabelMigrationInfos.forEach((info) => {
-      const cloneStatusClass = info.cloneStatus === 'created' ? 'text-success' : 'text-error';
+      const statusClass =
+        info.cloneStatus === 'created' ? 'text-success' : info.cloneStatus === 'error' ? 'text-error' : 'text-warning';
 
-      // If no localizations, create one row with empty language
-      if (!info.localizationStatus || Object.keys(info.localizationStatus).length === 0) {
-        rows.push({
-          rowId: `custom_label_${rowIndex++}`,
-          data: [
-            createRowDataParam('name', info.labelName, true, 1, 1, false),
-            createRowDataParam(
-              'cloneStatus',
-              info.cloneStatus,
-              false,
-              1,
-              1,
-              false,
-              undefined,
-              undefined,
-              cloneStatusClass
-            ),
-            createRowDataParam('language', '', false, 1, 1, false),
-            createRowDataParam('localizationCloneStatus', '', false, 1, 1, false),
-          ],
-        });
-      } else {
-        // Create separate row for each language
-        Object.entries(info.localizationStatus).forEach(([languageCode, status]) => {
-          const localizationStatusClass =
-            status === 'created' ? 'text-success' : status === 'duplicate' ? 'text-warning' : 'text-error';
-
-          rows.push({
-            rowId: `custom_label_${rowIndex++}`,
-            data: [
-              createRowDataParam('name', info.labelName, true, 1, 1, false),
-              createRowDataParam(
-                'cloneStatus',
-                info.cloneStatus,
-                false,
-                1,
-                1,
-                false,
-                undefined,
-                undefined,
-                cloneStatusClass
-              ),
-              createRowDataParam('language', languageCode, false, 1, 1, false),
-              createRowDataParam(
-                'localizationCloneStatus',
-                status,
-                false,
-                1,
-                1,
-                false,
-                undefined,
-                undefined,
-                localizationStatusClass
-              ),
-            ],
-          });
-        });
-      }
+      rows.push({
+        rowId: `custom_label_${rowIndex++}`,
+        data: [
+          createRowDataParam('name', info.labelName, true, 1, 1, false),
+          createRowDataParam('packageId', info.packageInfo?.id || '<ID>', false, 1, 1, true),
+          createRowDataParam(
+            'packageValue',
+            info.packageInfo?.value || '',
+            false,
+            1,
+            1,
+            false,
+            undefined,
+            undefined,
+            undefined,
+            true
+          ),
+          createRowDataParam('coreId', info.coreInfo?.id || '<Core Id>', false, 1, 1, true),
+          createRowDataParam(
+            'coreValue',
+            info.coreInfo?.value || '',
+            false,
+            1,
+            1,
+            false,
+            undefined,
+            undefined,
+            undefined,
+            true
+          ),
+          createRowDataParam(
+            'status',
+            info.cloneStatus === 'created'
+              ? 'Successfully migrated'
+              : info.cloneStatus === 'error'
+              ? 'Failed'
+              : 'Skipped',
+            false,
+            1,
+            1,
+            false,
+            undefined,
+            undefined,
+            statusClass
+          ),
+          createRowDataParam('summary', info.message || '', false, 1, 1, false, undefined, undefined, undefined, true),
+        ],
+      });
     });
 
     return rows;
@@ -290,20 +289,49 @@ export class CustomLabelMigrationReporter {
           {
             name: 'Name',
             colspan: 1,
+            rowspan: 2,
+          },
+          {
+            name: 'Package',
+            colspan: 2,
             rowspan: 1,
           },
           {
-            name: 'Clone Status',
+            name: 'Core',
+            colspan: 2,
+            rowspan: 1,
+          },
+          {
+            name: 'Status',
+            colspan: 1,
+            rowspan: 2,
+          },
+          {
+            name: 'Summary',
+            colspan: 1,
+            rowspan: 2,
+          },
+        ],
+      },
+      {
+        header: [
+          {
+            name: 'Id',
             colspan: 1,
             rowspan: 1,
           },
           {
-            name: 'Language',
+            name: 'Value',
             colspan: 1,
             rowspan: 1,
           },
           {
-            name: 'Localization Clone Status',
+            name: 'Id',
+            colspan: 1,
+            rowspan: 1,
+          },
+          {
+            name: 'Value',
             colspan: 1,
             rowspan: 1,
           },

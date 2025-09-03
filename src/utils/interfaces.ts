@@ -4,7 +4,9 @@ import { CustomLabelAssessmentInfo, CustomLabelStatistics } from './customLabels
 export interface MigratedObject {
   name: string;
   data?: MigratedRecordInfo[];
+  records?: any; // For consolidated map approach - using any to avoid type conflicts
   errors?: string[];
+  totalCount?: number; // Optional total count for dashboard calculation
 }
 
 export interface MigratedRecordInfo {
@@ -21,7 +23,18 @@ export interface MigratedRecordInfo {
   migratedId?: string;
   migratedName?: string;
   warnings: string[];
-  localizationStatus?: Record<string, string>;
+  // Custom fields for custom labels
+  coreInfo?: {
+    id: string;
+    value: string;
+  };
+  packageInfo?: {
+    id: string;
+    value: string;
+  };
+  message?: string;
+  cloneStatus?: string;
+  labelName?: string;
 }
 
 export interface DiffPair {
