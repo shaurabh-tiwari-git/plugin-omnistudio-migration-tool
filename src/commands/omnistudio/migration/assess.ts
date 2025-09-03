@@ -1,3 +1,4 @@
+import path from 'path';
 import * as os from 'os';
 import { flags } from '@salesforce/command';
 import { Messages, Connection } from '@salesforce/core';
@@ -19,6 +20,7 @@ import { ProjectPathUtil } from '../../../utils/projectPathUtil';
 import { PreMigrate } from '../../../migration/premigrate';
 import { PostMigrate } from '../../../migration/postMigrate';
 import { CustomLabelsUtil } from '../../../utils/customLabels';
+import { ValidatorService } from '../../../utils/validatorService';
 
 Messages.importMessagesDirectory(__dirname);
 const messages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'assess');
@@ -77,16 +79,11 @@ export default class Assess extends OmniStudioBaseCommand {
     const apiVersion = conn.getApiVersion();
     const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn);
 
-    if (!orgs.hasValidNamespace) {
-      Logger.warn(messages.getMessage('invalidNamespace', [orgs.packageDetails.namespace]));
-    }
+    // Perform comprehensive validation using ValidatorService
+    const validator = new ValidatorService(orgs, conn, messages);
+    const isValidationPassed = await validator.validate();
 
-    if (!orgs.packageDetails) {
-      Logger.error(messages.getMessage('noPackageInstalled'));
-      return;
-    }
-    if (orgs.omniStudioOrgPermissionEnabled) {
-      Logger.error(messages.getMessage('alreadyStandardModel'));
+    if (!isValidationPassed) {
       return;
     }
 
@@ -117,7 +114,13 @@ export default class Assess extends OmniStudioBaseCommand {
       flexipageAssessmentInfos: [],
       experienceSiteAssessmentInfos: [],
       customLabelAssessmentInfos: [],
-      customLabelStatistics: { totalLabels: 0, canBeAutomated: 0, needManualIntervention: 0 },
+      customLabelStatistics: {
+        totalLabels: 0,
+        readyForMigration: 0,
+        needManualIntervention: 0,
+        warnings: 0,
+        failed: 0,
+      },
     };
 
     Logger.log(messages.getMessage('assessmentInitialization', [String(namespace)]));
@@ -200,6 +203,13 @@ export default class Assess extends OmniStudioBaseCommand {
       messages,
       userActionMessages
     );
+    Logger.log(
+      messages.getMessage('assessmentSuccessfulMessage', [
+        orgs.orgDetails?.Id,
+        path.join(process.cwd(), Constants.AssessmentReportsFolderName),
+      ])
+    );
+
     return assesmentInfo;
   }
 
@@ -329,14 +339,17 @@ export default class Assess extends OmniStudioBaseCommand {
       const customLabelResult = await CustomLabelsUtil.fetchCustomLabels(conn, namespace, messages);
       assesmentInfo.customLabelAssessmentInfos = customLabelResult.labels;
       assesmentInfo.customLabelStatistics = customLabelResult.statistics;
-      Logger.logVerbose(
-        messages.getMessage('assessedCustomLabelsCount', [assesmentInfo.customLabelAssessmentInfos.length])
-      );
       Logger.log(messages.getMessage('customLabelAssessmentCompleted'));
     } catch (error) {
       Logger.error(messages.getMessage('errorDuringCustomLabelAssessment', [(error as Error).message]));
       assesmentInfo.customLabelAssessmentInfos = [];
-      assesmentInfo.customLabelStatistics = { totalLabels: 0, canBeAutomated: 0, needManualIntervention: 0 };
+      assesmentInfo.customLabelStatistics = {
+        totalLabels: 0,
+        readyForMigration: 0,
+        needManualIntervention: 0,
+        warnings: 0,
+        failed: 0,
+      };
     }
   }
 }

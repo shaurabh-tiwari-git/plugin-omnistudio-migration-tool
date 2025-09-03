@@ -23,8 +23,10 @@ export interface CustomLabelAssessmentInfo {
 
 export interface CustomLabelStatistics {
   totalLabels: number;
-  canBeAutomated: number;
+  readyForMigration: number;
   needManualIntervention: number;
+  warnings: number;
+  failed: number;
 }
 
 export interface CustomLabelResult {
@@ -44,7 +46,7 @@ export class CustomLabelsUtil {
       if (!customLabels || customLabels.length === 0) {
         return {
           labels: [],
-          statistics: { totalLabels: 0, canBeAutomated: 0, needManualIntervention: 0 },
+          statistics: { totalLabels: 0, readyForMigration: 0, needManualIntervention: 0, warnings: 0, failed: 0 },
         };
       }
 
@@ -56,11 +58,11 @@ export class CustomLabelsUtil {
         const id = label.Id;
 
         const externalString = externalStrings.find((es) => es.Name === name);
-        let assessmentStatus = 'Can be Automated';
+        let assessmentStatus = 'Ready for migration';
         let summary = '';
 
         if (externalString && externalString.Value !== value) {
-          assessmentStatus = 'Need Manual Intervention';
+          assessmentStatus = 'Warnings';
           summary = messages.getMessage('customLabelAssessmentSummary');
         }
 
@@ -78,29 +80,39 @@ export class CustomLabelsUtil {
         };
       });
 
-      const labelsNeedingManualIntervention = processedLabels.filter(
-        (label) => label.assessmentStatus === 'Need Manual Intervention'
+      const warnings = processedLabels.filter((label) => label.assessmentStatus === 'Warnings');
+
+      const needsManualIntervention = processedLabels.filter(
+        (label) => label.assessmentStatus === 'Needs Manual Intervention'
       );
 
-      const canBeAutomated = processedLabels.filter((label) => label.assessmentStatus === 'Can be Automated').length;
+      const failed = processedLabels.filter((label) => label.assessmentStatus === 'Failed');
+
+      const readyForMigration = processedLabels.filter(
+        (label) => label.assessmentStatus === 'Ready for migration'
+      ).length;
+
+      const totalAttentionNeeded = warnings.length + needsManualIntervention.length + failed.length;
 
       Logger.logVerbose(
-        `Found ${labelsNeedingManualIntervention.length} labels that need manual intervention out of ${processedLabels.length} total`
+        messages.getMessage('assessedCustomLabelsCount', [String(totalAttentionNeeded), String(processedLabels.length)])
       );
 
       return {
-        labels: labelsNeedingManualIntervention,
+        labels: [...warnings, ...needsManualIntervention, ...failed],
         statistics: {
           totalLabels: processedLabels.length,
-          canBeAutomated,
-          needManualIntervention: labelsNeedingManualIntervention.length,
+          readyForMigration,
+          needManualIntervention: needsManualIntervention.length,
+          warnings: warnings.length,
+          failed: failed.length,
         },
       };
     } catch (error) {
       Logger.error(messages.getMessage('errorFetchingCustomLabels', [String(error)]));
       return {
         labels: [],
-        statistics: { totalLabels: 0, canBeAutomated: 0, needManualIntervention: 0 },
+        statistics: { totalLabels: 0, readyForMigration: 0, needManualIntervention: 0, warnings: 0, failed: 0 },
       };
     }
   }

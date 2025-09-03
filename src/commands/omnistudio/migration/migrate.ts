@@ -7,6 +7,7 @@
  * Licensed under the BSD 3-Clause license.
  * For full license text, see LICENSE.txt file in the repo root or https://opensource.org/licenses/BSD-3-Clause
  */
+import path from 'path';
 import * as os from 'os';
 import { flags } from '@salesforce/command';
 import { Connection, Messages } from '@salesforce/core';
@@ -30,6 +31,7 @@ import { YES_SHORT, YES_LONG, NO_SHORT, NO_LONG } from '../../../utils/projectPa
 import { PostMigrate } from '../../../migration/postMigrate';
 import { PreMigrate } from '../../../migration/premigrate';
 import { GlobalAutoNumberMigrationTool } from '../../../migration/globalautonumber';
+import { ValidatorService } from '../../../utils/validatorService';
 import { NameMappingRegistry } from '../../../migration/NameMappingRegistry';
 
 // Initialize Messages with the current plugin directory
@@ -90,16 +92,11 @@ export default class Migrate extends OmniStudioBaseCommand {
 
     const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn);
 
-    if (!orgs.hasValidNamespace) {
-      Logger.warn(messages.getMessage('invalidNamespace', [orgs.packageDetails.namespace]));
-    }
+    // Perform comprehensive validation using ValidatorService
+    const validator = new ValidatorService(orgs, conn, messages);
+    const isValidationPassed = await validator.validate();
 
-    if (!orgs.packageDetails) {
-      Logger.error(messages.getMessage('noPackageInstalled'));
-      return;
-    }
-    if (orgs.omniStudioOrgPermissionEnabled) {
-      Logger.error(messages.getMessage('alreadyStandardModel'));
+    if (!isValidationPassed) {
       return;
     }
 
@@ -245,7 +242,12 @@ export default class Migrate extends OmniStudioBaseCommand {
       actionItems,
       objectsToProcess
     );
-
+    Logger.log(
+      messages.getMessage('migrationSuccessfulMessage', [
+        orgs.orgDetails?.Id,
+        path.join(process.cwd(), Constants.MigrationReportsFolderName),
+      ])
+    );
     // Return results needed for --json flag
     return { objectMigrationResults: [] };
   }

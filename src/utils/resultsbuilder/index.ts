@@ -32,7 +32,8 @@ import { Logger } from '../logger';
 import { getMigrationHeading } from '../stringUtils';
 import { Constants } from '../constants/stringContants';
 import { CustomLabelMigrationInfo, CustomLabelMigrationReporter } from './CustomLabelMigrationReporter';
-const resultsDir = path.join(process.cwd(), 'migration_report');
+
+const resultsDir = path.join(process.cwd(), Constants.MigrationReportsFolderName);
 const migrationReportHTMLfileName = 'dashboard.html';
 const flexipageFileName = 'flexipage.html';
 const templateDir = 'templates';
