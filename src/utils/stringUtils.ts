@@ -27,15 +27,13 @@ export function formatUnicorn(
 
 export function getMigrationHeading(name: string): string {
   if (name.toLowerCase().includes('data')) {
-    return 'Data Mapper';
+    return 'Data Mappers';
   } else if (name.toLowerCase().includes('flexcard')) {
-    return 'Flexcard';
+    return 'Flexcards';
   } else if (name.toLowerCase().includes('omniscript')) {
-    return 'OmniScript';
+    return 'Omniscripts';
   } else if (name.toLowerCase().includes('integration')) {
-    return 'Integration Procedure';
-  } else if (name.toLowerCase().includes('apex')) {
-    return 'Apex File';
+    return 'Integration Procedures';
   } else {
     return name;
   }

@@ -8,6 +8,9 @@ import { DiffPair } from '../../interfaces';
 
 export class FileDiffUtil {
   public static getDiffHTML(diff: string, name: string): string {
+    if (!diff) {
+      return '';
+    }
     const diffArray: DiffPair[] = JSON.parse(diff) as DiffPair[];
     let result = '<div style="height: 120px; text-align: left; overflow-x: auto;">';
     if (diffArray.length <= 6) {
@@ -21,7 +24,9 @@ export class FileDiffUtil {
               <div class="diffModalContent">
                 <span onclick="toggleDiffModal('${name}')" class="closeButton">&times;</span>
                 <h2 class="modalHeader">Summary</h2>
-                <p class="modalContent">${this.getDiffContent(diff, -1)}</p>
+                <div class="modalContent">
+                  ${this.getDiffContent(diff, -1)}
+                </div>
         </div>
       </div>`;
     }

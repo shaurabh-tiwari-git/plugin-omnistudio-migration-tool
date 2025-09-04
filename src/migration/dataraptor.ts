@@ -32,7 +32,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
   static readonly OMNIDATATRANSFORMITEM_NAME = 'OmniDataTransformItem';
 
   getName(): string {
-    return 'DataMappers';
+    return 'Data Mappers';
   }
 
   getRecordName(record: string) {
@@ -101,7 +101,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
       (dr) => dr[this.namespacePrefix + 'Type__c'] !== 'Migration'
     ).length;
     Logger.log(this.messages.getMessage('foundDataRaptorsToMigrate', [nonMigrationDataRaptors]));
-    const progressBar = createProgressBar('Migrating', 'DataMappers');
+    const progressBar = createProgressBar('Migrating', 'Data Mappers');
     progressBar.start(nonMigrationDataRaptors, progressCounter);
     for (let dr of dataRaptors) {
       // Skip if Type is "Migration"
@@ -193,7 +193,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     progressBar.stop();
 
     return {
-      name: 'Data Mapper',
+      name: 'Data Mappers',
       results: drUploadInfo,
       records: originalDrRecords,
     };
@@ -237,7 +237,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     const existingDataRaptorNames = new Set<string>();
     const dataRaptorItemsMap = await this.getAllDRToItemsMap();
 
-    const progressBar = createProgressBar('Assessing', 'DataMappers');
+    const progressBar = createProgressBar('Assessing', 'Data Mappers');
     let progressCounter = 0;
     let nonMigrationDataRaptors = dataRaptors.filter(
       (dr) => dr[this.namespacePrefix + 'Type__c'] !== 'Migration'
