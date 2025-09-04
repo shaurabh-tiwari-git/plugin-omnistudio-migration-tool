@@ -88,7 +88,12 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   // Perform Records Migration from VlocityCard__c to OmniUiCard
   async migrate(): Promise<MigrationResult[]> {
     // Get All the Active VlocityCard__c records
-    const allCards = await this.getAllActiveCards();
+    // const allCards = await this.getAllActiveCards();
+    let allCards = await this.getAllActiveCards();
+    let filteredCards = allCards.filter(
+      (card: any) => typeof card === 'object' && 'Name' in card && card.Name.includes('ABC')
+    );
+    allCards = filteredCards;
 
     Logger.log(this.messages.getMessage('foundFlexCardsToMigrate', [allCards.length]));
 
@@ -1042,7 +1047,8 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       mappedObject[CardMappings.Datasource__c] = JSON.stringify(datasource);
     }
 
-    this.ensureCommunityTargets(mappedObject);
+    const isCardActive: boolean = cardRecord[`${this.namespacePrefix}Active__c`];
+    this.ensureCommunityTargets(mappedObject, isCardActive);
 
     // Update all dependencies comprehensively
     this.updateAllDependenciesWithRegistry(mappedObject, invalidIpNames);
@@ -1540,7 +1546,11 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
    * Ensures that the FlexCard Definition includes required Lightning Community targets
    * Adds "lightningCommunity__Page" and "lightningCommunity__Default" if missing
    */
-  private ensureCommunityTargets(mappedObject: any): void {
+  private ensureCommunityTargets(mappedObject: any, isCardActive: boolean): void {
+    if (!isCardActive) {
+      return;
+    }
+
     const definition = JSON.parse(mappedObject[CardMappings.Definition__c] || '{}');
 
     if (!definition || !definition.xmlObject) {
@@ -1553,12 +1563,17 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     }
 
     // Ensure target is an array
-    // This also does not seem to be correct and may not be needed as the specified json structure would exist already
     if (!Array.isArray(definition.xmlObject.targets.target)) {
-      definition.xmlObject.targets.target = [definition.xmlObject.targets.target];
+      definition.xmlObject.targets.target = [];
     }
 
-    const requiredTargets = ['lightningCommunity__Page', 'lightningCommunity__Default'];
+    const requiredTargets = [
+      'lightning__RecordPage',
+      'lightning__AppPage',
+      'lightning__HomePage',
+      'lightningCommunity__Page',
+      'lightningCommunity__Default',
+    ];
     const currentTargets = definition.xmlObject.targets.target;
 
     // Add missing community targets
