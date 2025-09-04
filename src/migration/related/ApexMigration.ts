@@ -130,16 +130,45 @@ export class ApexMigration extends BaseRelatedObjectMigration {
     parser.parse();
     const tokenUpdates: TokenUpdater[] = [];
     const tokenUpdatesForRemoteCalls = this.processApexFileForRemotecalls(file, parser);
-    const tokeUpdatesForMethodCalls = this.processApexFileForMethodCalls(file, parser);
+    const ipNameUpdateFailed = new Set<string>();
+    const dmNameUpdateFailed = new Set<string>();
+    const tokenUpdatesForMethodCalls = this.processApexFileForMethodCalls(file, parser, ipNameUpdateFailed);
+    const tokenUpdatesForSimpleVarDeclarations = this.processApexFileForSimpleVarDeclarations(
+      parser,
+      ipNameUpdateFailed,
+      dmNameUpdateFailed
+    );
     const updateMessages: string[] = [];
 
     if (tokenUpdatesForRemoteCalls && tokenUpdatesForRemoteCalls.length > 0) {
       tokenUpdates.push(...tokenUpdatesForRemoteCalls);
       updateMessages.push(assessMessages.getMessage('fileUpdatedToAllowRemoteCalls'));
     }
-    if (tokeUpdatesForMethodCalls && tokeUpdatesForMethodCalls.length > 0) {
+    if (tokenUpdatesForMethodCalls && tokenUpdatesForMethodCalls.length > 0) {
       updateMessages.push(assessMessages.getMessage('fileUpdatedToAllowCalls'));
-      tokenUpdates.push(...tokeUpdatesForMethodCalls);
+      tokenUpdates.push(...tokenUpdatesForMethodCalls);
+    }
+
+    if (tokenUpdatesForSimpleVarDeclarations && tokenUpdatesForSimpleVarDeclarations.length > 0) {
+      if (type === 'migration') {
+        updateMessages.push(migrateMessages.getMessage('varDeclarationUpdated'));
+      } else {
+        updateMessages.push(assessMessages.getMessage('varDeclarationUpdated'));
+      }
+      tokenUpdates.push(...tokenUpdatesForSimpleVarDeclarations);
+    }
+
+    const warnings: string[] = [];
+
+    if (ipNameUpdateFailed.size > 0) {
+      ipNameUpdateFailed.forEach((name) => {
+        warnings.push(assessMessages.getMessage('ipNameUpdateFailed', [name]));
+      });
+    }
+    if (dmNameUpdateFailed.size > 0) {
+      dmNameUpdateFailed.forEach((name) => {
+        warnings.push(assessMessages.getMessage('dmNameUpdateFailed', [name]));
+      });
     }
     let difference = [];
     if (tokenUpdates && tokenUpdates.length > 0) {
@@ -156,11 +185,11 @@ export class ApexMigration extends BaseRelatedObjectMigration {
     if (updateMessages.length === 0) {
       Logger.info(assessMessages.getMessage('fileNoOmnistudioCalls', [file.name]));
     }
-    const warningMessage: string[] = this.processNonReplacableMethodCalls(file, parser);
+    warnings.push(...this.processNonReplacableMethodCalls(file, parser));
     return {
       name: file.name,
       errors: [],
-      warnings: warningMessage,
+      warnings,
       infos: updateMessages,
       path: file.location,
       diff: JSON.stringify(difference),
@@ -247,7 +276,11 @@ export class ApexMigration extends BaseRelatedObjectMigration {
     return tokenUpdates;
   }
 
-  private processApexFileForMethodCalls(file: File, parser: ApexASTParser): TokenUpdater[] {
+  private processApexFileForMethodCalls(
+    file: File,
+    parser: ApexASTParser,
+    ipNameUpdateFailed: Set<string>
+  ): TokenUpdater[] {
     const namespaceChanges = parser.namespaceChanges;
     const tokenUpdates: TokenUpdater[] = [];
     if (namespaceChanges && namespaceChanges.has(this.namespace)) {
@@ -264,6 +297,24 @@ export class ApexMigration extends BaseRelatedObjectMigration {
         if (token.text === newName) continue;
         Logger.info(assessMessages.getMessage('inApexDrNameWillBeUpdated', [file.name, token.text, newName]));
         Logger.log(assessMessages.getMessage('inApexDrNameWillBeUpdated', [file.name, token.text, newName]));
+        tokenUpdates.push(new SingleTokenUpdate(newName, token));
+      }
+    }
+
+    const ipParameters = methodParameters.get(ParameterType.IP_NAME);
+    if (ipParameters) {
+      for (const token of ipParameters) {
+        const oldName = token.text;
+        const parts = oldName.split('_');
+        if (parts.length !== 2) {
+          ipNameUpdateFailed.add(oldName);
+          continue;
+        }
+        const newName = `'${parts.map((p) => Stringutil.cleanName(p)).join('_')}'`;
+        if (newName === oldName) {
+          continue;
+        }
+        Logger.info(assessMessages.getMessage('inApexIpNameWillBeUpdated', [file.name, oldName, newName]));
         tokenUpdates.push(new SingleTokenUpdate(newName, token));
       }
     }
@@ -296,6 +347,51 @@ export class ApexMigration extends BaseRelatedObjectMigration {
                 return invokeMethod(action, inputMap, outMap, options);
             }
     `;
+  }
+
+  private processApexFileForSimpleVarDeclarations(
+    parser: ApexASTParser,
+    ipNameUpdateFailed: Set<string>,
+    dmNameUpdateFailed: Set<string>
+  ): TokenUpdater[] {
+    const simpleVarDeclarations = parser.simpleVarDeclarations;
+    const tokenUpdates: TokenUpdater[] = [];
+    // check and update for DM
+    const dmVarInMethodCalls = parser.dmVarInMethodCalls;
+    for (const varName of dmVarInMethodCalls) {
+      const varToken = simpleVarDeclarations.get(varName);
+      if (!varToken) {
+        dmNameUpdateFailed.add(varName);
+        continue;
+      }
+      const newName = `'${Stringutil.cleanName(varToken.text.substring(1, varToken.text.length - 1))}'`;
+      if (newName === varToken.text) {
+        continue;
+      }
+      tokenUpdates.push(new SingleTokenUpdate(newName, varToken));
+    }
+    // check and update for IP
+    const ipVarInMethodCalls = parser.ipVarInMethodCalls;
+    for (const varName of ipVarInMethodCalls) {
+      const varToken = simpleVarDeclarations.get(varName);
+      if (!varToken) {
+        ipNameUpdateFailed.add(varName);
+        continue;
+      }
+      const oldName = varToken.text.substring(1, varToken.text.length - 1);
+      const parts = oldName.split('_');
+      if (parts.length !== 2) {
+        ipNameUpdateFailed.add(varName);
+        continue;
+      }
+      const newName = `'${parts.map((p) => Stringutil.cleanName(p)).join('_')}'`;
+      if (newName === varToken.text) {
+        continue;
+      }
+      tokenUpdates.push(new SingleTokenUpdate(newName, varToken));
+    }
+
+    return tokenUpdates;
   }
   /*
     private mapTOName(apexAssessmentInfos: ApexAssessmentInfo[]): string[] {

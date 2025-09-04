@@ -273,7 +273,7 @@ export class AssessmentReporter {
     }
     if (reports.includes(Constants.Apex)) {
       summaryItems.push({
-        name: 'Apex',
+        name: 'Apex classes',
         total: result.apexAssessmentInfos.length,
         data: ApexAssessmentReporter.getSummaryData(result.apexAssessmentInfos),
         file: this.apexAssessmentFileName,

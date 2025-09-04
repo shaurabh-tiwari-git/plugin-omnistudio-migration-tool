@@ -7,7 +7,7 @@ import { Stringutil } from '../utils/StringValue/stringutil';
 import { Logger } from '../utils/logger';
 import { TransformData, UploadRecordResult } from './interfaces';
 
-export type ComponentType = 'DataMappers' | 'Flexcards' | 'Omniscripts' | 'Integration Procedures';
+export type ComponentType = 'Data Mappers' | 'Flexcards' | 'Omniscripts' | 'Integration Procedures';
 
 /**
  * Creates a progress bar for migration/assessment operations

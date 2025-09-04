@@ -13,9 +13,13 @@ import {
   CompilationUnitContext,
   TypeRefContext,
   LiteralPrimaryContext,
+  LocalVariableDeclarationContext,
+  VariableDeclaratorsContext,
+  VariableDeclaratorContext,
 } from '@apexdevtools/apex-parser';
-import { CharStreams, Token, TokenStreamRewriter } from 'antlr4ts';
+import { CharStreams, ParserRuleContext, Token, TokenStreamRewriter } from 'antlr4ts';
 import { ParseTreeWalker } from 'antlr4ts/tree/ParseTreeWalker';
+import { Logger } from '../../logger';
 
 export class ApexASTParser {
   private apexFileContent: string;
@@ -29,6 +33,11 @@ export class ApexASTParser {
   private methodCalls: Set<MethodCall>;
   private classDeclarationToken: Token;
   private hasCallMethod = false;
+
+  // token value will be enclosed in quotes
+  private simpleVariableDeclarations: Map<string, Token> = new Map();
+  private dmVariablesInMethodCalls: Set<string> = new Set();
+  private ipVariablesInMethodCalls: Set<string> = new Set();
 
   public get implementsInterfaces(): Map<InterfaceImplements, Token[]> {
     return this.implementsInterface;
@@ -49,6 +58,16 @@ export class ApexASTParser {
   }
   public get hasCallMethodImplemented(): boolean {
     return this.hasCallMethod;
+  }
+
+  public get simpleVarDeclarations(): Map<string, Token> {
+    return this.simpleVariableDeclarations;
+  }
+  public get dmVarInMethodCalls(): Set<string> {
+    return this.dmVariablesInMethodCalls;
+  }
+  public get ipVarInMethodCalls(): Set<string> {
+    return this.ipVariablesInMethodCalls;
   }
 
   public constructor(
@@ -116,16 +135,19 @@ export class ApexASTParser {
             const parameter = methodcall.parameter;
             if (!parameter) continue;
             const bundleName = dotMethodCall.expressionList().expression(parameter.position - 1);
-            if (
-              bundleName &&
-              bundleName?.children &&
-              bundleName.childCount > 0 &&
-              bundleName.children[0] instanceof LiteralPrimaryContext
-            ) {
-              const arg: LiteralPrimaryContext = bundleName.getChild(0) as LiteralPrimaryContext;
-              const argValue = arg?.literal()?.StringLiteral();
-              if (!argValue) continue;
-              MapUtil.addToValueList(this.parser.methodParameter, parameter.type, argValue.symbol);
+            if (bundleName && bundleName?.children && bundleName.childCount > 0) {
+              if (bundleName.children[0] instanceof LiteralPrimaryContext) {
+                const arg: LiteralPrimaryContext = bundleName.getChild(0) as LiteralPrimaryContext;
+                const argValue = arg?.literal()?.StringLiteral();
+                if (!argValue) continue;
+                MapUtil.addToValueList(this.parser.methodParameter, parameter.type, argValue.symbol);
+              } else {
+                if (ParameterType.DR_NAME === parameter.type) {
+                  this.parser.dmVariablesInMethodCalls.add(bundleName.text);
+                } else if (ParameterType.IP_NAME === parameter.type) {
+                  this.parser.ipVariablesInMethodCalls.add(bundleName.text);
+                }
+              }
             } else {
               this.parser.nonReplacableMethodParameter.push(methodcall);
             }
@@ -151,6 +173,23 @@ export class ApexASTParser {
               this.parser.hasCallMethod = true;
             }
           }
+        }
+      }
+
+      public enterLocalVariableDeclaration(ctx: LocalVariableDeclarationContext): void {
+        try {
+          Logger.logVerbose(`Found variable declaration: ${ctx?.text}`);
+          if (!checkIfValidSimpleDeclaration(ctx)) {
+            return;
+          }
+
+          const varName = ((ctx.children[1] as ParserRuleContext).children[0] as ParserRuleContext).children[0].text;
+          const valueToken = (
+            ((ctx.children[1] as ParserRuleContext).children[0] as ParserRuleContext).children[2] as ParserRuleContext
+          ).start;
+          this.parser.simpleVariableDeclarations.set(varName, valueToken);
+        } catch (error) {
+          Logger.logVerbose('Failed to check or parse variable declaration');
         }
       }
     }
@@ -275,4 +314,27 @@ export class InsertAfterTokenUpdate implements TokenUpdater {
   public applyUpdate(rewriter: TokenStreamRewriter): void {
     rewriter.insertAfter(this.token, this.newText);
   }
+}
+
+export function checkIfValidSimpleDeclaration(ctx: LocalVariableDeclarationContext): boolean {
+  // check for String data type
+  if (ctx.children?.length !== 2 || ctx.children[0].text !== 'String') {
+    return false;
+  }
+
+  // check number of tokens in the variable declaration
+  if (
+    !(ctx.children[1] instanceof VariableDeclaratorsContext) ||
+    ctx.children[1].children?.length !== 1 ||
+    !(ctx.children[1].children[0] instanceof VariableDeclaratorContext) ||
+    ctx.children[1].children[0].children?.length !== 3
+  ) {
+    return false;
+  }
+
+  // check for string literal as initial value
+  return (
+    ctx.children[1].children[0].children[2].text.startsWith("'") &&
+    ctx.children[1].children[0].children[2].text.endsWith("'")
+  );
 }
