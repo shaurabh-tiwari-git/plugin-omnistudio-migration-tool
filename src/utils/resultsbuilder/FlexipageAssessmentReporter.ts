@@ -152,12 +152,7 @@ export class FlexipageAssessmentReporter {
           1,
           false,
           undefined,
-          flexipageAssessmentInfo.errors,
-          flexipageAssessmentInfo.status === 'Needs Manual Intervention'
-            ? 'text-error'
-            : flexipageAssessmentInfo.status === 'Warnings'
-            ? 'text-warning'
-            : 'text-success'
+          flexipageAssessmentInfo.errors
         ),
       ],
       rowId: `${this.rowIdPrefix}${this.rowId++}`,

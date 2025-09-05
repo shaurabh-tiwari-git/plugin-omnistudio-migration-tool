@@ -134,8 +134,7 @@ export class LWCAssessmentReporter {
                     1,
                     false,
                     undefined,
-                    lwcAssessmentInfo.errors,
-                    this.getMigrationStatusCssClass(lwcAssessmentInfo, true)
+                    lwcAssessmentInfo.errors
                   ),
                 ]
               : []),

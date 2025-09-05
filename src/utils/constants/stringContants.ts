@@ -15,7 +15,7 @@ export const Constants = {
   OmniScriptComponentName: 'OmniScript',
   OmniScriptPluralName: 'OmniScripts',
   FlexCardComponentName: 'Flexcard',
-  FlexCardPluralName: 'FlexCards',
+  FlexCardPluralName: 'Flexcards',
   IntegrationProcedureComponentName: 'IntegrationProcedure',
   IntegrationProcedurePluralName: 'IntegrationProcedures',
   DataRaptorComponentName: 'DataRaptor',

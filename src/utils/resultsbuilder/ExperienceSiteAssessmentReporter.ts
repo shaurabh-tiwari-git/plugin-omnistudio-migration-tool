@@ -121,17 +121,7 @@ export class ExperienceSiteAssessmentReporter {
           undefined,
           FileDiffUtil.getDiffHTML(experienceSiteAssessmentInfo.diff, experienceSiteAssessmentInfo.name)
         ),
-        createRowDataParam(
-          'summary',
-          '',
-          false,
-          1,
-          1,
-          false,
-          undefined,
-          experienceSiteAssessmentInfo.warnings,
-          experienceSiteAssessmentInfo.status === 'Ready for migration' ? 'text-success' : 'text-error'
-        ),
+        createRowDataParam('summary', '', false, 1, 1, false, undefined, experienceSiteAssessmentInfo.warnings),
       ],
       rowId: `${this.rowIdPrefix}${this.rowId++}`,
     }));

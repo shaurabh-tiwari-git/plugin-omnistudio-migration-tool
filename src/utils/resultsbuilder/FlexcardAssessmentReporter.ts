@@ -207,12 +207,7 @@ export class FlexcardAssessmentReporter {
           1,
           false,
           undefined,
-          flexCardAssessmentInfo.warnings,
-          flexCardAssessmentInfo.migrationStatus === 'Warnings'
-            ? 'text-warning'
-            : flexCardAssessmentInfo.migrationStatus === 'Ready for migration'
-            ? ''
-            : 'text-error'
+          flexCardAssessmentInfo.warnings
         ),
         createRowDataParam(
           'omniScriptDependencies',

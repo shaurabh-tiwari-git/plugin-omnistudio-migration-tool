@@ -203,8 +203,7 @@ export class GlobalAutoNumberAssessmentReporter {
             1,
             false,
             undefined,
-            allMessages,
-            this.getMigrationStatusCssClass(globalAutoNumberAssessmentInfo)
+            allMessages
           ),
         ],
       };
