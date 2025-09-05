@@ -121,6 +121,7 @@
   "labelStatusComplete": "Complete",
   "migrationConsentNotGiven": "Couldn't confirm whether assessment errors are resolved",
   "foundFlexiPages": "Found %s FlexiPages to migrate",
+  "expSitesWithChanges": "Found %s Experience Sites with changes",
   "migratingFlexiPages": "Migrating FlexiPages",
   "completedProcessingAllFlexiPages": "Completed processing all flexipages. Total processed: %s",
   "completedProcessingFlexiPage": "Completed processing %s. Errors: %s",

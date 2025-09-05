@@ -142,6 +142,7 @@
   "generatedDiffForFile": "Generated difference for the file: %s",
   "errorProcessingFlexiPage": "Error processing FlexiPage: %s, %s",
   "flexipagesWithChanges": "Found %s FlexiPages with changes",
+  "expSitesWithChanges": "Found %s Experience Sites with changes",
   "migratingFlexiPages": "Migrating FlexiPages",
   "experienceSiteMetadataConsent": "Your consent for migrating Experience Cloud sites is %s",
   "experienceSiteConsentNotProvidedWarning": "You’ve not provided consent and your Experience Cloud sites won’t be processed.",

@@ -4,12 +4,13 @@
  * Licensed under the BSD 3-Clause license.
  * For full license text, see LICENSE.txt file in the repo root or https://opensource.org/licenses/BSD-3-Clause
  */
-import { ExperienceSiteAssessmentInfo } from '../interfaces';
+import { ExperienceSiteAssessmentInfo, ExperienceSiteAssessmentPageInfo } from '../interfaces';
 import { Logger } from '../logger';
 import { FileDiffUtil } from '../lwcparser/fileutils/FileDiffUtil';
 import { OmnistudioOrgDetails } from '../orgUtils';
 import {
   FilterGroupParam,
+  ReportDataParam,
   ReportHeaderGroupParam,
   ReportParam,
   ReportRowParam,
@@ -28,14 +29,19 @@ export class ExperienceSiteAssessmentReporter {
     omnistudioOrgDetails: OmnistudioOrgDetails
   ): ReportParam {
     return {
-      title: 'Experience Sites Assessment Report',
-      heading: 'Experience Sites Assessment Report',
+      title: 'Experience Site Pages Assessment Report',
+      heading: 'Experience Site Pages Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
       assessmentDate: new Date().toLocaleString(),
       total: experienceSiteAssessmentInfos?.length || 0,
       filterGroups: this.getFilterGroupsForReport(experienceSiteAssessmentInfos),
       headerGroups: this.getHeaderGroupsForReport(),
       rows: this.getRowsForReport(experienceSiteAssessmentInfos),
+      props: JSON.stringify({
+        recordName: 'Pages',
+        rowBased: true,
+        rowCount: true,
+      }),
     };
   }
 
@@ -45,7 +51,9 @@ export class ExperienceSiteAssessmentReporter {
     return [
       {
         name: 'Ready for migration',
-        count: experienceSiteAssessmentInfos.filter((info) => info.status === 'Ready for migration').length,
+        count: experienceSiteAssessmentInfos
+          .flatMap((info) => info.experienceSiteAssessmentPageInfos)
+          .filter((info) => info.status === 'Ready for migration').length,
         cssClass: 'text-success',
       },
       {
@@ -55,12 +63,16 @@ export class ExperienceSiteAssessmentReporter {
       },
       {
         name: 'Needs Manual Intervention',
-        count: experienceSiteAssessmentInfos.filter((info) => info.status === 'Needs Manual Intervention').length,
+        count: experienceSiteAssessmentInfos
+          .flatMap((info) => info.experienceSiteAssessmentPageInfos)
+          .filter((info) => info.status === 'Needs Manual Intervention').length,
         cssClass: 'text-error',
       },
       {
         name: 'Failed',
-        count: experienceSiteAssessmentInfos.filter((info) => info.status === 'Failed').length,
+        count: experienceSiteAssessmentInfos
+          .flatMap((info) => info.experienceSiteAssessmentPageInfos)
+          .filter((info) => info.status === 'Failed').length,
         cssClass: 'text-error',
       },
     ];
@@ -70,71 +82,82 @@ export class ExperienceSiteAssessmentReporter {
     if (!experienceSiteAssessmentInfos || experienceSiteAssessmentInfos.length === 0) {
       return [];
     }
-    experienceSiteAssessmentInfos.forEach((apexAssessmentInfo) => {
-      const diffString = FileDiffUtil.getDiffHTML(apexAssessmentInfo.diff, apexAssessmentInfo.name);
-      Logger.logVerbose('The diff is' + JSON.stringify(diffString));
+    experienceSiteAssessmentInfos
+      .flatMap((info) => info.experienceSiteAssessmentPageInfos)
+      .forEach((apexAssessmentInfo) => {
+        const diffString = FileDiffUtil.getDiffHTML(apexAssessmentInfo.diff, apexAssessmentInfo.name);
+        Logger.logVerbose('The diff is' + JSON.stringify(diffString));
+      });
+
+    const rows: ReportRowParam[] = [];
+
+    experienceSiteAssessmentInfos.forEach((siteInfo) => {
+      const rId = `${this.rowIdPrefix}${this.rowId++}`;
+      let showBundleName = true;
+
+      siteInfo.experienceSiteAssessmentPageInfos.forEach((pageInfo) => {
+        rows.push({
+          rowId: rId,
+          data: this.getRowDataForReportRow(pageInfo, siteInfo, showBundleName),
+        });
+        showBundleName = false;
+      });
     });
 
-    return experienceSiteAssessmentInfos.map((experienceSiteAssessmentInfo) => ({
-      data: [
-        createRowDataParam(
-          'name',
-          experienceSiteAssessmentInfo.name,
-          true,
-          1,
-          1,
-          false,
-          undefined,
-          undefined,
-          experienceSiteAssessmentInfo.status === 'Needs Manual Intervention' ||
-            experienceSiteAssessmentInfo.status === 'Failed'
-            ? 'invalid-icon'
-            : ''
-        ),
-        createRowDataParam(
-          'path',
-          `${experienceSiteAssessmentInfo.name}${this.experienceSiteFileSuffix}`,
-          false,
-          1,
-          1,
-          true,
-          experienceSiteAssessmentInfo.path
-        ),
-        createRowDataParam(
-          'status',
-          experienceSiteAssessmentInfo.status,
-          false,
-          1,
-          1,
-          false,
-          undefined,
-          experienceSiteAssessmentInfo.status,
-          experienceSiteAssessmentInfo.status === 'Ready for migration' ? 'text-success' : 'text-error'
-        ),
-        createRowDataParam(
-          'diff',
-          '',
-          false,
-          1,
-          1,
-          false,
-          undefined,
-          FileDiffUtil.getDiffHTML(experienceSiteAssessmentInfo.diff, experienceSiteAssessmentInfo.name)
-        ),
-        createRowDataParam(
-          'summary',
-          '',
-          false,
-          1,
-          1,
-          false,
-          undefined,
-          experienceSiteAssessmentInfo.warnings,
-          experienceSiteAssessmentInfo.status === 'Ready for migration' ? 'text-success' : 'text-error'
-        ),
-      ],
-      rowId: `${this.rowIdPrefix}${this.rowId++}`,
-    }));
+    return rows;
+  }
+
+  private static getRowDataForReportRow(
+    pageInfo: ExperienceSiteAssessmentPageInfo,
+    siteInfo: ExperienceSiteAssessmentInfo,
+    showBundleName: boolean
+  ): ReportDataParam[] {
+    return [
+      createRowDataParam(
+        'name',
+        siteInfo.experienceBundleName,
+        true,
+        siteInfo.experienceSiteAssessmentPageInfos.length,
+        1,
+        false,
+        undefined,
+        undefined,
+        showBundleName ? '' : 'no-display'
+      ),
+      createRowDataParam('pageName', pageInfo.name, false, 1, 1, false, undefined, undefined),
+      createRowDataParam('path', pageInfo.name + this.experienceSiteFileSuffix, false, 1, 1, true, pageInfo.path),
+      createRowDataParam(
+        'status',
+        pageInfo.status,
+        false,
+        1,
+        1,
+        false,
+        undefined,
+        undefined,
+        pageInfo.status === 'Ready for migration' ? 'text-success' : 'text-error'
+      ),
+      createRowDataParam(
+        'diff',
+        pageInfo.name + 'diff',
+        false,
+        1,
+        1,
+        false,
+        undefined,
+        FileDiffUtil.getDiffHTML(pageInfo.diff, pageInfo.name)
+      ),
+      createRowDataParam(
+        'summary',
+        pageInfo.warnings ? pageInfo.warnings.join(', ') : '',
+        false,
+        1,
+        1,
+        false,
+        undefined,
+        pageInfo.warnings
+      ),
+    ];
   }
 
   private static getHeaderGroupsForReport(): ReportHeaderGroupParam[] {
@@ -142,7 +165,12 @@ export class ExperienceSiteAssessmentReporter {
       {
         header: [
           {
-            name: 'ExperienceSite Name',
+            name: 'Experience Site Name',
+            colspan: 1,
+            rowspan: 1,
+          },
+          {
+            name: 'Page Name',
             colspan: 1,
             rowspan: 1,
           },
@@ -174,7 +202,13 @@ export class ExperienceSiteAssessmentReporter {
   private static getFilterGroupsForReport(
     experienceSiteAssessmentInfos: ExperienceSiteAssessmentInfo[]
   ): FilterGroupParam[] {
-    const distinctStatuses = [...new Set(experienceSiteAssessmentInfos.map((info) => info.status))];
+    const distinctStatuses = [
+      ...new Set(
+        experienceSiteAssessmentInfos
+          .flatMap((info) => info.experienceSiteAssessmentPageInfos)
+          .map((info) => info.status)
+      ),
+    ];
     const statusFilterGroupParam: FilterGroupParam[] =
       distinctStatuses.length > 0 && distinctStatuses.filter((status) => status).length > 0
         ? [createFilterGroupParam('Filter By Assessment Status', 'status', distinctStatuses)]

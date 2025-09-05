@@ -1,3 +1,6 @@
+let props = {};
+let classToHide = 'no-display';
+
 function toggleFilterDropdown(tableId) {
   const reportTable = document.getElementById(tableId);
   const dropdown = reportTable.querySelector('#filter-dropdown');
@@ -87,6 +90,8 @@ function filterAndSearchTable(tableId) {
 
   // Otherwise, apply filters and search
   let processedClasses = new Set();
+
+  let classRowMap = new Map();
   rows.forEach((row) => {
     if (row.id === 'no-rows-message') return;
 
@@ -112,10 +117,18 @@ function filterAndSearchTable(tableId) {
       }
     }
 
-    // row.style.display = show ? '' : 'none';
-    if (!processedClasses.has(row.classList[0])) {
-      hideOrShowData(reportTable, row.classList[0], show);
-      processedClasses.add(row.classList[0]);
+    if (props?.rowBased) {
+      if (show && !classRowMap.has(row.classList[0])) {
+        classRowMap.set(row.classList[0], { row, cnt: 1 });
+      } else if (show) {
+        classRowMap.get(row.classList[0]).cnt++;
+      }
+      row.style.display = show ? '' : 'none';
+    } else {
+      if (!processedClasses.has(row.classList[0])) {
+        hideOrShowData(reportTable, row.classList[0], show);
+        processedClasses.add(row.classList[0]);
+      }
     }
     if (show) visibleRowCount++;
   });
@@ -129,11 +142,24 @@ function filterAndSearchTable(tableId) {
     (row) => row.style.display !== 'none' && row.id !== 'no-rows-message'
   );
 
+  if (props?.rowBased) {
+    rows.forEach((row) => {
+      row.cells[0].classList.add(classToHide);
+    });
+
+    classRowMap.forEach((value) => {
+      value.row.cells[0].classList.remove(classToHide);
+      value.row.cells[0].rowSpan = value.cnt;
+    });
+  }
+
   // filter only distinct classes from visibleRows
-  const distinctClasses = [...new Set(visibleRows.map((row) => row.classList[0]))];
-  reportTable.querySelector('#row-count').textContent = `Showing ${distinctClasses.length} record${
-    distinctClasses.length !== 1 ? 's' : ''
-  }`;
+  let recordLabel = props?.recordName || 'records';
+  let cnt = visibleRows.length;
+  if (!props?.rowCount) {
+    cnt = [...new Set(visibleRows.map((row) => row.classList[0]))].length;
+  }
+  reportTable.querySelector('#row-count').textContent = `Total ${recordLabel}: ${cnt}`;
 }
 
 function toggleCtaSummaryPanel() {
@@ -160,6 +186,7 @@ function hideOrShowData(reportTable, rowClass, show) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  loadProps();
   document.querySelectorAll('.collapsible-content').forEach((collapsibleContent) => {
     collapsibleContent.style.display = 'none';
   });
@@ -264,6 +291,21 @@ function closeCtaPanel() {
   if (overlay) {
     overlay.classList.remove('open');
   }
+}
+
+function loadProps() {
+  const propElement = document.querySelector('#props');
+  if (!propElement) {
+    return;
+  }
+
+  try {
+    props = JSON.parse(propElement.textContent);
+  } catch (error) {
+    console.error('error parsing props', error);
+    return;
+  }
+  console.log('parsed props', props);
 }
 
 // Expose globally so HTML inline event handlers can access them

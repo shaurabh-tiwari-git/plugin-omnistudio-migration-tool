@@ -9,6 +9,7 @@
 </head>
 
 <body>
+  <div id="props" class="no-display">{{props}}</div>
   <div style="margin: 20px">
     <div class="report-wrapper">
       <div id="scrollable-wrapper" class="scrollable-wrapper">

@@ -187,12 +187,17 @@ export interface FileParser {
   // saveToFile(filePath: string, content: string | undefined): void;
 }
 
-export interface ExperienceSiteAssessmentInfo extends FileChangeInfo {
+export interface ExperienceSiteAssessmentPageInfo extends FileChangeInfo {
   warnings: string[];
   infos: string[];
   hasOmnistudioContent: boolean;
   errors: string[];
   status: 'Ready for migration' | 'Failed' | 'Successfully migrated' | 'Needs Manual Intervention' | 'Skipped';
+}
+
+export interface ExperienceSiteAssessmentInfo {
+  experienceBundleName: string;
+  experienceSiteAssessmentPageInfos: ExperienceSiteAssessmentPageInfo[];
 }
 
 export interface FileProcessor {

@@ -574,3 +574,7 @@ td {
 .normal-td-padding {
   padding-left: 0.5rem !important;
 }
+
+.no-display {
+  display: none;
+}
