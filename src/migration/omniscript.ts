@@ -31,7 +31,6 @@ import {
   populateRegexForFunctionMetadata,
 } from '../utils/formula/FormulaUtil';
 import { StringVal } from '../utils/StringValue/stringval';
-import { formatUnicorn } from '../utils/stringUtils';
 import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
 
