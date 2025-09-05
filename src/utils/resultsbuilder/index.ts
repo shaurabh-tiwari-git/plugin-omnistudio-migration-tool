@@ -211,8 +211,7 @@ export class ResultsBuilder {
               1,
               false,
               undefined,
-              item.errors || [],
-              item.status === 'Successfully migrated' ? '' : 'text-error'
+              item.errors || []
             ),
             createRowDataParam(
               'summary',
@@ -222,8 +221,7 @@ export class ResultsBuilder {
               1,
               false,
               undefined,
-              item.warnings || [],
-              item.status === 'Successfully migrated' ? '' : 'text-error'
+              item.warnings || []
             ),
           ],
         })),
@@ -475,17 +473,7 @@ export class ResultsBuilder {
             item.status === 'Successfully migrated' ? 'text-success' : 'text-error'
           ),
           createRowDataParam('diff', '', false, 1, 1, false, undefined, FileDiffUtil.getDiffHTML(item.diff, item.name)),
-          createRowDataParam(
-            'error',
-            'error',
-            false,
-            1,
-            1,
-            false,
-            undefined,
-            item.errors,
-            item.status === 'Successfully migrated' ? '' : 'text-error'
-          ),
+          createRowDataParam('error', 'error', false, 1, 1, false, undefined, item.errors),
         ],
       })),
     };
@@ -576,27 +564,19 @@ export class ResultsBuilder {
             undefined,
             FileDiffUtil.getDiffHTML(item.diff, item.name)
           ),
-          createRowDataParam(
-            'infos',
-            item.infos ? item.infos.join(', ') : '',
-            false,
-            1,
-            1,
-            false,
-            undefined,
-            item.infos,
-            this.getStatusCssClass(item.errors, true)
-          ),
+          createRowDataParam('infos', item.infos ? item.infos.join(', ') : '', false, 1, 1, false, undefined, [
+            ...item.infos,
+            ...item.warnings,
+          ]),
           createRowDataParam(
             'warnings',
-            item.warnings.length > 0 ? 'Failed' : 'Successfully Completed',
+            item.errors.length > 0 ? 'Failed' : 'Successfully Completed',
             false,
             1,
             1,
             false,
             undefined,
-            [...item.warnings, ...item.errors],
-            this.getStatusCssClass(item.errors, true)
+            item.errors
           ),
         ],
       })),
@@ -732,8 +712,7 @@ export class ResultsBuilder {
                     1,
                     false,
                     undefined,
-                    lwcAssessmentInfo.warnings || [],
-                    this.getStatusCssClass(lwcAssessmentInfo.errors, true)
+                    lwcAssessmentInfo.warnings || []
                   ),
                   createRowDataParam(
                     'errors',
@@ -743,8 +722,7 @@ export class ResultsBuilder {
                     1,
                     false,
                     undefined,
-                    lwcAssessmentInfo.errors || [],
-                    this.getStatusCssClass(lwcAssessmentInfo.errors, true)
+                    lwcAssessmentInfo.errors || []
                   ),
                 ]
               : []),

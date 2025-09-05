@@ -78,9 +78,7 @@ describe('PostMigrate', () => {
     // Set up default message returns
     getMessageStub.withArgs('settingDesignersToStandardModel').returns('Setting designers to standard model...');
     getMessageStub.withArgs('designersSetToStandardModel').returns('Designers set to standard model');
-    getMessageStub
-      .withArgs('errorSettingDesignersToStandardDataModel', ['Test error stack trace'])
-      .returns('Error setting designers to standard model: Test error stack trace');
+    getMessageStub.returns('Error setting designers to standard model: Test error stack trace');
     getMessageStub
       .withArgs('exceptionSettingDesignersToStandardDataModel', ['{"message":"Test exception"}'])
       .returns('Exception setting designers to standard model: {"message":"Test exception"}');

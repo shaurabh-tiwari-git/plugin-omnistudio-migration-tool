@@ -118,19 +118,17 @@ export class ApexAssessmentReporter {
           1,
           false,
           undefined,
-          apexAssessmentInfo.infos,
-          this.getMigrationStatusCssClass(apexAssessmentInfo, true)
+          [...apexAssessmentInfo.infos, ...apexAssessmentInfo.warnings]
         ),
         createRowDataParam(
           'errors',
-          apexAssessmentInfo.warnings ? apexAssessmentInfo.warnings.join(', ') : '',
+          apexAssessmentInfo.errors ? apexAssessmentInfo.errors.join(', ') : '',
           false,
           1,
           1,
           false,
           undefined,
-          apexAssessmentInfo.warnings,
-          this.getMigrationStatusCssClass(apexAssessmentInfo, true)
+          apexAssessmentInfo.errors
         ),
       ],
     }));
