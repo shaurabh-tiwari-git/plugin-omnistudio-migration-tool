@@ -334,8 +334,8 @@ export class ResultsBuilder {
   ): void {
     Logger.logVerbose('Generating experience site report');
     const data: ReportParam = {
-      title: 'Experience Site Pages Migration Report',
-      heading: 'Experience Site Pages Migration Report',
+      title: 'Experience Cloud Site Pages Migration Report',
+      heading: 'Experience Cloud Site Pages Migration Report',
       org: {
         name: orgDetails.orgDetails.Name,
         id: orgDetails.orgDetails.Id,
@@ -353,7 +353,7 @@ export class ResultsBuilder {
         {
           header: [
             {
-              name: 'Experience Site Name',
+              name: 'Experience Cloud Site Name',
               colspan: 1,
               rowspan: 1,
             },
@@ -754,7 +754,7 @@ export class ResultsBuilder {
     }
     if (objectsToProcess.includes(Constants.ExpSites)) {
       relatedObjectSummaryItems.push({
-        name: 'Experience Sites',
+        name: 'Experience Cloud Sites',
         total:
           relatedObjectMigrationResult.experienceSiteAssessmentInfos?.flatMap(
             (item) => item.experienceSiteAssessmentPageInfos

@@ -29,8 +29,8 @@ export class ExperienceSiteAssessmentReporter {
     omnistudioOrgDetails: OmnistudioOrgDetails
   ): ReportParam {
     return {
-      title: 'Experience Site Pages Assessment Report',
-      heading: 'Experience Site Pages Assessment Report',
+      title: 'Experience Cloud Site Pages Assessment Report',
+      heading: 'Experience Cloud Site Pages Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
       assessmentDate: new Date().toLocaleString(),
       total: experienceSiteAssessmentInfos?.length || 0,
@@ -165,7 +165,7 @@ export class ExperienceSiteAssessmentReporter {
       {
         header: [
           {
-            name: 'Experience Site Name',
+            name: 'Experience Cloud Site Name',
             colspan: 1,
             rowspan: 1,
           },

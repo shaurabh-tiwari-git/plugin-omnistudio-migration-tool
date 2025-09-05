@@ -421,7 +421,7 @@ export class AssessmentReporter {
     if (reports.includes(Constants.ExpSites)) {
       // TODO - Experience Sites
       summaryItems.push({
-        name: 'Experience Site Pages',
+        name: 'Experience Cloud Site Pages',
         total: result.experienceSiteAssessmentInfos.flatMap((info) => info.experienceSiteAssessmentPageInfos).length,
         data: ExperienceSiteAssessmentReporter.getSummaryData(result.experienceSiteAssessmentInfos),
         file: this.experienceSiteAssessmentFileName,
