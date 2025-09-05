@@ -31,7 +31,6 @@ import {
   populateRegexForFunctionMetadata,
 } from '../utils/formula/FormulaUtil';
 import { StringVal } from '../utils/StringValue/stringval';
-import { formatUnicorn } from '../utils/stringUtils';
 import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
 
@@ -116,7 +115,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
     let success: boolean = await NetUtils.delete(this.connection, ids);
     if (!success) {
-      throw new Error(formatUnicorn(this.messages.getMessage('couldNotTruncateOmnniProcess'), objectName));
+      throw new Error(this.messages.getMessage('couldNotTruncateOmnniProcess', [this.getName(), this.getName()]));
     }
   }
 
