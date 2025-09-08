@@ -142,7 +142,8 @@ export class FlexipageAssessmentReporter {
           1,
           false,
           undefined,
-          FileDiffUtil.getDiffHTML(flexipageAssessmentInfo.diff, flexipageAssessmentInfo.name)
+          FileDiffUtil.getDiffHTML(flexipageAssessmentInfo.diff, flexipageAssessmentInfo.name),
+          'diff-cell'
         ),
         createRowDataParam(
           'errors',

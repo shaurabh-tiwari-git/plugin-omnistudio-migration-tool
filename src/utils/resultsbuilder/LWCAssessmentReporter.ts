@@ -111,7 +111,8 @@ export class LWCAssessmentReporter {
               1,
               false,
               undefined,
-              FileDiffUtil.getDiffHTML(fileChangeInfo.diff, fileChangeInfo.name)
+              FileDiffUtil.getDiffHTML(fileChangeInfo.diff, fileChangeInfo.name),
+              'diff-cell'
             ),
             ...(fileIndex === 0
               ? [

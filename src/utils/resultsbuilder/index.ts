@@ -472,7 +472,17 @@ export class ResultsBuilder {
             undefined,
             item.status === 'Successfully migrated' ? 'text-success' : 'text-error'
           ),
-          createRowDataParam('diff', '', false, 1, 1, false, undefined, FileDiffUtil.getDiffHTML(item.diff, item.name)),
+          createRowDataParam(
+            'diff',
+            '',
+            false,
+            1,
+            1,
+            false,
+            undefined,
+            FileDiffUtil.getDiffHTML(item.diff, item.name),
+            'diff-cell'
+          ),
           createRowDataParam('error', 'error', false, 1, 1, false, undefined, item.errors),
         ],
       })),
@@ -562,7 +572,8 @@ export class ResultsBuilder {
             1,
             false,
             undefined,
-            FileDiffUtil.getDiffHTML(item.diff, item.name)
+            FileDiffUtil.getDiffHTML(item.diff, item.name),
+            'diff-cell'
           ),
           createRowDataParam('infos', item.infos ? item.infos.join(', ') : '', false, 1, 1, false, undefined, [
             ...item.infos,
@@ -698,7 +709,8 @@ export class ResultsBuilder {
               1,
               false,
               undefined,
-              FileDiffUtil.getDiffHTML(fileChangeInfo.diff, fileChangeInfo.name)
+              FileDiffUtil.getDiffHTML(fileChangeInfo.diff, fileChangeInfo.name),
+              'diff-cell'
             ),
             ...(showCommon
               ? [
@@ -1004,7 +1016,8 @@ export class ResultsBuilder {
         1,
         false,
         undefined,
-        FileDiffUtil.getDiffHTML(page.diff, page.name)
+        FileDiffUtil.getDiffHTML(page.diff, page.name),
+        'diff-cell'
       ),
       createRowDataParam('errors', page.errors ? page.errors.join(', ') : '', false, 1, 1, false, undefined, [
         ...(page.errors || []),

@@ -108,7 +108,8 @@ export class ApexAssessmentReporter {
           1,
           false,
           undefined,
-          FileDiffUtil.getDiffHTML(apexAssessmentInfo.diff, apexAssessmentInfo.name)
+          FileDiffUtil.getDiffHTML(apexAssessmentInfo.diff, apexAssessmentInfo.name),
+          'diff-cell'
         ),
         createRowDataParam(
           'comments',

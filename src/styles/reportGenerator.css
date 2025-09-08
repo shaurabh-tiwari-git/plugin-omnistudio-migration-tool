@@ -306,10 +306,11 @@ html {
 .expandModalButton {
   position: absolute;
   top: 5px;
-  right: 5px;
+  right: 1.5rem;
   width: 30px;
   height: 30px;
   opacity: 0.7;
+  display: none;
 }
 .report-wrapper {
   display: flex;
@@ -577,4 +578,12 @@ td {
 
 .no-display {
   display: none;
+}
+
+.diff-cell {
+  min-width: 30rem;
+}
+
+.diff-cell:hover .expandModalButton {
+  display: block;
 }

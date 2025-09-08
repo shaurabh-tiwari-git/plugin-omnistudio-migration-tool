@@ -145,7 +145,8 @@ export class ExperienceSiteAssessmentReporter {
         1,
         false,
         undefined,
-        FileDiffUtil.getDiffHTML(pageInfo.diff, pageInfo.name)
+        FileDiffUtil.getDiffHTML(pageInfo.diff, pageInfo.name),
+        'diff-cell'
       ),
       createRowDataParam(
         'summary',
