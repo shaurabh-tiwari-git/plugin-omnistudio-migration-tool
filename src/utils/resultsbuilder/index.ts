@@ -15,6 +15,7 @@ import {
   RelatedObjectAssesmentInfo,
   ExperienceSiteAssessmentInfo,
   FlexiPageAssessmentInfo,
+  ExperienceSiteAssessmentPageInfo,
 } from '../interfaces';
 import {
   ReportParam,
@@ -23,6 +24,7 @@ import {
   SummaryItemParam,
   DashboardParam,
   FilterGroupParam,
+  ReportDataParam,
 } from '../reportGenerator/reportInterfaces';
 import { OmnistudioOrgDetails } from '../orgUtils';
 import { TemplateParser } from '../templateParser/generate';
@@ -332,8 +334,8 @@ export class ResultsBuilder {
   ): void {
     Logger.logVerbose('Generating experience site report');
     const data: ReportParam = {
-      title: 'Experience Sites Migration Report',
-      heading: 'Experience Sites Migration Report',
+      title: 'Experience Cloud Site Pages Migration Report',
+      heading: 'Experience Cloud Site Pages Migration Report',
       org: {
         name: orgDetails.orgDetails.Name,
         id: orgDetails.orgDetails.Id,
@@ -342,12 +344,21 @@ export class ResultsBuilder {
       },
       assessmentDate: new Date().toLocaleString(),
       total: result.length,
-      filterGroups: [...this.getStatusFilterGroup(result.map((item) => item.status))],
+      filterGroups: [
+        ...this.getStatusFilterGroup(
+          result.flatMap((item) => item.experienceSiteAssessmentPageInfos.map((page) => page.status))
+        ),
+      ],
       headerGroups: [
         {
           header: [
             {
-              name: 'Experience Site Name',
+              name: 'Experience Cloud Site Name',
+              colspan: 1,
+              rowspan: 1,
+            },
+            {
+              name: 'Page Name',
               colspan: 1,
               rowspan: 1,
             },
@@ -374,45 +385,12 @@ export class ResultsBuilder {
           ],
         },
       ],
-      rows: result.map((item) => ({
-        rowId: `${this.rowClass}${this.rowId++}`,
-        data: [
-          createRowDataParam('name', item.name, true, 1, 1, false),
-          createRowDataParam('path', `${item.name}${this.experienceSiteFileSuffix}`, false, 1, 1, true, item.path),
-          createRowDataParam(
-            'status',
-            item.status,
-            false,
-            1,
-            1,
-            false,
-            undefined,
-            undefined,
-            item.status === 'Successfully migrated' ? 'text-success' : 'text-error'
-          ),
-          createRowDataParam(
-            'diff',
-            item.name + 'diff',
-            false,
-            1,
-            1,
-            false,
-            undefined,
-            FileDiffUtil.getDiffHTML(item.diff, this.rowId.toString()),
-            'diff-cell'
-          ),
-          createRowDataParam(
-            'errors',
-            item.warnings && item.warnings.length > 0 ? 'Failed' : 'Complete',
-            false,
-            1,
-            1,
-            false,
-            undefined,
-            item.warnings
-          ),
-        ],
-      })),
+      rows: this.getRowsForExperienceSites(result),
+      props: JSON.stringify({
+        recordName: 'Pages',
+        rowBased: true,
+        rowCount: true,
+      }),
     };
 
     const reportTemplate = fs.readFileSync(reportTemplateFilePath, 'utf8');
@@ -788,8 +766,11 @@ export class ResultsBuilder {
     }
     if (objectsToProcess.includes(Constants.ExpSites)) {
       relatedObjectSummaryItems.push({
-        name: 'Experience Sites',
-        total: relatedObjectMigrationResult.experienceSiteAssessmentInfos?.length || 0,
+        name: 'Experience Cloud Sites',
+        total:
+          relatedObjectMigrationResult.experienceSiteAssessmentInfos?.flatMap(
+            (item) => item.experienceSiteAssessmentPageInfos
+          ).length || 0,
         data: this.getDifferentStatusDataForExperienceSites(relatedObjectMigrationResult.experienceSiteAssessmentInfos),
         file: experienceSiteFileName,
       });
@@ -894,11 +875,11 @@ export class ResultsBuilder {
   }
 
   private static getDifferentStatusDataForApex(
-    data: ApexAssessmentInfo[] | ExperienceSiteAssessmentInfo[]
+    data: ApexAssessmentInfo[]
   ): Array<{ name: string; count: number; cssClass: string }> {
     let complete = 0;
     let error = 0;
-    data.forEach((item: ApexAssessmentInfo | ExperienceSiteAssessmentInfo) => {
+    data.forEach((item: ApexAssessmentInfo) => {
       if (this.getStatusFromErrors(item.errors) === 'Successfully migrated') complete++;
       else error++;
     });
@@ -947,11 +928,13 @@ export class ResultsBuilder {
     let completed = 0;
     let skipped = 0;
     let failed = 0;
-    data.forEach((item) => {
-      if (item.status === 'Successfully migrated') completed++;
-      else if (item.status === 'Skipped') skipped++;
-      else failed++;
-    });
+    data
+      .flatMap((item) => item.experienceSiteAssessmentPageInfos)
+      .forEach((item) => {
+        if (item.status === 'Successfully migrated') completed++;
+        else if (item.status === 'Skipped') skipped++;
+        else failed++;
+      });
 
     return [
       { name: 'Successfully migrated', count: completed, cssClass: 'text-success' },
@@ -975,5 +958,71 @@ export class ResultsBuilder {
     if (errors && errors.length > 0) return 'text-error';
     if (neutralSuccess) return '';
     return 'text-success';
+  }
+
+  private static getRowsForExperienceSites(result: ExperienceSiteAssessmentInfo[]): ReportRowParam[] {
+    const rows: ReportRowParam[] = [];
+
+    result.forEach((item) => {
+      const rId = `${this.rowClass}${this.rowId++}`;
+      let showBundleName = true;
+      item.experienceSiteAssessmentPageInfos.forEach((page) => {
+        rows.push({
+          rowId: rId,
+          data: this.getRowDataForExperienceSites(page, item, showBundleName),
+        });
+        showBundleName = false;
+      });
+    });
+
+    return rows;
+  }
+
+  private static getRowDataForExperienceSites(
+    page: ExperienceSiteAssessmentPageInfo,
+    item: ExperienceSiteAssessmentInfo,
+    showBundleName: boolean
+  ): ReportDataParam[] {
+    return [
+      createRowDataParam(
+        'name',
+        item.experienceBundleName,
+        true,
+        item.experienceSiteAssessmentPageInfos.length,
+        1,
+        false,
+        undefined,
+        undefined,
+        showBundleName ? '' : 'no-display'
+      ),
+      createRowDataParam('pageName', page.name, false, 1, 1, false, undefined, undefined),
+      createRowDataParam('path', page.name + this.experienceSiteFileSuffix, false, 1, 1, true, page.path),
+      createRowDataParam(
+        'status',
+        page.status,
+        false,
+        1,
+        1,
+        false,
+        undefined,
+        undefined,
+        page.status === 'Successfully migrated' ? 'text-success' : 'text-error'
+      ),
+      createRowDataParam(
+        'diff',
+        page.name + 'diff',
+        false,
+        1,
+        1,
+        false,
+        undefined,
+        FileDiffUtil.getDiffHTML(page.diff, page.name),
+        'diff-cell'
+      ),
+      createRowDataParam('errors', page.errors ? page.errors.join(', ') : '', false, 1, 1, false, undefined, [
+        ...(page.errors || []),
+        ...(page.warnings || []),
+      ]),
+    ];
   }
 }

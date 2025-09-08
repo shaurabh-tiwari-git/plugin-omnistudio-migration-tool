@@ -190,7 +190,7 @@ describe('ExperienceSiteMigration', () => {
       expect(fileUtilStub.calledOnce).to.be.true;
       expect(processFileStub.calledTwice).to.be.true; // Only called for JSON files
       expect(result).to.have.length(1); // Only files with hasOmnistudioContent: true
-      expect(result[0].name).to.equal('site1.json');
+      expect(result[0].experienceSiteAssessmentPageInfos[0].name).to.equal('site1.json');
     });
 
     it('should handle errors when processing individual files', () => {
@@ -207,10 +207,10 @@ describe('ExperienceSiteMigration', () => {
 
       // Assert
       expect(result).to.be.an('array').that.has.length(1);
-      expect(result[0].name).to.equal('error.json');
-      expect(result[0].status).to.equal('Failed');
-      expect(result[0].warnings).to.include('Unknown error occurred');
-      expect(result[0].hasOmnistudioContent).to.be.false;
+      expect(result[0].experienceSiteAssessmentPageInfos[0].name).to.equal('error.json');
+      expect(result[0].experienceSiteAssessmentPageInfos[0].status).to.equal('Failed');
+      expect(result[0].experienceSiteAssessmentPageInfos[0].warnings).to.include('Unknown error occurred');
+      expect(result[0].experienceSiteAssessmentPageInfos[0].hasOmnistudioContent).to.be.false;
       expect((Logger.error as sinon.SinonStub).called).to.be.true;
     });
   });

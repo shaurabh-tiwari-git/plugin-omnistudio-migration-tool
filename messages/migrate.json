@@ -101,6 +101,7 @@
   "errorEvaluatingExpression": "Error evaluating expression: %s, %s",
   "migrationConsentNotGiven": "Couldn't confirm whether assessment errors are resolved",
   "foundFlexiPages": "Found %s FlexiPages to migrate",
+  "expSitesWithChanges": "Found %s Experience Cloud Sites with changes",
   "migratingFlexiPages": "Migrating FlexiPages",
   "completedProcessingAllFlexiPages": "Completed processing all flexipages. Total processed: %s",
   "completedProcessingFlexiPage": "Completed processing %s. Errors: %s",

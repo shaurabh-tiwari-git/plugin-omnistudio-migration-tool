@@ -58,7 +58,7 @@ export class ApexMigration extends BaseRelatedObjectMigration {
     shell.cd(this.projectPath);
     Logger.info(migrateMessages.getMessage('processingApexFilesForMigration'));
     const apexAssessmentInfos = this.processApexFiles(this.projectPath, 'migration');
-    Logger.info(migrateMessages.getMessage('successfullyProcessedApexFilesForMigration', [apexAssessmentInfos.length]));
+    Logger.log(migrateMessages.getMessage('successfullyProcessedApexFilesForMigration', [apexAssessmentInfos.length]));
     Logger.logVerbose(
       migrateMessages.getMessage('apexMigrationResults', [JSON.stringify(apexAssessmentInfos, null, 2)])
     );
@@ -72,7 +72,7 @@ export class ApexMigration extends BaseRelatedObjectMigration {
     shell.cd(this.projectPath);
     Logger.info(assessMessages.getMessage('processingApexFilesForAssessment'));
     const apexAssessmentInfos = this.processApexFiles(this.projectPath, 'assessment');
-    Logger.info(assessMessages.getMessage('successfullyProcessedApexFilesForAssessment', [apexAssessmentInfos.length]));
+    Logger.log(assessMessages.getMessage('successfullyProcessedApexFilesForAssessment', [apexAssessmentInfos.length]));
     Logger.logVerbose(
       assessMessages.getMessage('apexAssessmentResults', [JSON.stringify(apexAssessmentInfos, null, 2)])
     );

@@ -576,6 +576,10 @@ td {
   padding-left: 0.5rem !important;
 }
 
+.no-display {
+  display: none;
+}
+
 .diff-cell {
   min-width: 30rem;
 }
