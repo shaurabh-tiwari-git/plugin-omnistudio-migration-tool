@@ -11,76 +11,99 @@
 <body>
   <div class="slds-m-around_medium">
     <div class="slds-text-heading_large">{{heading}}</div>
-    <div class="header-container">
-      <div class="org-details-section">
-        <div class="label-key">Org Name</div>
-        <div class="label-value">{{org.name}}</div>
-      </div>
-
-      <div class="org-details-section">
-        <div class="label-key">Org ID</div>
-        <div class="label-value">{{org.id}}</div>
-      </div>
-
-      <div class="org-details-section">
-        <div class="label-key">Namespace</div>
-        <div class="label-value">{{org.namespace}}</div>
-      </div>
-
-      <div class="org-details-section">
-        <div class="label-key">Data Model</div>
-        <div class="label-value">{{org.dataModel}}</div>
-      </div>
-
-      <div class="org-details-section">
-        <c:if exp={$mode == 'assess'}>
-          <div class="label-key">Assessment Date and Time</div>
-        </c:if>
-        <c:if exp={$mode == 'migrate'}>
-          <div class="label-key">Migration Date and Time</div>
-        </c:if>
-        <div class="label-value">{{assessmentDate}}</div>
-      </div>
-    </div>
-
-    <div class="details-body">
-      <c:for items=(summaryItems) var="summary">
-        <div class="slds-box slds-box_small slds-box_body-spacing">
-          <div class="detail-row">
-            <div class="detail-item slds-text-heading_medium">{{summary.name}}</div>
-            <div class="detail-item slds-text-heading_medium">{{summary.total}}</div>
+    
+    <!-- Two-Pane Layout Container -->
+    <div class="dashboard-layout-container">
+      <!-- Left Pane: Org Details, Legends, and Component Cards -->
+      <div class="dashboard-left-pane">
+        <!-- Org Details Section -->
+        <div class="header-container">
+          <div class="org-details-section">
+            <div class="label-key">Org Name</div>
+            <div class="label-value">{{org.name}}</div>
           </div>
-          <hr />
-          <c:for items=(summary.data) var="item">
-            <div class="detail-row">
-              <div class="detail-item">{{item.name}}</div>
-              <div class="(item.cssClass)">{{item.count}}</div>
-            </div>
-          </c:for>
 
-          <div class="detail-row card-footer">
-            <button class="slds-button_stretch slds-button slds-button_neutral" data-summary="(summary.file)"
-              onclick="openReport(this)">
-              View Report
-            </button>
+          <div class="org-details-section">
+            <div class="label-key">Org ID</div>
+            <div class="label-value">{{org.id}}</div>
+          </div>
+
+          <div class="org-details-section">
+            <div class="label-key">Namespace</div>
+            <div class="label-value">{{org.namespace}}</div>
+          </div>
+
+          <div class="org-details-section">
+            <div class="label-key">Data Model</div>
+            <div class="label-value">{{org.dataModel}}</div>
+          </div>
+
+          <div class="org-details-section">
+            <c:if exp={$mode == 'assess'}>
+              <div class="label-key">Assessment Date and Time</div>
+            </c:if>
+            <c:if exp={$mode == 'migrate'}>
+              <div class="label-key">Migration Date and Time</div>
+            </c:if>
+            <div class="label-value">{{assessmentDate}}</div>
           </div>
         </div>
-      </c:for>
-    </div>
-    <div>
-      <c:if exp={Array.isArray($actionItems) && $actionItems.length > 0}>
-        <div class="slds-box slds-theme_default slds-m-top_medium">
-          <div class="slds-text-heading_medium slds-m-bottom_small">User Action Required</div>
-          <div class="slds-m-bottom_small">
-            <p class="slds-m-bottom_x-small">Action Items</p>
+
+        <div class="dashboard-common-pane">
+          <c:if exp={Array.isArray($actionItems) && $actionItems.length > 0}>
+            <div class="user-actions-container">
+              <div class="slds-text-heading_medium slds-m-bottom_small">User Actions Required</div>
+              <div class="slds-text-body_small slds-m-bottom_small action-items-subtitle">Action Items</div>
+              <ul class="slds-list_dotted">
+                <c:for items=(actionItems) var="actionItem">
+                  <li class="slds-item action-item-black">{{actionItem}}</li>
+                </c:for>
+              </ul>
+            </div>
+          </c:if>
+        </div>
+
+        <!-- Component Cards Section -->
+        <div class="details-body">
+          <c:for items=(summaryItems) var="summary">
+            <div class="slds-box slds-box_small slds-box_body-spacing">
+              <div class="detail-row">
+                <div class="detail-item slds-text-heading_medium">{{summary.name}}</div>
+                <div class="detail-item slds-text-heading_medium">{{summary.total}}</div>
+              </div>
+              <hr />
+              <c:for items=(summary.data) var="item">
+                <div class="detail-row">
+                  <div class="detail-item">{{item.name}}</div>
+                  <div class="(item.cssClass)">{{item.count}}</div>
+                </div>
+              </c:for>
+
+              <div class="detail-row card-footer">
+                <button class="slds-button_stretch slds-button slds-button_neutral" data-summary="(summary.file)"
+                  onclick="openReport(this)">
+                  View Report
+                </button>
+              </div>
+            </div>
+          </c:for>
+        </div>
+      </div>
+
+      <!-- Right Pane: User Actions -->
+      <div class="dashboard-right-pane">
+        <c:if exp={Array.isArray($actionItems) && $actionItems.length > 0}>
+          <div class="user-actions-container">
+            <div class="slds-text-heading_medium slds-m-bottom_small">User Actions Required</div>
+            <div class="slds-text-body_small slds-m-bottom_small action-items-subtitle">Action Items</div>
             <ul class="slds-list_dotted">
               <c:for items=(actionItems) var="actionItem">
-                <li class="slds-item slds-text-color_destructive">{{actionItem}}</li>
+                <li class="slds-item action-item-black">{{actionItem}}</li>
               </c:for>
             </ul>
           </div>
-        </div>
-      </c:if>
+        </c:if>
+      </div>
     </div>
   </div>
 </body>
