@@ -21,6 +21,7 @@ import { PreMigrate } from '../../../migration/premigrate';
 import { PostMigrate } from '../../../migration/postMigrate';
 import { CustomLabelsUtil } from '../../../utils/customLabels';
 import { ValidatorService } from '../../../utils/validatorService';
+import { globalValidationState } from '../../../utils/globalValidationState';
 
 Messages.importMessagesDirectory(__dirname);
 const messages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'assess');
@@ -80,12 +81,29 @@ export default class Assess extends OmniStudioBaseCommand {
     const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn);
 
     // Perform comprehensive validation using ValidatorService
+    // Reset global validation state before starting validation
+    globalValidationState.resetValidationState();
     const validator = new ValidatorService(orgs, conn, messages);
     const isValidationPassed = await validator.validate();
 
     if (!isValidationPassed) {
       return;
     }
+
+    // Access individual validation results from global state
+    const validationState = globalValidationState.getValidationState();
+    Logger.logVerbose(`Namespace validation: ${validationState.namespaceValidation.isValid ? 'PASSED' : 'FAILED'}`);
+    Logger.logVerbose(
+      `Package installation validation: ${validationState.packageInstallationValidation.isValid ? 'PASSED' : 'FAILED'}`
+    );
+    Logger.logVerbose(
+      `OmniStudio org permission validation: ${
+        validationState.omniStudioOrgPermissionValidation.isValid ? 'PASSED' : 'FAILED'
+      }`
+    );
+    Logger.logVerbose(
+      `OmniStudio licenses validation: ${validationState.omniStudioLicensesValidation.isValid ? 'PASSED' : 'FAILED'}`
+    );
 
     const namespace = orgs.packageDetails.namespace;
     let projectPath = '';

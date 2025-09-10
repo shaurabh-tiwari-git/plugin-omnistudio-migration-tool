@@ -383,7 +383,10 @@ export class OrgUtils {
    */
   public static async isOmniStudioOrgPermissionEnabled(connection: Connection, namespace: string): Promise<boolean> {
     try {
-      return await connection.apex.get('/' + namespace + '/v1/orgPermission');
+      const query = `SELECT DeveloperName FROM OmniInteractionConfig WHERE DeveloperName = 'TheFirstInstalledOmniPackage'`;
+      const result = await connection.query(query);
+      return result.records.length > 0;
+      // return await connection.apex.get('/' + namespace + '/v1/orgPermission');
     } catch (e) {
       // Returning false as a fallback when the endpoint is not found.
       // As part of the 256 MVP, we don't want to block the migration just because the endpoint is missing.
