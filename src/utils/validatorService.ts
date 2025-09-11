@@ -2,6 +2,9 @@ import { Connection, Messages } from '@salesforce/core';
 import { Logger } from '../utils/logger';
 import { OmnistudioOrgDetails } from './orgUtils';
 
+// Global variable to store data model type
+let DATA_MODEL: string | null = null;
+
 export class ValidatorService {
   private readonly connection: Connection;
   private readonly messages: Messages;
@@ -13,13 +16,46 @@ export class ValidatorService {
     this.messages = messages;
   }
 
+  // Static methods to manage global DATA_MODEL variable
+  public static setDataModel(dataModel: string): void {
+    DATA_MODEL = dataModel;
+    Logger.info('Current Data Model: ' + dataModel);
+  }
+
+  public static getDataModel(): string | null {
+    return DATA_MODEL;
+  }
+
+  public static unsetDataModel(): void {
+    DATA_MODEL = null;
+  }
+
+  public static hasDataModelInfo(): boolean {
+    return DATA_MODEL !== null;
+  }
+
   public async validate(): Promise<boolean> {
-    return (
-      this.validateNamespace() &&
-      this.validatePackageInstalled() &&
-      this.validateOmniStudioOrgPermissionEnabled() &&
-      (await this.validateOmniStudioLicenses())
-    );
+    const namespaceValid = this.validateNamespace();
+    const packageInstalled = this.validatePackageInstalled();
+    const omniStudioOrgPermissionEnabled = this.validateOmniStudioOrgPermissionEnabled();
+    const omniStudioLicensesValid = await this.validateOmniStudioLicenses();
+
+    // Determine DATA_MODEL based on validation results
+    let dataModel: string;
+
+    if (namespaceValid && packageInstalled && omniStudioOrgPermissionEnabled && omniStudioLicensesValid) {
+      dataModel = 'custom';
+    } else if (namespaceValid && packageInstalled && !omniStudioOrgPermissionEnabled) {
+      dataModel = 'standard';
+    } else {
+      dataModel = 'unknown'; // Fallback for other cases
+    }
+
+    // Set the global DATA_MODEL variable
+    ValidatorService.setDataModel(dataModel);
+
+    // Return true if either custom or standard model is detected
+    return dataModel === 'custom' || dataModel === 'standard';
   }
 
   public validatePackageInstalled(): boolean {
@@ -34,7 +70,7 @@ export class ValidatorService {
   public validateOmniStudioOrgPermissionEnabled(): boolean {
     const { omniStudioOrgPermissionEnabled } = this.orgs;
     if (omniStudioOrgPermissionEnabled) {
-      Logger.error(this.messages.getMessage('alreadyStandardModel'));
+      Logger.info(this.messages.getMessage('alreadyStandardModel'));
       return false;
     }
     return true;

@@ -385,11 +385,25 @@ export class OrgUtils {
     try {
       return await connection.apex.get('/' + namespace + '/v1/orgPermission');
     } catch (e) {
-      // Returning false as a fallback when the endpoint is not found.
-      // As part of the 256 MVP, we don't want to block the migration just because the endpoint is missing.
-      return !(e.errorCode === 'NOT_FOUND');
-    }
+      // If the endpoint returns NOT_FOUND error, check for OmniInteractionConfig records
+      if (e.errorCode === 'NOT_FOUND') {
+        try {
+          const query = `SELECT DeveloperName FROM OmniInteractionConfig`;
+          const result = await connection.query(query);
 
-    return true;
+          // Check if both required records are present
+          const developerNames = result.records.map((record: any) => record.DeveloperName);
+          const hasFirstInstalledOmniPackage = developerNames.includes('TheFirstInstalledOmniPackage');
+          const hasInstalledIndustryPackage = developerNames.includes('InstalledIndustryPackage');
+
+          return hasFirstInstalledOmniPackage && hasInstalledIndustryPackage;
+        } catch (queryError) {
+          // If query fails, return false
+          return false;
+        }
+      }
+      // For other errors, return true
+      return true;
+    }
   }
 }
