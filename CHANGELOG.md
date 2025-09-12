@@ -1,3 +1,7 @@
+## [1.6.1](https://github.com/salesforcecli/plugin-omnistudio-migration-tool/compare/1.6.0...1.6.1) (2025-09-12)
+
+
+
 # [1.6.0](https://github.com/salesforcecli/plugin-omnistudio-migration-tool/compare/1.5.0...1.6.0) (2024-09-12)
 
 
