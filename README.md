@@ -1,8 +1,10 @@
 # OmniStudio Migration Tool
 
-### Before You Begin
+## 🚀 Before You Begin
 
-Read and follow the directions in the Omnistudio migration documentation: https://help.salesforce.com/s/articleView?id=sf.os_migrate_omnistudio_custom_objects_to_standard_objects.htm&type=5
+⚠️ IMPORTANT: Before installing and using the Omnistudio Migration Tool, contact Salesforce support.
+
+Follow the steps in [Migration Process from Omnistudio for Managed Packages to Omnistudio](https://help.salesforce.com/s/articleView?id=xcloud.os_migrate_omnistudio_custom_objects_to_standard_objects.htm&language=en_US&type=5)
 
 ## Running SFDX plugin
 
