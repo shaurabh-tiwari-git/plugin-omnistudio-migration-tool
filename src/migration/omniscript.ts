@@ -681,7 +681,13 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
   async migrate(): Promise<MigrationResult[]> {
     // Get All Records from OmniScript__c (IP & OS Parent Records)
-    const omniscripts = await this.getAllOmniScripts();
+    //const omniscripts = await this.getAllOmniScripts();
+    let omniscripts = await this.getAllOmniScripts();
+    let filteredOmniscripts = omniscripts.filter(
+      (omniscript: any) =>
+        typeof omniscript === 'object' && 'Name' in omniscript && omniscript.Name.includes('MyOmniscriptABCD')
+    );
+    omniscripts = filteredOmniscripts;
 
     const functionDefinitionMetadata = await getAllFunctionMetadata(this.namespace, this.connection);
     populateRegexForFunctionMetadata(functionDefinitionMetadata);
@@ -856,8 +862,13 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         }
       }
 
+      let mappedOmniScript: AnyJson = {};
       // Perform the transformation for OS/IP Parent Record from OmniScript__c
-      const mappedOmniScript = this.mapOmniScriptRecord(omniscript);
+      if (!ISUSECASE2) {
+        mappedOmniScript = this.mapOmniScriptRecord(omniscript);
+      } else {
+        mappedOmniScript = omniscript;
+      }
 
       // Clean type, subtype
       mappedOmniScript[OmniScriptMappings.Type__c] = this.cleanName(mappedOmniScript[OmniScriptMappings.Type__c]);
@@ -953,12 +964,26 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       mappedRecords.push(mappedOmniScript);
 
       // Save the OmniScript__c records to Standard BPO i.e OmniProcess
-      const osUploadResponse = await NetUtils.createOne(
-        this.connection,
-        OmniScriptMigrationTool.OMNIPROCESS_NAME,
-        recordId,
-        mappedOmniScript
-      );
+      let osUploadResponse;
+      if (!ISUSECASE2) {
+        osUploadResponse = await NetUtils.createOne(
+          this.connection,
+          OmniScriptMigrationTool.OMNIPROCESS_NAME,
+          recordId,
+          mappedOmniScript
+        );
+      } else {
+        let standardRecordId = mappedOmniScript['Id'];
+        delete mappedOmniScript['Id'];
+        osUploadResponse = await NetUtils.updateOne(
+          this.connection,
+          OmniScriptMigrationTool.OMNIPROCESS_NAME,
+          recordId,
+          recordId,
+          mappedOmniScript
+        );
+        osUploadResponse['id'] = standardRecordId;
+      }
 
       if (!osUploadResponse?.success) {
         osUploadResponse.errors = Array.isArray(osUploadResponse.errors)
@@ -1297,11 +1322,35 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           tempElements,
           elementsUploadInfo
         );
-        // Upload the transformed Element__c
-        let elementsUploadResponse = await this.uploadTransformedData(
-          OmniScriptMigrationTool.OMNIPROCESSELEMENT_NAME,
-          elementsTransformedData
-        );
+        let elementsUploadResponse = new Map<string, UploadRecordResult>();
+
+        if (!ISUSECASE2) {
+          // Upload the transformed Element__c
+          elementsUploadResponse = await this.uploadTransformedData(
+            OmniScriptMigrationTool.OMNIPROCESSELEMENT_NAME,
+            elementsTransformedData
+          );
+        } else {
+          for (let elementRecord of elementsTransformedData.mappedRecords) {
+            let standardElementId = elementRecord['Id'];
+            let standardOmniProcessId = elementRecord['OmniProcessId'];
+
+            delete elementRecord['Id'];
+            delete elementRecord['OmniProcessId'];
+            let response: UploadRecordResult = await NetUtils.updateOne(
+              this.connection,
+              OmniScriptMigrationTool.OMNIPROCESSELEMENT_NAME,
+              standardElementId,
+              standardElementId,
+              elementRecord
+            );
+
+            elementRecord['Id'] = standardElementId;
+            elementRecord['OmniProcessId'] = standardOmniProcessId;
+            elementsUploadResponse[standardElementId] = response; // TODO - NEED TO CHECK THE FORMAT ONCE
+          }
+        }
+
         // Keep appending upload Info for Elements at each level
         elementsUploadInfo = new Map([
           ...Array.from(elementsUploadInfo.entries()),
@@ -1321,7 +1370,27 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     osDefinitions: AnyJson[]
   ): Promise<Map<string, UploadRecordResult>> {
     let osDefinitionsData = await this.prepareOsDefinitionsData(omniScriptUploadResults, osDefinitions);
-    return await this.uploadTransformedData(OmniScriptMigrationTool.OMNIPROCESSCOMPILATION_NAME, osDefinitionsData);
+    if (!ISUSECASE2) {
+      return await this.uploadTransformedData(OmniScriptMigrationTool.OMNIPROCESSCOMPILATION_NAME, osDefinitionsData);
+    } else {
+      for (let osDefinitionRecord of osDefinitionsData.mappedRecords) {
+        let standardOsDefintionId = osDefinitionRecord['Id'];
+        let standardOmniProcessId = osDefinitionRecord['OmniProcessId'];
+        delete osDefinitionRecord['Id'];
+        delete osDefinitionRecord['OmniProcessId'];
+
+        let osUploadResponse = await NetUtils.updateOne(
+          this.connection,
+          OmniScriptMigrationTool.OMNIPROCESSCOMPILATION_NAME,
+          standardOsDefintionId,
+          standardOsDefintionId,
+          osDefinitionRecord
+        );
+
+        osUploadResponse['Id'] = standardOsDefintionId;
+        osUploadResponse['OmniProcessId'] = standardOmniProcessId;
+      }
+    }
   }
 
   // Prepare Elements Data and Do the neccessary updates, transformation, validations etc.
@@ -1417,31 +1486,35 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     invalidIpReferences: Map<String, String>
   ) {
     // Transformed object
-    const mappedObject = {};
+    let mappedObject = {};
 
-    // Get the fields of the record
-    const recordFields = Object.keys(elementRecord);
+    if (!ISUSECASE2) {
+      // Get the fields of the record
+      const recordFields = Object.keys(elementRecord);
 
-    // Map individual fields
-    recordFields.forEach((recordField) => {
-      const cleanFieldName = this.getCleanFieldName(recordField);
+      // Map individual fields
+      recordFields.forEach((recordField) => {
+        const cleanFieldName = this.getCleanFieldName(recordField);
 
-      if (ElementMappings.hasOwnProperty(cleanFieldName)) {
-        mappedObject[ElementMappings[cleanFieldName]] = elementRecord[recordField];
+        if (ElementMappings.hasOwnProperty(cleanFieldName)) {
+          mappedObject[ElementMappings[cleanFieldName]] = elementRecord[recordField];
 
-        if (
-          cleanFieldName === 'ParentElementId__c' &&
-          parentElementUploadResponse.has(elementRecord[`${this.namespacePrefix}ParentElementId__c`])
-        ) {
-          mappedObject[ElementMappings[cleanFieldName]] = parentElementUploadResponse.get(
-            elementRecord[`${this.namespacePrefix}ParentElementId__c`]
-          ).id;
+          if (
+            cleanFieldName === 'ParentElementId__c' &&
+            parentElementUploadResponse.has(elementRecord[`${this.namespacePrefix}ParentElementId__c`])
+          ) {
+            mappedObject[ElementMappings[cleanFieldName]] = parentElementUploadResponse.get(
+              elementRecord[`${this.namespacePrefix}ParentElementId__c`]
+            ).id;
+          }
         }
-      }
-    });
+      });
 
-    // Set the parent/child relationship
-    mappedObject['OmniProcessId'] = omniProcessId;
+      // Set the parent/child relationship
+      mappedObject['OmniProcessId'] = omniProcessId;
+    } else {
+      mappedObject = elementRecord;
+    }
 
     // We need to fix the child references
     const elementType = mappedObject[ElementMappings.Type__c];
@@ -1593,23 +1666,27 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
   // Maps an individual Definition into an OmniProcessCompilation record
   private mapOsDefinitionsData(osDefinition: AnyJson, omniProcessId: string) {
     // Transformed object
-    const mappedObject = {};
+    let mappedObject = {};
 
-    // Get the fields of the record
-    const recordFields = Object.keys(osDefinition);
+    if (!ISUSECASE2) {
+      // Get the fields of the record
+      const recordFields = Object.keys(osDefinition);
 
-    // Map individual fields
-    recordFields.forEach((recordField) => {
-      const cleanFieldName = this.getCleanFieldName(recordField);
+      // Map individual fields
+      recordFields.forEach((recordField) => {
+        const cleanFieldName = this.getCleanFieldName(recordField);
 
-      if (OmniScriptDefinitionMappings.hasOwnProperty(cleanFieldName)) {
-        mappedObject[OmniScriptDefinitionMappings[cleanFieldName]] = osDefinition[recordField];
-      }
-    });
+        if (OmniScriptDefinitionMappings.hasOwnProperty(cleanFieldName)) {
+          mappedObject[OmniScriptDefinitionMappings[cleanFieldName]] = osDefinition[recordField];
+        }
+      });
 
-    // Set the parent/child relationship
-    mappedObject[OmniScriptDefinitionMappings.Name] = omniProcessId;
-    mappedObject[OmniScriptDefinitionMappings.OmniScriptId__c] = omniProcessId;
+      // Set the parent/child relationship
+      mappedObject[OmniScriptDefinitionMappings.Name] = omniProcessId;
+      mappedObject[OmniScriptDefinitionMappings.OmniScriptId__c] = omniProcessId;
+    } else {
+      mappedObject = osDefinition;
+    }
 
     let content = mappedObject[OmniScriptDefinitionMappings.Content__c];
     if (content) {
