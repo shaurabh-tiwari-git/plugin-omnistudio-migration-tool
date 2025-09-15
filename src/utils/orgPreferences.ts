@@ -188,6 +188,7 @@ export class OrgPreferences {
         return false;
       }
     } catch (error) {
+      // TODO: What should be the default behavior if the query fails?
       const errMsg = error instanceof Error ? error.message : String(error);
       Logger.error(`Error checking standard designer for namespace ${namespaceToModify}: ${errMsg}`);
       return false;

@@ -386,12 +386,8 @@ export class OrgUtils {
     try {
       return await connection.apex.get('/' + namespace + '/v1/orgPermission');
     } catch (e) {
-      // If the endpoint returns NOT_FOUND error, check for OmniInteractionConfig records
-      if (e.errorCode === 'NOT_FOUND') {
-        return await OrgPreferences.isStandardDesignerEnabled(connection, namespace);
-      }
-      // For other errors, return true
-      return true;
+      // Any error in the apex mechanism will fallback to check the standard designer status
+      return await OrgPreferences.isStandardDesignerEnabled(connection, namespace);
     }
   }
 }
