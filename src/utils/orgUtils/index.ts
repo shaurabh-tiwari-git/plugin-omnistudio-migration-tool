@@ -3,6 +3,7 @@
 import { Connection, Messages } from '@salesforce/core';
 import { QueryTools } from '../query';
 import { Logger } from '../logger';
+import { OrgPreferences } from '../orgPreferences';
 
 // Load messages
 const messages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'migrate');
@@ -387,20 +388,7 @@ export class OrgUtils {
     } catch (e) {
       // If the endpoint returns NOT_FOUND error, check for OmniInteractionConfig records
       if (e.errorCode === 'NOT_FOUND') {
-        try {
-          const query = `SELECT DeveloperName FROM OmniInteractionConfig`;
-          const result = await connection.query(query);
-
-          // Check if both required records are present
-          const developerNames = result.records.map((record: any) => record.DeveloperName);
-          const hasFirstInstalledOmniPackage = developerNames.includes('TheFirstInstalledOmniPackage');
-          const hasInstalledIndustryPackage = developerNames.includes('InstalledIndustryPackage');
-
-          return hasFirstInstalledOmniPackage && hasInstalledIndustryPackage;
-        } catch (queryError) {
-          // If query fails, return false
-          return false;
-        }
+        return await OrgPreferences.isStandardDesignerEnabled(connection, namespace);
       }
       // For other errors, return true
       return true;

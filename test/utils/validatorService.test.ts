@@ -172,7 +172,7 @@ describe('ValidatorService', () => {
       expect(loggerErrorStub.called).to.be.false;
     });
 
-    it('should return false and log info when org permission is already enabled', () => {
+    it('should return false and log error when org permission is already enabled', () => {
       // Arrange
       const orgs: OmnistudioOrgDetails = {
         hasValidNamespace: true,
@@ -434,10 +434,6 @@ describe('ValidatorService', () => {
         omniStudioOrgPermissionEnabled: false,
       } as unknown as OmnistudioOrgDetails;
       (messages.getMessage as sinon.SinonStub).withArgs('noPackageInstalled').returns('No package');
-      // Mock license validation to return false
-      const queryResult = { records: [] };
-      (connection.query as sinon.SinonStub).resolves(queryResult);
-      (messages.getMessage as sinon.SinonStub).withArgs('noOmniStudioLicenses').returns('No licenses');
       const validator = new ValidatorService(orgs, connection, messages);
 
       // Act
@@ -445,7 +441,7 @@ describe('ValidatorService', () => {
 
       // Assert
       expect(result).to.be.false;
-      expect(loggerErrorStub.called).to.be.true;
+      expect(loggerErrorStub.calledOnce).to.be.true;
     });
 
     it('should return false when org permission validation fails', async () => {
@@ -456,17 +452,14 @@ describe('ValidatorService', () => {
         omniStudioOrgPermissionEnabled: true,
       } as OmnistudioOrgDetails;
       (messages.getMessage as sinon.SinonStub).withArgs('alreadyStandardModel').returns('Already standard');
-      // Mock license validation to return true
-      const queryResult = { records: [{ total: '1' }] };
-      (connection.query as sinon.SinonStub).resolves(queryResult);
       const validator = new ValidatorService(orgs, connection, messages);
 
       // Act
       const result = await validator.validate();
 
       // Assert
-      expect(result).to.be.true;
-      expect(loggerInfoStub.called).to.be.true;
+      expect(result).to.be.false;
+      expect(loggerInfoStub.calledOnce).to.be.true;
     });
 
     it('should return false when license validation fails', async () => {

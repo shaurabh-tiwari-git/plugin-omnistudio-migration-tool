@@ -20,7 +20,7 @@ import { ProjectPathUtil } from '../../../utils/projectPathUtil';
 import { PreMigrate } from '../../../migration/premigrate';
 import { PostMigrate } from '../../../migration/postMigrate';
 import { CustomLabelsUtil } from '../../../utils/customLabels';
-import { ValidatorService } from '../../../utils/validatorService';
+import { initializeDataModelService, getDataModelInfo } from '../../../utils/dataModelService';
 
 Messages.importMessagesDirectory(__dirname);
 const messages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'assess');
@@ -79,11 +79,13 @@ export default class Assess extends OmniStudioBaseCommand {
     const apiVersion = conn.getApiVersion();
     const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn);
 
-    // Perform comprehensive validation using ValidatorService
-    const validator = new ValidatorService(orgs, conn, messages);
-    const isValidationPassed = await validator.validate();
+    // Initialize global data model service
+    initializeDataModelService(orgs, conn, messages);
 
-    if (!isValidationPassed) {
+    // Validate data model - must be custom or standard
+    const dataModel = await getDataModelInfo();
+    if (dataModel !== Constants.CustomDataModel && dataModel !== Constants.StandardDataModel) {
+      // Exit when data model is neither custom nor standard
       return;
     }
 

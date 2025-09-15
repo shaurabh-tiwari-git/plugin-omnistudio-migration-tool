@@ -27,6 +27,8 @@ export const Constants = {
   ApexComponentName: 'Apex Classes',
   CustomLabelComponentName: 'Custom Label',
   CustomLabelPluralName: 'Custom Labels',
+  CustomDataModel: 'custom',
+  StandardDataModel: 'standard',
 
   // artifacts persistance folder names
   AssessmentReportsFolderName: 'assessment_reports',
