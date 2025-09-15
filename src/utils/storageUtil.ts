@@ -14,7 +14,7 @@ export class StorageUtil {
 
   public static getOmnistudioMigrationStorage(): MigrationStorage {
     if (this.omnistudioMigrationStorage === undefined) {
-      this.omnistudioAssessmentStorage = {
+      this.omnistudioMigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map<string, FlexcardStorage>(),
       };
