@@ -224,7 +224,23 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
         drUploadResponse.newName = transformedDataRaptor[DRBundleMappings.Name];
 
         // Move the items
-        await this.uploadTransformedData(DataRaptorMigrationTool.OMNIDATATRANSFORMITEM_NAME, items);
+        if (!ISUSECASE2) {
+          await this.uploadTransformedData(DataRaptorMigrationTool.OMNIDATATRANSFORMITEM_NAME, items);
+        } else {
+          // Handle all the items one by one
+          for (let item of items.mappedRecords) {
+            let standardItemId = item['Id'];
+            delete item['Id'];
+            await NetUtils.updateOne(
+              this.connection,
+              DataRaptorMigrationTool.OMNIDATATRANSFORMITEM_NAME,
+              standardItemId,
+              standardItemId,
+              item
+            );
+            item['Id'] = standardItemId;
+          }
+        }
       } else {
         // Handle failed migration - add error information
         if (!drUploadResponse) {
@@ -463,13 +479,14 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     drId: string
   ): Promise<TransformData> {
     //Query all Elements
-    const mappedRecords = [],
-      originalRecords = new Map<string, AnyJson>();
+    const mappedRecords = [];
+    const originalRecords = new Map<string, AnyJson>();
 
     dataRaptorItems.forEach((drItem) => {
       const recordId = drItem['Id'];
       // const itemParentId = drItem[nsPrefix + 'OmniDataTransformationId__c']
       if (drItem['Name'] === drName) {
+        // CHECK IF THE NAME UPDATE EFFECTED HERE
         mappedRecords.push(this.mapDataRaptorItemData(drItem, drId));
       }
 
@@ -524,19 +541,23 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
    */
   private mapDataRaptorItemData(dataRaptorItemRecord: AnyJson, omniDataTransformationId: string) {
     // Transformed object
-    const mappedObject = {};
+    let mappedObject = {};
 
-    // Get the fields of the record
-    const recordFields = Object.keys(dataRaptorItemRecord);
+    if (!ISUSECASE2) {
+      // Get the fields of the record
+      const recordFields = Object.keys(dataRaptorItemRecord);
 
-    // Map individual fields
-    recordFields.forEach((recordField) => {
-      const cleanFieldName = this.getCleanFieldName(recordField);
+      // Map individual fields
+      recordFields.forEach((recordField) => {
+        const cleanFieldName = this.getCleanFieldName(recordField);
 
-      if (DRMapItemMappings.hasOwnProperty(cleanFieldName)) {
-        mappedObject[DRMapItemMappings[cleanFieldName]] = dataRaptorItemRecord[recordField];
-      }
-    });
+        if (DRMapItemMappings.hasOwnProperty(cleanFieldName)) {
+          mappedObject[DRMapItemMappings[cleanFieldName]] = dataRaptorItemRecord[recordField];
+        }
+      });
+    } else {
+      mappedObject = { ...(dataRaptorItemRecord as object) };
+    }
 
     // Set the parent/child relationship
     mappedObject['OmniDataTransformationId'] = omniDataTransformationId;
@@ -561,7 +582,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
   }
 
   private getDRMapItemFields(): string[] {
-    return ISUSECASE2 ? Object.values(DRMapItemMappings) : Object.keys(DRMapItemMappings);
+    return ISUSECASE2 ? [...new Set(Object.values(DRMapItemMappings))] : Object.keys(DRMapItemMappings);
   }
 
   private getBundleFieldKey(fieldName: string): string {
