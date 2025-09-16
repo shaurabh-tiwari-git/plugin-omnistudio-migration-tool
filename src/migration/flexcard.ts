@@ -91,10 +91,6 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     // Get All the Active VlocityCard__c records
     // const allCards = await this.getAllActiveCards();
     let allCards = await this.getAllActiveCards();
-    let filteredCards = allCards.filter(
-      (card: any) => typeof card === 'object' && 'Name' in card && card.Name.includes('DuplicateAfterNameClean_ABCFC')
-    );
-    allCards = filteredCards;
 
     Logger.log(this.messages.getMessage('foundFlexCardsToMigrate', [allCards.length]));
 
