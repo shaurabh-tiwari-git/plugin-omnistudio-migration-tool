@@ -89,7 +89,13 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   // Perform Records Migration from VlocityCard__c to OmniUiCard
   async migrate(): Promise<MigrationResult[]> {
     // Get All the Active VlocityCard__c records
-    const allCards = await this.getAllActiveCards();
+    // const allCards = await this.getAllActiveCards();
+    let allCards = await this.getAllActiveCards();
+    let filteredCards = allCards.filter(
+      (card: any) => typeof card === 'object' && 'Name' in card && card.Name.includes('ABCDWithDataMapper')
+    );
+    allCards = filteredCards;
+
     Logger.log(this.messages.getMessage('foundFlexCardsToMigrate', [allCards.length]));
 
     // Filter out FlexCards with Angular OmniScript dependencies
@@ -787,12 +793,39 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       originalRecords.set(recordId, card);
 
       // Create card
-      const uploadResult = await NetUtils.createOne(
-        this.connection,
-        CardMigrationTool.OMNIUICARD_NAME,
-        recordId,
-        transformedCard
-      );
+
+      let uploadResult: UploadRecordResult;
+      if (!ISUSECASE2) {
+        uploadResult = await NetUtils.createOne(
+          this.connection,
+          CardMigrationTool.OMNIUICARD_NAME,
+          recordId,
+          transformedCard
+        );
+      } else {
+        const standardId = transformedCard['Id'];
+        delete transformedCard['Id'];
+
+        const deactivationResult = await NetUtils.updateOne(
+          this.connection,
+          CardMigrationTool.OMNIUICARD_NAME,
+          standardId,
+          standardId,
+          {
+            ['IsActive']: false,
+          }
+        );
+        Logger.logVerbose(JSON.stringify(deactivationResult)); // TODO - Add checks here
+
+        uploadResult = await NetUtils.updateOne(
+          this.connection,
+          CardMigrationTool.OMNIUICARD_NAME,
+          recordId,
+          recordId,
+          transformedCard
+        );
+        uploadResult['id'] = standardId;
+      }
 
       if (uploadResult) {
         // Fix errors
@@ -949,7 +982,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
   private getChildCards(card: AnyJson): string[] {
     let childs = [];
-    const definition = JSON.parse(card[this.namespacePrefix + 'Definition__c']);
+    const definition = JSON.parse(card[this.getFieldKey('Definition__c')]);
     if (!definition) return childs;
 
     for (let state of definition.states || []) {
@@ -984,38 +1017,42 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     invalidIpNames: Map<string, string>
   ): AnyJson {
     // Transformed object
-    const mappedObject = {};
+    let mappedObject = {};
 
-    // Get the fields of the record
-    const recordFields = Object.keys(cardRecord);
+    if (!ISUSECASE2) {
+      // Get the fields of the record
+      const recordFields = Object.keys(cardRecord);
 
-    // Map individual fields
-    recordFields.forEach((recordField) => {
-      const cleanFieldName = this.getCleanFieldName(recordField);
+      // Map individual fields
+      recordFields.forEach((recordField) => {
+        const cleanFieldName = this.getCleanFieldName(recordField);
 
-      if (CardMappings.hasOwnProperty(cleanFieldName) && cleanFieldName !== 'IsChildCard__c') {
-        mappedObject[CardMappings[cleanFieldName]] = cardRecord[recordField];
+        if (CardMappings.hasOwnProperty(cleanFieldName) && cleanFieldName !== 'IsChildCard__c') {
+          mappedObject[CardMappings[cleanFieldName]] = cardRecord[recordField];
 
-        // Transform ParentId__c to ClonedFromOmniUiCardKey field from uploaded response map
-        if (cleanFieldName === 'ParentID__c' && cardsUploadInfo.has(cardRecord[this.getFieldKey('ParentID__c')])) {
-          mappedObject[CardMappings[cleanFieldName]] = cardsUploadInfo.get(
-            cardRecord[this.getFieldKey('ParentID__c')]
-          ).id;
+          // Transform ParentId__c to ClonedFromOmniUiCardKey field from uploaded response map
+          if (cleanFieldName === 'ParentID__c' && cardsUploadInfo.has(cardRecord[this.getFieldKey('ParentID__c')])) {
+            mappedObject[CardMappings[cleanFieldName]] = cardsUploadInfo.get(
+              cardRecord[this.getFieldKey('ParentID__c')]
+            ).id;
+          }
+
+          // CardType__c and OmniUiCardType have different picklist values
+          if (cleanFieldName === 'CardType__c') {
+            let ischildCard = cardRecord[this.getFieldKey('IsChildCard__c')];
+            mappedObject['OmniUiCardType'] = ischildCard ? 'Child' : 'Parent';
+          }
+
+          // Child Cards don't have version, so assigning 1
+          if (cleanFieldName === 'Version__c') {
+            let versionNumber = cardRecord[this.getFieldKey('Version__c')];
+            mappedObject['VersionNumber'] = versionNumber ? versionNumber : 1;
+          }
         }
-
-        // CardType__c and OmniUiCardType have different picklist values
-        if (cleanFieldName === 'CardType__c') {
-          let ischildCard = cardRecord[this.getFieldKey('IsChildCard__c')];
-          mappedObject['OmniUiCardType'] = ischildCard ? 'Child' : 'Parent';
-        }
-
-        // Child Cards don't have version, so assigning 1
-        if (cleanFieldName === 'Version__c') {
-          let versionNumber = cardRecord[this.getFieldKey('Version__c')];
-          mappedObject['VersionNumber'] = versionNumber ? versionNumber : 1;
-        }
-      }
-    });
+      });
+    } else {
+      mappedObject = { ...(cardRecord as object) };
+    }
 
     // Clean the name
     mappedObject['Name'] = this.cleanName(mappedObject['Name']);

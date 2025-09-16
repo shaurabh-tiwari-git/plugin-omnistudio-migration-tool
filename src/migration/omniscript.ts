@@ -1300,9 +1300,9 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     do {
       let tempElements = []; // Stores Elements at a same level starting with levelCount = 0 level (parent elements)
       for (let element of elements) {
-        if (element[this.getFieldKey('Level__c')] === levelCount) {
+        if (element[this.getElementFieldKey('Level__c')] === levelCount) {
           let elementId = element['Id'];
-          let elementParentId = element[this.getFieldKey['ParentElementId__c']];
+          let elementParentId = element[this.getElementFieldKey['ParentElementId__c']];
           if (
             !elementsUploadInfo.has(elementId) &&
             (!elementParentId || (elementParentId && elementsUploadInfo.has(elementParentId)))
@@ -1965,6 +1965,10 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         }
       }
     }
+  }
+
+  private getElementFieldKey(fieldName: string): string {
+    return ISUSECASE2 ? ElementMappings[fieldName] : this.namespacePrefix + fieldName;
   }
 
   private getFieldKey(fieldName: string): string {
