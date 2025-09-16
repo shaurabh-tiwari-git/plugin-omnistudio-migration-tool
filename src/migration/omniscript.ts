@@ -870,7 +870,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
                               formulaEx.message || formulaEx,
                             ])
                           );
-                          Logger.logVerbose(`Formula content: ${value}`);
+                          Logger.logVerbose(this.messages.getMessage('formulaSyntaxError', [value]));
                         }
                       }
                     }
