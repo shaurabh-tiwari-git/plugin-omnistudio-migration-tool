@@ -92,7 +92,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     // const allCards = await this.getAllActiveCards();
     let allCards = await this.getAllActiveCards();
     let filteredCards = allCards.filter(
-      (card: any) => typeof card === 'object' && 'Name' in card && card.Name.includes('ABCDWithDataMapper')
+      (card: any) => typeof card === 'object' && 'Name' in card && card.Name.includes('DuplicateAfterNameClean_ABCFC')
     );
     allCards = filteredCards;
 
@@ -764,12 +764,41 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           }
         }
 
-        this.updateChildCards(card);
+        const isChildCardUpdated: boolean = this.updateChildCards(card);
+
+        if (ISUSECASE2 && isChildCardUpdated) {
+          originalRecords.set(recordId, card);
+
+          cardsUploadInfo.set(recordId, {
+            referenceId: recordId,
+            hasErrors: true,
+            success: false,
+            errors: ['Need manual intervention as Card Children have special characters in its Name'],
+            warnings: [],
+          });
+
+          return;
+        }
       }
 
       // Perform the transformation
       const invalidIpNames = new Map<string, string>();
-      const transformedCard = this.mapVlocityCardRecord(card, cardsUploadInfo, invalidIpNames);
+      const transformedCard = this.mapVlocityCardRecord(card, cardsUploadInfo, invalidIpNames); // This only has the card structure, card definition is not there
+
+      if (ISUSECASE2) {
+        if (transformedCard['Name'] != card['Name']) {
+          originalRecords.set(recordId, card);
+
+          cardsUploadInfo.set(recordId, {
+            referenceId: recordId,
+            hasErrors: true,
+            success: false,
+            errors: ['Need manual intervention as Card Name has special characters'],
+            warnings: [],
+          });
+        }
+        return;
+      }
 
       // Verify duplicated names
       let transformedCardName: string;
@@ -997,17 +1026,28 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     return childs;
   }
 
-  private updateChildCards(card: AnyJson): void {
+  private updateChildCards(card: AnyJson): boolean {
     const definition = JSON.parse(card[this.getFieldKey('Definition__c')]);
-    if (!definition) return;
+    if (!definition) return false;
+
+    let hasNameChanges = false;
 
     for (let state of definition.states || []) {
       if (state.childCards && Array.isArray(state.childCards)) {
+        const originalChildCards = [...state.childCards];
         state.childCards = state.childCards.map((c) => this.cleanName(c));
+
+        // Check if any child card name was changed
+        for (let i = 0; i < originalChildCards.length; i++) {
+          if (originalChildCards[i] !== state.childCards[i]) {
+            hasNameChanges = true;
+          }
+        }
       }
     }
 
     card[this.getFieldKey('Definition__c')] = JSON.stringify(definition);
+    return hasNameChanges;
   }
 
   // Maps an indivitdual VlocityCard__c record to an OmniUiCard record.
@@ -1056,6 +1096,12 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
     // Clean the name
     mappedObject['Name'] = this.cleanName(mappedObject['Name']);
+
+    // Here for usecase2 add check for name
+    if (ISUSECASE2 && mappedObject['Name'] != cardRecord['Name']) {
+      Logger.logVerbose('The Name of flexcard has special chars');
+    }
+
     mappedObject[CardMappings.Author__c] = this.cleanName(mappedObject[CardMappings.Author__c]);
     mappedObject[CardMappings.Active__c] = false;
 

@@ -68,7 +68,14 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
 
     // Query all dataraptors and the respective items
     DebugTimer.getInstance().lap('Query data raptors');
-    const dataRaptors = await this.getAllDataRaptors();
+    // const dataRaptors = await this.getAllDataRaptors();
+    let dataRaptors = await this.getAllDataRaptors();
+    let filteredDataRaptors = dataRaptors.filter(
+      (dataraptor: any) =>
+        typeof dataraptor === 'object' && 'Name' in dataraptor && dataraptor.Name.includes('SpecialCharsMix')
+    );
+    dataRaptors = filteredDataRaptors;
+
     const dataRaptorItemsData = await this.getAllItems();
 
     // Query all the functionMetadata with all required fields
@@ -77,6 +84,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     // Start transforming each dataRaptor
     DebugTimer.getInstance().lap('Transform Data Raptor');
 
+    // TODO - NEED TO UNDERSTAND THIS PART
     if (functionDefinitionMetadata.length > 0 && dataRaptorItemsData.length > 0) {
       // do the formula updation in the DR items
       for (let drItem of dataRaptorItemsData) {
@@ -87,6 +95,11 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
               drItem[this.getItemFieldKey('Formula__c')],
               functionDefinitionMetadata
             );
+
+            if (originalString !== drItem[this.getItemFieldKey('Formula__c')]) {
+              Logger.logVerbose('Formula was updated during string replacement');
+            }
+
             drItem[this.getItemFieldKey('Formula__c')] = originalString;
           } catch (ex) {
             Logger.error('Error updating formula for data mapper', ex);
@@ -183,12 +196,26 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
 
       // Save the data raptors
       // const drUploadResponse = await this.uploadTransformedData(DataRaptorMigrationTool.OMNIDATATRANSFORM_NAME, { mappedRecords, originalRecords });
-      let drUploadResponse = await NetUtils.createOne(
-        this.connection,
-        DataRaptorMigrationTool.OMNIDATATRANSFORM_NAME,
-        recordId,
-        transformedDataRaptor
-      );
+      let drUploadResponse;
+      if (!ISUSECASE2) {
+        drUploadResponse = await NetUtils.createOne(
+          this.connection,
+          DataRaptorMigrationTool.OMNIDATATRANSFORM_NAME,
+          recordId,
+          transformedDataRaptor
+        );
+      } else {
+        const standardId = transformedDataRaptor['Id'];
+        delete transformedDataRaptor['Id'];
+        drUploadResponse = await NetUtils.updateOne(
+          this.connection,
+          DataRaptorMigrationTool.OMNIDATATRANSFORM_NAME,
+          recordId,
+          recordId,
+          transformedDataRaptor
+        );
+        transformedDataRaptor['Id'] = standardId;
+      }
 
       // Always add the response to track success/failure
       if (drUploadResponse && drUploadResponse.success === true) {
@@ -460,19 +487,23 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
    */
   private mapDataRaptorRecord(dataRaptorRecord: AnyJson): AnyJson {
     // Transformed object
-    const mappedObject = {};
+    let mappedObject = {};
 
-    // Get the fields of the record
-    const recordFields = Object.keys(dataRaptorRecord);
+    if (!ISUSECASE2) {
+      // Get the fields of the record
+      const recordFields = Object.keys(dataRaptorRecord);
 
-    // Map individual fields
-    recordFields.forEach((recordField) => {
-      const cleanFieldName = this.getCleanFieldName(recordField);
+      // Map individual fields
+      recordFields.forEach((recordField) => {
+        const cleanFieldName = this.getCleanFieldName(recordField);
 
-      if (DRBundleMappings.hasOwnProperty(cleanFieldName)) {
-        mappedObject[DRBundleMappings[cleanFieldName]] = dataRaptorRecord[recordField];
-      }
-    });
+        if (DRBundleMappings.hasOwnProperty(cleanFieldName)) {
+          mappedObject[DRBundleMappings[cleanFieldName]] = dataRaptorRecord[recordField];
+        }
+      });
+    } else {
+      mappedObject = { ...(dataRaptorRecord as object) };
+    }
 
     mappedObject['Name'] = this.cleanName(mappedObject['Name']);
     mappedObject['IsActive'] = true;
@@ -509,11 +540,11 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
 
     // Set the parent/child relationship
     mappedObject['OmniDataTransformationId'] = omniDataTransformationId;
-    mappedObject['Name'] = this.cleanName(mappedObject['Name']);
+    mappedObject['Name'] = this.cleanName(mappedObject['Name']); // TODO - In the item also, this might refer to name which needs to be updated
 
     // Update formula field references if NameMappingRegistry is available
     if (this.nameRegistry && mappedObject['Formula']) {
-      mappedObject['Formula'] = this.nameRegistry.updateDependencyReferences(mappedObject['Formula']);
+      mappedObject['Formula'] = this.nameRegistry.updateDependencyReferences(mappedObject['Formula']); // TODO - UNDERSTAND IN MORE DETAIL - HERE IT SEEMS LIKE OBJECT CAN HAVE DATAMAPPER IN NAME WHICH IS BEING UPDATED
     }
 
     // BATCH framework requires that each record has an "attributes" property
