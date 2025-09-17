@@ -15,7 +15,7 @@ import {
 } from '../../utils/apex/parser/apexparser';
 import { FileUtil, File } from '../../utils/file/fileUtil';
 import { Logger } from '../../utils/logger';
-import { ApexAssessmentInfo } from '../../utils';
+import { ApexAssessmentInfo, DiffPair } from '../../utils';
 import { FileDiffUtil } from '../../utils/lwcparser/fileutils/FileDiffUtil';
 import { Constants } from '../../utils/constants/stringContants';
 import { ComponentType, createProgressBar } from '../base';
@@ -118,6 +118,7 @@ export class ApexMigration extends BaseRelatedObjectMigration {
           infos: [],
           path: file.location,
           diff: '',
+          status: 'Failed',
         });
         processingErrorsList.push(assessMessages.getMessage('errorProcessingApexFile', [file.name]));
         progressBar.update(++progressCounter);
@@ -134,21 +135,12 @@ export class ApexMigration extends BaseRelatedObjectMigration {
     const fileContent = fs.readFileSync(file.location, 'utf8');
     const interfaces: InterfaceImplements[] = [];
     interfaces.push(this.vlocityOpenInterface, this.vlocityOpenInterface2, this.callableInterface);
-    const methodCalls = new Set<MethodCall>();
-    const drNameParameter = new MethodParameter(2, ParameterType.DR_NAME);
-    const ipNameParameter = new MethodParameter(1, ParameterType.IP_NAME);
-    methodCalls.add(new MethodCall('DRGlobal', 'process', this.namespace, drNameParameter));
-    methodCalls.add(new MethodCall('DRGlobal', 'processObjectsJSON', this.namespace, drNameParameter));
-    methodCalls.add(new MethodCall('DRGlobal', 'processString', this.namespace, drNameParameter));
-    methodCalls.add(new MethodCall('DRGlobal', 'processFromApex', this.namespace, drNameParameter));
-    methodCalls.add(
-      new MethodCall('IntegrationProcedureService', 'runIntegrationService', this.namespace, ipNameParameter)
-    );
+    const methodCalls = this.prepareMethodCall();
     const parser = new ApexASTParser(fileContent, interfaces, methodCalls, this.namespace);
     parser.parse();
     const tokenUpdates: TokenUpdater[] = [];
     const tokenUpdatesForRemoteCalls = this.processApexFileForRemotecalls(file, parser);
-    const ipNameUpdateFailed = new Set<string>();
+    const ipNameUpdateFailed = new Set<string | number>();
     const dmNameUpdateFailed = new Set<string>();
     const tokenUpdatesForMethodCalls = this.processApexFileForMethodCalls(file, parser, ipNameUpdateFailed);
     const tokenUpdatesForSimpleVarDeclarations = this.processApexFileForSimpleVarDeclarations(
@@ -157,7 +149,11 @@ export class ApexMigration extends BaseRelatedObjectMigration {
       dmNameUpdateFailed
     );
     const updateMessages: string[] = [];
+    let status: 'Ready for migration' | 'Failed' | 'Complete' | 'Needs Manual Intervention' =
+      type === 'migration' ? 'Complete' : 'Ready for migration';
 
+    let methodCallsUpdated = false;
+    let simpleVarDeclarationsUpdated = false;
     if (tokenUpdatesForRemoteCalls && tokenUpdatesForRemoteCalls.length > 0) {
       tokenUpdates.push(...tokenUpdatesForRemoteCalls);
       if (type === 'migration') {
@@ -167,48 +163,57 @@ export class ApexMigration extends BaseRelatedObjectMigration {
       }
     }
     if (tokenUpdatesForMethodCalls && tokenUpdatesForMethodCalls.length > 0) {
-      if (type === 'migration') {
-        updateMessages.push(migrateMessages.getMessage('fileUpdatedToAllowCalls'));
-      } else {
-        updateMessages.push(assessMessages.getMessage('fileUpdatedToAllowCalls'));
-      }
+      methodCallsUpdated = true;
       tokenUpdates.push(...tokenUpdatesForMethodCalls);
     }
 
     if (tokenUpdatesForSimpleVarDeclarations && tokenUpdatesForSimpleVarDeclarations.length > 0) {
-      if (type === 'migration') {
-        updateMessages.push(migrateMessages.getMessage('varDeclarationUpdated'));
-      } else {
-        updateMessages.push(assessMessages.getMessage('varDeclarationUpdated'));
-      }
+      simpleVarDeclarationsUpdated = true;
       tokenUpdates.push(...tokenUpdatesForSimpleVarDeclarations);
     }
 
     const warnings: string[] = [];
 
     if (ipNameUpdateFailed.size > 0) {
-      ipNameUpdateFailed.forEach((name) => {
-        warnings.push(assessMessages.getMessage('ipNameUpdateFailed', [name]));
+      ipNameUpdateFailed.forEach((nameOrLine: string | number) => {
+        if (typeof nameOrLine === 'number') {
+          warnings.push(assessMessages.getMessage('ipNameUpdateFailed', [nameOrLine]));
+        } else {
+          warnings.push(assessMessages.getMessage('ipNameReferenceNotFound'));
+        }
       });
+      status = type === 'migration' ? 'Failed' : 'Needs Manual Intervention';
     }
     if (dmNameUpdateFailed.size > 0) {
-      dmNameUpdateFailed.forEach((name) => {
-        warnings.push(assessMessages.getMessage('dmNameUpdateFailed', [name]));
+      dmNameUpdateFailed.forEach((nameOrLine: string | number) => {
+        if (typeof nameOrLine === 'number') {
+          warnings.push(assessMessages.getMessage('dmNameUpdateFailed', [nameOrLine]));
+        } else {
+          warnings.push(assessMessages.getMessage('dmNameReferenceNotFound'));
+        }
       });
+      status = type === 'migration' ? 'Failed' : 'Needs Manual Intervention';
     }
 
-    let difference = [];
-    if (tokenUpdates && tokenUpdates.length > 0) {
-      const updatedContent = parser.rewrite(tokenUpdates);
-      // Only write file changes if we're in migration mode, not assessment mode
-      if (type === 'migration') {
-        fs.writeFileSync(file.location, updatedContent);
-        Logger.logger.info(migrateMessages.getMessage('apexFileChangesApplied', [file.name]));
-      } else {
-        Logger.logger.info(assessMessages.getMessage('apexFileChangesIdentifiedNotApplied', [file.name]));
+    if (!ipNameUpdateFailed?.size && !dmNameUpdateFailed?.size) {
+      if (methodCallsUpdated) {
+        updateMessages.push(
+          type === 'migration'
+            ? migrateMessages.getMessage('fileUpdatedToAllowCalls')
+            : assessMessages.getMessage('fileUpdatedToAllowCalls')
+        );
       }
-      difference = new FileDiffUtil().getFileDiff(file.name, fileContent, updatedContent);
+
+      if (simpleVarDeclarationsUpdated) {
+        updateMessages.push(
+          type === 'migration'
+            ? migrateMessages.getMessage('varDeclarationUpdated')
+            : assessMessages.getMessage('varDeclarationUpdated')
+        );
+      }
     }
+
+    const difference = this.getDifferences(tokenUpdates, parser, file, type, fileContent);
     if (updateMessages.length === 0) {
       Logger.info(assessMessages.getMessage('fileNoOmnistudioCalls', [file.name]));
     }
@@ -220,11 +225,12 @@ export class ApexMigration extends BaseRelatedObjectMigration {
       infos: updateMessages,
       path: file.location,
       diff: JSON.stringify(difference),
+      status,
     };
   }
   private processApexFileForSimpleVarDeclarations(
     parser: ApexASTParser,
-    ipNameUpdateFailed: Set<string>,
+    ipNameUpdateFailed: Set<string | number>,
     dmNameUpdateFailed: Set<string>
   ): TokenUpdater[] {
     const simpleVarDeclarations = parser.simpleVarDeclarations;
@@ -235,6 +241,7 @@ export class ApexMigration extends BaseRelatedObjectMigration {
     for (const varName of dmVarInMethodCalls) {
       const varToken = simpleVarDeclarations.get(varName);
       if (!varToken) {
+        Logger.logVerbose(`ERROR: dm variable reference not found: ${varName}`);
         dmNameUpdateFailed.add(varName);
         continue;
       }
@@ -251,13 +258,15 @@ export class ApexMigration extends BaseRelatedObjectMigration {
     for (const varName of ipVarInMethodCalls) {
       const varToken = simpleVarDeclarations.get(varName);
       if (!varToken) {
+        Logger.logVerbose(`ERROR: ip variable reference not found: ${varName}`);
         ipNameUpdateFailed.add(varName);
         continue;
       }
       const oldName = varToken.text.substring(1, varToken.text.length - 1);
       const parts = oldName.split('_');
       if (parts.length !== 2) {
-        ipNameUpdateFailed.add(varName);
+        Logger.logVerbose(`ERROR: ip variable reference can't be updated: ${varName}`);
+        ipNameUpdateFailed.add(varToken.line);
         continue;
       }
       const newName = `'${nameRegistry.getIntegrationProcedureCleanedName(oldName)}'`;
@@ -361,11 +370,11 @@ export class ApexMigration extends BaseRelatedObjectMigration {
   private processApexFileForMethodCalls(
     file: File,
     parser: ApexASTParser,
-    ipNameUpdateFailed: Set<string>
+    ipNameUpdateFailed: Set<string | number>
   ): TokenUpdater[] {
     const namespaceChanges = parser.namespaceChanges;
     const tokenUpdates: TokenUpdater[] = [];
-    if (namespaceChanges && namespaceChanges.has(this.namespace)) {
+    if (namespaceChanges && namespaceChanges.has(this.namespace) && this.namespace !== this.updatedNamespace) {
       for (const tokenChange of namespaceChanges.get(this.namespace))
         tokenUpdates.push(new SingleTokenUpdate(this.updatedNamespace, tokenChange));
     }
@@ -389,7 +398,7 @@ export class ApexMigration extends BaseRelatedObjectMigration {
         const oldName = token.text;
         const parts = oldName.split('_');
         if (parts.length !== 2) {
-          ipNameUpdateFailed.add(oldName);
+          ipNameUpdateFailed.add(token.line);
           continue;
         }
         const newName = `'${nameRegistry.getIntegrationProcedureCleanedName(oldName)}'`;
@@ -429,6 +438,43 @@ export class ApexMigration extends BaseRelatedObjectMigration {
                 return invokeMethod(action, inputMap, outMap, options);
             }
     `;
+  }
+
+  private prepareMethodCall(): Set<MethodCall> {
+    const drNameParameter = new MethodParameter(2, ParameterType.DR_NAME);
+    const ipNameParameter = new MethodParameter(1, ParameterType.IP_NAME);
+
+    const methodCalls = new Set<MethodCall>();
+    methodCalls.add(new MethodCall('DRGlobal', 'process', this.namespace, drNameParameter));
+    methodCalls.add(new MethodCall('DRGlobal', 'processObjectsJSON', this.namespace, drNameParameter));
+    methodCalls.add(new MethodCall('DRGlobal', 'processString', this.namespace, drNameParameter));
+    methodCalls.add(new MethodCall('DRGlobal', 'processFromApex', this.namespace, drNameParameter));
+    methodCalls.add(
+      new MethodCall('IntegrationProcedureService', 'runIntegrationService', this.namespace, ipNameParameter)
+    );
+    return methodCalls;
+  }
+
+  private getDifferences(
+    tokenUpdates: TokenUpdater[],
+    parser: ApexASTParser,
+    file: File,
+    type: string,
+    fileContent: string
+  ): DiffPair[] {
+    let difference: DiffPair[] = [];
+    if (tokenUpdates && tokenUpdates.length > 0) {
+      const updatedContent = parser.rewrite(tokenUpdates);
+      // Only write file changes if we're in migration mode, not assessment mode
+      if (type === 'migration') {
+        fs.writeFileSync(file.location, updatedContent);
+        Logger.logger.info(migrateMessages.getMessage('apexFileChangesApplied', [file.name]));
+      } else {
+        Logger.logger.info(assessMessages.getMessage('apexFileChangesIdentifiedNotApplied', [file.name]));
+      }
+      difference = new FileDiffUtil().getFileDiff(file.name, fileContent, updatedContent);
+    }
+    return difference;
   }
   /*
     private mapTOName(apexAssessmentInfos: ApexAssessmentInfo[]): string[] {
