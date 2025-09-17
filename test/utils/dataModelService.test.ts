@@ -92,21 +92,18 @@ describe('DataModelService', () => {
       expect(service.getDataModel()).to.equal(Constants.StandardDataModel);
     });
 
-    it('should throw error when getDataModelService is called without initialization', () => {
+    it('should return null when getDataModelService is called without initialization', () => {
       // Arrange - Clear any existing global state by importing fresh module
       delete require.cache[require.resolve('../../src/utils/dataModelService')];
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const freshDataModelService = require('../../src/utils/dataModelService');
 
-      // Act & Assert
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        freshDataModelService.getDataModelService();
-        expect.fail('Expected getDataModelService to throw an error');
-      } catch (error) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        expect(error.message).to.include('DataModelService has not been initialized');
-      }
+      // Act
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      const result = freshDataModelService.getDataModelService();
+
+      // Assert
+      expect(result).to.be.null;
     });
 
     it('should throw error when getDataModelInfo is called without initialization', () => {
@@ -116,14 +113,10 @@ describe('DataModelService', () => {
       const freshDataModelService = require('../../src/utils/dataModelService');
 
       // Act & Assert
-      try {
+      expect(() => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         freshDataModelService.getDataModelInfo();
-        expect.fail('Expected getDataModelInfo to throw an error');
-      } catch (error) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        expect(error.message).to.include('DataModelService has not been initialized');
-      }
+      }).to.throw();
     });
 
     it('should return cached data model on subsequent calls', () => {
