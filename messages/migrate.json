@@ -244,5 +244,18 @@
   "customLabelAssessmentSummary": "Custom Label with same name and different value is already exist without namespace.",
   "generatedCustomLabelAssessmentReportPage": "Generated custom label assessment report page %s of %s with %s labels",
   "varDeclarationUpdated": "Variable initialization has been updated for target name",
-  "migrationSuccessfulMessage": "Migration process for org %s is complete and reports are ready for review in the folder %s"
+  "migrationSuccessfulMessage": "Migration process for org %s is complete and reports are ready for review in the folder %s",
+  "configTablesAlreadyClean": "Config tables are already clean",
+  "startingConfigCleanup": "Starting config tables cleanup process",
+  "cleaningConfigTable": "Cleaning %s",
+  "noRecordsFoundInTable": "No records found in %s",
+  "foundRecordsInTable": "Found %s records in %s. Proceeding with cleanup.",
+  "failedToDeleteRecords": "Failed to delete records from %s",
+  "errorCleaningTable": "Error cleaning config table %s: %s",
+  "successfullyCleanedRecords": "Successfully cleaned %s records from %s",
+  "failedToCleanTables": "Failed to clean tables: %s",
+  "errorDuringConfigTablesCleanup": "Error during config tables cleanup: %s",
+  "errorCheckingConfigTables": "Error checking config tables: %s",
+  "configCleanupCompleted": "Config data cleanup completed. Total records cleaned: %s",
+  "configCleanupConsentMessage": "Do you want to clean up config tables? This will delete all records from OmniUiCardConfig, OmniScriptConfig, OmniIntegrationProcConfig, and OmniDataTransformConfig tables. (y/n):"
 }

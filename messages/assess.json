@@ -195,5 +195,18 @@
   "ipNameUpdateFailed": "IP reference %s can’t be updated",
   "dmNameUpdateFailed": "DM reference %s can’t be updated",
   "invalidTypeAssessErrorMessage": "We couldn't assess your Omnistudio components in the %s namespace. Select the correct namespace and try again",
-  "assessmentSuccessfulMessage": "Migration assessment for org %s is complete and reports are ready for review in the folder %s"
+  "assessmentSuccessfulMessage": "Migration assessment for org %s is complete and reports are ready for review in the folder %s",
+  "configTablesAlreadyClean": "Config tables are already clean",
+  "startingConfigCleanup": "Starting config tables cleanup process",
+  "cleaningConfigTable": "Cleaning %s",
+  "noRecordsFoundInTable": "No records found in %s",
+  "foundRecordsInTable": "Found %s records in %s. Proceeding with cleanup.",
+  "failedToDeleteRecords": "Failed to delete records from %s",
+  "errorCleaningTable": "Error cleaning config table %s: %s",
+  "successfullyCleanedRecords": "Successfully cleaned %s records from %s",
+  "failedToCleanTables": "Failed to clean tables: %s",
+  "errorDuringConfigTablesCleanup": "Error during config tables cleanup: %s",
+  "errorCheckingConfigTables": "Error checking config tables: %s",
+  "configCleanupCompleted": "Config data cleanup completed. Total records cleaned: %s",
+  "configCleanupConsentMessage": "Do you want to clean up config tables? This will delete all records from OmniUiCardConfig, OmniScriptConfig, OmniIntegrationProcConfig, and OmniDataTransformConfig tables. (y/n):"
 }
