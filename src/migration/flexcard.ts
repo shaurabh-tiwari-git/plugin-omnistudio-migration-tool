@@ -89,7 +89,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   async migrate(): Promise<MigrationResult[]> {
     // Get All the Active VlocityCard__c records
     // const allCards = await this.getAllActiveCards();
-    let allCards = await this.getAllActiveCards();
+    const allCards = await this.getAllActiveCards();
 
     Logger.log(this.messages.getMessage('foundFlexCardsToMigrate', [allCards.length]));
 
@@ -147,12 +147,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     try {
       Logger.log(this.messages.getMessage('startingFlexCardAssessment'));
       // const flexCards = await this.getAllActiveCards();
-      let flexCards = await this.getAllActiveCards();
-      let filteredCards = flexCards.filter(
-        (flexCard: any) =>
-          typeof flexCard === 'object' && 'Name' in flexCard && flexCard.Name.includes('DuplicateAfterNameClean')
-      );
-      flexCards = filteredCards;
+      const flexCards = await this.getAllActiveCards();
       Logger.log(this.messages.getMessage('foundFlexCardsToAssess', [flexCards.length]));
 
       const flexCardsAssessmentInfos = await this.processCardComponents(flexCards);
