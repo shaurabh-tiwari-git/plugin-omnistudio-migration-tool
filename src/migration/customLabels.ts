@@ -109,8 +109,8 @@ export class CustomLabelsMigrationTool extends BaseMigrationTool implements Migr
 
           // Only include error and duplicate (where message is not "same value")
           if (
-            labelResult.status === 'error' ||
-            (labelResult.status === 'duplicate' && labelResult.message !== 'same value')
+            Constants.CustomLabelInvalidStatuses.includes(labelResult.status) &&
+            !(labelResult.status === 'duplicate' && labelResult.message === Constants.CustomLabelSameValueMessage)
           ) {
             const { mappedStatus, hasErrors } = this.mapCloneStatusToMigrationStatus(labelResult.status);
 
@@ -120,8 +120,8 @@ export class CustomLabelsMigrationTool extends BaseMigrationTool implements Migr
               id: labelResult.name,
               name: labelResult.name,
               status: mappedStatus,
-              errors: labelResult.status === 'error' ? [labelResult.message] : [],
-              warnings: labelResult.status === 'duplicate' ? [labelResult.message] : [],
+              errors: labelResult.status === Constants.CustomLabelErrorStatus ? [labelResult.message] : [],
+              warnings: labelResult.status === Constants.CustomLabelDuplicateStatus ? [labelResult.message] : [],
               migratedId: labelResult.name,
               migratedName: labelResult.name,
 
@@ -137,7 +137,7 @@ export class CustomLabelsMigrationTool extends BaseMigrationTool implements Migr
               newName: labelResult.name,
               hasErrors,
               success: false, // We only process error and duplicate, so success is always false
-              skipped: labelResult.status === 'duplicate',
+              skipped: labelResult.status === Constants.CustomLabelDuplicateStatus,
               type: Constants.CustomLabelComponentName,
             };
 

@@ -661,7 +661,7 @@ export default class Migrate extends OmniStudioBaseCommand {
 
     for (const record of Array.from(migrationResults.records.values())) {
       // For custom labels, preserve all the custom fields
-      if (migrationTool.getName().toLowerCase().includes('custom labels')) {
+      if (migrationTool.getName().toLowerCase().includes(Constants.CustomLabelPluralName.toLowerCase())) {
         // Use the record as-is for custom labels since it already has all the needed fields
         const customLabelRecord = record;
         mergedResults.push({

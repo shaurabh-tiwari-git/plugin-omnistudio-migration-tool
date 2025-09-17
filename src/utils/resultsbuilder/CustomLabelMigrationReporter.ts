@@ -233,7 +233,7 @@ export class CustomLabelMigrationReporter {
         rowId: `custom_label_${rowIndex++}`,
         data: [
           createRowDataParam('name', info.labelName, true, 1, 1, false),
-          createRowDataParam('packageId', info.packageInfo?.id || '<ID>', false, 1, 1, true),
+          createRowDataParam('packageId', info.packageInfo?.id || '', false, 1, 1, true),
           createRowDataParam(
             'packageValue',
             info.packageInfo?.value || '',
