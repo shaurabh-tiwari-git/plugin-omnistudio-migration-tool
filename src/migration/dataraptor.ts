@@ -23,7 +23,7 @@ import {
 import { StringVal } from '../utils/StringValue/stringval';
 import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
-import { ISUSECASE2 } from '../utils/constants/migrationConfig';
+import { IS_STANDARD_DATA_MODEL } from '../utils/constants/migrationConfig';
 
 export class DataRaptorMigrationTool extends BaseMigrationTool implements MigrationTool {
   static readonly DRBUNDLE_NAME = 'DRBundle__c';
@@ -187,7 +187,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
       // Save the data raptors
       // const drUploadResponse = await this.uploadTransformedData(DataRaptorMigrationTool.OMNIDATATRANSFORM_NAME, { mappedRecords, originalRecords });
       let drUploadResponse;
-      if (!ISUSECASE2) {
+      if (!IS_STANDARD_DATA_MODEL) {
         drUploadResponse = await NetUtils.createOne(
           this.connection,
           DataRaptorMigrationTool.OMNIDATATRANSFORM_NAME,
@@ -214,7 +214,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
         drUploadResponse.newName = transformedDataRaptor[DRBundleMappings.Name];
 
         // Move the items
-        if (!ISUSECASE2) {
+        if (!IS_STANDARD_DATA_MODEL) {
           await this.uploadTransformedData(DataRaptorMigrationTool.OMNIDATATRANSFORMITEM_NAME, items);
         } else {
           // Handle all the items one by one
@@ -495,7 +495,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     // Transformed object
     let mappedObject = {};
 
-    if (!ISUSECASE2) {
+    if (!IS_STANDARD_DATA_MODEL) {
       // Get the fields of the record
       const recordFields = Object.keys(dataRaptorRecord);
 
@@ -532,7 +532,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     // Transformed object
     let mappedObject = {};
 
-    if (!ISUSECASE2) {
+    if (!IS_STANDARD_DATA_MODEL) {
       // Get the fields of the record
       const recordFields = Object.keys(dataRaptorItemRecord);
 
@@ -567,30 +567,34 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
   }
 
   private getDRBundleFields(): string[] {
-    return ISUSECASE2 ? Object.values(DRBundleMappings) : Object.keys(DRBundleMappings);
+    return IS_STANDARD_DATA_MODEL ? Object.values(DRBundleMappings) : Object.keys(DRBundleMappings);
   }
 
   private getDRMapItemFields(): string[] {
-    return ISUSECASE2 ? [...new Set(Object.values(DRMapItemMappings))] : Object.keys(DRMapItemMappings);
+    return IS_STANDARD_DATA_MODEL ? [...new Set(Object.values(DRMapItemMappings))] : Object.keys(DRMapItemMappings);
   }
 
   private getBundleFieldKey(fieldName: string): string {
-    return ISUSECASE2 ? DRBundleMappings[fieldName] : this.namespacePrefix + fieldName;
+    return IS_STANDARD_DATA_MODEL ? DRBundleMappings[fieldName] : this.namespacePrefix + fieldName;
   }
 
   private getItemFieldKey(fieldName: string): string {
-    return ISUSECASE2 ? DRMapItemMappings[fieldName] : this.namespacePrefix + fieldName;
+    return IS_STANDARD_DATA_MODEL ? DRMapItemMappings[fieldName] : this.namespacePrefix + fieldName;
   }
 
   private getQueryNamespace(): string {
-    return ISUSECASE2 ? '' : this.namespace;
+    return IS_STANDARD_DATA_MODEL ? '' : this.namespace;
   }
 
   private getBundleObjectName(): string {
-    return ISUSECASE2 ? DataRaptorMigrationTool.OMNIDATATRANSFORM_NAME : DataRaptorMigrationTool.DRBUNDLE_NAME;
+    return IS_STANDARD_DATA_MODEL
+      ? DataRaptorMigrationTool.OMNIDATATRANSFORM_NAME
+      : DataRaptorMigrationTool.DRBUNDLE_NAME;
   }
 
   private getItemObjectName(): string {
-    return ISUSECASE2 ? DataRaptorMigrationTool.OMNIDATATRANSFORMITEM_NAME : DataRaptorMigrationTool.DRMAPITEM_NAME;
+    return IS_STANDARD_DATA_MODEL
+      ? DataRaptorMigrationTool.OMNIDATATRANSFORMITEM_NAME
+      : DataRaptorMigrationTool.DRMAPITEM_NAME;
   }
 }

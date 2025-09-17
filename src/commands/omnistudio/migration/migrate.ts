@@ -33,7 +33,7 @@ import { PreMigrate } from '../../../migration/premigrate';
 import { GlobalAutoNumberMigrationTool } from '../../../migration/globalautonumber';
 import { ValidatorService } from '../../../utils/validatorService';
 import { NameMappingRegistry } from '../../../migration/NameMappingRegistry';
-import { ISUSECASE2 } from '../../../utils/constants/migrationConfig';
+import { IS_STANDARD_DATA_MODEL } from '../../../utils/constants/migrationConfig';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -170,7 +170,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     const debugTimer = DebugTimer.getInstance();
     // We need to truncate the standard objects first (in reverse order for cleanup)
     let objectMigrationResults;
-    if (!ISUSECASE2) {
+    if (!IS_STANDARD_DATA_MODEL) {
       objectMigrationResults = await this.truncateObjects([...migrationObjects].reverse(), debugTimer);
       const allTruncateComplete = objectMigrationResults.length === 0;
 
