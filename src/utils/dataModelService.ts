@@ -29,9 +29,6 @@ export function initializeDataModelService(orgs: OmnistudioOrgDetails): void {
 
 // Get the global instance
 export function getDataModelService(): DataModelService {
-  if (!globalDataModelService) {
-    throw new Error('DataModelService has not been initialized. Call initializeDataModelService() first.');
-  }
   return globalDataModelService;
 }
 
