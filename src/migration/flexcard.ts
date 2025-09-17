@@ -18,7 +18,6 @@ import { UX } from '@salesforce/command';
 import { FlexCardAssessmentInfo } from '../../src/utils';
 import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
-
 import { Constants } from '../utils/constants/stringContants';
 import { StorageUtil } from '../utils/storageUtil';
 import { getUpdatedAssessmentStatus } from '../utils/stringUtils';
@@ -147,7 +146,13 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   public async assess(): Promise<FlexCardAssessmentInfo[]> {
     try {
       Logger.log(this.messages.getMessage('startingFlexCardAssessment'));
-      const flexCards = await this.getAllActiveCards();
+      // const flexCards = await this.getAllActiveCards();
+      let flexCards = await this.getAllActiveCards();
+      let filteredCards = flexCards.filter(
+        (flexCard: any) =>
+          typeof flexCard === 'object' && 'Name' in flexCard && flexCard.Name.includes('DuplicateAfterNameClean')
+      );
+      flexCards = filteredCards;
       Logger.log(this.messages.getMessage('foundFlexCardsToAssess', [flexCards.length]));
 
       const flexCardsAssessmentInfos = await this.processCardComponents(flexCards);
@@ -225,10 +230,17 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       'Ready for migration';
     flexCardAssessmentInfo.name = this.allVersions ? `${cleanedName}_${version}` : cleanedName;
     if (cleanedName !== originalName) {
-      flexCardAssessmentInfo.warnings.push(
-        this.messages.getMessage('cardNameChangeMessage', [originalName, cleanedName])
-      );
-      assessmentStatus = getUpdatedAssessmentStatus(assessmentStatus, 'Warnings');
+      if (!ISUSECASE2) {
+        flexCardAssessmentInfo.warnings.push(
+          this.messages.getMessage('cardNameChangeMessage', [originalName, cleanedName])
+        );
+        assessmentStatus = getUpdatedAssessmentStatus(assessmentStatus, 'Warnings');
+      } else {
+        flexCardAssessmentInfo.warnings.push(
+          this.messages.getMessage('needManualInterventionAsSpecialCharsInFlexcardName')
+        );
+        assessmentStatus = 'Needs Manual Intervention';
+      }
     }
 
     // Check for duplicate names
@@ -385,13 +397,20 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
         // Add warning if child card name will change
         if (childCardName !== cleanedChildCardName) {
-          flexCardAssessmentInfo.warnings.push(
-            this.messages.getMessage('cardNameChangeMessage', [childCardName, cleanedChildCardName])
-          );
-          flexCardAssessmentInfo.migrationStatus = getUpdatedAssessmentStatus(
-            flexCardAssessmentInfo.migrationStatus,
-            'Warnings'
-          );
+          if (!ISUSECASE2) {
+            flexCardAssessmentInfo.warnings.push(
+              this.messages.getMessage('cardNameChangeMessage', [childCardName, cleanedChildCardName])
+            );
+            flexCardAssessmentInfo.migrationStatus = getUpdatedAssessmentStatus(
+              flexCardAssessmentInfo.migrationStatus,
+              'Warnings'
+            );
+          } else {
+            flexCardAssessmentInfo.warnings.push(
+              this.messages.getMessage('needManualInterventionAsSpecialCharsInChildFlexcardName')
+            );
+            flexCardAssessmentInfo.migrationStatus = 'Needs Manual Intervention';
+          }
         }
       }
     } catch (err) {
@@ -769,7 +788,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
             referenceId: recordId,
             hasErrors: true,
             success: false,
-            errors: ['Need manual intervention as Card Children have special characters in its Name'],
+            errors: [this.messages.getMessage('needManualInterventionAsSpecialCharsInChildFlexcardName')],
             warnings: [],
           });
 
@@ -789,7 +808,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
             referenceId: recordId,
             hasErrors: true,
             success: false,
-            errors: ['Need manual intervention as Card Name has special characters'],
+            errors: [this.messages.getMessage('needManualInterventionAsSpecialCharsInFlexcardName')],
             warnings: [],
           });
         }

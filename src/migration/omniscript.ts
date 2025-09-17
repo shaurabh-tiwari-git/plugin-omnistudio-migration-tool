@@ -864,11 +864,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
       let mappedOmniScript: AnyJson = {};
       // Perform the transformation for OS/IP Parent Record from OmniScript__c
-      if (!ISUSECASE2) {
-        mappedOmniScript = this.mapOmniScriptRecord(omniscript);
-      } else {
-        mappedOmniScript = omniscript;
-      }
+      mappedOmniScript = this.mapOmniScriptRecord(omniscript);
 
       // Clean type, subtype
       mappedOmniScript[OmniScriptMappings.Type__c] = this.cleanName(mappedOmniScript[OmniScriptMappings.Type__c]);
@@ -1453,19 +1449,23 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
    */
   private mapOmniScriptRecord(omniScriptRecord: AnyJson): AnyJson {
     // Transformed object
-    const mappedObject = {};
+    let mappedObject = {};
 
-    // Get the fields of the record
-    const recordFields = Object.keys(omniScriptRecord);
+    if (!ISUSECASE2) {
+      // Get the fields of the record
+      const recordFields = Object.keys(omniScriptRecord);
 
-    // Map individual fields
-    recordFields.forEach((recordField) => {
-      const cleanFieldName = this.getCleanFieldName(recordField);
+      // Map individual fields
+      recordFields.forEach((recordField) => {
+        const cleanFieldName = this.getCleanFieldName(recordField);
 
-      if (OmniScriptMappings.hasOwnProperty(cleanFieldName)) {
-        mappedObject[OmniScriptMappings[cleanFieldName]] = omniScriptRecord[recordField];
-      }
-    });
+        if (OmniScriptMappings.hasOwnProperty(cleanFieldName)) {
+          mappedObject[OmniScriptMappings[cleanFieldName]] = omniScriptRecord[recordField];
+        }
+      });
+    } else {
+      mappedObject = { ...(omniScriptRecord as Object) };
+    }
 
     mappedObject['Name'] = this.cleanName(mappedObject['Name']);
 
@@ -1513,7 +1513,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       // Set the parent/child relationship
       mappedObject['OmniProcessId'] = omniProcessId;
     } else {
-      mappedObject = elementRecord;
+      mappedObject = { ...(elementRecord as Object) };
     }
 
     // We need to fix the child references
@@ -1685,7 +1685,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       mappedObject[OmniScriptDefinitionMappings.Name] = omniProcessId;
       mappedObject[OmniScriptDefinitionMappings.OmniScriptId__c] = omniProcessId;
     } else {
-      mappedObject = osDefinition;
+      mappedObject = { ...(osDefinition as Object) };
     }
 
     let content = mappedObject[OmniScriptDefinitionMappings.Content__c];
