@@ -81,10 +81,10 @@ export default class Assess extends OmniStudioBaseCommand {
     const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn);
 
     // Initialize global data model service
-    initializeDataModelService(orgs, conn, messages);
+    initializeDataModelService(orgs);
 
     // Perform comprehensive validation using ValidatorService
-    const validator = new ValidatorService(orgs, messages);
+    const validator = new ValidatorService(orgs, messages, conn);
     const isValidationPassed = await validator.validate();
 
     if (!isValidationPassed) {

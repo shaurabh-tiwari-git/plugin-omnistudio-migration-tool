@@ -1,15 +1,16 @@
-import { Messages } from '@salesforce/core';
+import { Connection, Messages } from '@salesforce/core';
 import { Logger } from '../utils/logger';
 import { OmnistudioOrgDetails } from './orgUtils';
-import { isStandardDataModel, isCustomDataModel } from './dataModelService';
+import { isStandardDataModel } from './dataModelService';
 
 export class ValidatorService {
   private readonly messages: Messages;
   private readonly orgs: OmnistudioOrgDetails;
-
-  public constructor(orgs: OmnistudioOrgDetails, messages: Messages) {
+  private readonly connection: Connection;
+  public constructor(orgs: OmnistudioOrgDetails, messages: Messages, connection: Connection) {
     this.orgs = orgs;
     this.messages = messages;
+    this.connection = connection;
   }
 
   public async validate(): Promise<boolean> {
@@ -18,16 +19,16 @@ export class ValidatorService {
       return false;
     }
 
-    // Validate that data model is either standard or custom (not unknown)
-    const isStandard = await isStandardDataModel();
-    const isCustom = await isCustomDataModel();
-
-    if (!isStandard && !isCustom) {
-      Logger.error(this.messages.getMessage('unknownDataModel'));
-      return false;
+    // If data model is standard no need to check for the licences
+    // TODO: Add metadata toggle validation
+    const isStandard = isStandardDataModel();
+    if (isStandard) {
+      return true;
     }
 
-    return true;
+    // For custom data model, validate if licenses are valid
+    const isLicensesValid = await this.validateOmniStudioLicenses();
+    return isLicensesValid;
   }
 
   public validatePackageInstalled(): boolean {
@@ -46,5 +47,32 @@ export class ValidatorService {
       return false;
     }
     return true;
+  }
+
+  public async validateOmniStudioLicenses(): Promise<boolean> {
+    try {
+      const query =
+        "SELECT count(DeveloperName) total FROM PermissionSetLicense WHERE PermissionSetLicenseKey LIKE 'OmniStudio%' AND Status = 'Active'";
+      const result = await this.connection.query<{ total: string }>(query);
+
+      // Salesforce returns records as an array in result.records
+      if (result?.records && result?.records?.length > 0) {
+        // Since we only get one record with the total count, check if count > 0
+        const totalCount = Number(result.records[0].total);
+        if (totalCount > 0) {
+          return true;
+        }
+      }
+
+      Logger.error(this.messages.getMessage('noOmniStudioLicenses'));
+      return false;
+    } catch (error) {
+      if (error instanceof Error && error.message) {
+        Logger.error(`Error validating OmniStudio licenses: ${error.message}`);
+      } else {
+        Logger.error('Error validating OmniStudio licenses: Unknown error');
+      }
+      return false;
+    }
   }
 }
