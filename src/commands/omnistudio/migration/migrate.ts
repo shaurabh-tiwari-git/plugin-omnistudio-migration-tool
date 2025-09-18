@@ -134,7 +134,6 @@ export default class Migrate extends OmniStudioBaseCommand {
         return;
       }
     }
-    return;
 
     let actionItems = [];
 
