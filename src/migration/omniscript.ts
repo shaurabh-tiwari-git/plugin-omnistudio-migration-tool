@@ -37,11 +37,14 @@ import { StringVal } from '../utils/StringValue/stringval';
 import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
 import { StorageUtil } from '../utils/storageUtil';
-import { IS_STANDARD_DATA_MODEL } from '../utils/constants/migrationConfig';
+import { isStandardDataModel } from '../utils/dataModelService';
 
 export class OmniScriptMigrationTool extends BaseMigrationTool implements MigrationTool {
   private readonly exportType: OmniScriptExportType;
   private readonly allVersions: boolean;
+  static get IS_STANDARD_DATA_MODEL(): boolean {
+    return isStandardDataModel();
+  }
 
   // Reserved keys that should not be used for storing output
   private readonly reservedKeys = new Set<string>(['Request', 'Response', 'Condition']);
@@ -956,7 +959,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
       // Save the OmniScript__c records to Standard BPO i.e OmniProcess
       let osUploadResponse;
-      if (!IS_STANDARD_DATA_MODEL) {
+      if (!OmniScriptMigrationTool.IS_STANDARD_DATA_MODEL) {
         osUploadResponse = await NetUtils.createOne(
           this.connection,
           OmniScriptMigrationTool.OMNIPROCESS_NAME,
@@ -1247,7 +1250,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
   private async getAllElementsForOmniScript(recordId: string): Promise<AnyJson[]> {
     // Query all Elements for an OmniScript
     const filters = new Map<string, any>();
-    IS_STANDARD_DATA_MODEL
+    OmniScriptMigrationTool.IS_STANDARD_DATA_MODEL
       ? filters.set('OmniProcessId', recordId)
       : filters.set(this.namespacePrefix + 'OmniScriptId__c', recordId);
 
@@ -1265,7 +1268,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
   private async getOmniScriptCompiledDefinition(recordId: string): Promise<AnyJson[]> {
     // Query all Definitions for an OmniScript
     const filters = new Map<string, any>();
-    IS_STANDARD_DATA_MODEL
+    OmniScriptMigrationTool.IS_STANDARD_DATA_MODEL
       ? filters.set('OmniProcessId', recordId)
       : filters.set(this.namespacePrefix + 'OmniScriptId__c', recordId);
 
@@ -1315,7 +1318,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         );
         let elementsUploadResponse = new Map<string, UploadRecordResult>();
 
-        if (!IS_STANDARD_DATA_MODEL) {
+        if (!OmniScriptMigrationTool.IS_STANDARD_DATA_MODEL) {
           // Upload the transformed Element__c
           elementsUploadResponse = await this.uploadTransformedData(
             OmniScriptMigrationTool.OMNIPROCESSELEMENT_NAME,
@@ -1361,7 +1364,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     osDefinitions: AnyJson[]
   ): Promise<Map<string, UploadRecordResult>> {
     let osDefinitionsData = await this.prepareOsDefinitionsData(omniScriptUploadResults, osDefinitions);
-    if (!IS_STANDARD_DATA_MODEL) {
+    if (!OmniScriptMigrationTool.IS_STANDARD_DATA_MODEL) {
       return await this.uploadTransformedData(OmniScriptMigrationTool.OMNIPROCESSCOMPILATION_NAME, osDefinitionsData);
     } else {
       for (let osDefinitionRecord of osDefinitionsData.mappedRecords) {
@@ -1446,7 +1449,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     // Transformed object
     let mappedObject = {};
 
-    if (!IS_STANDARD_DATA_MODEL) {
+    if (!OmniScriptMigrationTool.IS_STANDARD_DATA_MODEL) {
       // Get the fields of the record
       const recordFields = Object.keys(omniScriptRecord);
 
@@ -1483,7 +1486,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     // Transformed object
     let mappedObject = {};
 
-    if (!IS_STANDARD_DATA_MODEL) {
+    if (!OmniScriptMigrationTool.IS_STANDARD_DATA_MODEL) {
       // Get the fields of the record
       const recordFields = Object.keys(elementRecord);
 
@@ -1663,7 +1666,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     // Transformed object
     let mappedObject = {};
 
-    if (!IS_STANDARD_DATA_MODEL) {
+    if (!OmniScriptMigrationTool.IS_STANDARD_DATA_MODEL) {
       // Get the fields of the record
       const recordFields = Object.keys(osDefinition);
 
@@ -1916,21 +1919,25 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
   }
 
   private getOmniScriptFields(): string[] {
-    return IS_STANDARD_DATA_MODEL ? Object.values(OmniScriptMappings) : Object.keys(OmniScriptMappings);
+    return OmniScriptMigrationTool.IS_STANDARD_DATA_MODEL
+      ? Object.values(OmniScriptMappings)
+      : Object.keys(OmniScriptMappings);
   }
 
   private getElementFields(): string[] {
-    return IS_STANDARD_DATA_MODEL ? Object.values(ElementMappings) : Object.keys(ElementMappings);
+    return OmniScriptMigrationTool.IS_STANDARD_DATA_MODEL
+      ? Object.values(ElementMappings)
+      : Object.keys(ElementMappings);
   }
 
   private getOmniScriptCompiledDefinitionObjectName(): string {
-    return IS_STANDARD_DATA_MODEL
+    return OmniScriptMigrationTool.IS_STANDARD_DATA_MODEL
       ? OmniScriptMigrationTool.OMNIPROCESSCOMPILATION_NAME
       : OmniScriptMigrationTool.OMNISCRIPTDEFINITION_NAME;
   }
 
   private getOmniScriptDefinitionFields(): string[] {
-    return IS_STANDARD_DATA_MODEL
+    return OmniScriptMigrationTool.IS_STANDARD_DATA_MODEL
       ? Object.values(OmniScriptDefinitionMappings)
       : Object.keys(OmniScriptDefinitionMappings);
   }
@@ -1965,23 +1972,29 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
   }
 
   private getElementFieldKey(fieldName: string): string {
-    return IS_STANDARD_DATA_MODEL ? ElementMappings[fieldName] : this.namespacePrefix + fieldName;
+    return OmniScriptMigrationTool.IS_STANDARD_DATA_MODEL
+      ? ElementMappings[fieldName]
+      : this.namespacePrefix + fieldName;
   }
 
   private getFieldKey(fieldName: string): string {
-    return IS_STANDARD_DATA_MODEL ? OmniScriptMappings[fieldName] : this.namespacePrefix + fieldName;
+    return OmniScriptMigrationTool.IS_STANDARD_DATA_MODEL
+      ? OmniScriptMappings[fieldName]
+      : this.namespacePrefix + fieldName;
   }
 
   private getQueryNamespace(): string {
-    return IS_STANDARD_DATA_MODEL ? '' : this.namespace;
+    return OmniScriptMigrationTool.IS_STANDARD_DATA_MODEL ? '' : this.namespace;
   }
 
   getOmniscriptObjectName(): string {
-    return IS_STANDARD_DATA_MODEL ? OmniScriptMigrationTool.OMNIPROCESS_NAME : OmniScriptMigrationTool.OMNISCRIPT_NAME;
+    return OmniScriptMigrationTool.IS_STANDARD_DATA_MODEL
+      ? OmniScriptMigrationTool.OMNIPROCESS_NAME
+      : OmniScriptMigrationTool.OMNISCRIPT_NAME;
   }
 
   private getElementObjectName(): string {
-    return IS_STANDARD_DATA_MODEL
+    return OmniScriptMigrationTool.IS_STANDARD_DATA_MODEL
       ? OmniScriptMigrationTool.OMNIPROCESSELEMENT_NAME
       : OmniScriptMigrationTool.ELEMENT_NAME;
   }

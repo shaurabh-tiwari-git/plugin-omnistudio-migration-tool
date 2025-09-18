@@ -21,12 +21,16 @@ import { createProgressBar } from './base';
 import { Constants } from '../utils/constants/stringContants';
 import { StorageUtil } from '../utils/storageUtil';
 import { getUpdatedAssessmentStatus } from '../utils/stringUtils';
-import { IS_STANDARD_DATA_MODEL } from '../utils/constants/migrationConfig';
+import { isStandardDataModel } from '../utils/dataModelService';
 
 export class CardMigrationTool extends BaseMigrationTool implements MigrationTool {
   static readonly VLOCITYCARD_NAME = 'VlocityCard__c';
   static readonly OMNIUICARD_NAME = 'OmniUiCard';
   static readonly VERSION_PROP = 'Version__c';
+  static get IS_STANDARD_DATA_MODEL(): boolean {
+    return isStandardDataModel();
+  }
+
   private readonly allVersions: boolean;
 
   constructor(
@@ -225,7 +229,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       'Ready for migration';
     flexCardAssessmentInfo.name = this.allVersions ? `${cleanedName}_${version}` : cleanedName;
     if (cleanedName !== originalName) {
-      if (!IS_STANDARD_DATA_MODEL) {
+      if (!CardMigrationTool.IS_STANDARD_DATA_MODEL) {
         flexCardAssessmentInfo.warnings.push(
           this.messages.getMessage('cardNameChangeMessage', [originalName, cleanedName])
         );
@@ -392,7 +396,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
         // Add warning if child card name will change
         if (childCardName !== cleanedChildCardName) {
-          if (!IS_STANDARD_DATA_MODEL) {
+          if (!CardMigrationTool.IS_STANDARD_DATA_MODEL) {
             flexCardAssessmentInfo.warnings.push(
               this.messages.getMessage('cardNameChangeMessage', [childCardName, cleanedChildCardName])
             );
@@ -684,7 +688,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     //DebugTimer.getInstance().lap('Query Vlocity Cards');
     const filters = new Map<string, any>();
 
-    if (!IS_STANDARD_DATA_MODEL) {
+    if (!CardMigrationTool.IS_STANDARD_DATA_MODEL) {
       filters.set(this.namespacePrefix + 'CardType__c', 'flex');
     }
 
@@ -776,7 +780,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
         const isChildCardUpdated: boolean = this.updateChildCards(card);
 
-        if (IS_STANDARD_DATA_MODEL && isChildCardUpdated) {
+        if (CardMigrationTool.IS_STANDARD_DATA_MODEL && isChildCardUpdated) {
           originalRecords.set(recordId, card);
 
           cardsUploadInfo.set(recordId, {
@@ -795,7 +799,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       const invalidIpNames = new Map<string, string>();
       const transformedCard = this.mapVlocityCardRecord(card, cardsUploadInfo, invalidIpNames); // This only has the card structure, card definition is not there
 
-      if (IS_STANDARD_DATA_MODEL) {
+      if (CardMigrationTool.IS_STANDARD_DATA_MODEL) {
         if (transformedCard['Name'] != card['Name']) {
           originalRecords.set(recordId, card);
 
@@ -834,7 +838,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       // Create card
 
       let uploadResult: UploadRecordResult;
-      if (!IS_STANDARD_DATA_MODEL) {
+      if (!CardMigrationTool.IS_STANDARD_DATA_MODEL) {
         uploadResult = await NetUtils.createOne(
           this.connection,
           CardMigrationTool.OMNIUICARD_NAME,
@@ -1069,7 +1073,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     // Transformed object
     let mappedObject = {};
 
-    if (!IS_STANDARD_DATA_MODEL) {
+    if (!CardMigrationTool.IS_STANDARD_DATA_MODEL) {
       // Get the fields of the record
       const recordFields = Object.keys(cardRecord);
 
@@ -1108,7 +1112,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     mappedObject['Name'] = this.cleanName(mappedObject['Name']);
 
     // Here for usecase2 add check for name
-    if (IS_STANDARD_DATA_MODEL && mappedObject['Name'] != cardRecord['Name']) {
+    if (CardMigrationTool.IS_STANDARD_DATA_MODEL && mappedObject['Name'] != cardRecord['Name']) {
       Logger.logVerbose('The Name of flexcard has special chars');
     }
 
@@ -1453,21 +1457,23 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   }
 
   private getCardFields(): string[] {
-    return IS_STANDARD_DATA_MODEL
+    return CardMigrationTool.IS_STANDARD_DATA_MODEL
       ? Object.values(CardMappings).filter((value) => value !== '')
       : Object.keys(CardMappings);
   }
 
   private getFieldKey(fieldName: string): string {
-    return IS_STANDARD_DATA_MODEL ? CardMappings[fieldName] : this.namespacePrefix + fieldName;
+    return CardMigrationTool.IS_STANDARD_DATA_MODEL ? CardMappings[fieldName] : this.namespacePrefix + fieldName;
   }
 
   private getQueryNamespace(): string {
-    return IS_STANDARD_DATA_MODEL ? '' : this.namespace;
+    return CardMigrationTool.IS_STANDARD_DATA_MODEL ? '' : this.namespace;
   }
 
   private getCardObjectName(): string {
-    return IS_STANDARD_DATA_MODEL ? CardMigrationTool.OMNIUICARD_NAME : CardMigrationTool.VLOCITYCARD_NAME;
+    return CardMigrationTool.IS_STANDARD_DATA_MODEL
+      ? CardMigrationTool.OMNIUICARD_NAME
+      : CardMigrationTool.VLOCITYCARD_NAME;
   }
 
   /**

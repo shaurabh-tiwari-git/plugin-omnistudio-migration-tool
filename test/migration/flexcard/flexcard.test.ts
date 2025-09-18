@@ -3,6 +3,8 @@ import { expect } from 'chai';
 import { CardMigrationTool } from '../../../src/migration/flexcard';
 import { NameMappingRegistry } from '../../../src/migration/NameMappingRegistry';
 import CardMappings from '../../../src/mappings/VlocityCard';
+import { initializeDataModelService } from '../../../src/utils/dataModelService';
+import { OmnistudioOrgDetails } from '../../../src/utils/orgUtils';
 
 describe('FlexCard Community Targets Functionality', () => {
   let cardTool: CardMigrationTool;
@@ -15,6 +17,16 @@ describe('FlexCard Community Targets Functionality', () => {
   beforeEach(() => {
     nameRegistry = NameMappingRegistry.getInstance();
     nameRegistry.clear();
+
+    // Initialize data model service for tests (set to custom data model)
+    const mockOrgDetails: OmnistudioOrgDetails = {
+      packageDetails: { version: '1.0.0', namespace: 'vlocity_ins' },
+      omniStudioOrgPermissionEnabled: false, // This makes IS_STANDARD_DATA_MODEL = false
+      orgDetails: { Name: 'Test Org', Id: '00D000000000000' },
+      dataModel: 'Custom',
+      hasValidNamespace: true,
+    };
+    initializeDataModelService(mockOrgDetails);
 
     // Use simple mock objects instead of Sinon stubs to avoid conflicts
     mockConnection = {};
