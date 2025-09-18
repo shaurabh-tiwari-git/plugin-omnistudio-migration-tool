@@ -7,7 +7,7 @@
  * Licensed under the BSD 3-Clause license.
  * For full license text, see LICENSE.txt file in the repo root or https://opensource.org/licenses/BSD-3-Clause
  */
-import path from 'path';
+import path from 'path'
 import * as os from 'os';
 import { flags } from '@salesforce/command';
 import { Connection, Messages } from '@salesforce/core';
@@ -31,9 +31,10 @@ import { YES_SHORT, YES_LONG, NO_SHORT, NO_LONG } from '../../../utils/projectPa
 import { PostMigrate } from '../../../migration/postMigrate';
 import { PreMigrate } from '../../../migration/premigrate';
 import { GlobalAutoNumberMigrationTool } from '../../../migration/globalautonumber';
-import { ValidatorService } from '../../../utils/validatorService';
+import { initializeDataModelService } from '../../../utils/dataModelService';
 import { NameMappingRegistry } from '../../../migration/NameMappingRegistry';
 import { IS_STANDARD_DATA_MODEL } from '../../../utils/constants/migrationConfig';
+import { ValidatorService } from '../../../utils/validatorService';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -93,10 +94,11 @@ export default class Migrate extends OmniStudioBaseCommand {
 
     const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn);
 
-    // Perform comprehensive validation using ValidatorService
-    const validator = new ValidatorService(orgs, conn, messages);
-    const isValidationPassed = await validator.validate();
+    // Initialize global data model service
+    initializeDataModelService(orgs);
 
+    const validator = new ValidatorService(orgs, messages, conn);
+    const isValidationPassed = await validator.validate();
     if (!isValidationPassed) {
       return;
     }

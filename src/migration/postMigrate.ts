@@ -51,37 +51,6 @@ export class PostMigrate extends BaseMigrationTool {
     return userActionMessage;
   }
 
-  /**
-   * Checks if OmniStudio designers are already using the standard data model for the specific package.
-   */
-  private async isStandardDesignerEnabled(namespaceToModify: string): Promise<boolean> {
-    try {
-      const query = `SELECT DeveloperName, Value FROM OmniInteractionConfig WHERE DeveloperName IN ('TheFirstInstalledOmniPackage', 'InstalledIndustryPackage')`;
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const result = await this.connection.query(query);
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      if (result?.totalSize > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const records = result.records as Array<{ DeveloperName: string; Value: string }>;
-
-        for (const record of records) {
-          if (record.Value === namespaceToModify) {
-            return true;
-          }
-        }
-        return false;
-      } else {
-        return false;
-      }
-    } catch (error) {
-      const errMsg = error instanceof Error ? error.message : String(error);
-      Logger.error(this.messages.getMessage('errorCheckingStandardDesigner', [namespaceToModify, errMsg]));
-      return false;
-    }
-  }
-
   public async enableDesignersToUseStandardDataModelIfNeeded(
     namespaceToModify: string,
     userActionMessage: string[]
@@ -91,7 +60,7 @@ export class PostMigrate extends BaseMigrationTool {
 
       // First check if standard designer is already enabled for this package
       Logger.logVerbose(this.messages.getMessage('checkingStandardDesignerStatus', [namespaceToModify]));
-      const isAlreadyEnabled = await this.isStandardDesignerEnabled(namespaceToModify);
+      const isAlreadyEnabled = await OrgPreferences.isStandardDesignerEnabled(this.connection, namespaceToModify);
 
       if (isAlreadyEnabled) {
         Logger.logVerbose(this.messages.getMessage('standardDesignerAlreadyEnabled', [namespaceToModify]));

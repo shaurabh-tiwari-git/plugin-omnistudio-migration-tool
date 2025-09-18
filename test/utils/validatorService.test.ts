@@ -4,6 +4,7 @@ import sinon = require('sinon');
 import { ValidatorService } from '../../src/utils/validatorService';
 import { Logger } from '../../src/utils/logger';
 import { OmnistudioOrgDetails } from '../../src/utils/orgUtils';
+import * as dataModelService from '../../src/utils/dataModelService';
 
 describe('ValidatorService', () => {
   let connection: Connection;
@@ -11,6 +12,7 @@ describe('ValidatorService', () => {
   let sandbox: sinon.SinonSandbox;
   let loggerWarnStub: sinon.SinonStub;
   let loggerErrorStub: sinon.SinonStub;
+  let isStandardDataModelStub: sinon.SinonStub;
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
@@ -28,6 +30,9 @@ describe('ValidatorService', () => {
     // Mock Logger
     loggerWarnStub = sandbox.stub(Logger, 'warn');
     loggerErrorStub = sandbox.stub(Logger, 'error');
+
+    // Mock dataModelService
+    isStandardDataModelStub = sandbox.stub(dataModelService, 'isStandardDataModel');
   });
 
   afterEach(() => {
@@ -42,7 +47,7 @@ describe('ValidatorService', () => {
         packageDetails: { namespace: 'ValidNamespace' },
         omniStudioOrgPermissionEnabled: false,
       } as OmnistudioOrgDetails;
-      const validator = new ValidatorService(orgs, connection, messages);
+      const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
       const result = validator.validateNamespace();
@@ -62,7 +67,7 @@ describe('ValidatorService', () => {
       (messages.getMessage as sinon.SinonStub)
         .withArgs('unknownNamespace')
         .returns("Org doesn't have Omnistudio namespace(s) configured");
-      const validator = new ValidatorService(orgs, connection, messages);
+      const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
       const result = validator.validateNamespace();
@@ -83,7 +88,7 @@ describe('ValidatorService', () => {
       (messages.getMessage as sinon.SinonStub)
         .withArgs('unknownNamespace')
         .returns("Org doesn't have Omnistudio namespace(s) configured");
-      const validator = new ValidatorService(orgs, connection, messages);
+      const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
       const result = validator.validateNamespace();
@@ -103,7 +108,7 @@ describe('ValidatorService', () => {
         packageDetails: { namespace: 'TestNamespace' },
         omniStudioOrgPermissionEnabled: false,
       } as OmnistudioOrgDetails;
-      const validator = new ValidatorService(orgs, connection, messages);
+      const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
       const result = validator.validatePackageInstalled();
@@ -121,7 +126,7 @@ describe('ValidatorService', () => {
         omniStudioOrgPermissionEnabled: false,
       } as unknown as OmnistudioOrgDetails;
       (messages.getMessage as sinon.SinonStub).withArgs('noPackageInstalled').returns('No package installed');
-      const validator = new ValidatorService(orgs, connection, messages);
+      const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
       const result = validator.validatePackageInstalled();
@@ -140,7 +145,7 @@ describe('ValidatorService', () => {
         omniStudioOrgPermissionEnabled: false,
       } as unknown as OmnistudioOrgDetails;
       (messages.getMessage as sinon.SinonStub).withArgs('noPackageInstalled').returns('No package installed');
-      const validator = new ValidatorService(orgs, connection, messages);
+      const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
       const result = validator.validatePackageInstalled();
@@ -149,44 +154,6 @@ describe('ValidatorService', () => {
       expect(result).to.be.false;
       expect(loggerErrorStub.calledOnce).to.be.true;
       expect(loggerErrorStub.firstCall.args[0]).to.equal('No package installed');
-    });
-  });
-
-  describe('validateOmniStudioOrgPermissionEnabled', () => {
-    it('should return true when org permission is not enabled', () => {
-      // Arrange
-      const orgs: OmnistudioOrgDetails = {
-        hasValidNamespace: true,
-        packageDetails: { namespace: 'TestNamespace' },
-        omniStudioOrgPermissionEnabled: false,
-      } as OmnistudioOrgDetails;
-      const validator = new ValidatorService(orgs, connection, messages);
-
-      // Act
-      const result = validator.validateOmniStudioOrgPermissionEnabled();
-
-      // Assert
-      expect(result).to.be.true;
-      expect(loggerErrorStub.called).to.be.false;
-    });
-
-    it('should return false and log error when org permission is already enabled', () => {
-      // Arrange
-      const orgs: OmnistudioOrgDetails = {
-        hasValidNamespace: true,
-        packageDetails: { namespace: 'TestNamespace' },
-        omniStudioOrgPermissionEnabled: true,
-      } as OmnistudioOrgDetails;
-      (messages.getMessage as sinon.SinonStub).withArgs('alreadyStandardModel').returns('Already standard model');
-      const validator = new ValidatorService(orgs, connection, messages);
-
-      // Act
-      const result = validator.validateOmniStudioOrgPermissionEnabled();
-
-      // Assert
-      expect(result).to.be.false;
-      expect(loggerErrorStub.calledOnce).to.be.true;
-      expect(loggerErrorStub.firstCall.args[0]).to.equal('Already standard model');
     });
   });
 
@@ -202,7 +169,7 @@ describe('ValidatorService', () => {
         records: [{ total: '5' }],
       };
       (connection.query as sinon.SinonStub).resolves(queryResult);
-      const validator = new ValidatorService(orgs, connection, messages);
+      const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
       const result = await validator.validateOmniStudioLicenses();
@@ -227,7 +194,7 @@ describe('ValidatorService', () => {
         records: [{ total: '1' }],
       };
       (connection.query as sinon.SinonStub).resolves(queryResult);
-      const validator = new ValidatorService(orgs, connection, messages);
+      const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
       const result = await validator.validateOmniStudioLicenses();
@@ -249,7 +216,7 @@ describe('ValidatorService', () => {
       };
       (connection.query as sinon.SinonStub).resolves(queryResult);
       (messages.getMessage as sinon.SinonStub).withArgs('noOmniStudioLicenses').returns('No licenses found');
-      const validator = new ValidatorService(orgs, connection, messages);
+      const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
       const result = await validator.validateOmniStudioLicenses();
@@ -272,7 +239,7 @@ describe('ValidatorService', () => {
       };
       (connection.query as sinon.SinonStub).resolves(queryResult);
       (messages.getMessage as sinon.SinonStub).withArgs('noOmniStudioLicenses').returns('No licenses found');
-      const validator = new ValidatorService(orgs, connection, messages);
+      const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
       const result = await validator.validateOmniStudioLicenses();
@@ -291,7 +258,7 @@ describe('ValidatorService', () => {
         omniStudioOrgPermissionEnabled: false,
       } as OmnistudioOrgDetails;
       (connection.query as sinon.SinonStub).resolves(null);
-      const validator = new ValidatorService(orgs, connection, messages);
+      const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
       const result = await validator.validateOmniStudioLicenses();
@@ -309,7 +276,7 @@ describe('ValidatorService', () => {
       } as OmnistudioOrgDetails;
       const queryResult = {};
       (connection.query as sinon.SinonStub).resolves(queryResult);
-      const validator = new ValidatorService(orgs, connection, messages);
+      const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
       const result = await validator.validateOmniStudioLicenses();
@@ -327,7 +294,7 @@ describe('ValidatorService', () => {
       } as OmnistudioOrgDetails;
       const error = new Error('Database connection failed');
       (connection.query as sinon.SinonStub).rejects(error);
-      const validator = new ValidatorService(orgs, connection, messages);
+      const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
       const result = await validator.validateOmniStudioLicenses();
@@ -349,7 +316,7 @@ describe('ValidatorService', () => {
       } as OmnistudioOrgDetails;
       const error = 'String error message';
       (connection.query as sinon.SinonStub).rejects(error);
-      const validator = new ValidatorService(orgs, connection, messages);
+      const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
       const result = await validator.validateOmniStudioLicenses();
@@ -371,7 +338,7 @@ describe('ValidatorService', () => {
         records: [{ total: '10' }],
       };
       (connection.query as sinon.SinonStub).resolves(queryResult);
-      const validator = new ValidatorService(orgs, connection, messages);
+      const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
       const result = await validator.validateOmniStudioLicenses();
@@ -392,7 +359,7 @@ describe('ValidatorService', () => {
       };
       (connection.query as sinon.SinonStub).resolves(queryResult);
       (messages.getMessage as sinon.SinonStub).withArgs('noOmniStudioLicenses').returns('No licenses found');
-      const validator = new ValidatorService(orgs, connection, messages);
+      const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
       const result = await validator.validateOmniStudioLicenses();
@@ -404,7 +371,7 @@ describe('ValidatorService', () => {
   });
 
   describe('validate', () => {
-    it('should return true when all validations pass', async () => {
+    it('should return true when all validations pass for custom data model', async () => {
       // Arrange
       const orgs: OmnistudioOrgDetails = {
         hasValidNamespace: true,
@@ -415,13 +382,32 @@ describe('ValidatorService', () => {
         records: [{ total: '5' }],
       };
       (connection.query as sinon.SinonStub).resolves(queryResult);
-      const validator = new ValidatorService(orgs, connection, messages);
+      isStandardDataModelStub.returns(false); // Custom data model
+      const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
       const result = await validator.validate();
 
       // Assert
       expect(result).to.be.true;
+    });
+
+    it('should return true for standard data model without checking licenses', async () => {
+      // Arrange
+      const orgs: OmnistudioOrgDetails = {
+        hasValidNamespace: true,
+        packageDetails: { namespace: 'TestNamespace' },
+        omniStudioOrgPermissionEnabled: true,
+      } as OmnistudioOrgDetails;
+      isStandardDataModelStub.returns(true); // Standard data model
+      const validator = new ValidatorService(orgs, messages, connection);
+
+      // Act
+      const result = await validator.validate();
+
+      // Assert
+      expect(result).to.be.true;
+      expect((connection.query as sinon.SinonStub).called).to.be.false; // License validation should be skipped
     });
 
     it('should return false when package validation fails', async () => {
@@ -432,7 +418,8 @@ describe('ValidatorService', () => {
         omniStudioOrgPermissionEnabled: false,
       } as unknown as OmnistudioOrgDetails;
       (messages.getMessage as sinon.SinonStub).withArgs('noPackageInstalled').returns('No package');
-      const validator = new ValidatorService(orgs, connection, messages);
+      isStandardDataModelStub.returns(false);
+      const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
       const result = await validator.validate();
@@ -442,25 +429,7 @@ describe('ValidatorService', () => {
       expect(loggerErrorStub.calledOnce).to.be.true;
     });
 
-    it('should return false when org permission validation fails', async () => {
-      // Arrange
-      const orgs: OmnistudioOrgDetails = {
-        hasValidNamespace: true,
-        packageDetails: { namespace: 'TestNamespace' },
-        omniStudioOrgPermissionEnabled: true,
-      } as OmnistudioOrgDetails;
-      (messages.getMessage as sinon.SinonStub).withArgs('alreadyStandardModel').returns('Already standard');
-      const validator = new ValidatorService(orgs, connection, messages);
-
-      // Act
-      const result = await validator.validate();
-
-      // Assert
-      expect(result).to.be.false;
-      expect(loggerErrorStub.calledOnce).to.be.true;
-    });
-
-    it('should return false when license validation fails', async () => {
+    it('should return false when license validation fails for custom data model', async () => {
       // Arrange
       const orgs: OmnistudioOrgDetails = {
         hasValidNamespace: true,
@@ -472,7 +441,8 @@ describe('ValidatorService', () => {
       };
       (connection.query as sinon.SinonStub).resolves(queryResult);
       (messages.getMessage as sinon.SinonStub).withArgs('noOmniStudioLicenses').returns('No licenses');
-      const validator = new ValidatorService(orgs, connection, messages);
+      isStandardDataModelStub.returns(false); // Custom data model
+      const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
       const result = await validator.validate();
@@ -482,7 +452,7 @@ describe('ValidatorService', () => {
       expect(loggerErrorStub.calledOnce).to.be.true;
     });
 
-    it('should return false when license query throws error', async () => {
+    it('should return false when license query throws error for custom data model', async () => {
       // Arrange
       const orgs: OmnistudioOrgDetails = {
         hasValidNamespace: true,
@@ -491,7 +461,8 @@ describe('ValidatorService', () => {
       } as OmnistudioOrgDetails;
       const error = new Error('Connection error');
       (connection.query as sinon.SinonStub).rejects(error);
-      const validator = new ValidatorService(orgs, connection, messages);
+      isStandardDataModelStub.returns(false); // Custom data model
+      const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
       const result = await validator.validate();
@@ -515,7 +486,8 @@ describe('ValidatorService', () => {
       (messages.getMessage as sinon.SinonStub)
         .withArgs('unknownNamespace')
         .returns("Org doesn't have Omnistudio namespace(s) configured");
-      const validator = new ValidatorService(orgs, connection, messages);
+      isStandardDataModelStub.returns(false);
+      const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
       const result = await validator.validate();
