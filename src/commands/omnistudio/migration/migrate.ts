@@ -31,8 +31,9 @@ import { YES_SHORT, YES_LONG, NO_SHORT, NO_LONG } from '../../../utils/projectPa
 import { PostMigrate } from '../../../migration/postMigrate';
 import { PreMigrate } from '../../../migration/premigrate';
 import { GlobalAutoNumberMigrationTool } from '../../../migration/globalautonumber';
-import { ValidatorService } from '../../../utils/validatorService';
+import { initializeDataModelService } from '../../../utils/dataModelService';
 import { NameMappingRegistry } from '../../../migration/NameMappingRegistry';
+import { ValidatorService } from '../../../utils/validatorService';
 
 // Initialize Messages with the current plugin directory
 Messages.importMessagesDirectory(__dirname);
@@ -92,10 +93,11 @@ export default class Migrate extends OmniStudioBaseCommand {
 
     const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn);
 
-    // Perform comprehensive validation using ValidatorService
-    const validator = new ValidatorService(orgs, conn, messages);
-    const isValidationPassed = await validator.validate();
+    // Initialize global data model service
+    initializeDataModelService(orgs);
 
+    const validator = new ValidatorService(orgs, messages, conn);
+    const isValidationPassed = await validator.validate();
     if (!isValidationPassed) {
       return;
     }

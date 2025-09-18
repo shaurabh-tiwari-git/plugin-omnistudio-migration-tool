@@ -20,6 +20,7 @@ import { ProjectPathUtil } from '../../../utils/projectPathUtil';
 import { PreMigrate } from '../../../migration/premigrate';
 import { PostMigrate } from '../../../migration/postMigrate';
 import { CustomLabelsUtil } from '../../../utils/customLabels';
+import { initializeDataModelService } from '../../../utils/dataModelService';
 import { ValidatorService } from '../../../utils/validatorService';
 
 Messages.importMessagesDirectory(__dirname);
@@ -79,8 +80,11 @@ export default class Assess extends OmniStudioBaseCommand {
     const apiVersion = conn.getApiVersion();
     const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn);
 
+    // Initialize global data model service
+    initializeDataModelService(orgs);
+
     // Perform comprehensive validation using ValidatorService
-    const validator = new ValidatorService(orgs, conn, messages);
+    const validator = new ValidatorService(orgs, messages, conn);
     const isValidationPassed = await validator.validate();
 
     if (!isValidationPassed) {

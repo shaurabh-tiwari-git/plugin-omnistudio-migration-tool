@@ -1,40 +1,40 @@
 import { Connection, Messages } from '@salesforce/core';
 import { Logger } from '../utils/logger';
 import { OmnistudioOrgDetails } from './orgUtils';
+import { isStandardDataModel } from './dataModelService';
 
 export class ValidatorService {
-  private readonly connection: Connection;
   private readonly messages: Messages;
   private readonly orgs: OmnistudioOrgDetails;
-
-  public constructor(orgs: OmnistudioOrgDetails, connection: Connection, messages: Messages) {
+  private readonly connection: Connection;
+  public constructor(orgs: OmnistudioOrgDetails, messages: Messages, connection: Connection) {
     this.orgs = orgs;
-    this.connection = connection;
     this.messages = messages;
+    this.connection = connection;
   }
 
   public async validate(): Promise<boolean> {
-    return (
-      this.validateNamespace() &&
-      this.validatePackageInstalled() &&
-      this.validateOmniStudioOrgPermissionEnabled() &&
-      (await this.validateOmniStudioLicenses())
-    );
+    const basicValidation = this.validateNamespace() && this.validatePackageInstalled();
+    if (!basicValidation) {
+      return false;
+    }
+
+    // If data model is standard no need to check for the licences
+    // TODO: Add metadata toggle validation
+    const isStandard = isStandardDataModel();
+    if (isStandard) {
+      return true;
+    }
+
+    // For custom data model, validate if licenses are valid
+    const isLicensesValid = await this.validateOmniStudioLicenses();
+    return isLicensesValid;
   }
 
   public validatePackageInstalled(): boolean {
     const { packageDetails } = this.orgs;
     if (!packageDetails) {
       Logger.error(this.messages.getMessage('noPackageInstalled'));
-      return false;
-    }
-    return true;
-  }
-
-  public validateOmniStudioOrgPermissionEnabled(): boolean {
-    const { omniStudioOrgPermissionEnabled } = this.orgs;
-    if (omniStudioOrgPermissionEnabled) {
-      Logger.error(this.messages.getMessage('alreadyStandardModel'));
       return false;
     }
     return true;

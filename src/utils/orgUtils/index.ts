@@ -3,6 +3,7 @@
 import { Connection, Messages } from '@salesforce/core';
 import { QueryTools } from '../query';
 import { Logger } from '../logger';
+import { OrgPreferences } from '../orgPreferences';
 
 // Load messages
 const messages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'migrate');
@@ -385,11 +386,8 @@ export class OrgUtils {
     try {
       return await connection.apex.get('/' + namespace + '/v1/orgPermission');
     } catch (e) {
-      // Returning false as a fallback when the endpoint is not found.
-      // As part of the 256 MVP, we don't want to block the migration just because the endpoint is missing.
-      return !(e.errorCode === 'NOT_FOUND');
+      // Any error in the apex mechanism will fallback to check the standard designer status
+      return await OrgPreferences.isStandardDesignerEnabled(connection, namespace);
     }
-
-    return true;
   }
 }
