@@ -175,8 +175,6 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
         continue;
       }
 
-      duplicatedNames.add(transformedDataRaptor['Name']);
-
       // Create a map of the original records
       originalDrRecords.set(recordId, dr);
 
@@ -191,21 +189,28 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
 
       // Always add the response to track success/failure
       if (drUploadResponse && drUploadResponse.success === true) {
-        const items = await this.getItemsForDataRaptor(dataRaptorItemsData, name, drUploadResponse.id);
+        // Append the processed DM name into duplicateNames Map
+        const dataMapperName = transformedDataRaptor[DRBundleMappings.Name];
+        duplicatedNames.add(dataMapperName);
 
-        drUploadResponse.newName = transformedDataRaptor[DRBundleMappings.Name];
+        const items = await this.getItemsForDataRaptor(dataRaptorItemsData, name, drUploadResponse.id);
+        drUploadResponse.newName = dataMapperName;
 
         // Move the items
         await this.uploadTransformedData(DataRaptorMigrationTool.OMNIDATATRANSFORMITEM_NAME, items);
       } else {
         // Handle failed migration - add error information
-        if (!drUploadResponse) {
+        if (!drUploadResponse?.success) {
+          Logger.logVerbose(
+            `\n${this.messages.getMessage('dataMapperMigrationFailed', [name]) + drUploadResponse.errors}`
+          );
+
           drUploadResponse = {
             referenceId: recordId,
             id: '',
             success: false,
             hasErrors: true,
-            errors: [this.messages.getMessage('dataMapperMigrationFailed', [name])],
+            errors: [this.messages.getMessage('dataMapperMigrationFailed', [name]) + drUploadResponse.errors],
             warnings: [],
             newName: '',
           };

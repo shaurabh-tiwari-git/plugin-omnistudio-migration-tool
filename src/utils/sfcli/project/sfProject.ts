@@ -39,7 +39,7 @@ export class sfProject {
     Logger.log(messages.getMessage('deployingFromManifest'));
     const cmd = `sf project deploy start --manifest "${manifestPath}" --target-org "${username}" --async`;
     Logger.log(cmd);
-    const cmdOutput = sfProject.executeCommand(cmd);
+    const cmdOutput = sfProject.executeCommand(cmd, true);
     Logger.logVerbose(`Deploy output: ${cmdOutput}`);
     sfProject.processOutput(cmdOutput);
   }
@@ -64,9 +64,13 @@ export class sfProject {
     }
   }
 
-  private static executeCommand(cmd: string): string {
+  private static executeCommand(cmd: string, jsonOutput = false): string {
     try {
-      return cli.exec(`${cmd} --json`);
+      if (jsonOutput) {
+        return cli.exec(`${cmd} --json`);
+      } else {
+        return cli.exec(`${cmd}`);
+      }
     } catch (error) {
       Logger.error(messages.getMessage('sfProjectCommandError', [String(error)]));
       throw error;

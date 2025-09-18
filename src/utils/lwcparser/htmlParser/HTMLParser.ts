@@ -34,10 +34,23 @@ export class HTMLParser {
   public replaceTags(namespaceTag: string): Map<string, string> {
     const htmlContentMap = new Map<string, string>();
     htmlContentMap.set(FileConstant.BASE_CONTENT, this.html);
-    // Use a regular expression to match <omnistudio-input> to </omnistudio-input>
+
+    // Handle empty namespace - no changes should be made
+    if (!namespaceTag || namespaceTag.trim() === '') {
+      htmlContentMap.set(FileConstant.MODIFIED_CONTENT, this.html);
+      return htmlContentMap;
+    }
+
+    // Escape special regex characters in the namespace tag
+    const escapedNamespaceTag = namespaceTag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    // Use regular expressions with global flag to replace ALL occurrences
+    const openTagRegex = new RegExp('<' + escapedNamespaceTag, 'g');
+    const closeTagRegex = new RegExp('</' + escapedNamespaceTag, 'g');
+
     this.html = this.html
-      .replace('<' + namespaceTag, '<' + DEFAULT_NAMESPACE)
-      .replace('</' + namespaceTag, '</' + DEFAULT_NAMESPACE);
+      .replace(openTagRegex, '<' + DEFAULT_NAMESPACE)
+      .replace(closeTagRegex, '</' + DEFAULT_NAMESPACE);
 
     htmlContentMap.set(FileConstant.MODIFIED_CONTENT, this.html);
     return htmlContentMap;

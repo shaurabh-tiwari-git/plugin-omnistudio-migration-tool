@@ -198,7 +198,7 @@
   "flexCardMigrationProcessingMessage": "Processing %s Flexcards for migration (%s skipped due to Angular dependencies)",
   "noMetadataToDeploy": "No metadata to deploy",
   "missingMandatoryField": "Missing mandatory field: %s for %s",
-  "dataMapperMigrationFailed": "DataMapper migration failed for: %s",
+  "dataMapperMigrationFailed": "DataMapper migration failed for: %s ",
   "dataMapperNameStartsWithNumber": "DataMapper name '%s' starts with a number which causes migration issues. Proposed new name: %s",
   "integrationProcedureTypeEmptyAfterCleaning": "Integration Procedure Type '%s' becomes empty after name cleaning. Please provide a valid Type value.",
   "integrationProcedureSubtypeEmptyAfterCleaning": "Integration Procedure SubType '%s' becomes empty after name cleaning. Please provide a valid SubType value.",
@@ -244,5 +244,8 @@
   "customLabelAssessmentSummary": "Custom Label with same name and different value is already exist without namespace.",
   "generatedCustomLabelAssessmentReportPage": "Generated custom label assessment report page %s of %s with %s labels",
   "varDeclarationUpdated": "Variable initialization has been updated for target name",
-  "migrationSuccessfulMessage": "Migration process for org %s is complete and reports are ready for review in the folder %s"
+  "migrationSuccessfulMessage": "Migration process for org %s is complete and reports are ready for review in the folder %s",
+  "elementValueMapUnexpectedType": "ElementValueMap has unexpected data type '%s' for element '%s'. Expected object format.",
+  "errorProcessingFormulaInElement": "Error processing formula for key '%s' in element '%s': %s",
+  "errorProcessingElementValueMap": "Error processing elementValueMap in Integration Procedure element '%s': %s"
 }

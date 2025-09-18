@@ -1,0 +1,14 @@
+<template>
+  <!-- Test file with multiple occurrences of the same namespace -->
+  <vlocity_ins-input label="First Input" value="test1"></vlocity_ins-input>
+  <div class="container">
+    <vlocity_ins-button onclick="handleClick">Click Me</vlocity_ins-button>
+    <vlocity_ins-icon icon-name="utility:info" size="small"></vlocity_ins-icon>
+  </div>
+  <section>
+    <vlocity_ins-input label="Second Input" value="test2"></vlocity_ins-input>
+    <vlocity_ins-modal title="Test Modal">
+      <vlocity_ins-button slot="footer" onclick="handleSave">Save</vlocity_ins-button>
+    </vlocity_ins-modal>
+  </section>
+</template>
