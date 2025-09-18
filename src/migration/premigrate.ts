@@ -6,7 +6,7 @@ import { OrgPreferences } from '../utils/orgPreferences';
 import { askStringWithTimeout, PromptUtil } from '../utils/promptUtil';
 import { YES_SHORT, YES_LONG, NO_SHORT, NO_LONG } from '../utils/projectPathUtil';
 import { documentRegistry } from '../utils/constants/documentRegistry';
-import { ConfigDataCleanupService } from '../utils/config/ConfigDataCleanupService';
+import { ConfigDataCleanupService } from '../utils/config/configDataCleanupService';
 import { BaseMigrationTool } from './base';
 
 const authEnvKey = 'OMA_AUTH_KEY';
@@ -119,7 +119,7 @@ export class PreMigrate extends BaseMigrationTool {
     const configCleanupService = new ConfigDataCleanupService(this.connection, this.messages);
 
     if (await configCleanupService.hasCleanConfigTables()) {
-      Logger.log(this.messages.getMessage('configTablesAlreadyClean'));
+      Logger.logVerbose(this.messages.getMessage('configTablesAlreadyClean'));
       return true;
     }
 

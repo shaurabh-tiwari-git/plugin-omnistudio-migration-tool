@@ -97,7 +97,7 @@ export class ConfigDataCleanupService {
     tableName: string
   ): Promise<{ tableName: string; recordCount: number; success: boolean }> {
     try {
-      Logger.info(this.messages.getMessage('cleaningConfigTable', [tableName]));
+      Logger.logVerbose(this.messages.getMessage('cleaningConfigTable', [tableName]));
 
       // Query for record IDs in the table
       const recordIds = await QueryTools.queryIds(this.connection, tableName);

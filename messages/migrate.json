@@ -257,5 +257,5 @@
   "errorDuringConfigTablesCleanup": "Error during config tables cleanup: %s",
   "errorCheckingConfigTables": "Error checking config tables: %s",
   "configCleanupCompleted": "Config data cleanup completed. Total records cleaned: %s",
-  "configCleanupConsentMessage": "Do you want to clean up config tables? This will delete all records from OmniUiCardConfig, OmniScriptConfig, OmniIntegrationProcConfig, and OmniDataTransformConfig tables. (y/n):"
+  "configCleanupConsentMessage": "In order to continue the migration, we need to clean up the config tables. This will delete all records from OmniUiCardConfig, OmniScriptConfig, OmniIntegrationProcConfig, and OmniDataTransformConfig tables. Do you want to proceed? (y/n):"
 }
