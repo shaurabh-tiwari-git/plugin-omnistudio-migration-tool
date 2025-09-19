@@ -4,16 +4,16 @@ import { QueryTools } from '../query';
 import { NetUtils } from '../net';
 
 /**
- * ConfigDataCleanupService
+ * OmniStudioMetadataCleanupService
  *
- * This service checks for records in four config tables and cleans them if found:
+ * This service checks for records in four OmniStudio metadata tables and cleans them if found:
  * - OmniUiCardConfig
  * - OmniScriptConfig
- * - OmniIntegrationPocConfig
+ * - OmniIntegrationProcConfig
  * - OmniDataTransformConfig
  */
 
-export class ConfigDataCleanupService {
+export class OmniStudioMetadataCleanupService {
   private static readonly CONFIG_TABLES = [
     'OmniUiCardConfig',
     'OmniScriptConfig',
@@ -34,9 +34,9 @@ export class ConfigDataCleanupService {
    *
    * @returns Promise<boolean> - true if all tables are empty, false if any table has records
    */
-  public async hasCleanConfigTables(): Promise<boolean> {
+  public async hasCleanOmniStudioMetadataTables(): Promise<boolean> {
     try {
-      for (const tableName of ConfigDataCleanupService.CONFIG_TABLES) {
+      for (const tableName of OmniStudioMetadataCleanupService.CONFIG_TABLES) {
         const recordIds = await QueryTools.queryIds(this.connection, tableName);
         if (recordIds.length > 0) {
           return false;
@@ -44,7 +44,7 @@ export class ConfigDataCleanupService {
       }
       return true;
     } catch (error) {
-      Logger.error(this.messages.getMessage('errorCheckingConfigTables', [String(error)]));
+      Logger.error(this.messages.getMessage('errorCheckingMetadataTables', [String(error)]));
       return false;
     }
   }
@@ -54,15 +54,15 @@ export class ConfigDataCleanupService {
    *
    * @returns Promise<boolean> - true if cleanup was successful, false otherwise
    */
-  public async cleanupConfigTables(): Promise<boolean> {
+  public async cleanupOmniStudioMetadataTables(): Promise<boolean> {
     try {
-      Logger.log(this.messages.getMessage('startingConfigCleanup'));
+      Logger.log(this.messages.getMessage('startingMetadataCleanup'));
 
       let totalCleanedRecords = 0;
       const cleanupResults: Array<{ tableName: string; recordCount: number; success: boolean }> = [];
 
-      for (const tableName of ConfigDataCleanupService.CONFIG_TABLES) {
-        const result = await this.cleanupConfigTable(tableName);
+      for (const tableName of OmniStudioMetadataCleanupService.CONFIG_TABLES) {
+        const result = await this.cleanupOmniStudioMetadataTable(tableName);
         cleanupResults.push(result);
 
         if (result.success) {
@@ -79,10 +79,10 @@ export class ConfigDataCleanupService {
         );
         return false;
       }
-      Logger.log(this.messages.getMessage('configCleanupCompleted', [totalCleanedRecords]));
+      Logger.log(this.messages.getMessage('metadataCleanupCompleted', [totalCleanedRecords]));
       return true;
     } catch (error) {
-      Logger.error(this.messages.getMessage('errorDuringConfigTablesCleanup', [String(error)]));
+      Logger.error(this.messages.getMessage('errorDuringMetadataTablesCleanup', [String(error)]));
       return false;
     }
   }
@@ -93,11 +93,11 @@ export class ConfigDataCleanupService {
    * @param tableName - Name of the table to check and clean
    * @returns Promise<{tableName: string, recordCount: number, success: boolean}>
    */
-  private async cleanupConfigTable(
+  private async cleanupOmniStudioMetadataTable(
     tableName: string
   ): Promise<{ tableName: string; recordCount: number; success: boolean }> {
     try {
-      Logger.logVerbose(this.messages.getMessage('cleaningConfigTable', [tableName]));
+      Logger.logVerbose(this.messages.getMessage('cleaningMetadataTable', [tableName]));
 
       // Query for record IDs in the table
       const recordIds = await QueryTools.queryIds(this.connection, tableName);
@@ -119,7 +119,7 @@ export class ConfigDataCleanupService {
         return { tableName, recordCount: recordIds.length, success: false };
       }
     } catch (error) {
-      Logger.logVerbose(this.messages.getMessage('errorCleaningTable', [tableName, String(error)]));
+      Logger.logVerbose(this.messages.getMessage('errorCleaningMetadataTable', [tableName, String(error)]));
       return { tableName, recordCount: 0, success: false };
     }
   }

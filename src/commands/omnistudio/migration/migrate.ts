@@ -129,8 +129,8 @@ export default class Migrate extends OmniStudioBaseCommand {
 
     // Handle config tables cleanup for standard data model migration
     if (isStandardDataModel()) {
-      const isConfigCleanupSuccess = await preMigrate.handleConfigCleanup();
-      if (!isConfigCleanupSuccess) {
+      const isMetadataCleanupSuccess = await preMigrate.handleOmniStudioMetadataCleanup();
+      if (!isMetadataCleanupSuccess) {
         return;
       }
     }

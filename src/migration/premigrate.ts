@@ -6,7 +6,7 @@ import { OrgPreferences } from '../utils/orgPreferences';
 import { askStringWithTimeout, PromptUtil } from '../utils/promptUtil';
 import { YES_SHORT, YES_LONG, NO_SHORT, NO_LONG } from '../utils/projectPathUtil';
 import { documentRegistry } from '../utils/constants/documentRegistry';
-import { ConfigDataCleanupService } from '../utils/config/configDataCleanupService';
+import { OmniStudioMetadataCleanupService } from '../utils/config/OmniStudioMetadataCleanupService';
 import { BaseMigrationTool } from './base';
 
 const authEnvKey = 'OMA_AUTH_KEY';
@@ -111,24 +111,25 @@ export class PreMigrate extends BaseMigrationTool {
   }
 
   /**
-   * Handles config tables cleanup with user consent
+   * Handles OmniStudio metadata tables cleanup with user consent
    *
    * @returns Promise<boolean> - true if cleanup was successful, false otherwise
    */
-  public async handleConfigCleanup(): Promise<boolean> {
-    const configCleanupService = new ConfigDataCleanupService(this.connection, this.messages);
+  public async handleOmniStudioMetadataCleanup(): Promise<boolean> {
+    const omniStudioMetadataCleanupService = new OmniStudioMetadataCleanupService(this.connection, this.messages);
 
-    if (await configCleanupService.hasCleanConfigTables()) {
-      Logger.logVerbose(this.messages.getMessage('configTablesAlreadyClean'));
+    if (await omniStudioMetadataCleanupService.hasCleanOmniStudioMetadataTables()) {
+      Logger.logVerbose(this.messages.getMessage('metadataTablesAlreadyClean'));
       return true;
     }
 
-    const consent = await this.getConfigCleanupConsent();
+    const consent = await this.getMetadataCleanupConsent();
 
     if (!consent) {
+      Logger.error(this.messages.getMessage('metadataCleanupConsentNotGiven'));
       return false;
     }
-    return await configCleanupService.cleanupConfigTables();
+    return await omniStudioMetadataCleanupService.cleanupOmniStudioMetadataTables();
   }
 
   // This needs to be behind timeout
@@ -172,11 +173,11 @@ export class PreMigrate extends BaseMigrationTool {
   }
 
   /**
-   * Gets user consent for config tables cleanup
+   * Gets user consent for OmniStudio metadata tables cleanup
    *
    * @returns Promise<boolean> - true if user consents, false otherwise
    */
-  private async getConfigCleanupConsent(): Promise<boolean> {
+  private async getMetadataCleanupConsent(): Promise<boolean> {
     const askWithTimeOut = PromptUtil.askWithTimeOut(this.messages);
     let validResponse = false;
     let consent = false;
@@ -185,7 +186,7 @@ export class PreMigrate extends BaseMigrationTool {
       try {
         const resp = await askWithTimeOut(
           Logger.prompt.bind(Logger),
-          this.messages.getMessage('configCleanupConsentMessage')
+          this.messages.getMessage('metadataCleanupConsentMessage')
         );
         const response = typeof resp === 'string' ? resp.trim().toLowerCase() : '';
 
