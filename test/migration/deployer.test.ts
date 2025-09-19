@@ -9,6 +9,8 @@ import sinon = require('sinon');
 import { Deployer } from '../../src/migration/deployer';
 import { sfProject } from '../../src/utils/sfcli/project/sfProject';
 import { Logger } from '../../src/utils/logger';
+import { OmniscriptPackageManager } from '../../src/utils/omniscriptPackageManager';
+import { OmniscriptPackageDeploymentError } from '../../src/error/deploymentErrors';
 
 describe('Deployer', () => {
   let deployer: Deployer;
@@ -36,13 +38,40 @@ describe('Deployer', () => {
     } as unknown as Messages;
     getMessageStub = messages.getMessage as sinon.SinonStub;
 
+    // Set up default message stubs
+    getMessageStub.withArgs('installingRequiredDependencies').returns('Installing dependencies...');
+    getMessageStub.withArgs('deploymentCompletedSuccessfully').returns('Deployment completed');
+    getMessageStub.withArgs('omniscriptPackageIntegrated').returns('Package integrated');
+    getMessageStub.withArgs('errorIntegratingOmniscriptPackage').returns('Integration error');
+
+    // Message stubs for omniscriptPackageManager direct logging
+    getMessageStub
+      .withArgs('ensurePackageInstalled')
+      .returns('Please ensure omniscript customization package is properly installed: %s');
+    getMessageStub
+      .withArgs('packageDeploymentFailedWithError')
+      .returns(
+        'Omniscript package deployment failed after %s attempts. Error: %s. Please check deployment logs and org settings.'
+      );
+    getMessageStub
+      .withArgs('maxRetryAttemptsExceeded')
+      .returns('Maximum retry attempts (%s) exceeded for omniscript package deployment');
+    getMessageStub
+      .withArgs('deploymentNonRetryableError')
+      .returns('Deployment failed with non-retryable error: %s. Please review and fix the issue manually.');
+
     // Mock Logger
     sandbox.stub(Logger, 'logVerbose');
+    sandbox.stub(Logger, 'log');
+    sandbox.stub(Logger, 'error');
 
     // Mock sfProject methods
     sandbox.stub(sfProject, 'createNPMConfigFile');
     sandbox.stub(sfProject, 'installDependency');
     sandbox.stub(sfProject, 'deployFromManifest');
+
+    // Mock OmniscriptPackageManager
+    sandbox.stub(OmniscriptPackageManager.prototype, 'deployPackageAsync').resolves(true);
 
     deployer = new Deployer(testProjectPath, messages, testUsername, testAuthKey);
   });
@@ -66,71 +95,91 @@ describe('Deployer', () => {
   });
 
   describe('deploy', () => {
-    it('should execute deployment steps in correct order', () => {
+    it('should execute deployment steps in correct order', async () => {
       // Arrange
       const createNPMConfigFileStub = sfProject.createNPMConfigFile as sinon.SinonStub;
       const installDependencyStub = sfProject.installDependency as sinon.SinonStub;
       const deployFromManifestStub = sfProject.deployFromManifest as sinon.SinonStub;
+      const deployPackageStub = OmniscriptPackageManager.prototype.deployPackageAsync as sinon.SinonStub;
+      const logStub = Logger.log as sinon.SinonStub;
+      const logVerboseStub = Logger.logVerbose as sinon.SinonStub;
 
       // Act
-      deployer.deploy();
+      await deployer.deploy();
 
-      // Assert
+      // Assert - Verify all steps were called in correct order
       expect(createNPMConfigFileStub.calledWith(testAuthKey)).to.be.true;
       expect(installDependencyStub.calledTwice).to.be.true;
       expect(installDependencyStub.firstCall.calledWith()).to.be.true; // No dependency
       expect(installDependencyStub.secondCall.calledWith('@omnistudio/omniscript_customization@250.0.0')).to.be.true;
+      expect(deployPackageStub.called).to.be.true;
       expect(deployFromManifestStub.called).to.be.true;
+      expect(logVerboseStub.calledWith('Installing dependencies...')).to.be.true;
+      expect(logStub.calledWith('Package integrated')).to.be.true;
     });
 
-    it('should log verbose message for installing required dependencies', () => {
+    it('should handle errors from omniscript package deployment', async () => {
       // Arrange
-      const expectedMessage = 'Installing required dependencies';
-      getMessageStub.withArgs('installingRequiredDependencies').returns(expectedMessage);
-      const logVerboseStub = Logger.logVerbose as sinon.SinonStub;
-
-      // Act
-      deployer.deploy();
-
-      // Assert
-      expect(logVerboseStub.calledWith(expectedMessage)).to.be.true;
-      expect(getMessageStub.calledWith('installingRequiredDependencies')).to.be.true;
-    });
-
-    it('should handle errors from createNPMConfigFile', () => {
-      // Arrange
-      const createNPMConfigFileStub = sfProject.createNPMConfigFile as sinon.SinonStub;
-      const error = new Error('Failed to create NPM config');
-      createNPMConfigFileStub.throws(error);
+      const deployPackageStub = OmniscriptPackageManager.prototype.deployPackageAsync as sinon.SinonStub;
+      const error = new Error('Package deployment failed');
+      deployPackageStub.rejects(error);
 
       // Act & Assert
-      expect(() => {
-        deployer.deploy();
-      }).to.throw('Failed to create NPM config');
+      try {
+        await deployer.deploy();
+        expect.fail('Expected deploy to throw');
+      } catch (err) {
+        expect(err).to.be.instanceOf(OmniscriptPackageDeploymentError);
+        expect(err.message).to.equal('Omniscript package deployment failed: Package deployment failed');
+      }
     });
 
-    it('should handle errors from installDependency', () => {
+    it('should handle omniscript package deployment returning false', async () => {
       // Arrange
-      const installDependencyStub = sfProject.installDependency as sinon.SinonStub;
-      const error = new Error('NPM install failed');
-      installDependencyStub.throws(error);
+      const deployPackageStub = OmniscriptPackageManager.prototype.deployPackageAsync as sinon.SinonStub;
+      deployPackageStub.resolves(false);
+      const errorStub = Logger.error as sinon.SinonStub;
 
       // Act & Assert
-      expect(() => {
-        deployer.deploy();
-      }).to.throw('NPM install failed');
+      try {
+        await deployer.deploy();
+        expect.fail('Expected deploy to throw');
+      } catch (err) {
+        expect(err).to.be.instanceOf(OmniscriptPackageDeploymentError);
+        expect(err.message).to.equal(
+          'Omniscript package deployment failed: Omniscript package deployment failed - deployment returned false. This may be due to missing package, permissions, or deployment timeout.'
+        );
+        expect(errorStub.called).to.be.true;
+      }
     });
 
-    it('should handle errors from deployFromManifest', () => {
+    it('should handle deployment failures properly', async () => {
       // Arrange
       const deployFromManifestStub = sfProject.deployFromManifest as sinon.SinonStub;
       const error = new Error('Deployment failed');
       deployFromManifestStub.throws(error);
 
       // Act & Assert
-      expect(() => {
-        deployer.deploy();
-      }).to.throw('Deployment failed');
+      try {
+        await deployer.deploy();
+        expect.fail('Expected deploy to throw');
+      } catch (err) {
+        expect(err.message).to.equal('Deployment failed');
+      }
+    });
+
+    it('should not deploy omniscript package when authKey is not provided', async () => {
+      // Arrange
+      const deployerWithoutAuth = new Deployer(testProjectPath, messages, testUsername, '');
+      const deployPackageStub = OmniscriptPackageManager.prototype.deployPackageAsync as sinon.SinonStub;
+      const deployFromManifestStub = sfProject.deployFromManifest as sinon.SinonStub;
+
+      // Act
+      await deployerWithoutAuth.deploy();
+
+      // Assert
+      expect(deployPackageStub.called).to.be.false;
+      expect(deployFromManifestStub.called).to.be.true;
     });
   });
 
@@ -142,22 +191,42 @@ describe('Deployer', () => {
   });
 
   describe('integration scenarios', () => {
-    it('should complete full deployment workflow successfully', () => {
+    it('should complete full deployment workflow successfully', async () => {
       // Arrange
       const createNPMConfigFileStub = sfProject.createNPMConfigFile as sinon.SinonStub;
       const installDependencyStub = sfProject.installDependency as sinon.SinonStub;
       const deployFromManifestStub = sfProject.deployFromManifest as sinon.SinonStub;
+      const deployPackageStub = OmniscriptPackageManager.prototype.deployPackageAsync as sinon.SinonStub;
       const logVerboseStub = Logger.logVerbose as sinon.SinonStub;
-      getMessageStub.withArgs('installingRequiredDependencies').returns('Installing dependencies...');
 
       // Act
-      deployer.deploy();
+      await deployer.deploy();
 
       // Assert - Verify all steps were called
       expect(createNPMConfigFileStub.called).to.be.true;
       expect(installDependencyStub.called).to.be.true;
+      expect(deployPackageStub.called).to.be.true;
       expect(deployFromManifestStub.called).to.be.true;
       expect(logVerboseStub.calledWith('Installing dependencies...')).to.be.true;
+    });
+
+    it('should handle omniscript package deployment failure with user action logging', async () => {
+      // Arrange
+      const deployPackageStub = OmniscriptPackageManager.prototype.deployPackageAsync as sinon.SinonStub;
+      const errorStub = Logger.error as sinon.SinonStub;
+      deployPackageStub.resolves(false); // Deployment returns false
+
+      // Act & Assert
+      try {
+        await deployer.deploy();
+        expect.fail('Expected deploy to throw');
+      } catch (err) {
+        expect(err).to.be.instanceOf(OmniscriptPackageDeploymentError);
+        expect(err.message).to.equal(
+          'Omniscript package deployment failed: Omniscript package deployment failed - deployment returned false. This may be due to missing package, permissions, or deployment timeout.'
+        );
+        expect(errorStub.calledTwice).to.be.true; // User action + integration error
+      }
     });
   });
 });

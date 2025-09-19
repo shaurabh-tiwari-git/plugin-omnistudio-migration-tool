@@ -14,6 +14,7 @@ import { Logger } from '../../src/utils/logger';
 import { AnonymousApexRunner } from '../../src/utils/apex/executor/AnonymousApexRunner';
 import { OrgPreferences } from '../../src/utils/orgPreferences';
 import { Deployer } from '../../src/migration/deployer';
+import { OmniscriptPackageDeploymentError } from '../../src/error/deploymentErrors';
 
 describe('PostMigrate', () => {
   let postMigrate: PostMigrate;
@@ -91,7 +92,39 @@ describe('PostMigrate', () => {
       .withArgs('errorRevertingExperienceBundleMetadataAPI')
       .returns('Error reverting Experience Bundle Metadata API');
     getMessageStub.withArgs('errorDeployingComponents').returns('Error deploying components');
-    // New messages referenced by implementation
+    // New deployment action messages
+    getMessageStub
+      .withArgs('deployOmniscriptPackageManually')
+      .returns(
+        'Omniscript customization package deployment failed. Please deploy the omniscript package manually before deploying your migrated components. Check the logs for detailed error information.'
+      );
+    getMessageStub
+      .withArgs('deployComponentsManually')
+      .returns(
+        'Component deployment failed. Please deploy the generated package.xml manually using Salesforce CLI or Workbench. Check the logs for detailed error information.'
+      );
+    getMessageStub
+      .withArgs('omniscriptDeploymentFailedContinuing')
+      .returns('Omniscript package deployment failed, continuing with report generation.');
+    getMessageStub
+      .withArgs('deploymentFailedContinuing')
+      .returns('Deployment failed, continuing with report generation.');
+    // New omniscriptPackageManager userAction messages
+    getMessageStub
+      .withArgs('ensurePackageInstalled')
+      .returns('Please ensure omniscript customization package is properly installed: %s');
+    getMessageStub
+      .withArgs('packageDeploymentFailedWithError')
+      .returns(
+        'Omniscript package deployment failed after %s attempts. Error: %s. Please check deployment logs and org settings.'
+      );
+    getMessageStub
+      .withArgs('maxRetryAttemptsExceeded')
+      .returns('Maximum retry attempts (%s) exceeded for omniscript package deployment');
+    getMessageStub
+      .withArgs('deploymentNonRetryableError')
+      .returns('Deployment failed with non-retryable error: %s. Please review and fix the issue manually.');
+    // Other messages referenced by implementation
     getMessageStub.withArgs('checkingStandardDesignerStatus', [testNamespace]).returns('Checking designer status');
     getMessageStub.withArgs('standardDesignerAlreadyEnabled', [testNamespace]).returns('Designer already enabled');
     getMessageStub.withArgs('skipStandardRuntimeDueToFailure').returns('Skip runtime due to failure');
@@ -152,42 +185,30 @@ describe('PostMigrate', () => {
       const deployerStub = sandbox.stub(Deployer.prototype, 'deploy');
 
       // Act
-      postMigrateNoDeploy.deploy();
+      void postMigrateNoDeploy.deploy([]);
 
       // Assert
       expect((postMigrateNoDeploy as any).deploymentConfig.autoDeploy).to.be.false;
       expect(deployerStub.called).to.be.false;
     });
 
-    it('should handle deployment errors gracefully', () => {
+    it('should handle deployment errors gracefully and add action items', async () => {
       // Arrange
-      const error = new Error('Deployment failed');
-      const deployerStub = sandbox.stub(Deployer.prototype, 'deploy').throws(error);
-      sandbox.stub(fs, 'existsSync').returns(true);
-
-      // Mock the deploy method directly to test error handling
-      postMigrate.deploy = function () {
-        try {
-          const deployer = new Deployer(
-            this.projectPath,
-            this.messages,
-            this.org.getUsername(),
-            this.deploymentConfig.authKey
-          );
-          deployer.deploy();
-        } catch (ex) {
-          Logger.error(this.messages.getMessage('errorDeployingComponents'), ex);
-        }
-      };
+      const error = new OmniscriptPackageDeploymentError('Omniscript package deployment failed');
+      const deployerStub = sandbox.stub(Deployer.prototype, 'deploy').rejects(error);
+      // Use existing stubs from beforeEach setup
+      const deployLogVerboseStub = Logger.logVerbose as sinon.SinonStub;
+      const actionItems: string[] = [];
 
       // Act
-      postMigrate.deploy();
+      await postMigrate.deploy(actionItems);
 
       // Assert
       expect(deployerStub.called).to.be.true;
       expect(logErrorStub.called).to.be.true;
-      expect(logErrorStub.firstCall.args[0]).to.equal('Error deploying components');
-      expect(logErrorStub.firstCall.args[1]).to.equal(error);
+      expect(deployLogVerboseStub.called).to.be.true;
+      expect(actionItems.length).to.be.greaterThan(0);
+      expect(actionItems[0]).to.include('Omniscript customization package deployment failed');
     });
 
     xit('should create Deployer with correct parameters', () => {
@@ -196,18 +217,18 @@ describe('PostMigrate', () => {
       sandbox.stub(fs, 'existsSync').returns(true);
 
       // Mock the deploy method directly to test Deployer creation
-      postMigrate.deploy = function () {
+      postMigrate.deploy = async function () {
         const deployer = new Deployer(
           this.projectPath,
           this.messages,
           this.org.getUsername(),
           this.deploymentConfig.authKey
         );
-        deployer.deploy();
+        await deployer.deploy();
       };
 
       // Act
-      postMigrate.deploy();
+      void postMigrate.deploy([]);
 
       // Assert
       expect(deployerDeployStub.called).to.be.true;
@@ -530,18 +551,18 @@ describe('PostMigrate', () => {
         .resolves();
 
       // Mock the deploy method directly to test workflow
-      postMigrate.deploy = function () {
+      postMigrate.deploy = async function () {
         const deployer = new Deployer(
           this.projectPath,
           this.messages,
           this.org.getUsername(),
           this.deploymentConfig.authKey
         );
-        deployer.deploy();
+        await deployer.deploy();
       };
 
       // Act
-      postMigrate.deploy();
+      void postMigrate.deploy([]);
       await (postMigrate as any).enableDesignersToUseStandardDataModelIfNeeded('test_namespace', []);
       await postMigrate.restoreExperienceAPIMetadataSettings({ value: true }, []);
 
@@ -576,7 +597,7 @@ describe('PostMigrate', () => {
       } as ExecuteAnonymousResult);
 
       // Act
-      postMigrateNoDeploy.deploy();
+      void postMigrateNoDeploy.deploy([]);
       await (postMigrateNoDeploy as any).enableDesignersToUseStandardDataModelIfNeeded('test_namespace', []);
 
       // Assert
