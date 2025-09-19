@@ -810,8 +810,8 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
             errors: [this.messages.getMessage('needManualInterventionAsSpecialCharsInFlexcardName')],
             warnings: [],
           });
+          return;
         }
-        return;
       }
 
       // Verify duplicated names

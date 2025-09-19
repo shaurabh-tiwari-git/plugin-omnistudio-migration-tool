@@ -1341,7 +1341,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
             elementRecord['Id'] = standardElementId;
             elementRecord['OmniProcessId'] = standardOmniProcessId;
-            elementsUploadResponse[standardElementId] = response; // TODO - NEED TO CHECK THE FORMAT ONCE
+            elementsUploadResponse[standardElementId] = response;
           }
         }
 
