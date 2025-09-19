@@ -246,7 +246,7 @@
   "varDeclarationUpdated": "Variable initialization has been updated for target name",
   "migrationSuccessfulMessage": "Migration process for org %s is complete and reports are ready for review in the folder %s",
   "needManualInterventionAsSpecialCharsInChildFlexcardName": "Need manual intervention as child flexcards have special characters in their name",
-  "needManualInterventionAsSpecialCharsInFlexcardName": "Need manual intervention as flexcard has special characters in name"
+  "needManualInterventionAsSpecialCharsInFlexcardName": "Need manual intervention as flexcard has special characters in name",
   "metadataTablesAlreadyClean": "OmniStudio metadata tables are empty",
   "startingMetadataCleanup": "Initiated cleanup process for Omnistudio metadata tables.",
   "failedToCleanTables": "Table cleanup failed: %s",

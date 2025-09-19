@@ -1107,11 +1107,6 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     // Clean the name
     mappedObject['Name'] = this.cleanName(mappedObject['Name']);
 
-    // Here for usecase2 add check for name
-    if (this.IS_STANDARD_DATA_MODEL && mappedObject['Name'] != cardRecord['Name']) {
-      Logger.logVerbose('The Name of flexcard has special chars');
-    }
-
     mappedObject[CardMappings.Author__c] = this.cleanName(mappedObject[CardMappings.Author__c]);
     mappedObject[CardMappings.Active__c] = false;
 
