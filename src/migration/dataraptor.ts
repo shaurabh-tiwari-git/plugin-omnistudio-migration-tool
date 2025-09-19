@@ -31,9 +31,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
 
   static readonly OMNIDATATRANSFORM_NAME = 'OmniDataTransform';
   static readonly OMNIDATATRANSFORMITEM_NAME = 'OmniDataTransformItem';
-  static get IS_STANDARD_DATA_MODEL(): boolean {
-    return isStandardDataModel();
-  }
+  private IS_STANDARD_DATA_MODEL: boolean = isStandardDataModel();
 
   getName(): string {
     return 'Data Mappers';
@@ -190,7 +188,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
       // Save the data raptors
       // const drUploadResponse = await this.uploadTransformedData(DataRaptorMigrationTool.OMNIDATATRANSFORM_NAME, { mappedRecords, originalRecords });
       let drUploadResponse;
-      if (!DataRaptorMigrationTool.IS_STANDARD_DATA_MODEL) {
+      if (!this.IS_STANDARD_DATA_MODEL) {
         drUploadResponse = await NetUtils.createOne(
           this.connection,
           DataRaptorMigrationTool.OMNIDATATRANSFORM_NAME,
@@ -217,7 +215,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
         drUploadResponse.newName = transformedDataRaptor[DRBundleMappings.Name];
 
         // Move the items
-        if (!DataRaptorMigrationTool.IS_STANDARD_DATA_MODEL) {
+        if (!this.IS_STANDARD_DATA_MODEL) {
           await this.uploadTransformedData(DataRaptorMigrationTool.OMNIDATATRANSFORMITEM_NAME, items);
         } else {
           // Handle all the items one by one
@@ -498,7 +496,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     // Transformed object
     let mappedObject = {};
 
-    if (!DataRaptorMigrationTool.IS_STANDARD_DATA_MODEL) {
+    if (!this.IS_STANDARD_DATA_MODEL) {
       // Get the fields of the record
       const recordFields = Object.keys(dataRaptorRecord);
 
@@ -535,7 +533,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     // Transformed object
     let mappedObject = {};
 
-    if (!DataRaptorMigrationTool.IS_STANDARD_DATA_MODEL) {
+    if (!this.IS_STANDARD_DATA_MODEL) {
       // Get the fields of the record
       const recordFields = Object.keys(dataRaptorItemRecord);
 
@@ -570,41 +568,35 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
   }
 
   private getDRBundleFields(): string[] {
-    return DataRaptorMigrationTool.IS_STANDARD_DATA_MODEL
-      ? Object.values(DRBundleMappings)
-      : Object.keys(DRBundleMappings);
+    return this.IS_STANDARD_DATA_MODEL ? Object.values(DRBundleMappings) : Object.keys(DRBundleMappings);
   }
 
   private getDRMapItemFields(): string[] {
-    return DataRaptorMigrationTool.IS_STANDARD_DATA_MODEL
+    return this.IS_STANDARD_DATA_MODEL
       ? [...new Set(Object.values(DRMapItemMappings))]
       : Object.keys(DRMapItemMappings);
   }
 
   private getBundleFieldKey(fieldName: string): string {
-    return DataRaptorMigrationTool.IS_STANDARD_DATA_MODEL
-      ? DRBundleMappings[fieldName]
-      : this.namespacePrefix + fieldName;
+    return this.IS_STANDARD_DATA_MODEL ? DRBundleMappings[fieldName] : this.namespacePrefix + fieldName;
   }
 
   private getItemFieldKey(fieldName: string): string {
-    return DataRaptorMigrationTool.IS_STANDARD_DATA_MODEL
-      ? DRMapItemMappings[fieldName]
-      : this.namespacePrefix + fieldName;
+    return this.IS_STANDARD_DATA_MODEL ? DRMapItemMappings[fieldName] : this.namespacePrefix + fieldName;
   }
 
   private getQueryNamespace(): string {
-    return DataRaptorMigrationTool.IS_STANDARD_DATA_MODEL ? '' : this.namespace;
+    return this.IS_STANDARD_DATA_MODEL ? '' : this.namespace;
   }
 
   private getBundleObjectName(): string {
-    return DataRaptorMigrationTool.IS_STANDARD_DATA_MODEL
+    return this.IS_STANDARD_DATA_MODEL
       ? DataRaptorMigrationTool.OMNIDATATRANSFORM_NAME
       : DataRaptorMigrationTool.DRBUNDLE_NAME;
   }
 
   private getItemObjectName(): string {
-    return DataRaptorMigrationTool.IS_STANDARD_DATA_MODEL
+    return this.IS_STANDARD_DATA_MODEL
       ? DataRaptorMigrationTool.OMNIDATATRANSFORMITEM_NAME
       : DataRaptorMigrationTool.DRMAPITEM_NAME;
   }
