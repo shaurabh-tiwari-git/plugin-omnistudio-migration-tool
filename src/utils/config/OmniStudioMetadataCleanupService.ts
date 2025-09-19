@@ -59,30 +59,27 @@ export class OmniStudioMetadataCleanupService {
       Logger.log(this.messages.getMessage('startingMetadataCleanup'));
 
       let totalCleanedRecords = 0;
-      const cleanupResults: Array<{ tableName: string; recordCount: number; success: boolean }> = [];
+      const failedTables: string[] = [];
 
       for (const tableName of OmniStudioMetadataCleanupService.CONFIG_TABLES) {
-        const result = await this.cleanupOmniStudioMetadataTable(tableName);
-        cleanupResults.push(result);
+        const recordCount = await this.cleanupOmniStudioMetadataTable(tableName);
 
-        if (result.success) {
-          totalCleanedRecords += result.recordCount;
-          Logger.logVerbose(this.messages.getMessage('successfullyCleanedRecords', [result.recordCount, tableName]));
+        if (recordCount >= 0) {
+          totalCleanedRecords += recordCount;
+        } else {
+          failedTables.push(tableName);
         }
       }
 
-      // Log summary
-      const failedTables = cleanupResults.filter((r) => !r.success);
       if (failedTables.length > 0) {
-        Logger.error(
-          this.messages.getMessage('failedToCleanTables', [failedTables.map((t) => t.tableName).join(', ')])
-        );
+        Logger.error(this.messages.getMessage('failedToCleanTables', [failedTables.join(', ')]));
         return false;
       }
+
       Logger.log(this.messages.getMessage('metadataCleanupCompleted', [totalCleanedRecords]));
       return true;
     } catch (error) {
-      Logger.error(this.messages.getMessage('errorDuringMetadataTablesCleanup', [String(error)]));
+      Logger.error(this.messages.getMessage('errorCheckingMetadataTables', [String(error)]));
       return false;
     }
   }
@@ -91,36 +88,16 @@ export class OmniStudioMetadataCleanupService {
    * Checks a specific table for records and cleans them if found
    *
    * @param tableName - Name of the table to check and clean
-   * @returns Promise<{tableName: string, recordCount: number, success: boolean}>
+   * @returns Promise<number> - number of cleaned records, or -1 if failed
    */
-  private async cleanupOmniStudioMetadataTable(
-    tableName: string
-  ): Promise<{ tableName: string; recordCount: number; success: boolean }> {
-    try {
-      Logger.logVerbose(this.messages.getMessage('cleaningMetadataTable', [tableName]));
+  private async cleanupOmniStudioMetadataTable(tableName: string): Promise<number> {
+    const recordIds = await QueryTools.queryIds(this.connection, tableName);
 
-      // Query for record IDs in the table
-      const recordIds = await QueryTools.queryIds(this.connection, tableName);
-
-      if (recordIds.length === 0) {
-        Logger.logVerbose(this.messages.getMessage('noRecordsFoundInTable', [tableName]));
-        return { tableName, recordCount: 0, success: true };
-      }
-
-      Logger.logVerbose(this.messages.getMessage('foundRecordsInTable', [recordIds.length, tableName]));
-
-      // Delete the records using NetUtils
-      const deleteSuccess = await NetUtils.delete(this.connection, recordIds);
-
-      if (deleteSuccess) {
-        return { tableName, recordCount: recordIds.length, success: true };
-      } else {
-        Logger.logVerbose(this.messages.getMessage('failedToDeleteRecords', [tableName]));
-        return { tableName, recordCount: recordIds.length, success: false };
-      }
-    } catch (error) {
-      Logger.logVerbose(this.messages.getMessage('errorCleaningMetadataTable', [tableName, String(error)]));
-      return { tableName, recordCount: 0, success: false };
+    if (recordIds.length === 0) {
+      return 0;
     }
+
+    const deleteSuccess = await NetUtils.delete(this.connection, recordIds);
+    return deleteSuccess ? recordIds.length : -1;
   }
 }
