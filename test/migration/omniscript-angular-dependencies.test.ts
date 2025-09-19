@@ -2,6 +2,8 @@
 import { expect } from 'chai';
 import { OmniScriptMigrationTool, OmniScriptExportType } from '../../src/migration/omniscript';
 import { NameMappingRegistry } from '../../src/migration/NameMappingRegistry';
+import { initializeDataModelService } from '../../src/utils/dataModelService';
+import { OmnistudioOrgDetails } from '../../src/utils/orgUtils';
 
 describe('OmniScript Angular Dependency Validation', () => {
   let omniScriptTool: OmniScriptMigrationTool;
@@ -14,6 +16,16 @@ describe('OmniScript Angular Dependency Validation', () => {
   beforeEach(() => {
     nameRegistry = NameMappingRegistry.getInstance();
     nameRegistry.clear();
+
+    // Initialize data model service for tests (set to custom data model)
+    const mockOrgDetails: OmnistudioOrgDetails = {
+      packageDetails: { version: '1.0.0', namespace: 'vlocity_ins' },
+      omniStudioOrgPermissionEnabled: false, // This makes IS_STANDARD_DATA_MODEL = false
+      orgDetails: { Name: 'Test Org', Id: '00D000000000000' },
+      dataModel: 'Custom',
+      hasValidNamespace: true,
+    };
+    initializeDataModelService(mockOrgDetails);
 
     // Setup mock objects
     mockConnection = {

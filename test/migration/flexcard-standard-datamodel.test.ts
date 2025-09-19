@@ -1,0 +1,618 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return, camelcase, comma-dangle */
+import { expect } from 'chai';
+import { CardMigrationTool } from '../../src/migration/flexcard';
+import { NameMappingRegistry } from '../../src/migration/NameMappingRegistry';
+import { initializeDataModelService } from '../../src/utils/dataModelService';
+import { OmnistudioOrgDetails } from '../../src/utils/orgUtils';
+
+describe('FlexCard Standard Data Model (Metadata API Disabled) - Assessment and Migration', () => {
+  let cardTool: CardMigrationTool;
+  let nameRegistry: NameMappingRegistry;
+  let mockConnection: any;
+  let mockMessages: any;
+  let mockUx: any;
+  let mockLogger: any;
+
+  beforeEach(() => {
+    nameRegistry = NameMappingRegistry.getInstance();
+    nameRegistry.clear();
+
+    // Initialize data model service for Standard Data Model
+    const mockOrgDetails: OmnistudioOrgDetails = {
+      packageDetails: { version: '1.0.0', namespace: 'omnistudio' },
+      omniStudioOrgPermissionEnabled: true, // This makes IS_STANDARD_DATA_MODEL = true
+      orgDetails: { Name: 'Test Org', Id: '00D000000000000' },
+      dataModel: 'Standard',
+      hasValidNamespace: true,
+    };
+    initializeDataModelService(mockOrgDetails);
+
+    mockConnection = {};
+    mockMessages = {
+      getMessage: (key: string, args?: string[]) => {
+        if (key === 'needManualInterventionAsSpecialCharsInFlexcardName') {
+          return 'FlexCard name contains special characters and cannot be auto-migrated';
+        }
+        if (key === 'cardNameChangeMessage') {
+          return `The card name '${args?.[0]}' will be changed to '${args?.[1]}'`;
+        }
+        if (key === 'childCardNameHasSpecialChars') {
+          return 'Child card name contains special characters and cannot be auto-migrated';
+        }
+        return 'Mock message for testing';
+      },
+    };
+    mockUx = {};
+    mockLogger = {};
+
+    cardTool = new CardMigrationTool('', mockConnection, mockLogger, mockMessages, mockUx, false);
+
+    // Setup test mappings for Standard Data Model
+    setupTestMappingsForStandardDataModel();
+  });
+
+  function setupTestMappingsForStandardDataModel() {
+    // DataMapper mappings with special characters
+    nameRegistry.registerNameMapping({
+      originalName: 'Customer-Data@Loader!',
+      cleanedName: 'CustomerDataLoader',
+      componentType: 'DataMapper',
+      recordId: 'dm1',
+    });
+
+    nameRegistry.registerNameMapping({
+      originalName: 'Product#Info$Extractor',
+      cleanedName: 'ProductInfoExtractor',
+      componentType: 'DataMapper',
+      recordId: 'dm2',
+    });
+
+    // Integration Procedure mappings (Type_SubType format)
+    nameRegistry.registerNameMapping({
+      originalName: 'API@Gateway_Customer$Info',
+      cleanedName: 'APIGateway_CustomerInfo',
+      componentType: 'IntegrationProcedure',
+      recordId: 'ip1',
+    });
+
+    nameRegistry.registerNameMapping({
+      originalName: 'Payment#Processor_Credit&Card',
+      cleanedName: 'PaymentProcessor_CreditCard',
+      componentType: 'IntegrationProcedure',
+      recordId: 'ip2',
+    });
+
+    // FlexCard mappings
+    nameRegistry.registerNameMapping({
+      originalName: 'Customer-Dashboard@Card!',
+      cleanedName: 'CustomerDashboardCard',
+      componentType: 'FlexCard',
+      recordId: 'fc1',
+    });
+  }
+
+  describe('Standard Data Model Assessment - OmniUiCard with Special Characters', () => {
+    it('should assess OmniUiCard (FlexCard) with special characters and add warning about manual intervention', async () => {
+      const mockFlexCard = {
+        Id: 'fc1',
+        Name: 'Customer-Profile@Card!', // Contains special characters
+        DataSourceConfig: JSON.stringify({
+          type: 'DataRaptor',
+          value: {
+            bundle: 'Customer-Data@Loader!',
+          },
+        }),
+        PropertySetConfig: JSON.stringify({
+          layout: 'Card',
+          enablePagination: true,
+        }),
+        IsActive: true,
+        OmniUiCardType: 'Parent',
+        VersionNumber: 1,
+      };
+
+      const result = await (cardTool as any).processFlexCard(mockFlexCard, new Set<string>());
+
+      // FlexCard name should be cleaned (FlexCards DO get cleaned in Standard Data Model)
+      expect(result.name).to.equal('CustomerProfileCard');
+      expect(result.oldName).to.equal('Customer-Profile@Card!');
+
+      // Should add warning for manual intervention due to special characters
+      expect(result.warnings).to.include('FlexCard name contains special characters and cannot be auto-migrated');
+      expect(result.migrationStatus).to.equal('Needs Manual Intervention');
+
+      // Dependencies should still be detected for assessment
+      expect(result.dependenciesDR).to.have.length.greaterThan(0);
+    });
+
+    it('should assess OmniUiCard with clean name and allow migration', async () => {
+      const mockFlexCard = {
+        Id: 'fc2',
+        Name: 'CustomerDashboardCard', // Clean name, no special characters
+        DataSourceConfig: JSON.stringify({
+          type: 'IntegrationProcedures',
+          value: {
+            ipMethod: 'CleanIPMethod_CleanSubType', // Use clean dependency to avoid warnings
+          },
+        }),
+        PropertySetConfig: JSON.stringify({
+          layout: 'Card',
+          enablePagination: false,
+        }),
+        IsActive: true,
+        OmniUiCardType: 'Parent',
+        VersionNumber: 1,
+      };
+
+      const result = await (cardTool as any).processFlexCard(mockFlexCard, new Set<string>());
+
+      // FlexCard name should remain unchanged (already clean)
+      expect(result.name).to.equal('CustomerDashboardCard');
+      expect(result.migrationStatus).to.equal('Ready for migration');
+
+      // No warnings should be generated for clean names
+      expect(result.warnings).to.be.empty;
+
+      // Dependencies should be detected
+      expect(result.dependenciesIP).to.have.length.greaterThan(0);
+    });
+
+    it('should detect various dependency types in FlexCard assessment', async () => {
+      const mockFlexCard = {
+        Id: 'fc3',
+        Name: 'MultiDependencyCard',
+        DataSourceConfig: JSON.stringify({
+          type: 'DataRaptor',
+          value: {
+            bundle: 'CleanDataRaptor',
+          },
+        }),
+        PropertySetConfig: JSON.stringify({
+          layout: 'Card',
+          flexCardReference: 'CleanFlexCard',
+          omniscriptReference: 'CleanOmniScript_CleanSubType_English',
+        }),
+        IsActive: true,
+        OmniUiCardType: 'Parent',
+        VersionNumber: 1,
+      };
+
+      const result = await (cardTool as any).processFlexCard(mockFlexCard, new Set<string>());
+
+      // Should detect multiple dependency types
+      const totalDependencies: number =
+        Number(result.dependenciesDR?.length || 0) +
+        Number(result.dependenciesFC?.length || 0) +
+        Number(result.dependenciesOS?.length || 0);
+      expect(totalDependencies).to.be.greaterThan(0);
+      expect(result.migrationStatus).to.equal('Ready for migration');
+    });
+  });
+
+  describe('Standard Data Model Migration - OmniUiCard Field Mapping and Data Source Updates', () => {
+    it('should map OmniUiCard fields correctly for Standard Data Model', () => {
+      const mockCardRecord = {
+        Id: 'fc1',
+        Name: 'TestCard',
+        DataSourceConfig: JSON.stringify({
+          type: 'DataRaptor',
+          value: { bundle: 'TestBundle' },
+        }),
+        PropertySetConfig: JSON.stringify({ layout: 'Card' }),
+        IsActive: true,
+        AuthorName: 'TestAuthor',
+        Description: 'Test FlexCard',
+        VersionNumber: 2,
+        OmniUiCardType: 'Parent',
+        OmniUiCardKey: 'test-card-key',
+      };
+
+      // Test field access for Standard Data Model
+      const result = (cardTool as any).mapVlocityCardRecord(mockCardRecord, new Map(), new Map());
+
+      // Standard Data Model should preserve original field names but clean the name
+      expect(result.Name).to.equal('TestCard'); // Names still get cleaned
+      expect(result.DataSourceConfig).to.be.a('string');
+      expect(result.PropertySetConfig).to.be.a('string');
+      expect(result.IsActive).to.be.false; // Always set to false during migration
+      expect(result.AuthorName).to.equal('TestAuthor');
+      expect(result.VersionNumber).to.equal(2);
+      expect(result.OmniUiCardType).to.equal('Parent');
+      expect(result.OmniUiCardKey).to.equal('test-card-key');
+    });
+
+    it('should process DataRaptor data source and preserve registry mapping functionality', () => {
+      const mockCardRecord = {
+        Id: 'fc1',
+        Name: 'TestCard',
+        DataSourceConfig: JSON.stringify({
+          type: 'DataRaptor',
+          value: {
+            bundle: 'Customer-Data@Loader!',
+          },
+        }),
+        PropertySetConfig: JSON.stringify({ layout: 'Card' }),
+        IsActive: true,
+        OmniUiCardType: 'Parent',
+        VersionNumber: 1,
+      };
+
+      const result = (cardTool as any).mapVlocityCardRecord(mockCardRecord, new Map(), new Map());
+
+      // Verify the structure is preserved and can be processed
+      expect(result.DataSourceConfig).to.be.a('string');
+      const dataSourceConfig = JSON.parse(result.DataSourceConfig);
+      expect(dataSourceConfig.type).to.equal('DataRaptor');
+      expect(dataSourceConfig.value).to.have.property('bundle');
+    });
+
+    it('should process Integration Procedure data source and preserve structure', () => {
+      const mockCardRecord = {
+        Id: 'fc1',
+        Name: 'TestCard',
+        DataSourceConfig: JSON.stringify({
+          type: 'IntegrationProcedures',
+          value: {
+            ipMethod: 'API@Gateway_Customer$Info',
+          },
+        }),
+        PropertySetConfig: JSON.stringify({ layout: 'Card' }),
+        IsActive: true,
+        OmniUiCardType: 'Parent',
+        VersionNumber: 1,
+      };
+
+      const result = (cardTool as any).mapVlocityCardRecord(mockCardRecord, new Map(), new Map());
+
+      // Verify the structure is preserved and can be processed
+      expect(result.DataSourceConfig).to.be.a('string');
+      const dataSourceConfig = JSON.parse(result.DataSourceConfig);
+      expect(dataSourceConfig.type).to.equal('IntegrationProcedures');
+      expect(dataSourceConfig.value).to.have.property('ipMethod');
+    });
+
+    it('should handle data source dependency and preserve structure for processing', () => {
+      const mockCardRecord = {
+        Id: 'fc1',
+        Name: 'TestCard',
+        DataSourceConfig: JSON.stringify({
+          type: 'DataRaptor',
+          value: {
+            bundle: 'Unknown@DataRaptor#Bundle!',
+          },
+        }),
+        PropertySetConfig: JSON.stringify({ layout: 'Card' }),
+        IsActive: true,
+        OmniUiCardType: 'Parent',
+        VersionNumber: 1,
+      };
+
+      const result = (cardTool as any).mapVlocityCardRecord(mockCardRecord, new Map(), new Map());
+
+      // Verify structure is maintained for further processing
+      expect(result.DataSourceConfig).to.be.a('string');
+      const dataSourceConfig = JSON.parse(result.DataSourceConfig);
+      expect(dataSourceConfig.type).to.equal('DataRaptor');
+      expect(dataSourceConfig.value).to.have.property('bundle');
+    });
+  });
+
+  describe('Standard Data Model Migration - PropertySet Configuration Updates', () => {
+    it('should update nested dependency references in PropertySetConfig', () => {
+      const mockCardRecord = {
+        Id: 'fc1',
+        Name: 'TestCard',
+        DataSourceConfig: JSON.stringify({
+          type: 'Static',
+          value: {},
+        }),
+        PropertySetConfig: JSON.stringify({
+          layout: 'Card',
+          actions: [
+            {
+              type: 'DataRaptor',
+              bundle: 'Product#Info$Extractor',
+            },
+            {
+              type: 'Integration Procedure',
+              ipMethod: 'Payment#Processor_Credit&Card',
+            },
+          ],
+          references: {
+            flexCardReference: 'Customer-Dashboard@Card!',
+            dataRaptorBundle: 'Customer-Data@Loader!',
+          },
+        }),
+        IsActive: true,
+        OmniUiCardType: 'Parent',
+        VersionNumber: 1,
+      };
+
+      const result = (cardTool as any).mapVlocityCardRecord(mockCardRecord, new Map(), new Map());
+
+      const propertySetConfig = JSON.parse(result.PropertySetConfig);
+
+      // Should update nested references using registry mappings
+      expect(propertySetConfig.actions[0].bundle).to.equal('ProductInfoExtractor');
+      expect(propertySetConfig.actions[1].ipMethod).to.equal('PaymentProcessor_CreditCard');
+      expect(propertySetConfig.references.flexCardReference).to.equal('CustomerDashboardCard');
+      expect(propertySetConfig.references.dataRaptorBundle).to.equal('CustomerDataLoader');
+    });
+
+    it('should handle missing dependencies gracefully in PropertySetConfig', () => {
+      const mockCardRecord = {
+        Id: 'fc1',
+        Name: 'TestCard',
+        DataSourceConfig: JSON.stringify({
+          type: 'Static',
+          value: {},
+        }),
+        PropertySetConfig: JSON.stringify({
+          layout: 'Card',
+          actions: [],
+          references: {
+            unknownProperty: 'someValue',
+            emptyBundle: '',
+            nullReference: null,
+          },
+        }),
+        IsActive: true,
+        OmniUiCardType: 'Parent',
+        VersionNumber: 1,
+      };
+
+      const result = (cardTool as any).mapVlocityCardRecord(mockCardRecord, new Map(), new Map());
+
+      // Should not throw errors and preserve non-dependency properties
+      expect(result.PropertySetConfig).to.be.a('string');
+      const propertySetConfig = JSON.parse(result.PropertySetConfig);
+      expect(propertySetConfig.references.unknownProperty).to.equal('someValue');
+      expect(propertySetConfig.references.emptyBundle).to.equal('');
+      expect(propertySetConfig.references.nullReference).to.be.null;
+    });
+  });
+
+  describe('Standard Data Model - Child Card Scenarios', () => {
+    it('should handle child cards with special characters in names (no name update)', () => {
+      const mockChildCard = {
+        Id: 'fc_child1',
+        Name: 'Child-Card@Special!',
+        DataSourceConfig: JSON.stringify({
+          type: 'DataRaptor',
+          value: {
+            bundle: 'Customer-Data@Loader!',
+          },
+        }),
+        PropertySetConfig: JSON.stringify({
+          layout: 'Card',
+          isChild: true,
+        }),
+        IsActive: true,
+        OmniUiCardType: 'Child',
+        ClonedFromOmniUiCardKey: 'parent-card-key',
+        VersionNumber: 1,
+      };
+
+      const result = (cardTool as any).mapVlocityCardRecord(mockChildCard, new Map(), new Map());
+
+      // Child card name should be cleaned even in Standard Data Model
+      expect(result.Name).to.equal('ChildCardSpecial');
+
+      // Data source structure should be preserved for processing
+      expect(result.DataSourceConfig).to.be.a('string');
+      const dataSourceConfig = JSON.parse(result.DataSourceConfig);
+      expect(dataSourceConfig.value).to.have.property('bundle');
+    });
+
+    it('should handle child cards with clean names (no name changes needed)', () => {
+      const mockChildCard = {
+        Id: 'fc_child2',
+        Name: 'CleanChildCard',
+        DataSourceConfig: JSON.stringify({
+          type: 'IntegrationProcedures',
+          value: {
+            ipMethod: 'Payment#Processor_Credit&Card',
+          },
+        }),
+        PropertySetConfig: JSON.stringify({
+          layout: 'Card',
+          isChild: true,
+        }),
+        IsActive: true,
+        OmniUiCardType: 'Child',
+        ClonedFromOmniUiCardKey: 'parent-card-key',
+        VersionNumber: 1,
+      };
+
+      const result = (cardTool as any).mapVlocityCardRecord(mockChildCard, new Map(), new Map());
+
+      // Clean child card name should remain unchanged
+      expect(result.Name).to.equal('CleanChildCard');
+
+      // Data source structure should be preserved for processing
+      expect(result.DataSourceConfig).to.be.a('string');
+      const dataSourceConfig = JSON.parse(result.DataSourceConfig);
+      expect(dataSourceConfig.value).to.have.property('ipMethod');
+    });
+  });
+
+  describe('Standard Data Model - Complex Scenarios with Multiple Dependencies', () => {
+    it('should handle FlexCard with mixed dependency types and special characters', async () => {
+      const mockFlexCard = {
+        Id: 'fc_complex',
+        Name: 'ComplexFlexCard',
+        DataSourceConfig: JSON.stringify({
+          type: 'DataRaptor',
+          value: {
+            bundle: 'CleanDataRaptor',
+          },
+        }),
+        PropertySetConfig: JSON.stringify({
+          layout: 'Card',
+          actions: [
+            {
+              type: 'DataRaptor',
+              bundle: 'CleanDataRaptor2',
+            },
+            {
+              type: 'Integration Procedure',
+              ipMethod: 'CleanIP_CleanSubType',
+            },
+          ],
+          references: {
+            flexCardReference: 'CleanFlexCard',
+            omniscriptReference: 'CleanOS_CleanSubType_English',
+          },
+          customSettings: {
+            enableCache: true,
+            timeout: 30,
+          },
+        }),
+        IsActive: true,
+        OmniUiCardType: 'Parent',
+        VersionNumber: 1,
+      };
+
+      // Test both assessment and migration
+      const assessmentResult = await (cardTool as any).processFlexCard(mockFlexCard, new Set<string>());
+      const migrationResult = (cardTool as any).mapVlocityCardRecord(mockFlexCard, new Map(), new Map());
+
+      // Assessment should show ready for migration (clean name and dependencies)
+      expect(assessmentResult.migrationStatus).to.equal('Ready for migration');
+      expect(assessmentResult.warnings).to.be.empty;
+
+      // Migration should preserve structure and non-dependency properties
+      const dataSourceConfig = JSON.parse(migrationResult.DataSourceConfig);
+      const propertySetConfig = JSON.parse(migrationResult.PropertySetConfig);
+
+      expect(dataSourceConfig.type).to.equal('DataRaptor');
+      expect(dataSourceConfig.value).to.have.property('bundle');
+      expect(propertySetConfig.actions).to.be.an('array');
+      expect(propertySetConfig.references).to.be.an('object');
+
+      // Should preserve non-dependency properties
+      expect(propertySetConfig.customSettings.enableCache).to.be.true;
+      expect(propertySetConfig.customSettings.timeout).to.equal(30);
+    });
+
+    it('should handle FlexCard migration with update operations for Standard Data Model', () => {
+      const mockFlexCards = [
+        {
+          Id: 'fc1',
+          Name: 'ParentCard',
+          DataSourceConfig: JSON.stringify({
+            type: 'DataRaptor',
+            value: { bundle: 'CleanDataRaptor' },
+          }),
+          PropertySetConfig: JSON.stringify({ layout: 'Card' }),
+          IsActive: true,
+          OmniUiCardType: 'Parent',
+          VersionNumber: 1,
+        },
+        {
+          Id: 'fc2',
+          Name: 'ChildCard',
+          DataSourceConfig: JSON.stringify({
+            type: 'IntegrationProcedures',
+            value: { ipMethod: 'CleanIP_CleanSubType' },
+          }),
+          PropertySetConfig: JSON.stringify({ layout: 'Card', isChild: true }),
+          IsActive: true,
+          OmniUiCardType: 'Child',
+          ClonedFromOmniUiCardKey: 'fc1',
+          VersionNumber: 1,
+        },
+      ];
+
+      const results = mockFlexCards.map((card) => (cardTool as any).mapVlocityCardRecord(card, new Map(), new Map()));
+
+      // All cards should preserve structure and have names cleaned
+      results.forEach((result, index) => {
+        expect(result.Name).to.equal(mockFlexCards[index].Name);
+        const dataSourceConfig = JSON.parse(result.DataSourceConfig);
+
+        if (index === 0) {
+          expect(dataSourceConfig.type).to.equal('DataRaptor');
+          expect(dataSourceConfig.value).to.have.property('bundle');
+        } else {
+          expect(dataSourceConfig.type).to.equal('IntegrationProcedures');
+          expect(dataSourceConfig.value).to.have.property('ipMethod');
+        }
+      });
+    });
+  });
+
+  describe('Standard Data Model - Error Scenarios and Edge Cases', () => {
+    it('should handle empty or null dependency references', () => {
+      const mockCardRecord = {
+        Id: 'fc1',
+        Name: 'TestCard',
+        DataSourceConfig: JSON.stringify({
+          type: 'DataRaptor',
+          value: {
+            bundle: '',
+          },
+        }),
+        PropertySetConfig: JSON.stringify({
+          layout: 'Card',
+          actions: [],
+          references: {
+            emptyReference: '',
+            nullReference: null,
+            undefinedReference: undefined,
+          },
+        }),
+        IsActive: true,
+        OmniUiCardType: 'Parent',
+        VersionNumber: 1,
+      };
+
+      const result = (cardTool as any).mapVlocityCardRecord(mockCardRecord, new Map(), new Map());
+
+      // Should handle empty/null references gracefully
+      expect(result).to.be.an('object');
+      expect(result.Name).to.equal('TestCard');
+
+      const dataSourceConfig = JSON.parse(result.DataSourceConfig);
+      const propertySetConfig = JSON.parse(result.PropertySetConfig);
+
+      expect(dataSourceConfig.value.bundle).to.equal('');
+      expect(propertySetConfig.references.emptyReference).to.equal('');
+      expect(propertySetConfig.references.nullReference).to.be.null;
+    });
+
+    it('should preserve FlexCard field mappings correctly for Standard Data Model', () => {
+      const mockCardRecord = {
+        Id: 'fc1',
+        Name: 'TestCard',
+        AuthorName: 'TestAuthor',
+        ClonedFromOmniUiCardKey: 'parent-key',
+        DataSourceConfig: '{}',
+        Description: 'Test Description',
+        IsActive: true,
+        PropertySetConfig: '{}',
+        SampleDataSourceResponse: 'sample-data',
+        StylingConfiguration: 'style-config',
+        OmniUiCardType: 'Parent',
+        VersionNumber: 1,
+        OmniUiCardKey: 'card-key',
+      };
+
+      const result = (cardTool as any).mapVlocityCardRecord(mockCardRecord, new Map(), new Map());
+
+      // All Standard Data Model fields should be preserved correctly (except IsActive which is set to false)
+      expect(result.Name).to.equal('TestCard');
+      expect(result.AuthorName).to.equal('TestAuthor');
+      expect(result.ClonedFromOmniUiCardKey).to.equal('parent-key');
+      expect(result.DataSourceConfig).to.equal('{}');
+      expect(result.Description).to.equal('Test Description');
+      expect(result.IsActive).to.be.false; // Always set to false during migration
+      expect(result.PropertySetConfig).to.equal('{}');
+      expect(result.SampleDataSourceResponse).to.equal('sample-data');
+      expect(result.StylingConfiguration).to.equal('style-config');
+      expect(result.OmniUiCardType).to.equal('Parent');
+      expect(result.VersionNumber).to.equal(1);
+      expect(result.OmniUiCardKey).to.equal('card-key');
+    });
+  });
+});
