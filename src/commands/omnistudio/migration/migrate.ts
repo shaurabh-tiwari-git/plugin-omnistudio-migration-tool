@@ -31,7 +31,7 @@ import { YES_SHORT, YES_LONG, NO_SHORT, NO_LONG } from '../../../utils/projectPa
 import { PostMigrate } from '../../../migration/postMigrate';
 import { PreMigrate } from '../../../migration/premigrate';
 import { GlobalAutoNumberMigrationTool } from '../../../migration/globalautonumber';
-import { initializeDataModelService } from '../../../utils/dataModelService';
+import { initializeDataModelService, isStandardDataModel } from '../../../utils/dataModelService';
 import { NameMappingRegistry } from '../../../migration/NameMappingRegistry';
 import { ValidatorService } from '../../../utils/validatorService';
 
@@ -126,6 +126,14 @@ export default class Migrate extends OmniStudioBaseCommand {
     let targetApexNamespace: string;
     const preMigrate: PreMigrate = new PreMigrate(namespace, conn, this.logger, messages, this.ux);
     const isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean } = { value: false };
+
+    // Handle config tables cleanup for standard data model migration
+    if (isStandardDataModel()) {
+      const isMetadataCleanupSuccess = await preMigrate.handleOmniStudioMetadataCleanup();
+      if (!isMetadataCleanupSuccess) {
+        return;
+      }
+    }
 
     let actionItems = [];
 

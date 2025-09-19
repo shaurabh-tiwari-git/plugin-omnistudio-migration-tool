@@ -244,5 +244,12 @@
   "customLabelAssessmentSummary": "Custom Label with same name and different value is already exist without namespace.",
   "generatedCustomLabelAssessmentReportPage": "Generated custom label assessment report page %s of %s with %s labels",
   "varDeclarationUpdated": "Variable initialization has been updated for target name",
-  "migrationSuccessfulMessage": "Migration process for org %s is complete and reports are ready for review in the folder %s"
+  "migrationSuccessfulMessage": "Migration process for org %s is complete and reports are ready for review in the folder %s",
+  "metadataTablesAlreadyClean": "OmniStudio metadata tables are empty",
+  "startingMetadataCleanup": "Initiated cleanup process for Omnistudio metadata tables.",
+  "failedToCleanTables": "Table cleanup failed: %s",
+  "errorCheckingMetadataTables": "Error checking Omnistudio metadata tables: %s",
+  "metadataCleanupCompleted": "The Omnistudio metadata table cleanup process is complete. Total records cleaned: %s",
+  "metadataCleanupConsentMessage": "By proceeding further, you hereby consent to clean up the Omnistudio metadata tables. Proceeding with the cleanup process will permanently delete all records from OmniUiCardConfig, OmniScriptConfig, OmniIntegrationProcConfig, and OmniDataTransformConfig tables. Do you want to proceed? [y/n]",
+  "metadataCleanupConsentNotGiven": "You’ve not consented to proceed with the Omnistudio metadata table cleanup. We’ll not be able to proceed with the migration."
 }
