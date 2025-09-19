@@ -6,6 +6,7 @@ import { OrgPreferences } from '../utils/orgPreferences';
 import { askStringWithTimeout, PromptUtil } from '../utils/promptUtil';
 import { YES_SHORT, YES_LONG, NO_SHORT, NO_LONG } from '../utils/projectPathUtil';
 import { documentRegistry } from '../utils/constants/documentRegistry';
+import { OmniStudioMetadataCleanupService } from '../utils/config/OmniStudioMetadataCleanupService';
 import { BaseMigrationTool } from './base';
 
 const authEnvKey = 'OMA_AUTH_KEY';
@@ -109,6 +110,28 @@ export class PreMigrate extends BaseMigrationTool {
     return deploymentConfig;
   }
 
+  /**
+   * Handles OmniStudio metadata tables cleanup with user consent
+   *
+   * @returns Promise<boolean> - true if cleanup was successful, false otherwise
+   */
+  public async handleOmniStudioMetadataCleanup(): Promise<boolean> {
+    const omniStudioMetadataCleanupService = new OmniStudioMetadataCleanupService(this.connection, this.messages);
+
+    if (await omniStudioMetadataCleanupService.hasCleanOmniStudioMetadataTables()) {
+      Logger.logVerbose(this.messages.getMessage('metadataTablesAlreadyClean'));
+      return true;
+    }
+
+    const consent = await this.getMetadataCleanupConsent();
+
+    if (!consent) {
+      Logger.error(this.messages.getMessage('metadataCleanupConsentNotGiven'));
+      return false;
+    }
+    return await omniStudioMetadataCleanupService.cleanupOmniStudioMetadataTables();
+  }
+
   // This needs to be behind timeout
   private async getExpSiteMetadataEnableConsent(): Promise<boolean> {
     const question = this.messages.getMessage('consentForExperienceSites');
@@ -147,5 +170,40 @@ export class PreMigrate extends BaseMigrationTool {
     if (index > -1) {
       relatedObjects.splice(index, 1);
     }
+  }
+
+  /**
+   * Gets user consent for OmniStudio metadata tables cleanup
+   *
+   * @returns Promise<boolean> - true if user consents, false otherwise
+   */
+  private async getMetadataCleanupConsent(): Promise<boolean> {
+    const askWithTimeOut = PromptUtil.askWithTimeOut(this.messages);
+    let validResponse = false;
+    let consent = false;
+
+    while (!validResponse) {
+      try {
+        const resp = await askWithTimeOut(
+          Logger.prompt.bind(Logger),
+          this.messages.getMessage('metadataCleanupConsentMessage')
+        );
+        const response = typeof resp === 'string' ? resp.trim().toLowerCase() : '';
+
+        if (response === YES_SHORT || response === YES_LONG) {
+          consent = true;
+          validResponse = true;
+        } else if (response === NO_SHORT || response === NO_LONG) {
+          consent = false;
+          validResponse = true;
+        } else {
+          Logger.error(this.messages.getMessage('invalidYesNoResponse'));
+        }
+      } catch (err) {
+        Logger.error(this.messages.getMessage('requestTimedOut'));
+        process.exit(1);
+      }
+    }
+    return consent;
   }
 }
