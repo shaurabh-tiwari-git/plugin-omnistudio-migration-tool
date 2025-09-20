@@ -195,5 +195,6 @@
   "ipNameUpdateFailed": "IP reference %s can’t be updated",
   "dmNameUpdateFailed": "DM reference %s can’t be updated",
   "invalidTypeAssessErrorMessage": "We couldn't assess your Omnistudio components in the %s namespace. Select the correct namespace and try again",
-  "assessmentSuccessfulMessage": "Migration assessment for org %s is complete and reports are ready for review in the folder %s"
+  "assessmentSuccessfulMessage": "Migration assessment for org %s is complete and reports are ready for review in the folder %s",
+  "missingMandatoryField": "Missing mandatory field: %s for %s"
 }

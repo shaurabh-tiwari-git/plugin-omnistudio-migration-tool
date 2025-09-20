@@ -211,7 +211,7 @@ describe('PostMigrate', () => {
       expect(actionItems[0]).to.include('Omniscript customization package deployment failed');
     });
 
-    xit('should create Deployer with correct parameters', () => {
+    it('should create Deployer with correct parameters', () => {
       // Arrange
       const deployerDeployStub = sandbox.stub(Deployer.prototype, 'deploy');
       sandbox.stub(fs, 'existsSync').returns(true);
@@ -533,7 +533,7 @@ describe('PostMigrate', () => {
   });
 
   describe('integration scenarios', () => {
-    xit('should handle complete post-migration workflow with auto-deploy enabled', async () => {
+    it('should handle complete post-migration workflow with auto-deploy enabled', async () => {
       // Arrange
       const deployerStub = sandbox.stub(Deployer.prototype, 'deploy');
       sandbox.stub(fs, 'existsSync').returns(true);

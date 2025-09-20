@@ -250,6 +250,7 @@
   "errorProcessingElementValueMap": "Error processing elementValueMap in Integration Procedure element '%s': %s",
   "startingOmniscriptPackageDeployment": "Starting deployment of omniscript customization package...",
   "omniscriptPackageDeploymentStarted": "Omniscript package deployment started with ID: %s",
+  "omniscriptPackageIntegrated": "Omniscript customization package deployed successfully",
   "pollingDeploymentStatus": "Polling deployment status for ID: %s (attempt %s/%s)",
   "deploymentStatusUpdate": "Deployment %s status: %s - %s%% complete",
   "deploymentInProgress": "Deployment in progress... Elapsed: %s, Estimated remaining: %s",
