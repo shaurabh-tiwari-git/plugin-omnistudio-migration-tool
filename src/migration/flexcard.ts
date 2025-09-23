@@ -234,6 +234,9 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         flexCardAssessmentInfo.warnings.push(
           this.messages.getMessage('needManualInterventionAsSpecialCharsInFlexcardName')
         );
+        flexCardAssessmentInfo.errors.push(
+          this.messages.getMessage('needManualInterventionAsSpecialCharsInFlexcardName')
+        );
         assessmentStatus = 'Needs Manual Intervention';
       }
     }
@@ -402,6 +405,9 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
             );
           } else {
             flexCardAssessmentInfo.warnings.push(
+              this.messages.getMessage('needManualInterventionAsSpecialCharsInChildFlexcardName')
+            );
+            flexCardAssessmentInfo.errors.push(
               this.messages.getMessage('needManualInterventionAsSpecialCharsInChildFlexcardName')
             );
             flexCardAssessmentInfo.migrationStatus = 'Needs Manual Intervention';

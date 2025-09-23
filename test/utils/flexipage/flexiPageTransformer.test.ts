@@ -51,6 +51,7 @@ describe('transformFlexipageBundle', () => {
       osStorage: new Map([
         ['subtype', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
       ]),
+      osStandardStorage: new Map(),
       fcStorage: new Map(),
     };
     sandbox.stub(StorageUtil, 'getOmnistudioMigrationStorage').returns(mockStorage);
@@ -111,6 +112,7 @@ describe('transformFlexipageBundle', () => {
       osStorage: new Map([
         ['subtype', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
       ]),
+      osStandardStorage: new Map(),
       fcStorage: new Map(),
     };
     sandbox.stub(StorageUtil, 'getOmnistudioMigrationStorage').returns(mockStorage);
@@ -138,6 +140,7 @@ describe('transformFlexipageBundle', () => {
         ['subtype2', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
         ['subtype3', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
       ]),
+      osStandardStorage: new Map(),
       fcStorage: new Map(),
     };
     sandbox.stub(StorageUtil, 'getOmnistudioMigrationStorage').returns(mockStorage);
@@ -165,6 +168,7 @@ describe('transformFlexipageBundle', () => {
     // Mock StorageUtil
     const mockStorage = {
       osStorage: new Map(),
+      osStandardStorage: new Map(),
       fcStorage: new Map([
         ['card1', { name: 'Card1', isDuplicate: false }],
         ['card2', { name: 'Card2', isDuplicate: false }],
@@ -205,6 +209,7 @@ describe('transformFlexipageBundle', () => {
         ['subtype1', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
         ['subtype2', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
       ]),
+      osStandardStorage: new Map(),
       fcStorage: new Map([
         ['card1', { name: 'Card1', isDuplicate: false }],
         ['card2', { name: 'Card2', isDuplicate: false }],
@@ -244,6 +249,7 @@ describe('transformFlexipageBundle', () => {
         ['subtype1', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
         ['subtype2', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
       ]),
+      osStandardStorage: new Map(),
       fcStorage: new Map([
         ['card1', { name: 'Card1', isDuplicate: false }],
         ['card2', { name: 'Card2', isDuplicate: false }],
@@ -295,6 +301,7 @@ describe('transformFlexipageBundle', () => {
         ['mixedcase', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
         ['lowercase', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
       ]),
+      osStandardStorage: new Map(),
       fcStorage: new Map(),
     };
     sandbox.stub(StorageUtil, 'getOmnistudioMigrationStorage').returns(mockStorage);
@@ -320,6 +327,7 @@ describe('transformFlexipageBundle', () => {
     // Mock StorageUtil
     const mockStorage = {
       osStorage: new Map(),
+      osStandardStorage: new Map(),
       fcStorage: new Map([
         ['mixedcase', { name: 'MixedCaseCard', isDuplicate: false }],
         ['lowercase', { name: 'lowercasecard', isDuplicate: false }],
@@ -354,6 +362,7 @@ describe('transformFlexipageBundle', () => {
       osStorage: new Map([
         ['mixedcase', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
       ]),
+      osStandardStorage: new Map(),
       fcStorage: new Map(),
     };
     sandbox.stub(StorageUtil, 'getOmnistudioAssessmentStorage').returns(mockStorage);
@@ -372,6 +381,7 @@ describe('transformFlexipageBundle', () => {
     // Mock StorageUtil for assess mode
     const mockStorage = {
       osStorage: new Map(),
+      osStandardStorage: new Map(),
       fcStorage: new Map([['mixedcase', { name: 'MixedCaseCard', isDuplicate: false }]]),
     };
     sandbox.stub(StorageUtil, 'getOmnistudioAssessmentStorage').returns(mockStorage);

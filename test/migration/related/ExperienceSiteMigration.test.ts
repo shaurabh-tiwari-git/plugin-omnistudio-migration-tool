@@ -6,6 +6,8 @@ import { FileUtil, File } from '../../../src/utils/file/fileUtil';
 import { Logger } from '../../../src/utils/logger';
 import { StorageUtil } from '../../../src/utils/storageUtil';
 import { FileDiffUtil } from '../../../src/utils/lwcparser/fileutils/FileDiffUtil';
+import { initializeDataModelService } from '../../../src/utils/dataModelService';
+import { OmnistudioOrgDetails } from '../../../src/utils/orgUtils';
 import {
   OmniScriptStorage,
   MigrationStorage,
@@ -82,6 +84,16 @@ describe('ExperienceSiteMigration', () => {
   };
 
   beforeEach(() => {
+    // Initialize data model service for tests (set to CUSTOM data model by default)
+    const mockOrgDetails: OmnistudioOrgDetails = {
+      packageDetails: { version: '1.0.0', namespace: 'omnistudio' },
+      omniStudioOrgPermissionEnabled: false, // This makes IS_STANDARD_DATA_MODEL = false
+      orgDetails: { Name: 'Test Org', Id: '00D000000000000' },
+      dataModel: 'Custom',
+      hasValidNamespace: true,
+    };
+    initializeDataModelService(mockOrgDetails);
+
     org = {} as unknown as Org;
 
     // Mock Messages
@@ -244,6 +256,7 @@ describe('ExperienceSiteMigration', () => {
       // Arrange
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
 
@@ -309,6 +322,7 @@ describe('ExperienceSiteMigration', () => {
       // Arrange
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
       storageUtilStub.returns(mockStorage);
@@ -327,6 +341,7 @@ describe('ExperienceSiteMigration', () => {
       // Arrange
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
 
@@ -354,6 +369,7 @@ describe('ExperienceSiteMigration', () => {
       // Arrange
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
 
@@ -385,6 +401,7 @@ describe('ExperienceSiteMigration', () => {
 
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
       storageUtilStub.returns(mockStorage);
@@ -407,6 +424,7 @@ describe('ExperienceSiteMigration', () => {
 
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
       storageUtilStub.returns(mockStorage);
@@ -424,6 +442,7 @@ describe('ExperienceSiteMigration', () => {
       // Arrange
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
 
@@ -483,6 +502,7 @@ describe('ExperienceSiteMigration', () => {
       // Arrange
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
 
@@ -511,6 +531,7 @@ describe('ExperienceSiteMigration', () => {
       // Arrange
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
       // Empty storage - no data for the target
@@ -530,6 +551,7 @@ describe('ExperienceSiteMigration', () => {
       // Arrange
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
 
@@ -558,6 +580,7 @@ describe('ExperienceSiteMigration', () => {
       // Arrange
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
 
@@ -586,6 +609,7 @@ describe('ExperienceSiteMigration', () => {
       // Arrange
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
       storageUtilStub.returns(mockStorage);
@@ -604,6 +628,7 @@ describe('ExperienceSiteMigration', () => {
       // Arrange
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
 
@@ -663,6 +688,7 @@ describe('ExperienceSiteMigration', () => {
       // Arrange
       const emptyStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
       storageUtilStub.returns(emptyStorage);

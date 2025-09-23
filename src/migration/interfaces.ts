@@ -175,8 +175,15 @@ export interface ExpSiteComponentAttributes {
   richTextValue?: string;
 }
 
+export interface OmniScriptStandardKey {
+  type: string;
+  subtype: string;
+  language: string;
+}
+
 export interface MigrationStorage {
   osStorage: Map<string, OmniScriptStorage>;
+  osStandardStorage: Map<string, OmniScriptStorage>; // String keys (serialized OmniScriptStandardKey)
   fcStorage: Map<string, FlexcardStorage>;
 }
 

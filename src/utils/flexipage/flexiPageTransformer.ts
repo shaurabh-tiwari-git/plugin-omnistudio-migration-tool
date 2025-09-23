@@ -11,8 +11,10 @@ import {
   FlexiComponentInstanceProperty,
   OmniScriptStorage,
   FlexcardStorage,
+  OmniScriptStandardKey,
 } from '../../migration/interfaces';
 import { StorageUtil } from '../storageUtil';
+import { isStandardDataModel } from '../dataModelService';
 
 /** Component name to look for during transformation */
 const lookupComponentName = 'vlocityLWCOmniWrapper';
@@ -60,34 +62,78 @@ export function transformFlexipageBundle(
       continue;
     }
     for (const item of region.itemInstances) {
-      if (
-        item?.componentInstance?.componentName?.split(':')[0] !== namespace ||
-        item?.componentInstance?.componentName?.split(':')[1] !== lookupComponentName
-      ) {
-        continue;
-      }
+      const componentName = item?.componentInstance?.componentName;
 
-      const typeSubtypeLanguage = item.componentInstance?.componentInstanceProperties?.find?.(
-        (prop) => prop.name === 'target'
-      )?.value;
-      if (!typeSubtypeLanguage) {
-        throw new TargetPropertyNotFoundError(item.componentInstance.componentName);
+      // Handle legacy vlocityLWCOmniWrapper components
+      if (componentName?.split(':')[0] === namespace && componentName?.split(':')[1] === lookupComponentName) {
+        const typeSubtypeLanguage = item.componentInstance?.componentInstanceProperties?.find?.(
+          (prop) => prop.name === 'target'
+        )?.value;
+        if (!typeSubtypeLanguage) {
+          throw new TargetPropertyNotFoundError(item.componentInstance.componentName);
+        }
+        const newPropsWithComponentNameAndIdentifier = createNewProps(
+          typeSubtypeLanguage.split(':')[1],
+          namespace,
+          mode,
+          item.componentInstance.componentInstanceProperties
+        );
+        const newProps = newPropsWithComponentNameAndIdentifier.props;
+        const targetComponentName = newPropsWithComponentNameAndIdentifier.componentName;
+        const targetIdentifier = newPropsWithComponentNameAndIdentifier.identifier;
+        changes = true;
+        item.componentInstance.componentInstanceProperties = Object.entries(newProps).map(
+          ([key, value]: [string, string]) => ({ name: key, value })
+        );
+        item.componentInstance.componentName = targetComponentName;
+        item.componentInstance.identifier = targetIdentifier;
       }
-      const newPropsWithComponentNameAndIdentifier = createNewProps(
-        typeSubtypeLanguage.split(':')[1],
-        namespace,
-        mode,
-        item.componentInstance.componentInstanceProperties
-      );
-      const newProps = newPropsWithComponentNameAndIdentifier.props;
-      const targetComponentName = newPropsWithComponentNameAndIdentifier.componentName;
-      const targetIdentifier = newPropsWithComponentNameAndIdentifier.identifier;
-      changes = true;
-      item.componentInstance.componentInstanceProperties = Object.entries(newProps).map(
-        ([key, value]: [string, string]) => ({ name: key, value })
-      );
-      item.componentInstance.componentName = targetComponentName;
-      item.componentInstance.identifier = targetIdentifier;
+      // Handle standard data model components
+      else if (isStandardDataModel() && componentName === targetComponentNameOS) {
+        const currentType = item.componentInstance?.componentInstanceProperties?.find(
+          (prop) => prop.name === 'type'
+        )?.value;
+        const currentSubType = item.componentInstance?.componentInstanceProperties?.find(
+          (prop) => prop.name === 'subType'
+        )?.value;
+        const currentLanguage = item.componentInstance?.componentInstanceProperties?.find(
+          (prop) => prop.name === 'language'
+        )?.value;
+
+        if (!currentType || !currentSubType || !currentLanguage) {
+          continue;
+        }
+
+        const newProps = createNewPropsForStandardOmniScript(currentType, currentSubType, currentLanguage, mode);
+        changes = true;
+
+        // Update only the specific properties that need to be changed
+        Object.entries(newProps).forEach(([key, value]) => {
+          const existingProp = item.componentInstance.componentInstanceProperties.find((prop) => prop.name === key);
+          if (existingProp) {
+            existingProp.value = value;
+          }
+        });
+      } else if (isStandardDataModel() && componentName === targetComponentNameFlexCard) {
+        const currentFlexCardName = item.componentInstance?.componentInstanceProperties?.find(
+          (prop) => prop.name === 'flexcardName'
+        )?.value;
+
+        if (!currentFlexCardName) {
+          continue;
+        }
+
+        const newProps = createNewPropsForStandardFlexCard(currentFlexCardName, mode);
+        changes = true;
+
+        // Update only the specific properties that need to be changed
+        Object.entries(newProps).forEach(([key, value]) => {
+          const existingProp = item.componentInstance.componentInstanceProperties.find((prop) => prop.name === key);
+          if (existingProp) {
+            existingProp.value = value;
+          }
+        });
+      }
     }
   }
 
@@ -181,5 +227,72 @@ function createNewPropsForFlexCard(
     componentName: targetComponentNameFlexCard,
     identifier: `${targetIdentifierFlexCard}${fcSeq++}`,
     props: newProps,
+  };
+}
+
+/**
+ * Creates new properties for standard data model OmniScript components using osStandardStorage
+ */
+function createNewPropsForStandardOmniScript(
+  currentType: string,
+  currentSubType: string,
+  currentLanguage: string,
+  mode: 'assess' | 'migrate'
+): Record<string, string> {
+  // Get storage based on mode
+  const storage =
+    mode === 'assess' ? StorageUtil.getOmnistudioAssessmentStorage() : StorageUtil.getOmnistudioMigrationStorage();
+
+  // Create the OmniScriptStandardKey object for lookup in osStandardStorage
+  const lookupKey: OmniScriptStandardKey = {
+    type: currentType,
+    subtype: currentSubType,
+    language: currentLanguage,
+  };
+
+  // Look up in osStandardStorage using the object key
+  const targetDataFromStorage: OmniScriptStorage | undefined = StorageUtil.getStandardOmniScript(storage, lookupKey);
+
+  if (!targetDataFromStorage) {
+    throw new KeyNotFoundInStorageError(`${currentType}_${currentSubType}_${currentLanguage}`, 'Omniscript');
+  }
+
+  // Return the new properties
+  return {
+    type: targetDataFromStorage.type,
+    subType: targetDataFromStorage.subtype,
+    language: targetDataFromStorage.language,
+  };
+}
+
+/**
+ * Creates new properties for standard data model FlexCard components using fcStorage
+ */
+function createNewPropsForStandardFlexCard(
+  currentFlexCardName: string,
+  mode: 'assess' | 'migrate'
+): Record<string, string> {
+  // Get storage based on mode
+  const storage =
+    mode === 'assess' ? StorageUtil.getOmnistudioAssessmentStorage() : StorageUtil.getOmnistudioMigrationStorage();
+
+  // Look up in fcStorage
+  const targetDataFromStorage: FlexcardStorage | undefined = storage.fcStorage.get(currentFlexCardName.toLowerCase());
+
+  if (!targetDataFromStorage) {
+    throw new KeyNotFoundInStorageError(currentFlexCardName, 'Flexcard');
+  }
+
+  if (targetDataFromStorage.isDuplicate) {
+    throw new DuplicateKeyError(currentFlexCardName, 'Flexcard');
+  }
+
+  if (targetDataFromStorage.error) {
+    throw new Error(targetDataFromStorage.error.join('\n\n'));
+  }
+
+  // Return the new properties
+  return {
+    flexcardName: targetDataFromStorage.name,
   };
 }
