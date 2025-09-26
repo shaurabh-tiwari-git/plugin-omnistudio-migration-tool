@@ -94,7 +94,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       for (const file of fileArray) {
         progressBar.update(++progressCounter);
         if (file.ext !== '.json') {
-          Logger.logVerbose(this.messages.getMessage('skipNonJsonFile ', [file.name]));
+          Logger.logVerbose(this.messages.getMessage('skipNonJsonFile', [file.name]));
           continue;
         }
         try {
