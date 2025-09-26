@@ -4,6 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable camelcase */
 import * as fs from 'fs';
+import * as path from 'path';
 import { expect } from '@salesforce/command/lib/test';
 import { Connection, Messages, Org } from '@salesforce/core';
 import { UX } from '@salesforce/command';
@@ -124,6 +125,14 @@ describe('PostMigrate', () => {
     getMessageStub
       .withArgs('deploymentNonRetryableError')
       .returns('Deployment failed with non-retryable error: %s. Please review and fix the issue manually.');
+    getMessageStub
+      .withArgs('omniscriptPackageDeploymentFailedReturnedFalse')
+      .returns(
+        'Omniscript package deployment failed - deployment returned false. This may be due to missing package, permissions, or deployment timeout.'
+      );
+    getMessageStub
+      .withArgs('omniscriptPackageDeploymentFailedWithMessage')
+      .callsFake((key: string, args: string[]) => `Omniscript package deployment failed: ${args[0]}`);
     // Other messages referenced by implementation
     getMessageStub.withArgs('checkingStandardDesignerStatus', [testNamespace]).returns('Checking designer status');
     getMessageStub.withArgs('standardDesignerAlreadyEnabled', [testNamespace]).returns('Designer already enabled');
@@ -199,16 +208,31 @@ describe('PostMigrate', () => {
       // Use existing stubs from beforeEach setup
       const deployLogVerboseStub = Logger.logVerbose as sinon.SinonStub;
       const actionItems: string[] = [];
+      // Create a temporary package.xml file to ensure fs.existsSync returns true
+      const tempPackageXml = path.join(process.cwd(), 'package.xml');
+      fs.writeFileSync(tempPackageXml, '<?xml version="1.0" encoding="UTF-8"?><Package></Package>');
+
+      // Clean up after test
+      const cleanup = () => {
+        if (fs.existsSync(tempPackageXml)) {
+          fs.unlinkSync(tempPackageXml);
+        }
+      };
 
       // Act
       await postMigrate.deploy(actionItems);
 
-      // Assert
-      expect(deployerStub.called).to.be.true;
-      expect(logErrorStub.called).to.be.true;
-      expect(deployLogVerboseStub.called).to.be.true;
-      expect(actionItems.length).to.be.greaterThan(0);
-      expect(actionItems[0]).to.include('Omniscript customization package deployment failed');
+      try {
+        // Assert
+        expect(deployerStub.called).to.be.true;
+        expect(logErrorStub.called).to.be.true;
+        expect(deployLogVerboseStub.called).to.be.true;
+        expect(actionItems.length).to.be.greaterThan(0);
+        expect(actionItems[0]).to.include('Omniscript customization package deployment failed');
+      } finally {
+        // Always clean up the temporary file
+        cleanup();
+      }
     });
 
     it('should create Deployer with correct parameters', () => {

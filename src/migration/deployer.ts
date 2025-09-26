@@ -67,10 +67,11 @@ export class Deployer {
       if (success) {
         Logger.log(this.messages.getMessage('omniscriptPackageIntegrated'));
       } else {
-        const errorMsg =
-          'Omniscript package deployment failed - deployment returned false. This may be due to missing package, permissions, or deployment timeout.';
+        const errorMsg = this.messages.getMessage('omniscriptPackageDeploymentFailedReturnedFalse');
         Logger.error(errorMsg);
-        throw new OmniscriptPackageDeploymentError('Omniscript package deployment failed: ' + errorMsg);
+        throw new OmniscriptPackageDeploymentError(
+          this.messages.getMessage('omniscriptPackageDeploymentFailedWithMessage', [errorMsg])
+        );
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -80,7 +81,9 @@ export class Deployer {
       if (error instanceof OmniscriptPackageDeploymentError) {
         throw error;
       } else {
-        throw new OmniscriptPackageDeploymentError('Omniscript package deployment failed: ' + errorMessage);
+        throw new OmniscriptPackageDeploymentError(
+          this.messages.getMessage('omniscriptPackageDeploymentFailedWithMessage', [errorMessage])
+        );
       }
     }
   }

@@ -59,6 +59,14 @@ describe('Deployer', () => {
     getMessageStub
       .withArgs('deploymentNonRetryableError')
       .returns('Deployment failed with non-retryable error: %s. Please review and fix the issue manually.');
+    getMessageStub
+      .withArgs('omniscriptPackageDeploymentFailedReturnedFalse')
+      .returns(
+        'Omniscript package deployment failed - deployment returned false. This may be due to missing package, permissions, or deployment timeout.'
+      );
+    getMessageStub
+      .withArgs('omniscriptPackageDeploymentFailedWithMessage')
+      .callsFake((key: string, args: string[]) => `Omniscript package deployment failed: ${args[0]}`);
 
     // Mock Logger
     sandbox.stub(Logger, 'logVerbose');

@@ -1,4 +1,4 @@
-# OmniStudio Migration Assistant
+# Omnistudio Migration Assistant
 
 The Omnistudio Migration Assistant is a command-line interface (CLI) plugin that you install via Salesforce CLI. It creates records for your omnistudio components on the Salesforce standard objects.
 
