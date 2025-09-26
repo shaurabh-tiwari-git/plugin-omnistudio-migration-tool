@@ -78,4 +78,36 @@ export class OmnistudioSettingsPrefManager {
     }
     return null; // Already enabled, no action needed
   }
+
+  // OmniStudio Metadata methods
+  public async isOmniStudioSettingsMetadataEnabled(): Promise<boolean> {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const result = (await this.connection.metadata.read('OmniStudioSettings', ['OmniStudio'])) as unknown;
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const metadata = result as MetadataInfo;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      return metadata?.enableOmniStudioMetadata === 'true' || false;
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      Logger.error(this.messages.getMessage('errorCheckingOmniStudioMetadata', [errMsg]));
+      return false;
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public async enableOmniStudioSettingsMetadata(): Promise<any> {
+    const isMetadataEnabled = await this.isOmniStudioSettingsMetadataEnabled();
+    if (isMetadataEnabled) {
+      return null;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return await this.connection.metadata.update('OmniStudioSettings', [
+      {
+        fullName: 'OmniStudio',
+        enableOmniStudioMetadata: 'true',
+      } as MetadataInfo,
+    ]);
+  }
 }

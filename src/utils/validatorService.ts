@@ -2,6 +2,7 @@ import { Connection, Messages } from '@salesforce/core';
 import { Logger } from '../utils/logger';
 import { OmnistudioOrgDetails } from './orgUtils';
 import { isStandardDataModel } from './dataModelService';
+import { OmnistudioSettingsPrefManager } from './OmnistudioSettingsPrefManager';
 
 export class ValidatorService {
   private readonly messages: Messages;
@@ -20,9 +21,16 @@ export class ValidatorService {
     }
 
     // If data model is standard no need to check for the licences
-    // TODO: Add metadata toggle validation
     const isStandard = isStandardDataModel();
     if (isStandard) {
+      // Check if OmniStudio Metadata is already enabled for standard data model
+      const omniStudioSettingsPrefManager = new OmnistudioSettingsPrefManager(this.connection, this.messages);
+      const isOmniStudioSettingsMetadataEnabled =
+        await omniStudioSettingsPrefManager.isOmniStudioSettingsMetadataEnabled();
+      if (isOmniStudioSettingsMetadataEnabled) {
+        Logger.error(this.messages.getMessage('omniStudioSettingsMetadataAlreadyEnabled'));
+        return false;
+      }
       return true;
     }
 

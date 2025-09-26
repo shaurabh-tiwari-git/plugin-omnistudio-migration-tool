@@ -12,6 +12,7 @@ import { BaseMigrationTool } from './base';
 import { Deployer } from './deployer';
 import * as fs from 'fs';
 import * as path from 'path';
+import { isStandardDataModel } from '../utils/dataModelService';
 
 export class PostMigrate extends BaseMigrationTool {
   private readonly org: Org;
@@ -47,6 +48,9 @@ export class PostMigrate extends BaseMigrationTool {
     const designerOk = await this.enableDesignersToUseStandardDataModelIfNeeded(namespaceToModify, userActionMessage);
     if (designerOk) {
       await this.enableStandardRuntimeIfNeeded(userActionMessage);
+    }
+    if (isStandardDataModel()) {
+      await this.enableOmniStudioSettingsMetadataIfNeeded(userActionMessage);
     }
     return userActionMessage;
   }
@@ -122,6 +126,44 @@ export class PostMigrate extends BaseMigrationTool {
       const errMsg = error instanceof Error ? error.message : String(error);
       Logger.error(this.messages.getMessage('exceptionEnablingStandardRuntime', [errMsg]));
       userActionMessage.push(this.messages.getMessage('manuallyEnableStandardRuntime'));
+    }
+  }
+
+  private async enableOmniStudioSettingsMetadataIfNeeded(userActionMessage: string[]): Promise<void> {
+    try {
+      Logger.logVerbose(this.messages.getMessage('checkingOmniStudioSettingsMetadataStatus'));
+      const result = await this.settingsPrefManager.enableOmniStudioSettingsMetadata();
+      if (result === null) {
+        Logger.logVerbose(this.messages.getMessage('omniStudioSettingsMetadataAlreadyEnabled'));
+      } else if (result?.success === true) {
+        /* The API call returns true if the metadata enabling call was successful.
+        But it takes time for the checks to run and the metadata to be enabled or reverted back.
+        We need to wait and check for it to be enabled or reverted back.
+        */
+        const maxAttempts = 12;
+        let attempts = 0;
+        while (attempts < maxAttempts) {
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+          const isMetadataEnabled = await this.settingsPrefManager.isOmniStudioSettingsMetadataEnabled();
+          if (isMetadataEnabled) {
+            Logger.logVerbose(this.messages.getMessage('omniStudioSettingsMetadataEnabled'));
+            break;
+          }
+          attempts++;
+        }
+        if (attempts === maxAttempts) {
+          Logger.error(this.messages.getMessage('errorEnablingOmniStudioSettingsMetadata', ['Unknown error']));
+          userActionMessage.push(this.messages.getMessage('manuallyEnableOmniStudioSettingsMetadata'));
+        }
+      } else {
+        const errors = result?.errors?.join(', ') || 'Unknown error';
+        Logger.error(this.messages.getMessage('errorEnablingOmniStudioSettingsMetadata', [errors]));
+        userActionMessage.push(this.messages.getMessage('manuallyEnableOmniStudioSettingsMetadata'));
+      }
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      Logger.error(this.messages.getMessage('errorEnablingOmniStudioSettingsMetadata', [errMsg]));
+      userActionMessage.push(this.messages.getMessage('manuallyEnableOmniStudioSettingsMetadata'));
     }
   }
 

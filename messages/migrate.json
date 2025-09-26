@@ -253,5 +253,13 @@
   "errorCheckingMetadataTables": "Error checking Omnistudio metadata tables: %s",
   "metadataCleanupCompleted": "The Omnistudio metadata table cleanup process is complete. Total records cleaned: %s",
   "metadataCleanupConsentMessage": "By proceeding further, you hereby consent to clean up the Omnistudio metadata tables. Proceeding with the cleanup process will permanently delete all records from OmniUiCardConfig, OmniScriptConfig, OmniIntegrationProcConfig, and OmniDataTransformConfig tables. Do you want to proceed? [y/n]",
-  "metadataCleanupConsentNotGiven": "You’ve not consented to proceed with the Omnistudio metadata table cleanup. We’ll not be able to proceed with the migration."
+  "metadataCleanupConsentNotGiven": "You’ve not consented to proceed with the Omnistudio metadata table cleanup. We’ll not be able to proceed with the migration.",
+  "omniStudioMetadataEnableConsentMessage": "As part of the migration process, the OmniStudio Metadata will be enabled. Once it is enabled, it can't be disabled. Do you want to proceed? [y/n]",
+  "errorCheckingOmniStudioMetadata": "We couldn't check whether the Omnistudio Metadata is enabled: %s. Try again later.",
+  "omniStudioSettingsMetadataAlreadyEnabled": "OmniStudio Metadata is already enabled with standard data model. No need for migration.",
+  "omniStudioSettingsMetadataEnabled": "OmniStudio Metadata is enabled with standard data model.",
+  "errorEnablingOmniStudioSettingsMetadata": "We couldn't enable the OmniStudio Metadata: %s. Please enable it manually.",
+  "manuallyEnableOmniStudioSettingsMetadata": "Please manually enable the OmniStudio Metadata in your org's OmniStudio Settings.",
+  "omniStudioMetadataEnableConsentNotGiven": "You’ve not consented to proceed with the OmniStudio Metadata enablement. We’ll not be able to proceed with the migration.",
+  "checkingOmniStudioSettingsMetadataStatus": "Checking OmniStudio Metadata status..."
 }
