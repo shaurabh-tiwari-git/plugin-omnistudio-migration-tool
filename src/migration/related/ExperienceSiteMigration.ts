@@ -257,7 +257,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
 
     if (this.IS_STANDARD_DATA_MODEL) {
       // Check for new LWC components that need reference updates
-      if (this.isOmnistudioComponent(component.componentName)) {
+      if (this.isOmnistudioStandardWrapper(component.componentName)) {
         Logger.logVerbose(`Found Omnistudio component: ${component.componentName}`);
         experienceSiteAssessmentInfo.hasOmnistudioContent = true;
 
@@ -380,7 +380,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
   /**
    * Check if component is an Omnistudio LWC component
    */
-  private isOmnistudioComponent(componentName: string): boolean {
+  private isOmnistudioStandardWrapper(componentName: string): boolean {
     return (
       componentName === TARGET_COMPONENT_NAME_OS ||
       componentName === TARGET_COMPONENT_NAME_FC ||
@@ -424,6 +424,11 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     const currentLanguage = attributes['language'] as string;
 
     if (!currentType || !currentSubType || !currentLanguage) {
+      const warningMsg = this.messages.getMessage('manualInterventionForExperienceSiteConfiguration', [
+        `${currentType}_${currentSubType}_${currentLanguage}`,
+      ]);
+      experienceSiteAssessmentInfo.warnings.push(warningMsg);
+      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs Manual Intervention' : 'Skipped';
       return;
     }
 

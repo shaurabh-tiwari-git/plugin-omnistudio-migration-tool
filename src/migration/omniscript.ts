@@ -663,7 +663,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           const keyObject: OmniScriptStandardKey = {
             type: nameMapping.oldType,
             subtype: nameMapping.oldSubtype,
-            language: this.cleanLanguageName(nameMapping.oldLanguage),
+            language: nameMapping.oldLanguage,
           };
           StorageUtil.addStandardOmniScriptToStorage(storage, keyObject, value);
         }
@@ -1191,7 +1191,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
             const keyObject: OmniScriptStandardKey = {
               type: oldrecord[this.getFieldKey('Type__c')],
               subtype: oldrecord[this.getFieldKey('SubType__c')],
-              language: this.cleanLanguageName(oldrecord[this.getFieldKey('Language__c')]),
+              language: oldrecord[this.getFieldKey('Language__c')],
             };
             StorageUtil.addStandardOmniScriptToStorage(storage, keyObject, value);
           }

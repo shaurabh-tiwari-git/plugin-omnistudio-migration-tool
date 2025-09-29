@@ -43,13 +43,6 @@ export class StorageUtil {
   }
 
   /**
-   * Serialize OmniScriptStandardKey to string for Map storage
-   */
-  public static serializeOmniScriptKey(key: OmniScriptStandardKey): string {
-    return JSON.stringify(key);
-  }
-
-  /**
    * Add Standard OmniScript to storage
    */
   public static addStandardOmniScriptToStorage(
@@ -79,6 +72,13 @@ export class StorageUtil {
 
   public static printAssessmentStorage(): void {
     this.printStorage(this.omnistudioAssessmentStorage);
+  }
+
+  /**
+   * Serialize OmniScriptStandardKey to string for Map storage
+   */
+  private static serializeOmniScriptKey(key: OmniScriptStandardKey): string {
+    return JSON.stringify(key);
   }
 
   private static printStorage(storage: MigrationStorage): void {
