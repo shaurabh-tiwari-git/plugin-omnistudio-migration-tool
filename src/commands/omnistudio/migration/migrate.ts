@@ -31,7 +31,11 @@ import { YES_SHORT, YES_LONG, NO_SHORT, NO_LONG } from '../../../utils/projectPa
 import { PostMigrate } from '../../../migration/postMigrate';
 import { PreMigrate } from '../../../migration/premigrate';
 import { GlobalAutoNumberMigrationTool } from '../../../migration/globalautonumber';
-import { initializeDataModelService, isStandardDataModel } from '../../../utils/dataModelService';
+import {
+  getFieldKeyForOmniscript,
+  initializeDataModelService,
+  isStandardDataModel,
+} from '../../../utils/dataModelService';
 import { NameMappingRegistry } from '../../../migration/NameMappingRegistry';
 import { ValidatorService } from '../../../utils/validatorService';
 
@@ -554,7 +558,14 @@ export default class Migrate extends OmniStudioBaseCommand {
    * Query DataMappers from the org
    */
   private async queryDataMappers(conn: any, namespace: string): Promise<any[]> {
-    const query = `SELECT Id, Name FROM ${namespace}__DRBundle__c WHERE ${namespace}__Type__c != 'Migration'`;
+    let query;
+
+    if (isStandardDataModel()) {
+      query = "SELECT Id, Name FROM OmniDataTransform WHERE Type != 'Migration'";
+    } else {
+      query = `SELECT Id, Name FROM ${namespace}__DRBundle__c WHERE ${namespace}__Type__c != 'Migration'`;
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const result = await conn.query(query);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -566,8 +577,14 @@ export default class Migrate extends OmniStudioBaseCommand {
    */
   private async queryOmniScripts(conn: any, namespace: string, isProcedure: boolean): Promise<any[]> {
     const procedureFilter = isProcedure ? 'true' : 'false';
+    let query;
+
     // Query all OmniScripts (both LWC and Angular)
-    const query = `SELECT Id, Name, ${namespace}__Type__c, ${namespace}__SubType__c, ${namespace}__Language__c, ${namespace}__IsProcedure__c, ${namespace}__IsLwcEnabled__c FROM ${namespace}__OmniScript__c WHERE ${namespace}__IsProcedure__c = ${procedureFilter} and ${namespace}__IsActive__c = true`;
+    if (isStandardDataModel()) {
+      query = `SELECT Id, Name, Type, SubType, Language, IsIntegrationProcedure, IsWebCompEnabled FROM OmniProcess WHERE IsIntegrationProcedure = ${procedureFilter} and IsActive = true`;
+    } else {
+      query = `SELECT Id, Name, ${namespace}__Type__c, ${namespace}__SubType__c, ${namespace}__Language__c, ${namespace}__IsProcedure__c, ${namespace}__IsLwcEnabled__c FROM ${namespace}__OmniScript__c WHERE ${namespace}__IsProcedure__c = ${procedureFilter} and ${namespace}__IsActive__c = true`;
+    }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const result = await conn.query(query);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -582,7 +599,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     const angular: any[] = [];
 
     for (const omniscript of omniscripts) {
-      const isLwcEnabled = omniscript[`${namespace}__IsLwcEnabled__c`];
+      const isLwcEnabled = omniscript[getFieldKeyForOmniscript(namespace, 'IsLwcEnabled__c')];
       if (isLwcEnabled) {
         lwc.push(omniscript);
       } else {
@@ -597,7 +614,13 @@ export default class Migrate extends OmniStudioBaseCommand {
    * Query FlexCards from the org
    */
   private async queryFlexCards(conn: any, namespace: string): Promise<any[]> {
-    const query = `SELECT Id, Name FROM ${namespace}__VlocityCard__c WHERE ${namespace}__CardType__c = 'flex' AND ${namespace}__Active__c = true`;
+    let query;
+    if (isStandardDataModel()) {
+      query = 'SELECT Id, Name FROM OmniUiCard WHERE IsActive = true';
+    } else {
+      query = `SELECT Id, Name FROM ${namespace}__VlocityCard__c WHERE ${namespace}__CardType__c = 'flex' AND ${namespace}__Active__c = true`;
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const result = await conn.query(query);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return

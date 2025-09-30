@@ -1338,10 +1338,9 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
             elementRecord['Id'] = standardElementId;
             elementRecord['OmniProcessId'] = standardOmniProcessId;
-            elementsUploadResponse[standardElementId] = response;
+            elementsUploadResponse.set(standardElementId, response);
           }
         }
-
         // Keep appending upload Info for Elements at each level
         elementsUploadInfo = new Map([
           ...Array.from(elementsUploadInfo.entries()),
