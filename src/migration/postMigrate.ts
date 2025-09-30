@@ -147,8 +147,9 @@ export class PostMigrate extends BaseMigrationTool {
         while (attempts < maxAttempts) {
           await new Promise((resolve) => setTimeout(resolve, 20000));
           const metadataService = new OmniStudioMetadataCleanupService(this.connection, this.messages);
-          const isMetadataEnabled = await metadataService.hasCleanOmniStudioMetadataTables(); //Check is the config tables are populated or not.
-          if (!isMetadataEnabled) {
+          const isConfigTablesEmpty = await metadataService.hasCleanOmniStudioMetadataTables(); //Check is the config tables are populated or not.
+          if (!isConfigTablesEmpty) {
+            // If the config tables are populated, means the metadata is enabled.
             Logger.log(this.messages.getMessage('omniStudioSettingsMetadataEnabled'));
             break;
           }
