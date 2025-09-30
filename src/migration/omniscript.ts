@@ -19,6 +19,7 @@ import {
   MigrationResult,
   MigrationStorage,
   MigrationTool,
+  OmniScriptStandardKey,
   OmniScriptStorage,
   TransformData,
   UploadRecordResult,
@@ -657,6 +658,16 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           nameMapping.oldLanguage
         )}`;
 
+        if (this.IS_STANDARD_DATA_MODEL) {
+          // Create object key for new storage format
+          const keyObject: OmniScriptStandardKey = {
+            type: nameMapping.oldType,
+            subtype: nameMapping.oldSubtype,
+            language: nameMapping.oldLanguage,
+          };
+          StorageUtil.addStandardOmniScriptToStorage(storage, keyObject, value);
+        }
+
         finalKey = finalKey.toLowerCase();
         if (storage.osStorage.has(finalKey)) {
           // Key already exists - handle accordingly
@@ -1174,6 +1185,16 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           let finalKey = `${oldrecord[this.getFieldKey('Type__c')]}${
             oldrecord[this.getFieldKey('SubType__c')]
           }${this.cleanLanguageName(oldrecord[this.getFieldKey('Language__c')])}`;
+
+          if (this.IS_STANDARD_DATA_MODEL) {
+            // Create object key for new storage format
+            const keyObject: OmniScriptStandardKey = {
+              type: oldrecord[this.getFieldKey('Type__c')],
+              subtype: oldrecord[this.getFieldKey('SubType__c')],
+              language: oldrecord[this.getFieldKey('Language__c')],
+            };
+            StorageUtil.addStandardOmniScriptToStorage(storage, keyObject, value);
+          }
 
           finalKey = finalKey.toLowerCase();
           if (storage.osStorage.has(finalKey)) {

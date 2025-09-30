@@ -1,27 +1,34 @@
-import { FlexcardStorage, MigrationStorage, OmniScriptStorage } from '../migration/interfaces';
+import { FlexcardStorage, MigrationStorage, OmniScriptStorage, OmniScriptStandardKey } from '../migration/interfaces';
 import { Logger } from './logger';
 
 export class StorageUtil {
   private static omnistudioMigrationStorage: MigrationStorage = {
     osStorage: new Map<string, OmniScriptStorage>(),
+    osStandardStorage: new Map<string, OmniScriptStorage>(),
     fcStorage: new Map<string, FlexcardStorage>(),
   };
 
   private static omnistudioAssessmentStorage: MigrationStorage = {
     osStorage: new Map<string, OmniScriptStorage>(),
+    osStandardStorage: new Map<string, OmniScriptStorage>(),
     fcStorage: new Map<string, FlexcardStorage>(),
   };
 
   public static getOmnistudioMigrationStorage(): MigrationStorage {
     if (this.omnistudioMigrationStorage === undefined) {
-      this.omnistudioAssessmentStorage = {
+      this.omnistudioMigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map<string, FlexcardStorage>(),
       };
     }
 
     if (this.omnistudioMigrationStorage.osStorage === undefined) {
       this.omnistudioMigrationStorage.osStorage = new Map<string, OmniScriptStorage>();
+    }
+
+    if (this.omnistudioMigrationStorage.osStandardStorage === undefined) {
+      this.omnistudioMigrationStorage.osStandardStorage = new Map<string, OmniScriptStorage>();
     }
 
     if (this.omnistudioMigrationStorage.fcStorage === undefined) {
@@ -35,12 +42,43 @@ export class StorageUtil {
     return this.omnistudioAssessmentStorage;
   }
 
+  /**
+   * Add Standard OmniScript to storage
+   */
+  public static addStandardOmniScriptToStorage(
+    storage: MigrationStorage,
+    keyObject: OmniScriptStandardKey,
+    value: OmniScriptStorage
+  ): void {
+    // Add to new object-based storage using serialized key
+    const serializedKey = this.serializeOmniScriptKey(keyObject);
+    storage.osStandardStorage.set(serializedKey, value);
+  }
+
+  /**
+   * Get Standard OmniScript from object-based storage using OmniScriptStandardKey
+   */
+  public static getStandardOmniScript(
+    storage: MigrationStorage,
+    key: OmniScriptStandardKey
+  ): OmniScriptStorage | undefined {
+    const serializedKey = this.serializeOmniScriptKey(key);
+    return storage.osStandardStorage.get(serializedKey);
+  }
+
   public static printMigrationStorage(): void {
     this.printStorage(this.omnistudioMigrationStorage);
   }
 
   public static printAssessmentStorage(): void {
     this.printStorage(this.omnistudioAssessmentStorage);
+  }
+
+  /**
+   * Serialize OmniScriptStandardKey to string for Map storage
+   */
+  private static serializeOmniScriptKey(key: OmniScriptStandardKey): string {
+    return JSON.stringify(key);
   }
 
   private static printStorage(storage: MigrationStorage): void {

@@ -6,6 +6,8 @@ import { FileUtil, File } from '../../../src/utils/file/fileUtil';
 import { Logger } from '../../../src/utils/logger';
 import { StorageUtil } from '../../../src/utils/storageUtil';
 import { FileDiffUtil } from '../../../src/utils/lwcparser/fileutils/FileDiffUtil';
+import { initializeDataModelService } from '../../../src/utils/dataModelService';
+import { OmnistudioOrgDetails } from '../../../src/utils/orgUtils';
 import {
   OmniScriptStorage,
   MigrationStorage,
@@ -82,6 +84,16 @@ describe('ExperienceSiteMigration', () => {
   };
 
   beforeEach(() => {
+    // Initialize data model service for tests (set to CUSTOM data model by default)
+    const mockOrgDetails: OmnistudioOrgDetails = {
+      packageDetails: { version: '1.0.0', namespace: 'omnistudio' },
+      omniStudioOrgPermissionEnabled: false, // This makes IS_STANDARD_DATA_MODEL = false
+      orgDetails: { Name: 'Test Org', Id: '00D000000000000' },
+      dataModel: 'Custom',
+      hasValidNamespace: true,
+    };
+    initializeDataModelService(mockOrgDetails);
+
     org = {} as unknown as Org;
 
     // Mock Messages
@@ -104,6 +116,11 @@ describe('ExperienceSiteMigration', () => {
     getMessageStub
       .withArgs('emptyTargetData')
       .returns('The Target Name is empty. Check your Experience Cloud site configuration');
+    getMessageStub
+      .withArgs('manualInterventionForExperienceSiteConfiguration', sinon.match.any)
+      .callsFake((key: string, args: string[]) => {
+        return `${args[0]} needs manual intervention for configuration`;
+      });
     getMessageStub.returns('Mock message'); // fallback for any other message keys
 
     mockMessages = {
@@ -244,6 +261,7 @@ describe('ExperienceSiteMigration', () => {
       // Arrange
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
 
@@ -309,6 +327,7 @@ describe('ExperienceSiteMigration', () => {
       // Arrange
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
       storageUtilStub.returns(mockStorage);
@@ -327,6 +346,7 @@ describe('ExperienceSiteMigration', () => {
       // Arrange
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
 
@@ -354,6 +374,7 @@ describe('ExperienceSiteMigration', () => {
       // Arrange
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
 
@@ -385,6 +406,7 @@ describe('ExperienceSiteMigration', () => {
 
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
       storageUtilStub.returns(mockStorage);
@@ -407,6 +429,7 @@ describe('ExperienceSiteMigration', () => {
 
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
       storageUtilStub.returns(mockStorage);
@@ -424,6 +447,7 @@ describe('ExperienceSiteMigration', () => {
       // Arrange
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
 
@@ -483,6 +507,7 @@ describe('ExperienceSiteMigration', () => {
       // Arrange
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
 
@@ -511,6 +536,7 @@ describe('ExperienceSiteMigration', () => {
       // Arrange
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
       // Empty storage - no data for the target
@@ -530,6 +556,7 @@ describe('ExperienceSiteMigration', () => {
       // Arrange
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
 
@@ -558,6 +585,7 @@ describe('ExperienceSiteMigration', () => {
       // Arrange
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
 
@@ -586,6 +614,7 @@ describe('ExperienceSiteMigration', () => {
       // Arrange
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
       storageUtilStub.returns(mockStorage);
@@ -604,6 +633,7 @@ describe('ExperienceSiteMigration', () => {
       // Arrange
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
 
@@ -663,6 +693,7 @@ describe('ExperienceSiteMigration', () => {
       // Arrange
       const emptyStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
         fcStorage: new Map(),
       };
       storageUtilStub.returns(emptyStorage);
@@ -676,6 +707,213 @@ describe('ExperienceSiteMigration', () => {
       expect(result.warnings).to.have.length(1);
       expect(result.warnings[0]).to.include('needs manual intervention');
       expect(result.status).to.equal('Needs Manual Intervention');
+    });
+  });
+
+  describe('Standard Data Model Tests', () => {
+    let mockFile: File;
+    let fsReadStub: sinon.SinonStub;
+    let fsWriteStub: sinon.SinonStub;
+    let storageUtilStub: sinon.SinonStub;
+    let standardDataModelExperienceSiteMigration: ExperienceSiteMigration;
+
+    beforeEach(() => {
+      // Initialize data model service for standard data model tests
+      const mockOrgDetails: OmnistudioOrgDetails = {
+        packageDetails: { version: '1.0.0', namespace: 'omnistudio' },
+        omniStudioOrgPermissionEnabled: true, // This makes IS_STANDARD_DATA_MODEL = true
+        orgDetails: { Name: 'Test Org', Id: '00D000000000000' },
+        dataModel: 'Standard',
+        hasValidNamespace: true,
+      };
+      initializeDataModelService(mockOrgDetails);
+
+      // Create a new instance after initializing the data model service
+      standardDataModelExperienceSiteMigration = new ExperienceSiteMigration(
+        testProjectPath,
+        testNamespace,
+        org,
+        mockMessages
+      );
+
+      mockFile = {
+        name: 'standard-test.json',
+        location: '/test/path/standard-test.json',
+        ext: '.json',
+      };
+
+      // Stub fs methods
+      fsReadStub = sinon.stub();
+      fsWriteStub = sinon.stub();
+      // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+      sinon.stub(require('fs'), 'readFileSync').value(fsReadStub);
+      // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+      sinon.stub(require('fs'), 'writeFileSync').value(fsWriteStub);
+
+      storageUtilStub = sinon.stub(StorageUtil, 'getOmnistudioMigrationStorage');
+      sinon.stub(FileDiffUtil.prototype, 'getFileDiff').returns([]);
+    });
+
+    it('should process standard data model OmniScript component successfully', () => {
+      // Arrange
+      const standardOmniScriptJson = {
+        appPageId: '6cf4d1f4-c8b0-4643-be55-0f94edf517ea',
+        componentName: 'siteforce:sldsOneColLayout',
+        regions: [
+          {
+            components: [
+              {
+                componentAttributes: {
+                  type: 'TestType',
+                  subType: 'TestSubtype',
+                  language: 'English',
+                },
+                componentName: 'runtime_omnistudio:omniscript',
+                id: '00eea22e-5961-4bbb-af5f-2fa27b8d555f',
+                type: 'component',
+              },
+            ],
+            regionName: 'content',
+            type: 'region',
+          },
+        ],
+      };
+
+      const mockStorage: MigrationStorage = {
+        osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
+        fcStorage: new Map(),
+      };
+
+      const mockOSStandardStorage: OmniScriptStorage = {
+        type: 'UpdatedType',
+        subtype: 'UpdatedSubtype',
+        language: 'Spanish',
+        isDuplicate: false,
+        migrationSuccess: true,
+      };
+
+      mockStorage.osStandardStorage.set(
+        JSON.stringify({ type: 'TestType', subtype: 'TestSubtype', language: 'English' }),
+        mockOSStandardStorage
+      );
+      storageUtilStub.returns(mockStorage);
+      fsReadStub.returns(JSON.stringify(standardOmniScriptJson));
+
+      // Act
+      const result = standardDataModelExperienceSiteMigration.processExperienceSite(mockFile, Migrate);
+
+      // Assert
+      expect(result.hasOmnistudioContent).to.be.true;
+      expect(fsWriteStub.calledOnce).to.be.true;
+
+      // Verify the file content was updated
+      const writtenContent = fsWriteStub.firstCall.args[1];
+      const parsedContent = JSON.parse(writtenContent) as ExpSitePageJson;
+      const component = parsedContent.regions[0].components[0];
+
+      expect(component.componentName).to.equal('runtime_omnistudio:omniscript');
+      expect(component.componentAttributes.type).to.equal('UpdatedType');
+      expect(component.componentAttributes.subType).to.equal('UpdatedSubtype');
+      expect(component.componentAttributes.language).to.equal('Spanish');
+    });
+
+    it('should add warning when standard data model OmniScript has missing type attribute', () => {
+      // Arrange
+      const siteWithMissingType = {
+        appPageId: '6cf4d1f4-c8b0-4643-be55-0f94edf517ea',
+        componentName: 'siteforce:sldsOneColLayout',
+        regions: [
+          {
+            components: [
+              {
+                componentAttributes: {
+                  subType: 'TestSubtype',
+                  language: 'English',
+                  // Missing 'type' attribute
+                },
+                componentName: 'runtime_omnistudio:omniscript',
+                id: '00eea22e-5961-4bbb-af5f-2fa27b8d555f',
+                type: 'component',
+              },
+            ],
+            regionName: 'content',
+            type: 'region',
+          },
+        ],
+      };
+
+      const mockStorage: MigrationStorage = {
+        osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
+        fcStorage: new Map(),
+      };
+      storageUtilStub.returns(mockStorage);
+      fsReadStub.returns(JSON.stringify(siteWithMissingType));
+
+      // Act
+      const result = standardDataModelExperienceSiteMigration.processExperienceSite(mockFile, Migrate);
+
+      // Assert
+      expect(result.hasOmnistudioContent).to.be.true;
+      expect(result.warnings).to.have.length(1);
+      expect(result.warnings[0]).to.include('standard-test.json needs manual intervention for configuration');
+      expect(result.status).to.equal('Skipped');
+    });
+
+    it('should process standard data model FlexCard component successfully', () => {
+      // Arrange
+      const standardFlexCardJson = {
+        appPageId: '6cf4d1f4-c8b0-4643-be55-0f94edf517ea',
+        componentName: 'siteforce:sldsOneColLayout',
+        regions: [
+          {
+            components: [
+              {
+                componentAttributes: {
+                  flexcardName: 'TestFlexCard',
+                },
+                componentName: 'runtime_omnistudio:flexcard',
+                id: '00eea22e-5961-4bbb-af5f-2fa27b8d555f',
+                type: 'component',
+              },
+            ],
+            regionName: 'content',
+            type: 'region',
+          },
+        ],
+      };
+
+      const mockStorage: MigrationStorage = {
+        osStorage: new Map<string, OmniScriptStorage>(),
+        osStandardStorage: new Map<string, OmniScriptStorage>(),
+        fcStorage: new Map(),
+      };
+
+      const mockFlexCardStorage = {
+        name: 'UpdatedFlexCard',
+        isDuplicate: false,
+        migrationSuccess: true,
+      };
+
+      mockStorage.fcStorage.set('testflexcard', mockFlexCardStorage);
+      storageUtilStub.returns(mockStorage);
+      fsReadStub.returns(JSON.stringify(standardFlexCardJson));
+
+      // Act
+      const result = standardDataModelExperienceSiteMigration.processExperienceSite(mockFile, Migrate);
+
+      // Assert
+      expect(result.hasOmnistudioContent).to.be.true;
+      expect(fsWriteStub.calledOnce).to.be.true;
+
+      // Verify the file content was updated
+      const writtenContent = fsWriteStub.firstCall.args[1];
+      const parsedContent = JSON.parse(writtenContent) as ExpSitePageJson;
+      const component = parsedContent.regions[0].components[0];
+
+      expect(component.componentName).to.equal('runtime_omnistudio:flexcard');
+      expect(component.componentAttributes.flexcardName).to.equal('UpdatedFlexCard');
     });
   });
 });

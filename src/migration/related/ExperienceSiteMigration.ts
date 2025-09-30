@@ -9,6 +9,7 @@ import {
   ExpSiteComponent,
   ExpSiteComponentAttributes,
   MigrationStorage,
+  OmniScriptStandardKey,
   OmniScriptStorage,
   ExpSitePageJson,
   Storage,
@@ -19,12 +20,14 @@ import { FileDiffUtil } from '../../utils/lwcparser/fileutils/FileDiffUtil';
 import { ExperienceSiteAssessmentInfo, ExperienceSiteAssessmentPageInfo } from '../../utils';
 import { StorageUtil } from '../../utils/storageUtil';
 import { createProgressBar } from '../base';
+import { isStandardDataModel } from '../../utils/dataModelService';
 import { BaseRelatedObjectMigration } from './BaseRealtedObjectMigration';
 
 Messages.importMessagesDirectory(__dirname);
 
 const TARGET_COMPONENT_NAME_OS = 'runtime_omnistudio:omniscript';
 const TARGET_COMPONENT_NAME_FC = 'runtime_omnistudio:flexcard';
+const TARGET_COMPONENT_NAME_OS_EXP = 'runtime_omnistudio:omniscriptExperienceCloud';
 const FLEXCARD_PREFIX = 'cf';
 
 export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
@@ -32,6 +35,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
   private MIGRATE = 'Migrate';
   private ASSESS = 'Assess';
   private messages: Messages;
+  private IS_STANDARD_DATA_MODEL: boolean = isStandardDataModel();
 
   public constructor(projectPath: string, namespace: string, org: Org, messages: Messages) {
     super(projectPath, namespace, org);
@@ -235,6 +239,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       return;
     }
 
+    // Check for legacy wrapper component
     if (component.componentName === lookupComponentName) {
       Logger.logVerbose(this.messages.getMessage('omniWrapperFound'));
       experienceSiteAssessmentInfo.hasOmnistudioContent = true;
@@ -248,6 +253,18 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       );
 
       return;
+    }
+
+    if (this.IS_STANDARD_DATA_MODEL) {
+      // Check for new LWC components that need reference updates
+      if (this.isOmnistudioStandardWrapper(component.componentName)) {
+        Logger.logVerbose(`Found Omnistudio component: ${component.componentName}`);
+        experienceSiteAssessmentInfo.hasOmnistudioContent = true;
+
+        this.updateOmnistudioComponentReferences(component, experienceSiteAssessmentInfo, storage, type);
+
+        return;
+      }
     }
 
     const regionsInsideComponent: ExpSiteRegion[] = component.regions;
@@ -358,6 +375,111 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
 
   private shouldAddWarning(targetData: Storage): boolean {
     return targetData === undefined || targetData.migrationSuccess === false || targetData.isDuplicate === true;
+  }
+
+  /**
+   * Check if component is an Omnistudio LWC component
+   */
+  private isOmnistudioStandardWrapper(componentName: string): boolean {
+    return (
+      componentName === TARGET_COMPONENT_NAME_OS ||
+      componentName === TARGET_COMPONENT_NAME_FC ||
+      componentName === TARGET_COMPONENT_NAME_OS_EXP
+    );
+  }
+
+  /**
+   * Update references in Omnistudio LWC components
+   */
+  private updateOmnistudioComponentReferences(
+    component: ExpSiteComponent,
+    experienceSiteAssessmentInfo: ExperienceSiteAssessmentPageInfo,
+    storage: MigrationStorage,
+    type: string
+  ): void {
+    if (component === undefined || component.componentAttributes === undefined) {
+      return;
+    }
+    const componentName = component.componentName;
+    const attributes = component.componentAttributes;
+
+    if (componentName === TARGET_COMPONENT_NAME_OS || componentName === TARGET_COMPONENT_NAME_OS_EXP) {
+      this.updateOmniScriptComponentReferences(attributes, experienceSiteAssessmentInfo, storage, type);
+    } else if (componentName === TARGET_COMPONENT_NAME_FC) {
+      this.updateFlexCardComponentReferences(attributes, experienceSiteAssessmentInfo, storage, type);
+    }
+  }
+
+  /**
+   * Update OmniScript component references (for runtime_omnistudio:omniscript and runtime_omnistudio:omniscriptExperienceCloud)
+   */
+  private updateOmniScriptComponentReferences(
+    attributes: ExpSiteComponentAttributes,
+    experienceSiteAssessmentInfo: ExperienceSiteAssessmentPageInfo,
+    storage: MigrationStorage,
+    type: string
+  ): void {
+    const currentType = attributes['type'] as string;
+    const currentSubType = attributes['subType'] as string;
+    const currentLanguage = attributes['language'] as string;
+
+    if (!currentType || !currentSubType || !currentLanguage) {
+      const warningMsg = this.messages.getMessage('manualInterventionForExperienceSiteConfiguration', [
+        experienceSiteAssessmentInfo.name,
+      ]);
+      experienceSiteAssessmentInfo.warnings.push(warningMsg);
+      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs Manual Intervention' : 'Skipped';
+      return;
+    }
+
+    // Create the OmniScriptStandardKey object for lookup in osStandardStorage
+    const lookupKey: OmniScriptStandardKey = {
+      type: currentType,
+      subtype: currentSubType,
+      language: currentLanguage,
+    };
+    // Look up in osStandardStorage using the object key
+    const targetDataFromStorage: OmniScriptStorage = StorageUtil.getStandardOmniScript(storage, lookupKey);
+
+    if (this.shouldAddWarning(targetDataFromStorage)) {
+      const originalKey = `${currentType}_${currentSubType}_${currentLanguage}`;
+      const warningMsg: string = this.getWarningMessage(originalKey, targetDataFromStorage);
+      experienceSiteAssessmentInfo.warnings.push(warningMsg);
+      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs Manual Intervention' : 'Skipped';
+    } else {
+      // Update the attributes with the new values from storage
+      attributes['type'] = targetDataFromStorage.type;
+      attributes['subType'] = targetDataFromStorage.subtype;
+      attributes['language'] = targetDataFromStorage.language;
+    }
+  }
+
+  /**
+   * Update FlexCard component references (for runtime_omnistudio:flexcard)
+   */
+  private updateFlexCardComponentReferences(
+    attributes: ExpSiteComponentAttributes,
+    experienceSiteAssessmentInfo: ExperienceSiteAssessmentPageInfo,
+    storage: MigrationStorage,
+    type: string
+  ): void {
+    const currentFlexCardName = attributes['flexcardName'] as string;
+
+    if (!currentFlexCardName) {
+      return;
+    }
+
+    // Look up in storage to see if this FlexCard was migrated
+    const targetDataFromStorageFC: FlexcardStorage = storage.fcStorage.get(currentFlexCardName.toLowerCase());
+
+    if (this.shouldAddWarning(targetDataFromStorageFC)) {
+      const warningMsg: string = this.getWarningMessage(currentFlexCardName, targetDataFromStorageFC);
+      experienceSiteAssessmentInfo.warnings.push(warningMsg);
+      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs Manual Intervention' : 'Skipped';
+    } else {
+      // Update the flexcardName with the new value from storage
+      attributes['flexcardName'] = targetDataFromStorageFC.name;
+    }
   }
 
   private getWarningMessage(oldTypeSubtypeLanguage: string, targetDataFromStorage: Storage): string {
