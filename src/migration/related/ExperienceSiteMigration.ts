@@ -425,7 +425,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
 
     if (!currentType || !currentSubType || !currentLanguage) {
       const warningMsg = this.messages.getMessage('manualInterventionForExperienceSiteConfiguration', [
-        `${currentType}_${currentSubType}_${currentLanguage}`,
+        experienceSiteAssessmentInfo.name,
       ]);
       experienceSiteAssessmentInfo.warnings.push(warningMsg);
       experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs Manual Intervention' : 'Skipped';

@@ -9,6 +9,7 @@ import {
   FlexiComponentInstanceProperty,
 } from '../../../src/migration/interfaces';
 import { StorageUtil } from '../../../src/utils/storageUtil';
+import * as dataModelService from '../../../src/utils/dataModelService';
 
 describe('transformFlexipageBundle', () => {
   let sandbox: sinon.SinonSandbox;
@@ -396,5 +397,154 @@ describe('transformFlexipageBundle', () => {
     expect(changed.flexiPageRegions[0].itemInstances[0].componentInstance.componentName).to.equal(
       'runtime_omnistudio:flexcard'
     );
+  });
+
+  describe('Standard Data Model Tests', () => {
+    const targetComponentNameOS = 'runtime_omnistudio:omniscript';
+    const targetComponentNameFlexCard = 'runtime_omnistudio:flexcard';
+
+    function makeStandardOmniScriptComponent(type: string, subType: string, language: string): FlexiItemInstance {
+      return makeItemInstance(
+        [
+          { name: 'type', value: type },
+          { name: 'subType', value: subType },
+          { name: 'language', value: language },
+        ],
+        targetComponentNameOS
+      );
+    }
+
+    function makeStandardFlexCardComponent(flexcardName: string): FlexiItemInstance {
+      return makeItemInstance([{ name: 'flexcardName', value: flexcardName }], targetComponentNameFlexCard);
+    }
+
+    it('transforms standard data model OmniScript components successfully', () => {
+      // Mock isStandardDataModel to return true
+      sandbox.stub(dataModelService, 'isStandardDataModel').returns(true);
+
+      // Mock StorageUtil
+      const mockStorage = {
+        osStorage: new Map(),
+        osStandardStorage: new Map([
+          [
+            JSON.stringify({ type: 'TestType', subtype: 'TestSubtype', language: 'English' }),
+            { type: 'UpdatedType', subtype: 'UpdatedSubtype', language: 'Spanish', isDuplicate: false },
+          ],
+        ]),
+        fcStorage: new Map(),
+      };
+      sandbox.stub(StorageUtil, 'getOmnistudioMigrationStorage').returns(mockStorage);
+
+      const bundle: Flexipage = {
+        flexiPageRegions: [makeRegion([makeStandardOmniScriptComponent('TestType', 'TestSubtype', 'English')])],
+      };
+
+      const result = transformFlexipageBundle(bundle, namespace, 'migrate');
+      expect(result).to.not.equal(false);
+      const changed = result as Flexipage;
+
+      const item = changed.flexiPageRegions[0].itemInstances[0];
+      expect(item.componentInstance.componentName).to.equal('runtime_omnistudio:omniscript');
+
+      // Verify properties were updated
+      expect(item.componentInstance.componentInstanceProperties.find((p) => p.name === 'type')?.value).to.equal(
+        'UpdatedType'
+      );
+      expect(item.componentInstance.componentInstanceProperties.find((p) => p.name === 'subType')?.value).to.equal(
+        'UpdatedSubtype'
+      );
+      expect(item.componentInstance.componentInstanceProperties.find((p) => p.name === 'language')?.value).to.equal(
+        'Spanish'
+      );
+    });
+
+    it('transforms standard data model FlexCard components successfully', () => {
+      // Mock isStandardDataModel to return true
+      sandbox.stub(dataModelService, 'isStandardDataModel').returns(true);
+
+      // Mock StorageUtil
+      const mockStorage = {
+        osStorage: new Map(),
+        osStandardStorage: new Map(),
+        fcStorage: new Map([['testflexcard', { name: 'UpdatedFlexCard', isDuplicate: false }]]),
+      };
+      sandbox.stub(StorageUtil, 'getOmnistudioMigrationStorage').returns(mockStorage);
+
+      const bundle: Flexipage = {
+        flexiPageRegions: [makeRegion([makeStandardFlexCardComponent('TestFlexCard')])],
+      };
+
+      const result = transformFlexipageBundle(bundle, namespace, 'migrate');
+      expect(result).to.not.equal(false);
+      const changed = result as Flexipage;
+
+      const item = changed.flexiPageRegions[0].itemInstances[0];
+      expect(item.componentInstance.componentName).to.equal('runtime_omnistudio:flexcard');
+
+      // Verify properties were updated
+      expect(item.componentInstance.componentInstanceProperties.find((p) => p.name === 'flexcardName')?.value).to.equal(
+        'UpdatedFlexCard'
+      );
+    });
+
+    it('skips standard data model OmniScript component when type attribute is missing', () => {
+      // Mock isStandardDataModel to return true
+      sandbox.stub(dataModelService, 'isStandardDataModel').returns(true);
+
+      // Mock StorageUtil
+      const mockStorage = {
+        osStorage: new Map(),
+        osStandardStorage: new Map(),
+        fcStorage: new Map(),
+      };
+      sandbox.stub(StorageUtil, 'getOmnistudioMigrationStorage').returns(mockStorage);
+
+      const bundle: Flexipage = {
+        flexiPageRegions: [
+          makeRegion([
+            makeItemInstance(
+              [
+                { name: 'subType', value: 'TestSubtype' },
+                { name: 'language', value: 'English' },
+                // Missing 'type' attribute
+              ],
+              targetComponentNameOS
+            ),
+          ]),
+        ],
+      };
+
+      const result = transformFlexipageBundle(bundle, namespace, 'migrate');
+      expect(result).to.equal(false); // No changes made
+    });
+
+    it('skips standard data model FlexCard component when flexcardName is missing', () => {
+      // Mock isStandardDataModel to return true
+      sandbox.stub(dataModelService, 'isStandardDataModel').returns(true);
+
+      // Mock StorageUtil
+      const mockStorage = {
+        osStorage: new Map(),
+        osStandardStorage: new Map(),
+        fcStorage: new Map(),
+      };
+      sandbox.stub(StorageUtil, 'getOmnistudioMigrationStorage').returns(mockStorage);
+
+      const bundle: Flexipage = {
+        flexiPageRegions: [
+          makeRegion([
+            makeItemInstance(
+              [
+                // Missing 'flexcardName' attribute
+              ],
+              targetComponentNameFlexCard
+            ),
+          ]),
+        ],
+      };
+
+      const result = transformFlexipageBundle(bundle, namespace, 'migrate');
+      expect(result).to.equal(false); // No changes made
+    });
   });
 });

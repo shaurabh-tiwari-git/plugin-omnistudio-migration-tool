@@ -164,6 +164,7 @@
   "emptyTargetData": "The Target Name is empty. Check your Experience Cloud site configuration",
   "manualInterventionForExperienceSiteAsFailure": "We couldn’t process the %s component.",
   "manualInterventionForExperienceSiteAsDuplicateKey": "We couldn’t process the %s component because a duplicate key was found.",
+  "manualInterventionForExperienceSiteConfiguration": "We couldn’t process the %s Experience site because one of the type/subtype/language is missing in the omnistudio wrapper in experience site configuration.",
   "updatingStorageForOmniscipt": "Preparing storage for Omniscripts %s",
   "keyAlreadyInStorage": "The %s %s name already exists in storage.",
   "flexcardStorageProcessingStarted": "Preparing storage for Flexcards.",
