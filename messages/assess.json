@@ -199,5 +199,5 @@
   "needManualInterventionAsSpecialCharsInChildFlexcardName": "Need manual intervention as child flexcards have special characters in their name",
   "needManualInterventionAsSpecialCharsInFlexcardName": "Need manual intervention as flexcard has special characters in name",
   "errorCheckingOmniStudioMetadata": "We couldn't check whether the Omnistudio Metadata is enabled: %s. Try again later.",
-  "omniStudioSettingsMetadataAlreadyEnabled": "OmniStudio Metadata is already enabled with standard data model. No need for migration."
+  "omniStudioSettingsMetadataAlreadyEnabled": "The Omnistudio Metadata setting is already enabled with standard data model. No need for migration."
 }
