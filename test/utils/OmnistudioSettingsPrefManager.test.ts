@@ -250,4 +250,107 @@ describe('OmnistudioSettingsPrefManager', () => {
       });
     });
   });
+
+  // OmniStudio Metadata Tests
+  describe('OmniStudio Metadata functionality', () => {
+    describe('isOmniStudioSettingsMetadataEnabled()', () => {
+      it('should return true when omni studio metadata is enabled', async () => {
+        const readStub = connection.metadata.read as sinon.SinonStub;
+        readStub.resolves({ enableOmniStudioMetadata: 'true' });
+
+        const result = await prefManager.isOmniStudioSettingsMetadataEnabled();
+
+        expect(result).to.be.true;
+        expect(readStub.calledOnce).to.be.true;
+        expect(readStub.firstCall.args[0]).to.equal('OmniStudioSettings');
+        expect(readStub.firstCall.args[1]).to.deep.equal(['OmniStudio']);
+      });
+
+      it('should return false when omni studio metadata is disabled', async () => {
+        const readStub = connection.metadata.read as sinon.SinonStub;
+        readStub.resolves({ enableOmniStudioMetadata: 'false' });
+
+        const result = await prefManager.isOmniStudioSettingsMetadataEnabled();
+
+        expect(result).to.be.false;
+      });
+
+      it('should return false when omni studio metadata preference is not set', async () => {
+        const readStub = connection.metadata.read as sinon.SinonStub;
+        readStub.resolves({});
+
+        const result = await prefManager.isOmniStudioSettingsMetadataEnabled();
+
+        expect(result).to.be.false;
+      });
+
+      it('should handle metadata read failures', async () => {
+        const readStub = connection.metadata.read as sinon.SinonStub;
+        readStub.rejects(new Error('Metadata read failed'));
+
+        const result = await prefManager.isOmniStudioSettingsMetadataEnabled();
+
+        expect(result).to.be.false;
+      });
+
+      it('should return false when metadata is null', async () => {
+        const readStub = connection.metadata.read as sinon.SinonStub;
+        readStub.resolves(null);
+
+        const result = await prefManager.isOmniStudioSettingsMetadataEnabled();
+
+        expect(result).to.be.false;
+      });
+    });
+
+    describe('enableOmniStudioSettingsMetadata()', () => {
+      it('should return null when metadata is already enabled', async () => {
+        const readStub = connection.metadata.read as sinon.SinonStub;
+        const updateStub = connection.metadata.update as sinon.SinonStub;
+        readStub.resolves({ enableOmniStudioMetadata: 'true' });
+
+        const result = await prefManager.enableOmniStudioSettingsMetadata();
+
+        expect(result).to.be.null;
+        expect(readStub.calledOnce).to.be.true;
+        expect(updateStub.called).to.be.false;
+      });
+
+      it('should enable metadata when disabled', async () => {
+        const readStub = connection.metadata.read as sinon.SinonStub;
+        const updateStub = connection.metadata.update as sinon.SinonStub;
+        const expectedResult = { success: true };
+        readStub.resolves({ enableOmniStudioMetadata: 'false' });
+        updateStub.resolves(expectedResult);
+
+        const result = await prefManager.enableOmniStudioSettingsMetadata();
+
+        expect(result).to.deep.equal(expectedResult);
+        expect(readStub.calledOnce).to.be.true;
+        expect(updateStub.calledOnce).to.be.true;
+        expect(updateStub.firstCall.args[0]).to.equal('OmniStudioSettings');
+        expect(updateStub.firstCall.args[1]).to.deep.equal([
+          {
+            fullName: 'OmniStudio',
+            enableOmniStudioMetadata: 'true',
+          },
+        ]);
+      });
+
+      it('should handle update errors', async () => {
+        const readStub = connection.metadata.read as sinon.SinonStub;
+        const updateStub = connection.metadata.update as sinon.SinonStub;
+        const error = new Error('Update failed');
+        readStub.resolves({ enableOmniStudioMetadata: 'false' });
+        updateStub.rejects(error);
+
+        try {
+          await prefManager.enableOmniStudioSettingsMetadata();
+          expect.fail('Expected an error to be thrown');
+        } catch (err) {
+          expect(err).to.equal(error);
+        }
+      });
+    });
+  });
 });

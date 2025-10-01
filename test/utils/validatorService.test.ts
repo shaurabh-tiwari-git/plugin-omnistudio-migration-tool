@@ -5,6 +5,7 @@ import { ValidatorService } from '../../src/utils/validatorService';
 import { Logger } from '../../src/utils/logger';
 import { OmnistudioOrgDetails } from '../../src/utils/orgUtils';
 import * as dataModelService from '../../src/utils/dataModelService';
+import { OmnistudioSettingsPrefManager } from '../../src/utils/OmnistudioSettingsPrefManager';
 
 describe('ValidatorService', () => {
   let connection: Connection;
@@ -13,6 +14,7 @@ describe('ValidatorService', () => {
   let loggerWarnStub: sinon.SinonStub;
   let loggerErrorStub: sinon.SinonStub;
   let isStandardDataModelStub: sinon.SinonStub;
+  let omnistudioSettingsPrefManagerStub: sinon.SinonStub;
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
@@ -33,6 +35,12 @@ describe('ValidatorService', () => {
 
     // Mock dataModelService
     isStandardDataModelStub = sandbox.stub(dataModelService, 'isStandardDataModel');
+
+    // Mock OmnistudioSettingsPrefManager
+    omnistudioSettingsPrefManagerStub = sandbox.stub(
+      OmnistudioSettingsPrefManager.prototype,
+      'isOmniStudioSettingsMetadataEnabled'
+    );
   });
 
   afterEach(() => {
@@ -392,7 +400,7 @@ describe('ValidatorService', () => {
       expect(result).to.be.true;
     });
 
-    it('should return true for standard data model without checking licenses', async () => {
+    it('should return true for standard data model when metadata is not enabled', async () => {
       // Arrange
       const orgs: OmnistudioOrgDetails = {
         hasValidNamespace: true,
@@ -400,6 +408,7 @@ describe('ValidatorService', () => {
         omniStudioOrgPermissionEnabled: true,
       } as OmnistudioOrgDetails;
       isStandardDataModelStub.returns(true); // Standard data model
+      omnistudioSettingsPrefManagerStub.resolves(false); // Metadata not enabled
       const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
@@ -408,6 +417,31 @@ describe('ValidatorService', () => {
       // Assert
       expect(result).to.be.true;
       expect((connection.query as sinon.SinonStub).called).to.be.false; // License validation should be skipped
+      expect(omnistudioSettingsPrefManagerStub.calledOnce).to.be.true;
+    });
+
+    it('should return false for standard data model when metadata is already enabled', async () => {
+      // Arrange
+      const orgs: OmnistudioOrgDetails = {
+        hasValidNamespace: true,
+        packageDetails: { namespace: 'TestNamespace' },
+        omniStudioOrgPermissionEnabled: true,
+      } as OmnistudioOrgDetails;
+      isStandardDataModelStub.returns(true); // Standard data model
+      omnistudioSettingsPrefManagerStub.resolves(true); // Metadata already enabled
+      (messages.getMessage as sinon.SinonStub)
+        .withArgs('omniStudioSettingsMetadataAlreadyEnabled')
+        .returns('OmniStudio Metadata is already enabled');
+      const validator = new ValidatorService(orgs, messages, connection);
+
+      // Act
+      const result = await validator.validate();
+
+      // Assert
+      expect(result).to.be.false;
+      expect(loggerErrorStub.calledOnce).to.be.true;
+      expect(loggerErrorStub.firstCall.args[0]).to.equal('OmniStudio Metadata is already enabled');
+      expect(omnistudioSettingsPrefManagerStub.calledOnce).to.be.true;
     });
 
     it('should return false when package validation fails', async () => {

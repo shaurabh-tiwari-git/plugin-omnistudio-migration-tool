@@ -111,6 +111,41 @@ export class PreMigrate extends BaseMigrationTool {
   }
 
   /**
+   * Gets user consent for OmniStudio metadata cleanup
+   *
+   * @returns Promise<boolean> - true if user consents, false otherwise
+   */
+  public async getOmniStudioMetadataEnableConsent(): Promise<boolean> {
+    const askWithTimeOut = PromptUtil.askWithTimeOut(this.messages);
+    let validResponse = false;
+    let consent = false;
+
+    while (!validResponse) {
+      try {
+        const resp = await askWithTimeOut(
+          Logger.prompt.bind(Logger),
+          this.messages.getMessage('omniStudioMetadataEnableConsentMessage')
+        );
+        const response = typeof resp === 'string' ? resp.trim().toLowerCase() : '';
+
+        if (response === YES_SHORT || response === YES_LONG) {
+          consent = true;
+          validResponse = true;
+        } else if (response === NO_SHORT || response === NO_LONG) {
+          consent = false;
+          validResponse = true;
+        } else {
+          Logger.error(this.messages.getMessage('invalidYesNoResponse'));
+        }
+      } catch (err) {
+        Logger.error(this.messages.getMessage('requestTimedOut'));
+        process.exit(1);
+      }
+    }
+    return consent;
+  }
+
+  /**
    * Handles OmniStudio metadata tables cleanup with user consent
    *
    * @returns Promise<boolean> - true if cleanup was successful, false otherwise

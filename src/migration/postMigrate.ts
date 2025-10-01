@@ -12,6 +12,8 @@ import { BaseMigrationTool } from './base';
 import { Deployer } from './deployer';
 import * as fs from 'fs';
 import * as path from 'path';
+import { isStandardDataModel } from '../utils/dataModelService';
+import { OmniStudioMetadataCleanupService } from '../utils/config/OmniStudioMetadataCleanupService';
 
 export class PostMigrate extends BaseMigrationTool {
   private readonly org: Org;
@@ -47,6 +49,9 @@ export class PostMigrate extends BaseMigrationTool {
     const designerOk = await this.enableDesignersToUseStandardDataModelIfNeeded(namespaceToModify, userActionMessage);
     if (designerOk) {
       await this.enableStandardRuntimeIfNeeded(userActionMessage);
+    }
+    if (isStandardDataModel()) {
+      await this.enableOmniStudioSettingsMetadataIfNeeded(userActionMessage);
     }
     return userActionMessage;
   }
@@ -122,6 +127,48 @@ export class PostMigrate extends BaseMigrationTool {
       const errMsg = error instanceof Error ? error.message : String(error);
       Logger.error(this.messages.getMessage('exceptionEnablingStandardRuntime', [errMsg]));
       userActionMessage.push(this.messages.getMessage('manuallyEnableStandardRuntime'));
+    }
+  }
+
+  private async enableOmniStudioSettingsMetadataIfNeeded(userActionMessage: string[]): Promise<void> {
+    try {
+      Logger.log(this.messages.getMessage('enablingOmniStudioSettingsMetadataStatus'));
+      const result = await this.settingsPrefManager.enableOmniStudioSettingsMetadata();
+      if (result === null) {
+        Logger.logVerbose(this.messages.getMessage('omniStudioSettingsMetadataAlreadyEnabled'));
+      } else if (result?.success === true) {
+        /* The API call returns true if the metadata enabling call was successful.
+        But it takes time for the checks to run and the metadata to be enabled or reverted back.
+        We need to wait and check if the config tables are populated or not.
+        That will ensure that the metadata is enabled.
+        */
+        const maxAttempts = 6;
+        let attempts = 0;
+        while (attempts < maxAttempts) {
+          await new Promise((resolve) => setTimeout(resolve, 20000));
+          const metadataService = new OmniStudioMetadataCleanupService(this.connection, this.messages);
+          const isConfigTablesEmpty = await metadataService.hasCleanOmniStudioMetadataTables(); //Check is the config tables are populated or not.
+          if (!isConfigTablesEmpty) {
+            // If the config tables are populated, means the metadata is enabled.
+            Logger.log(this.messages.getMessage('omniStudioSettingsMetadataEnabled'));
+            break;
+          }
+          attempts++;
+        }
+        if (attempts === maxAttempts) {
+          // TODO: We need to figure out and show the user that what is the actual issue which is causing the metadata to not be enabled.
+          Logger.error(this.messages.getMessage('errorEnablingOmniStudioSettingsMetadata', ['Unknown error']));
+          userActionMessage.push(this.messages.getMessage('manuallyEnableOmniStudioSettingsMetadata'));
+        }
+      } else {
+        const errors = result?.errors?.join(', ') || 'Unknown error';
+        Logger.error(this.messages.getMessage('errorEnablingOmniStudioSettingsMetadata', [errors]));
+        userActionMessage.push(this.messages.getMessage('manuallyEnableOmniStudioSettingsMetadata'));
+      }
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      Logger.error(this.messages.getMessage('errorEnablingOmniStudioSettingsMetadata', [errMsg]));
+      userActionMessage.push(this.messages.getMessage('manuallyEnableOmniStudioSettingsMetadata'));
     }
   }
 

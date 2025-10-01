@@ -198,5 +198,7 @@
   "invalidTypeAssessErrorMessage": "We couldn't assess your Omnistudio components in the %s namespace. Select the correct namespace and try again",
   "assessmentSuccessfulMessage": "Migration assessment for org %s is complete and reports are ready for review in the folder %s",
   "needManualInterventionAsSpecialCharsInChildFlexcardName": "Need manual intervention as child flexcards have special characters in their name",
-  "needManualInterventionAsSpecialCharsInFlexcardName": "Need manual intervention as flexcard has special characters in name"
+  "needManualInterventionAsSpecialCharsInFlexcardName": "Need manual intervention as flexcard has special characters in name",
+  "errorCheckingOmniStudioMetadata": "We couldn't check whether the Omnistudio Metadata is enabled: %s. Try again later.",
+  "omniStudioSettingsMetadataAlreadyEnabled": "The Omnistudio Metadata setting is already enabled with standard data model. No need for migration."
 }

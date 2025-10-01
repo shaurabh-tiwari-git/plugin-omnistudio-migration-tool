@@ -131,8 +131,15 @@ export default class Migrate extends OmniStudioBaseCommand {
     const preMigrate: PreMigrate = new PreMigrate(namespace, conn, this.logger, messages, this.ux);
     const isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean } = { value: false };
 
-    // Handle config tables cleanup for standard data model migration
     if (isStandardDataModel()) {
+      // Get user consent to enable OmniStudio Metadata for standard data model migration
+      const omniStudioMetadataEnableConsent = await preMigrate.getOmniStudioMetadataEnableConsent();
+      if (!omniStudioMetadataEnableConsent) {
+        Logger.error(messages.getMessage('omniStudioMetadataEnableConsentNotGiven'));
+        return;
+      }
+
+      // Handle config tables cleanup for standard data model migration
       const isMetadataCleanupSuccess = await preMigrate.handleOmniStudioMetadataCleanup();
       if (!isMetadataCleanupSuccess) {
         return;
