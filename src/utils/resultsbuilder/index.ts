@@ -138,7 +138,20 @@ export class ResultsBuilder {
           data: [
             createRowDataParam('id', item.id, false, 1, 1, true, `${instanceUrl}/${item.id}`),
             createRowDataParam('name', item.name, true, 1, 1, false),
-            createRowDataParam('migratedId', item.migratedId, false, 1, 1, true, `${instanceUrl}/${item.migratedId}`),
+            // Only include migratedId for custom data model
+            ...(isStandardDataModel()
+              ? []
+              : [
+                  createRowDataParam(
+                    'migratedId',
+                    item.migratedId,
+                    false,
+                    1,
+                    1,
+                    true,
+                    `${instanceUrl}/${item.migratedId}`
+                  ),
+                ]),
             createRowDataParam('migratedName', item.migratedName, false, 1, 1, false),
             createRowDataParam(
               'status',
@@ -192,13 +205,24 @@ export class ResultsBuilder {
 
     const nameLabel = isStandardDataModel() ? 'Updated Name' : 'Name';
 
-    const secondRowHeaders = [
+    const secondRowHeadersForCustom = [
       { name: 'ID', colspan: 1, rowspan: 1 },
       { name: 'Name', colspan: 1, rowspan: 1 },
       { name: 'ID', colspan: 1, rowspan: 1 },
       { name: nameLabel, colspan: 1, rowspan: 1 },
     ];
-    return [{ header: firstRowHeaders }, { header: secondRowHeaders }];
+
+    const secondRowHeadersForStandard = [
+      { name: 'ID', colspan: 1, rowspan: 1 },
+      { name: 'Name', colspan: 1, rowspan: 1 },
+      { name: nameLabel, colspan: 1, rowspan: 1 },
+    ];
+
+    if (isStandardDataModel()) {
+      return [{ header: firstRowHeaders }, { header: secondRowHeadersForStandard }];
+    } else {
+      return [{ header: firstRowHeaders }, { header: secondRowHeadersForCustom }];
+    }
   }
 
   private static getNameHeaders(componentName: string): Array<{ name: string; colspan: number; rowspan: number }> {
@@ -208,7 +232,7 @@ export class ResultsBuilder {
     }
 
     if (isStandardDataModel() && !isGlobalAutoNumber) {
-      return [{ name: 'Standard', colspan: 4, rowspan: 1 }];
+      return [{ name: 'Standard', colspan: 3, rowspan: 1 }];
     } else {
       return [
         { name: 'Managed Package', colspan: 2, rowspan: 1 },
