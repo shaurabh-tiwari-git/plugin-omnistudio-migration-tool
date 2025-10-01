@@ -9,7 +9,12 @@ import {
   ReportRowParam,
   SummaryItemDetailParam,
 } from '../reportGenerator/reportInterfaces';
-import { createFilterGroupParam, createRowDataParam, getOrgDetailsForReport } from '../reportGenerator/reportUtil';
+import {
+  createFilterGroupParam,
+  createRowDataParam,
+  getAssessmentReportNameHeaders,
+  getOrgDetailsForReport,
+} from '../reportGenerator/reportUtil';
 import { reportingHelper } from './reportingHelper';
 
 export class FlexcardAssessmentReporter {
@@ -69,7 +74,7 @@ export class FlexcardAssessmentReporter {
 
   private static getHeaderGroupsForReport(): ReportHeaderGroupParam[] {
     const firstRowHeaders = [
-      ...this.getNameHeaders(),
+      ...getAssessmentReportNameHeaders(),
       { name: 'Assessment Status', colspan: 1, rowspan: 2 },
       { name: 'Summary', colspan: 1, rowspan: 2 },
       { name: 'Omniscript Dependencies', colspan: 1, rowspan: 2 },
@@ -89,17 +94,6 @@ export class FlexcardAssessmentReporter {
     ];
 
     return [{ header: firstRowHeaders }, { header: secondRowHeaders }];
-  }
-
-  private static getNameHeaders(): Array<{ name: string; colspan: number; rowspan: number }> {
-    if (isStandardDataModel()) {
-      return [{ name: 'Standard', colspan: 3, rowspan: 1 }];
-    } else {
-      return [
-        { name: 'Managed Package', colspan: 2, rowspan: 1 },
-        { name: 'Standard', colspan: 1, rowspan: 1 },
-      ];
-    }
   }
 
   private static getFilterGroupsForReport(flexCardAssessmentInfo: FlexCardAssessmentInfo[]): FilterGroupParam[] {
