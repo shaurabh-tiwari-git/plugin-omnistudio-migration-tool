@@ -251,10 +251,12 @@ export default class Migrate extends OmniStudioBaseCommand {
     );
 
     try {
-      postMigrate.deploy();
+      await postMigrate.deploy(actionItems);
     } catch (error) {
       Logger.error(messages.getMessage('errorDeployingComponents'), error);
       Logger.logVerbose(error);
+      // Even if deployment fails completely, continue with report generation
+      // Action items are already added to the array by the deploy method
     }
 
     await ResultsBuilder.generateReport(
