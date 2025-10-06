@@ -119,7 +119,16 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       }
     }
 
-    Logger.log(`${this.messages.getMessage('flexCardMigrationProcessingMessage', [cards.length, skippedCards.size])}`);
+    if (this.IS_STANDARD_DATA_MODEL) {
+      Logger.log(`${this.messages.getMessage('flexCardMigrationProcessingMessage', [cards.length])}`);
+    } else {
+      Logger.log(
+        `${this.messages.getMessage('flexCardMigrationProcessingMessage', [cards.length])} ${this.messages.getMessage(
+          'skippingAsAngularDependencies',
+          [skippedCards.size]
+        )}`
+      );
+    }
 
     const progressBar = createProgressBar('Migrating', 'Flexcards');
     // Save the Vlocity Cards in OmniUiCard
