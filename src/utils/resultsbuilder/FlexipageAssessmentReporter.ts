@@ -78,8 +78,8 @@ export class FlexipageAssessmentReporter {
         cssClass: 'text-warning',
       },
       {
-        name: 'Needs Manual Intervention',
-        count: flexipageAssessmentInfos.filter((info) => info.status === 'Needs Manual Intervention').length,
+        name: 'Needs manual intervention',
+        count: flexipageAssessmentInfos.filter((info) => info.status === 'Needs manual intervention').length,
         cssClass: 'text-error',
       },
       {
@@ -114,7 +114,7 @@ export class FlexipageAssessmentReporter {
           false,
           undefined,
           undefined,
-          flexipageAssessmentInfo.status === 'Needs Manual Intervention' || flexipageAssessmentInfo.status === 'Failed'
+          flexipageAssessmentInfo.status === 'Needs manual intervention' || flexipageAssessmentInfo.status === 'Failed'
             ? 'invalid-icon'
             : ''
         ),
@@ -128,7 +128,7 @@ export class FlexipageAssessmentReporter {
           false,
           undefined,
           undefined,
-          flexipageAssessmentInfo.status === 'Needs Manual Intervention'
+          flexipageAssessmentInfo.status === 'Needs manual intervention'
             ? 'text-error'
             : flexipageAssessmentInfo.status === 'Warnings'
             ? 'text-warning'

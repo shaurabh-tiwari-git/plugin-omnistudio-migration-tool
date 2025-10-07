@@ -48,8 +48,8 @@ export class ApexAssessmentReporter {
         cssClass: 'text-warning',
       },
       {
-        name: 'Needs Manual Intervention',
-        count: apexAssessmentInfos.filter((info) => this.getMigrationStatus(info) === 'Needs Manual Intervention')
+        name: 'Needs manual intervention',
+        count: apexAssessmentInfos.filter((info) => this.getMigrationStatus(info) === 'Needs manual intervention')
           .length,
         cssClass: 'text-error',
       },
@@ -74,7 +74,7 @@ export class ApexAssessmentReporter {
           false,
           undefined,
           undefined,
-          this.getMigrationStatus(apexAssessmentInfo) === 'Needs Manual Intervention' ||
+          this.getMigrationStatus(apexAssessmentInfo) === 'Needs manual intervention' ||
             this.getMigrationStatus(apexAssessmentInfo) === 'Failed'
             ? 'invalid-icon'
             : ''

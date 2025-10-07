@@ -89,17 +89,17 @@ describe('ExperienceSiteMigration', () => {
     getMessageStub
       .withArgs('manualInterventionForExperienceSite', sinon.match.any)
       .callsFake((key: string, args: string[]) => {
-        return `${args[0]} needs manual intervention`;
+        return `${args[0]} Needs manual intervention`;
       });
     getMessageStub
       .withArgs('manualInterventionForExperienceSiteAsFailure', sinon.match.any)
       .callsFake((key: string, args: string[]) => {
-        return `${args[0]} needs manual intervention as migration failed`;
+        return `${args[0]} Needs manual intervention as migration failed`;
       });
     getMessageStub
       .withArgs('manualInterventionForExperienceSiteAsDuplicateKey', sinon.match.any)
       .callsFake((key: string, args: string[]) => {
-        return `${args[0]} needs manual intervention as duplicated key found`;
+        return `${args[0]} Needs manual intervention as duplicated key found`;
       });
     getMessageStub
       .withArgs('emptyTargetData')
@@ -320,7 +320,7 @@ describe('ExperienceSiteMigration', () => {
       // Assert
       expect(result.hasOmnistudioContent).to.be.true;
       expect(result.warnings).to.have.length(1);
-      expect(result.warnings[0]).to.include('TestSubtype:English needs manual intervention');
+      expect(result.warnings[0]).to.include('TestSubtype:English Needs manual intervention');
     });
 
     it('should add warning when migration failed in storage', () => {
@@ -375,7 +375,7 @@ describe('ExperienceSiteMigration', () => {
       // Assert
       expect(result.hasOmnistudioContent).to.be.true;
       expect(result.warnings).to.have.length(1);
-      expect(result.warnings[0]).to.include('needs manual intervention as duplicated key found');
+      expect(result.warnings[0]).to.include('Needs manual intervention as duplicated key found');
     });
 
     it('should add warning when target attribute is empty', () => {
@@ -523,7 +523,7 @@ describe('ExperienceSiteMigration', () => {
       // Assert
       expect(result.hasOmnistudioContent).to.be.true;
       expect(result.warnings).to.have.length(1);
-      expect(result.warnings[0]).to.include('TestSubtype:English needs manual intervention');
+      expect(result.warnings[0]).to.include('TestSubtype:English Needs manual intervention');
     });
 
     it('should generate warnings when assessment storage has migration failure', () => {
@@ -551,7 +551,7 @@ describe('ExperienceSiteMigration', () => {
       // Assert
       expect(result.hasOmnistudioContent).to.be.true;
       expect(result.warnings).to.have.length(1);
-      expect(result.warnings[0]).to.include('needs manual intervention as migration failed');
+      expect(result.warnings[0]).to.include('Needs manual intervention as migration failed');
     });
 
     it('should generate warnings when assessment storage has duplicate keys', () => {
@@ -579,7 +579,7 @@ describe('ExperienceSiteMigration', () => {
       // Assert
       expect(result.hasOmnistudioContent).to.be.true;
       expect(result.warnings).to.have.length(1);
-      expect(result.warnings[0]).to.include('needs manual intervention as duplicated key found');
+      expect(result.warnings[0]).to.include('Needs manual intervention as duplicated key found');
     });
 
     it('should return false for hasOmnistudioContent when no wrapper component found in assess mode', () => {
@@ -674,8 +674,8 @@ describe('ExperienceSiteMigration', () => {
       // Assert
       expect(result.hasOmnistudioContent).to.be.true;
       expect(result.warnings).to.have.length(1);
-      expect(result.warnings[0]).to.include('needs manual intervention');
-      expect(result.status).to.equal('Needs Manual Intervention');
+      expect(result.warnings[0]).to.include('Needs manual intervention');
+      expect(result.status).to.equal('Needs manual intervention');
     });
   });
 });
