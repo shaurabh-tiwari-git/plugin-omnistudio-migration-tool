@@ -1,3 +1,6 @@
+import * as fs from 'fs';
+import * as path from 'path';
+import * as vm from 'vm';
 import { expect } from 'chai';
 import { JSDOM } from 'jsdom';
 
@@ -367,6 +370,454 @@ describe('reportGeneratorUtility Filter Popup Tests', () => {
       expect(() => {
         testWindow.closeAllFilterDropdowns();
       }).to.not.throw();
+    });
+  });
+});
+
+/* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unnecessary-type-assertion */
+describe('reportGeneratorUtility Column Freeze Tests', () => {
+  let dom: JSDOM;
+  let document: Document;
+
+  interface TestColumnFreezeWindow extends Window {
+    applyStickyStyles: (
+      element: HTMLElement,
+      width: number,
+      left: number,
+      zIndex: number,
+      bgColor: string,
+      addBorder?: boolean
+    ) => void;
+    removeStickyStyles: (element: HTMLElement) => void;
+    applySingleColumnFreeze: (table: HTMLElement, headerCell: HTMLElement, columnWidth?: number) => void;
+    applyMultiColumnHeaderFreeze: (
+      firstHeaderCell: HTMLElement,
+      secondRow: HTMLElement,
+      colspan: number,
+      baseColumnWidth: number,
+      firstColumnWidth: number
+    ) => void;
+    applyMultiColumnBodyFreeze: (
+      tbody: HTMLElement,
+      colspan: number,
+      baseColumnWidth: number,
+      firstColumnWidth: number
+    ) => void;
+    addHoverEffects: (tbody: HTMLElement, colspan: number) => void;
+    handleMultiColumnFreeze: (
+      table: HTMLElement,
+      firstHeaderCell: HTMLElement,
+      firstRow: HTMLElement,
+      secondRow: HTMLElement,
+      colspan: number
+    ) => void;
+    processTable: (table: HTMLElement) => void;
+    applyDynamicStickyColumns: () => void;
+  }
+
+  const loadActualSourceCode = (win: Window): void => {
+    // Load the actual JavaScript file from source
+    const jsFilePath = path.resolve(__dirname, '../../src/javascripts/reportGeneratorUtility.js');
+    const jsCode = fs.readFileSync(jsFilePath, 'utf-8');
+
+    // Execute the actual source code in the JSDOM window context using vm
+    const script = new vm.Script(jsCode);
+    const context = vm.createContext(win);
+    script.runInContext(context);
+  };
+
+  beforeEach(() => {
+    dom = new JSDOM(
+      `
+      <!DOCTYPE html>
+      <html>
+        <head><title>Test</title></head>
+        <body>
+          <div class="table-container">
+            <table class="slds-table">
+              <thead>
+                <tr>
+                  <th colspan="1" rowspan="1">Name</th>
+                  <th>Status</th>
+                  <th>Type</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Item 1</td>
+                  <td>Active</td>
+                  <td>Type A</td>
+                </tr>
+                <tr>
+                  <td>Item 2</td>
+                  <td>Inactive</td>
+                  <td>Type B</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </body>
+      </html>
+    `,
+      {
+        url: 'http://localhost',
+        pretendToBeVisual: true,
+        resources: 'usable',
+      }
+    );
+
+    document = dom.window.document;
+    global.document = document;
+    global.window = dom.window as unknown as Window & typeof globalThis;
+
+    // Load the ACTUAL source code from src/javascripts/reportGeneratorUtility.js
+    loadActualSourceCode(dom.window as unknown as Window);
+  });
+
+  afterEach(() => {
+    dom.window.close();
+  });
+
+  describe('applyStickyStyles', () => {
+    it('should apply sticky styles to an element', () => {
+      const element = document.createElement('th');
+      const testWin = dom.window as unknown as TestColumnFreezeWindow;
+
+      testWin.applyStickyStyles(element, 200, 0, 20, '#f3f3f3', true);
+
+      expect(element.style.getPropertyValue('width')).to.equal('200px');
+      expect(element.style.getPropertyValue('position')).to.equal('sticky');
+      expect(element.style.getPropertyValue('left')).to.equal('0px');
+      expect(element.style.getPropertyValue('z-index')).to.equal('20');
+      // CSS colors are normalized to rgb format by JSDOM
+      expect(element.style.getPropertyValue('background-color')).to.equal('rgb(243, 243, 243)');
+      expect(element.style.getPropertyValue('border-right')).to.equal('1px solid #e5e5e5');
+    });
+
+    it('should apply sticky styles without border when addBorder is false', () => {
+      const element = document.createElement('th');
+      const testWin = dom.window as unknown as TestColumnFreezeWindow;
+
+      testWin.applyStickyStyles(element, 200, 100, 10, '#fff', false);
+
+      expect(element.style.getPropertyValue('border-right')).to.equal('');
+      expect(element.style.getPropertyValue('left')).to.equal('100px');
+    });
+  });
+
+  describe('removeStickyStyles', () => {
+    it('should remove sticky styles from an element', () => {
+      const element = document.createElement('th');
+      const testWin = dom.window as unknown as TestColumnFreezeWindow;
+
+      // First apply sticky styles
+      testWin.applyStickyStyles(element, 200, 0, 20, '#f3f3f3', true);
+
+      // Then remove them
+      testWin.removeStickyStyles(element);
+
+      expect(element.style.getPropertyValue('position')).to.equal('static');
+      // JSDOM may normalize 'auto' to other values, just check it's not sticky anymore
+      expect(element.style.getPropertyValue('position')).to.equal('static');
+      expect(element.style.getPropertyValue('width')).to.equal('auto');
+      expect(element.style.getPropertyValue('max-width')).to.equal('none');
+    });
+  });
+
+  describe('applySingleColumnFreeze', () => {
+    it('should freeze only the first column with default width', () => {
+      const table = document.querySelector('table.slds-table') as HTMLElement;
+      const firstHeaderCell = table.querySelector('th:first-child') as HTMLElement;
+      const testWin = dom.window as unknown as TestColumnFreezeWindow;
+
+      testWin.applySingleColumnFreeze(table, firstHeaderCell);
+
+      expect(firstHeaderCell.style.getPropertyValue('position')).to.equal('sticky');
+      expect(firstHeaderCell.style.getPropertyValue('width')).to.equal('180px');
+      expect(firstHeaderCell.style.getPropertyValue('left')).to.equal('0px');
+
+      // Check that other headers are not sticky
+      const secondHeader = table.querySelector('th:nth-child(2)') as HTMLElement;
+      expect(secondHeader.style.getPropertyValue('position')).to.equal('static');
+    });
+
+    it('should freeze first column with custom width', () => {
+      const table = document.querySelector('table.slds-table') as HTMLElement;
+      const firstHeaderCell = table.querySelector('th:first-child') as HTMLElement;
+      const testWin = dom.window as unknown as TestColumnFreezeWindow;
+
+      testWin.applySingleColumnFreeze(table, firstHeaderCell, 250);
+
+      expect(firstHeaderCell.style.getPropertyValue('width')).to.equal('250px');
+    });
+
+    it('should apply sticky styles to first column in tbody', () => {
+      const table = document.querySelector('table.slds-table') as HTMLElement;
+      const firstHeaderCell = table.querySelector('th:first-child') as HTMLElement;
+      const testWin = dom.window as unknown as TestColumnFreezeWindow;
+
+      testWin.applySingleColumnFreeze(table, firstHeaderCell);
+
+      const tbody = table.querySelector('tbody');
+      const firstRow = tbody?.querySelector('tr');
+      const firstCell = firstRow?.querySelector('td:first-child') as HTMLElement;
+
+      expect(firstCell.style.getPropertyValue('position')).to.equal('sticky');
+      expect(firstCell.style.getPropertyValue('width')).to.equal('180px');
+    });
+
+    it('should add hover effects to frozen first column', () => {
+      const table = document.querySelector('table.slds-table') as HTMLElement;
+      const firstHeaderCell = table.querySelector('th:first-child') as HTMLElement;
+      const testWin = dom.window as unknown as TestColumnFreezeWindow;
+
+      testWin.applySingleColumnFreeze(table, firstHeaderCell);
+
+      const tbody = table.querySelector('tbody');
+      const firstRow = tbody?.querySelector('tr') as HTMLElement;
+      const firstCell = firstRow?.querySelector('td:first-child') as HTMLElement;
+
+      // Trigger mouseenter
+      const mouseenterEvent = new dom.window.MouseEvent('mouseenter', { bubbles: true });
+      firstRow.dispatchEvent(mouseenterEvent);
+
+      // CSS colors are normalized to rgb format by JSDOM
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      expect(firstCell.style.getPropertyValue('background-color')).to.equal('rgb(243, 243, 243)');
+
+      // Trigger mouseleave
+      const mouseleaveEvent = new dom.window.MouseEvent('mouseleave', { bubbles: true });
+      firstRow.dispatchEvent(mouseleaveEvent);
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      expect(firstCell.style.getPropertyValue('background-color')).to.equal('rgb(255, 255, 255)');
+    });
+  });
+
+  describe('applyMultiColumnHeaderFreeze', () => {
+    beforeEach(() => {
+      // Create a table with multi-column header structure
+      const multiColTable = `
+        <div class="table-container">
+          <table class="slds-table">
+            <thead>
+              <tr>
+                <th colspan="3" rowspan="1">Combined Header</th>
+                <th>Other</th>
+              </tr>
+              <tr>
+                <th>Name</th>
+                <th>ID</th>
+                <th>Type</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Item 1</td><td>001</td><td>A</td><td>Active</td></tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      document.body.innerHTML = multiColTable;
+    });
+
+    it('should freeze multiple columns in header', () => {
+      const table = document.querySelector('table.slds-table') as HTMLElement;
+      const firstRow = table.querySelector('thead tr:first-child') as HTMLElement;
+      const secondRow = table.querySelector('thead tr:nth-child(2)') as HTMLElement;
+      const firstHeaderCell = firstRow.querySelector('th:first-child') as HTMLElement;
+      const testWin = dom.window as unknown as TestColumnFreezeWindow;
+
+      testWin.applyMultiColumnHeaderFreeze(firstHeaderCell, secondRow, 3, 200, 250);
+
+      // First header should span the total width
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      expect(firstHeaderCell.style.getPropertyValue('width')).to.equal('650px'); // 250 + 200 + 200
+
+      // Second row headers should be frozen
+      const secondRowHeaders = Array.from(secondRow.querySelectorAll('th')) as HTMLElement[];
+      expect(secondRowHeaders[0].style.getPropertyValue('position')).to.equal('sticky');
+      expect(secondRowHeaders[0].style.getPropertyValue('left')).to.equal('0px');
+      expect(secondRowHeaders[1].style.getPropertyValue('left')).to.equal('250px');
+      expect(secondRowHeaders[2].style.getPropertyValue('left')).to.equal('450px');
+
+      // Fourth column should not be frozen
+      expect(secondRowHeaders[3].style.getPropertyValue('position')).to.equal('static');
+    });
+  });
+
+  describe('applyMultiColumnBodyFreeze', () => {
+    it('should freeze multiple columns in tbody', () => {
+      const table = document.querySelector('table.slds-table');
+      const tbody = table.querySelector('tbody') as HTMLElement;
+      const testWin = dom.window as unknown as TestColumnFreezeWindow;
+
+      testWin.applyMultiColumnBodyFreeze(tbody, 2, 200, 250);
+
+      const firstRow = tbody.querySelector('tr');
+      const cells = Array.from(firstRow?.querySelectorAll('td') || []) as HTMLElement[];
+
+      // First column should be frozen at left 0
+      expect(cells[0].style.getPropertyValue('position')).to.equal('sticky');
+      expect(cells[0].style.getPropertyValue('left')).to.equal('0px');
+      expect(cells[0].style.getPropertyValue('width')).to.equal('250px');
+
+      // Second column should be frozen at left 250
+      expect(cells[1].style.getPropertyValue('position')).to.equal('sticky');
+      expect(cells[1].style.getPropertyValue('left')).to.equal('250px');
+      expect(cells[1].style.getPropertyValue('width')).to.equal('200px');
+
+      // Third column should not be frozen
+      expect(cells[2].style.getPropertyValue('position')).to.equal('static');
+    });
+  });
+
+  describe('addHoverEffects', () => {
+    it('should add hover effects to frozen columns', () => {
+      const table = document.querySelector('table.slds-table');
+      const tbody = table.querySelector('tbody') as HTMLElement;
+      const testWin = dom.window as unknown as TestColumnFreezeWindow;
+
+      testWin.addHoverEffects(tbody, 2);
+
+      const firstRow = tbody.querySelector('tr') as HTMLElement;
+      const cells = Array.from(firstRow.querySelectorAll('td')) as HTMLElement[];
+
+      // Trigger mouseenter
+      const mouseenterEvent = new dom.window.MouseEvent('mouseenter', { bubbles: true });
+      firstRow.dispatchEvent(mouseenterEvent);
+
+      // CSS colors are normalized to rgb format by JSDOM
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      expect(cells[0].style.getPropertyValue('background-color')).to.equal('rgb(243, 243, 243)');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      expect(cells[1].style.getPropertyValue('background-color')).to.equal('rgb(243, 243, 243)');
+
+      // Trigger mouseleave
+      const mouseleaveEvent = new dom.window.MouseEvent('mouseleave', { bubbles: true });
+      firstRow.dispatchEvent(mouseleaveEvent);
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      expect(cells[0].style.getPropertyValue('background-color')).to.equal('rgb(255, 255, 255)');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      expect(cells[1].style.getPropertyValue('background-color')).to.equal('rgb(255, 255, 255)');
+    });
+  });
+
+  describe('processTable', () => {
+    it('should detect and apply single column freeze for rowspan=2, colspan=1', () => {
+      const singleColTable = `
+        <div class="table-container">
+          <table class="slds-table">
+            <thead>
+              <tr>
+                <th colspan="1" rowspan="2">Name</th>
+                <th>Status</th>
+              </tr>
+              <tr>
+                <th>Active</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Item 1</td><td>Active</td></tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      document.body.innerHTML = singleColTable;
+
+      const table = document.querySelector('table.slds-table') as HTMLElement;
+      const firstHeaderCell = table.querySelector('th:first-child') as HTMLElement;
+      const testWin = dom.window as unknown as TestColumnFreezeWindow;
+
+      testWin.processTable(table);
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      expect(firstHeaderCell.style.getPropertyValue('width')).to.equal('180px');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      expect(firstHeaderCell.style.getPropertyValue('position')).to.equal('sticky');
+    });
+
+    it('should detect and apply single column freeze for single-level header', () => {
+      const table = document.querySelector('table.slds-table') as HTMLElement;
+      const testWin = dom.window as unknown as TestColumnFreezeWindow;
+
+      testWin.processTable(table);
+
+      const firstHeaderCell = table.querySelector('th:first-child') as HTMLElement;
+      expect(firstHeaderCell.style.getPropertyValue('width')).to.equal('250px');
+      expect(firstHeaderCell.style.getPropertyValue('position')).to.equal('sticky');
+    });
+
+    it('should handle tables without thead gracefully', () => {
+      const noTheadTable = `
+        <div class="table-container">
+          <table class="slds-table">
+            <tbody>
+              <tr><td>Item 1</td><td>Active</td></tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      document.body.innerHTML = noTheadTable;
+
+      const table = document.querySelector('table.slds-table') as HTMLElement;
+      const testWin = dom.window as unknown as TestColumnFreezeWindow;
+
+      expect(() => testWin.processTable(table)).to.not.throw();
+    });
+  });
+
+  describe('applyDynamicStickyColumns', () => {
+    it('should process all tables in table containers', () => {
+      const multipleTables = `
+        <div class="table-container">
+          <table class="slds-table">
+            <thead>
+              <tr><th colspan="1" rowspan="1">Name</th><th>Status</th></tr>
+            </thead>
+            <tbody><tr><td>Item 1</td><td>Active</td></tr></tbody>
+          </table>
+        </div>
+        <div class="table-container">
+          <table class="slds-table">
+            <thead>
+              <tr><th colspan="1" rowspan="1">Title</th><th>Type</th></tr>
+            </thead>
+            <tbody><tr><td>Item 2</td><td>Type A</td></tr></tbody>
+          </table>
+        </div>
+      `;
+
+      document.body.innerHTML = multipleTables;
+
+      const testWin = dom.window as unknown as TestColumnFreezeWindow;
+      testWin.applyDynamicStickyColumns();
+
+      const tables = document.querySelectorAll('table.slds-table');
+      tables.forEach((table) => {
+        const firstHeaderCell = table.querySelector('th:first-child') as HTMLElement;
+        expect(firstHeaderCell.style.getPropertyValue('position')).to.equal('sticky');
+      });
+    });
+
+    it('should handle containers without slds-table class gracefully', () => {
+      const noSldsTable = `
+        <div class="table-container">
+          <table>
+            <thead><tr><th>Name</th></tr></thead>
+            <tbody><tr><td>Item</td></tr></tbody>
+          </table>
+        </div>
+      `;
+
+      document.body.innerHTML = noSldsTable;
+
+      const testWin = dom.window as unknown as TestColumnFreezeWindow;
+      expect(() => testWin.applyDynamicStickyColumns()).to.not.throw();
     });
   });
 });
