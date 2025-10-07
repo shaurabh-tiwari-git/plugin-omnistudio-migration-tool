@@ -32,7 +32,7 @@ You can also authenticate using a consumer key (client ID) and secret key throug
 3. In a new terminal session, Install the Omnistudio Migration Assistant by running the `sf plugins install` command. For example
 
 ```
-sf plugins install @salesforce/plugin-omnistudio-migration-tool@2.0.0-rc.43
+sf plugins install @salesforce/plugin-omnistudio-migration-tool@2.0.0-rc.51
 ```
 
 4. Run the Omnistudio Migration Assistant from the Salesforce CLI:
