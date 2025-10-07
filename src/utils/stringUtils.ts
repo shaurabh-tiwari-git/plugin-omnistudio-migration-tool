@@ -63,15 +63,15 @@ export function escapeHtml(text: string): string {
 
 const AssessmentStatusPriority = {
   Failed: 0,
-  'Needs Manual Intervention': 1,
+  'Needs manual intervention': 1,
   Warnings: 2,
   'Ready for migration': 3,
 };
 
 export function getUpdatedAssessmentStatus(
-  currentStatus: 'Warnings' | 'Needs Manual Intervention' | 'Ready for migration' | 'Failed',
-  newStatus: 'Warnings' | 'Needs Manual Intervention' | 'Ready for migration' | 'Failed'
-): 'Warnings' | 'Needs Manual Intervention' | 'Ready for migration' | 'Failed' {
+  currentStatus: 'Warnings' | 'Needs manual intervention' | 'Ready for migration' | 'Failed',
+  newStatus: 'Warnings' | 'Needs manual intervention' | 'Ready for migration' | 'Failed'
+): 'Warnings' | 'Needs manual intervention' | 'Ready for migration' | 'Failed' {
   const currentPriority = AssessmentStatusPriority[currentStatus];
   const newPriority = AssessmentStatusPriority[newStatus];
   return currentPriority > newPriority ? newStatus : currentStatus;

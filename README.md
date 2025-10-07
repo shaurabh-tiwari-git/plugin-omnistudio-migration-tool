@@ -34,7 +34,7 @@ You can also authenticate using a consumer key (client ID) and secret key throug
 3. In a new terminal session, Install the Omnistudio Migration Assistant by running the `sf plugins install` command. For example
 
 ```
-sf plugins install @salesforce/plugin-omnistudio-migration-tool@2.0.0-rc.50
+sf plugins install @salesforce/plugin-omnistudio-migration-tool@2.0.0-rc.51
 ```
 
 4. Run the Omnistudio Migration Assistant from the Salesforce CLI:
@@ -114,7 +114,7 @@ sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM --only=autonum
 
 ```
 USAGE
-  $ sf omnistudio:migration:assess [-f] [-v <string>] [-u <string>] [--loglevel
+  $ sf omnistudio:migration:assess [-v <string>] [-u <string>] [--loglevel
   trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 OPTIONS
@@ -149,7 +149,7 @@ OPTIONS
 
 ```
 USAGE
-  $ sf omnistudio:migration:migrate [-f] [-v <string>] [-u <string>] [--loglevel
+  $ sf omnistudio:migration:migrate [-v <string>] [-u <string>] [--loglevel
   trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 OPTIONS

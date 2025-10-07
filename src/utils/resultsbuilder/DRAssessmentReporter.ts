@@ -53,9 +53,9 @@ export class DRAssessmentReporter {
         cssClass: 'text-warning',
       },
       {
-        name: 'Needs Manual Intervention',
+        name: 'Needs manual intervention',
         count: dataRaptorAssessmentInfos.filter(
-          (dataRaptorAssessmentInfo) => dataRaptorAssessmentInfo.migrationStatus === 'Needs Manual Intervention'
+          (dataRaptorAssessmentInfo) => dataRaptorAssessmentInfo.migrationStatus === 'Needs manual intervention'
         ).length,
         cssClass: 'text-error',
       },
@@ -168,7 +168,7 @@ export class DRAssessmentReporter {
           false,
           undefined,
           undefined,
-          dataRaptorAssessmentInfo.migrationStatus === 'Needs Manual Intervention' ||
+          dataRaptorAssessmentInfo.migrationStatus === 'Needs manual intervention' ||
             dataRaptorAssessmentInfo.migrationStatus === 'Failed'
             ? 'invalid-icon'
             : ''

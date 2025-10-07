@@ -471,7 +471,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     const existingSubTypeVal = new StringVal(existingSubType, 'sub type');
     const omniScriptName = omniscript[this.namespacePrefix + 'Name'];
     const existingOmniScriptNameVal = new StringVal(omniScriptName, 'name');
-    let assessmentStatus: 'Ready for migration' | 'Warnings' | 'Needs Manual Intervention' = 'Ready for migration';
+    let assessmentStatus: 'Ready for migration' | 'Warnings' | 'Needs manual intervention' = 'Ready for migration';
 
     const warnings: string[] = [];
     const errors: string[] = [];
@@ -480,11 +480,11 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     if (omniProcessType === 'Integration Procedure') {
       if (!existingType || existingType.trim() === '') {
         errors.push(this.messages.getMessage('missingMandatoryField', ['Type', 'Integration Procedure']));
-        assessmentStatus = 'Needs Manual Intervention';
+        assessmentStatus = 'Needs manual intervention';
       }
       if (!existingSubType || existingSubType.trim() === '') {
         errors.push(this.messages.getMessage('missingMandatoryField', ['SubType', 'Integration Procedure']));
-        assessmentStatus = 'Needs Manual Intervention';
+        assessmentStatus = 'Needs manual intervention';
       }
     }
 
@@ -492,7 +492,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     for (const osDep of dependencyOS) {
       if (this.nameRegistry.isAngularOmniScript(osDep.name)) {
         warnings.push(this.messages.getMessage('angularOmniScriptDependencyWarning', [osDep.location, osDep.name]));
-        assessmentStatus = 'Needs Manual Intervention';
+        assessmentStatus = 'Needs manual intervention';
       }
     }
 
@@ -519,10 +519,11 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     if (!existingTypeVal.isNameCleaned()) {
       if (omniProcessType === 'Integration Procedure' && (!newType || newType.trim() === '')) {
         warnings.push(this.messages.getMessage('integrationProcedureTypeEmptyAfterCleaning', [existingTypeVal.val]));
-        assessmentStatus = 'Needs Manual Intervention';
+        assessmentStatus = 'Needs manual intervention';
       } else {
         warnings.push(
           this.messages.getMessage('changeMessage', [
+            omniProcessType,
             existingTypeVal.type,
             existingTypeVal.val,
             existingTypeVal.cleanName(),
@@ -536,10 +537,11 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         warnings.push(
           this.messages.getMessage('integrationProcedureSubtypeEmptyAfterCleaning', [existingSubTypeVal.val])
         );
-        assessmentStatus = 'Needs Manual Intervention';
+        assessmentStatus = 'Needs manual intervention';
       } else {
         warnings.push(
           this.messages.getMessage('changeMessage', [
+            omniProcessType,
             existingSubTypeVal.type,
             existingSubTypeVal.val,
             existingSubTypeVal.cleanName(),
@@ -552,6 +554,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     if (!existingOmniScriptNameVal.isNameCleaned()) {
       warnings.push(
         this.messages.getMessage('changeMessage', [
+          omniProcessType,
           existingOmniScriptNameVal.type,
           existingOmniScriptNameVal.val,
           existingOmniScriptNameVal.cleanName(),
@@ -561,7 +564,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     }
     if (existingOmniscriptNames.has(recordName)) {
       warnings.push(this.messages.getMessage('duplicatedName') + '  ' + recordName);
-      assessmentStatus = 'Needs Manual Intervention';
+      assessmentStatus = 'Needs manual intervention';
     } else {
       existingOmniscriptNames.add(recordName);
     }
@@ -570,21 +573,21 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     if (duplicateElementNames.size > 0) {
       const duplicateNamesList = Array.from(duplicateElementNames).join(', ');
       warnings.unshift(this.messages.getMessage('invalidOrRepeatingOmniscriptElementNames', [duplicateNamesList]));
-      assessmentStatus = 'Needs Manual Intervention';
+      assessmentStatus = 'Needs manual intervention';
     }
 
     // Add warning for reserved keys found in PropertySet
     if (foundReservedKeys.size > 0) {
       const reservedKeysList = Array.from(foundReservedKeys).join(', ');
       warnings.unshift(this.messages.getMessage('reservedKeysFoundInPropertySet', [reservedKeysList]));
-      assessmentStatus = 'Needs Manual Intervention';
+      assessmentStatus = 'Needs manual intervention';
     }
 
     if (omniProcessType === this.OMNISCRIPT) {
       const type = omniscript[this.namespacePrefix + 'IsLwcEnabled__c'] ? 'LWC' : 'Angular';
       if (type === 'Angular') {
         warnings.unshift(this.messages.getMessage('angularOSWarning'));
-        assessmentStatus = 'Needs Manual Intervention';
+        assessmentStatus = 'Needs manual intervention';
       }
     }
 
