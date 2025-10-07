@@ -203,7 +203,7 @@
   "integrationProcedureTypeEmptyAfterCleaning": "Integration Procedure Type '%s' becomes empty after name cleaning. Please provide a valid Type value.",
   "integrationProcedureSubtypeEmptyAfterCleaning": "Integration Procedure SubType '%s' becomes empty after name cleaning. Please provide a valid SubType value.",
   "manifestDeployementStarted": "Manifest deployment started with ID: %s",
-  "migrationConsentMessage": "Make sure that all records listed in the Assessment Status column in the Assessment Report are marked as either Ready for Migration or Warnings before proceeding with the migration. Do you want to proceed? Yes or No?",
+  "migrationConsentMessage": "Make sure that all records listed in the Assessment Status column in the Assessment Report are marked as either Ready for Migration or Warnings before proceeding with the migration. Do you want to proceed? [y/n]",
   "truncationFailed": "Truncation failed for %s: %s",
   "invalidTypeMigrateErrorMessage": "We couldn't migrate your Omnistudio components in the %s namespace. Select the correct namespace and try again",
   "errorCheckingStandardRuntime": "We couldn't check whether the Standard OmniStudio Runtime setting is enabled: %s. Try again later.",
