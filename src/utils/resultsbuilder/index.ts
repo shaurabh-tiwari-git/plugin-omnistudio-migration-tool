@@ -54,6 +54,9 @@ export class ResultsBuilder {
 
   private static flexiPageFileSuffix = '.flexipage-meta.xml';
 
+  private static successStatus = ['Ready for migration', 'Complete', 'Successfully migrated'];
+  private static errorStatus = ['Failed', 'Needs manual intervention'];
+
   public static async generateReport(
     results: MigratedObject[],
     relatedObjectMigrationResult: RelatedObjectAssesmentInfo,
@@ -555,14 +558,18 @@ export class ResultsBuilder {
           createRowDataParam('path', item.name, false, 1, 1, true, item.path, item.name + '.cls'),
           createRowDataParam(
             'status',
-            this.getStatusFromErrors(item.errors),
+            item.status,
             false,
             1,
             1,
             false,
             undefined,
             undefined,
-            this.getStatusCssClass(item.errors)
+            this.successStatus.includes(item.status)
+              ? 'text-success'
+              : this.errorStatus.includes(item.status)
+              ? 'text-error'
+              : 'text-warning'
           ),
           createRowDataParam(
             'diff',
@@ -880,7 +887,7 @@ export class ResultsBuilder {
     let complete = 0;
     let error = 0;
     data.forEach((item: ApexAssessmentInfo) => {
-      if (this.getStatusFromErrors(item.errors) === 'Successfully migrated') complete++;
+      if (this.successStatus.includes(item.status)) complete++;
       else error++;
     });
     return [

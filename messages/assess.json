@@ -192,8 +192,10 @@
   "generatedCustomLabelAssessmentReportPage": "Generated custom label assessment report page %s of %s with %s labels",
   "manualDeploymentSteps": "<a href='%s' target='_blank'>Please refer to this documentation for manual deployment process</a>",
   "varDeclarationUpdated": "Variable initialization will be updated for target name",
-  "ipNameUpdateFailed": "IP reference %s can’t be updated",
-  "dmNameUpdateFailed": "DM reference %s can’t be updated",
+  "ipNameUpdateFailed": "Integration Procedure reference can’t be updated at line %s",
+  "dmNameUpdateFailed": "Data Mapper reference can’t be updated at line %s",
+  "ipNameReferenceNotFound": "Integration Procedure reference can’t be updated",
+  "dmNameReferenceNotFound": "Data Mapper reference can’t be updated",
   "invalidTypeAssessErrorMessage": "We couldn't assess your Omnistudio components in the %s namespace. Select the correct namespace and try again",
   "assessmentSuccessfulMessage": "Migration assessment for org %s is complete and reports are ready for review in the folder %s",
   "missingMandatoryField": "Missing mandatory field: %s for %s"

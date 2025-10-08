@@ -37,25 +37,23 @@ export class ApexAssessmentReporter {
     return [
       {
         name: 'Ready for migration',
-        count: apexAssessmentInfos.filter(
-          (apexAssessmentInfo) => this.getMigrationStatus(apexAssessmentInfo) === 'Ready for migration'
-        ).length,
+        count: apexAssessmentInfos.filter((apexAssessmentInfo) => apexAssessmentInfo.status === 'Ready for migration')
+          .length,
         cssClass: 'text-success',
       },
       {
         name: 'Warnings',
-        count: apexAssessmentInfos.filter((info) => this.getMigrationStatus(info) === 'Warnings').length,
+        count: apexAssessmentInfos.filter((info) => info.status === 'Warnings').length,
         cssClass: 'text-warning',
       },
       {
         name: 'Needs manual intervention',
-        count: apexAssessmentInfos.filter((info) => this.getMigrationStatus(info) === 'Needs manual intervention')
-          .length,
+        count: apexAssessmentInfos.filter((info) => info.status === 'Needs manual intervention').length,
         cssClass: 'text-error',
       },
       {
         name: 'Failed',
-        count: apexAssessmentInfos.filter((info) => this.getMigrationStatus(info) === 'Failed').length,
+        count: apexAssessmentInfos.filter((info) => info.status === 'Failed').length,
         cssClass: 'text-error',
       },
     ];
@@ -74,8 +72,7 @@ export class ApexAssessmentReporter {
           false,
           undefined,
           undefined,
-          this.getMigrationStatus(apexAssessmentInfo) === 'Needs manual intervention' ||
-            this.getMigrationStatus(apexAssessmentInfo) === 'Failed'
+          apexAssessmentInfo.status === 'Needs manual intervention' || apexAssessmentInfo.status === 'Failed'
             ? 'invalid-icon'
             : ''
         ),
@@ -91,14 +88,14 @@ export class ApexAssessmentReporter {
         ),
         createRowDataParam(
           'status',
-          this.getMigrationStatus(apexAssessmentInfo),
+          apexAssessmentInfo.status,
           false,
           1,
           1,
           false,
           undefined,
-          this.getMigrationStatus(apexAssessmentInfo),
-          this.getMigrationStatusCssClass(apexAssessmentInfo)
+          apexAssessmentInfo.status,
+          this.getMigrationStatusCssClass(apexAssessmentInfo.status)
         ),
         createRowDataParam(
           'diff',
@@ -134,13 +131,16 @@ export class ApexAssessmentReporter {
       ],
     }));
   }
-  private static getMigrationStatusCssClass(apexAssessmentInfo: ApexAssessmentInfo, noClassForSuccess = false): string {
-    if (apexAssessmentInfo.errors && apexAssessmentInfo.errors.length > 0) {
-      return 'text-error';
+  private static getMigrationStatusCssClass(status: string, noClassForSuccess = false): string {
+    switch (status) {
+      case 'Warnings':
+        return 'text-warning';
+      case 'Needs manual intervention':
+        return 'text-error';
+      case 'Failed':
+        return 'text-error';
     }
-    if (apexAssessmentInfo.warnings && apexAssessmentInfo.warnings.length > 0) {
-      return 'text-warning';
-    }
+
     return noClassForSuccess ? '' : 'text-success';
   }
 
@@ -149,7 +149,7 @@ export class ApexAssessmentReporter {
       return [];
     }
 
-    const distinctStatuses = [...new Set(apexAssessmentInfos.map((info) => this.getMigrationStatus(info)))];
+    const distinctStatuses = Array.from(new Set(apexAssessmentInfos.map((info) => info.status)));
     const statusFilterGroupParam: FilterGroupParam[] =
       distinctStatuses.length > 0 && distinctStatuses.filter((status) => status).length > 0
         ? [createFilterGroupParam('Filter By Assessment Status', 'status', distinctStatuses)]
@@ -195,15 +195,5 @@ export class ApexAssessmentReporter {
         ],
       },
     ];
-  }
-
-  private static getMigrationStatus(apexAssessmentInfo: ApexAssessmentInfo): string {
-    if (apexAssessmentInfo.errors && apexAssessmentInfo.errors.length > 0) {
-      return 'Failed';
-    }
-    if (apexAssessmentInfo.warnings && apexAssessmentInfo.warnings.length > 0) {
-      return 'Warnings';
-    }
-    return 'Ready for migration';
   }
 }
