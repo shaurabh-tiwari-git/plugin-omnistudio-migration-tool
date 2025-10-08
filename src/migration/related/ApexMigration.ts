@@ -149,7 +149,7 @@ export class ApexMigration extends BaseRelatedObjectMigration {
       dmNameUpdateFailed
     );
     const updateMessages: string[] = [];
-    let status: 'Ready for migration' | 'Failed' | 'Complete' | 'Needs Manual Intervention' | 'Skipped' =
+    let status: 'Ready for migration' | 'Failed' | 'Complete' | 'Needs manual intervention' | 'Skipped' =
       type === 'migration' ? 'Complete' : 'Ready for migration';
 
     let methodCallsUpdated = false;
@@ -182,7 +182,7 @@ export class ApexMigration extends BaseRelatedObjectMigration {
           warnings.push(assessMessages.getMessage('ipNameReferenceNotFound'));
         }
       });
-      status = type === 'migration' ? 'Skipped' : 'Needs Manual Intervention';
+      status = type === 'migration' ? 'Skipped' : 'Needs manual intervention';
     }
     if (dmNameUpdateFailed.size > 0) {
       dmNameUpdateFailed.forEach((nameOrLine: string | number) => {
@@ -192,7 +192,7 @@ export class ApexMigration extends BaseRelatedObjectMigration {
           warnings.push(assessMessages.getMessage('dmNameReferenceNotFound'));
         }
       });
-      status = type === 'migration' ? 'Skipped' : 'Needs Manual Intervention';
+      status = type === 'migration' ? 'Skipped' : 'Needs manual intervention';
     }
 
     if (!ipNameUpdateFailed?.size && !dmNameUpdateFailed?.size) {

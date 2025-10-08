@@ -92,7 +92,7 @@ export interface FileChangeInfo {
 export interface ApexAssessmentInfo extends FileChangeInfo {
   warnings: string[];
   infos: string[];
-  status: 'Ready for migration' | 'Failed' | 'Skipped' | 'Complete' | 'Needs Manual Intervention' | 'Warnings';
+  status: 'Ready for migration' | 'Failed' | 'Skipped' | 'Complete' | 'Needs manual intervention' | 'Warnings';
 }
 
 export interface FileParser {

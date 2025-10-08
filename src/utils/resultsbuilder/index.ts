@@ -55,7 +55,7 @@ export class ResultsBuilder {
   private static flexiPageFileSuffix = '.flexipage-meta.xml';
 
   private static successStatus = ['Ready for migration', 'Complete', 'Successfully migrated'];
-  private static errorStatus = ['Failed', 'Needs Manual Intervention'];
+  private static errorStatus = ['Failed', 'Needs manual intervention'];
 
   public static async generateReport(
     results: MigratedObject[],

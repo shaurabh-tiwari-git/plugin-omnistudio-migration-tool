@@ -135,7 +135,7 @@ export class ApexAssessmentReporter {
     switch (status) {
       case 'Warnings':
         return 'text-warning';
-      case 'Needs Manual Intervention':
+      case 'Needs manual intervention':
         return 'text-error';
       case 'Failed':
         return 'text-error';
