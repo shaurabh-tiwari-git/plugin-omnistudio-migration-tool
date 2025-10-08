@@ -12,5 +12,6 @@
   "greetingOrgInfo": "Hello %s! This is org: %s",
   "greetingOrgInfoWithDate": "Hello %s! This is org: %s and I will be around until %s!",
   "hubOrgId": "My hub org id is: %s",
-  "allVersionsAppended": " and all versions will be migrated"
+  "allVersionsAppended": " and all versions will be migrated",
+  "errorRunningInfo": "Error occurred while running info command"
 }

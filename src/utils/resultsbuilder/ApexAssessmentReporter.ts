@@ -47,8 +47,8 @@ export class ApexAssessmentReporter {
         cssClass: 'text-warning',
       },
       {
-        name: 'Needs Manual Intervention',
-        count: apexAssessmentInfos.filter((info) => info.status === 'Needs Manual Intervention').length,
+        name: 'Needs manual intervention',
+        count: apexAssessmentInfos.filter((info) => info.status === 'Needs manual intervention').length,
         cssClass: 'text-error',
       },
       {
@@ -72,7 +72,7 @@ export class ApexAssessmentReporter {
           false,
           undefined,
           undefined,
-          apexAssessmentInfo.status === 'Needs Manual Intervention' || apexAssessmentInfo.status === 'Failed'
+          apexAssessmentInfo.status === 'Needs manual intervention' || apexAssessmentInfo.status === 'Failed'
             ? 'invalid-icon'
             : ''
         ),

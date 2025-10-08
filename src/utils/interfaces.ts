@@ -15,7 +15,7 @@ export interface MigratedRecordInfo {
     | 'Failed'
     | 'Skipped'
     | 'Successfully migrated'
-    | 'Needs Manual Intervention'
+    | 'Needs manual intervention'
     | 'Warnings';
   errors: string[];
   migratedId?: string;
@@ -44,7 +44,7 @@ export interface OSAssessmentInfo {
   missingIP: string[];
   dependenciesDR: nameLocation[];
   missingDR: string[];
-  migrationStatus: 'Ready for migration' | 'Failed' | 'Skipped' | 'Complete' | 'Needs Manual Intervention' | 'Warnings';
+  migrationStatus: 'Ready for migration' | 'Failed' | 'Skipped' | 'Complete' | 'Needs manual intervention' | 'Warnings';
   dependenciesOS: nameLocation[];
   missingOS: string[];
   dependenciesRemoteAction: nameLocation[];
@@ -82,7 +82,7 @@ export interface IPAssessmentInfo {
   warnings: string[];
   errors: string[];
   path: string;
-  migrationStatus: 'Ready for migration' | 'Failed' | 'Skipped' | 'Complete' | 'Needs Manual Intervention' | 'Warnings';
+  migrationStatus: 'Ready for migration' | 'Failed' | 'Skipped' | 'Complete' | 'Needs manual intervention' | 'Warnings';
 }
 export interface FileChangeInfo {
   path: string;
@@ -136,7 +136,7 @@ export interface FlexCardAssessmentInfo {
   infos: string[];
   warnings: string[];
   errors: string[];
-  migrationStatus: 'Ready for migration' | 'Failed' | 'Skipped' | 'Complete' | 'Needs Manual Intervention' | 'Warnings';
+  migrationStatus: 'Ready for migration' | 'Failed' | 'Skipped' | 'Complete' | 'Needs manual intervention' | 'Warnings';
   nameMapping?: FlexcardNameMapping;
 }
 
@@ -155,7 +155,7 @@ export interface DataRaptorAssessmentInfo {
   warnings: string[];
   errors: string[];
   apexDependencies: string[];
-  migrationStatus: 'Ready for migration' | 'Failed' | 'Skipped' | 'Complete' | 'Needs Manual Intervention' | 'Warnings';
+  migrationStatus: 'Ready for migration' | 'Failed' | 'Skipped' | 'Complete' | 'Needs manual intervention' | 'Warnings';
 }
 
 export interface GlobalAutoNumberAssessmentInfo {
@@ -193,7 +193,7 @@ export interface ExperienceSiteAssessmentPageInfo extends FileChangeInfo {
   infos: string[];
   hasOmnistudioContent: boolean;
   errors: string[];
-  status: 'Ready for migration' | 'Failed' | 'Successfully migrated' | 'Needs Manual Intervention' | 'Skipped';
+  status: 'Ready for migration' | 'Failed' | 'Successfully migrated' | 'Needs manual intervention' | 'Skipped';
 }
 
 export interface ExperienceSiteAssessmentInfo {
@@ -265,6 +265,6 @@ export interface FlexiPageAssessmentInfo extends FileChangeInfo {
     | 'Failed'
     | 'Warnings'
     | 'Successfully migrated'
-    | 'Needs Manual Intervention'
+    | 'Needs manual intervention'
     | 'Skipped';
 }

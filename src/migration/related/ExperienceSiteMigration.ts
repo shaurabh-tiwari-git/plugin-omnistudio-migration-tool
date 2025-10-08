@@ -94,7 +94,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       for (const file of fileArray) {
         progressBar.update(++progressCounter);
         if (file.ext !== '.json') {
-          Logger.logVerbose(this.messages.getMessage('skipNonJsonFile ', [file.name]));
+          Logger.logVerbose(this.messages.getMessage('skipNonJsonFile', [file.name]));
           continue;
         }
         try {
@@ -272,7 +272,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
 
     if (currentAttribute.target === undefined || currentAttribute.target === '') {
       experienceSiteAssessmentInfo.warnings.push(this.messages.getMessage('emptyTargetData'));
-      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs Manual Intervention' : 'Skipped';
+      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs manual intervention' : 'Skipped';
       return;
     }
 
@@ -304,7 +304,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     if (this.shouldAddWarning(targetDataFromStorageFC)) {
       const warningMsg: string = this.getWarningMessage(flexcardName, targetDataFromStorageFC);
       experienceSiteAssessmentInfo.warnings.push(warningMsg);
-      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs Manual Intervention' : 'Skipped';
+      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs manual intervention' : 'Skipped';
     } else {
       component.componentName = TARGET_COMPONENT_NAME_FC;
 
@@ -334,7 +334,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     if (this.shouldAddWarning(targetDataFromStorage)) {
       const warningMsg: string = this.getWarningMessage(targetName, targetDataFromStorage);
       experienceSiteAssessmentInfo.warnings.push(warningMsg);
-      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs Manual Intervention' : 'Skipped';
+      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs manual intervention' : 'Skipped';
     } else {
       component.componentName = TARGET_COMPONENT_NAME_OS;
 
