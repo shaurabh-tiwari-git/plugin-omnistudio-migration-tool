@@ -112,6 +112,7 @@ describe('OmniScript Angular Dependency Validation', () => {
         mockOmniscript,
         new Set<string>(),
         new Set<string>(),
+        new Set<string>(),
         new Set<string>()
       );
 
@@ -150,6 +151,7 @@ describe('OmniScript Angular Dependency Validation', () => {
 
       const result = await (omniScriptTool as any).processOmniScript(
         mockOmniscript,
+        new Set<string>(),
         new Set<string>(),
         new Set<string>(),
         new Set<string>()

@@ -165,11 +165,12 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     const progressBar = createProgressBar('Assessing', 'Flexcards');
     progressBar.start(flexCards.length, progressCounter);
     const uniqueNames = new Set<string>();
+    const dupFlexCardNames: Set<string> = new Set<string>();
 
     // Now process each OmniScript and its elements
     for (const flexCard of flexCards) {
       try {
-        const flexCardAssessmentInfo = await this.processFlexCard(flexCard, uniqueNames);
+        const flexCardAssessmentInfo = await this.processFlexCard(flexCard, uniqueNames, dupFlexCardNames);
         flexCardAssessmentInfos.push(flexCardAssessmentInfo);
       } catch (e) {
         flexCardAssessmentInfos.push({
@@ -196,7 +197,11 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     return flexCardAssessmentInfos;
   }
 
-  private async processFlexCard(flexCard: AnyJson, uniqueNames: Set<string>): Promise<FlexCardAssessmentInfo> {
+  private async processFlexCard(
+    flexCard: AnyJson,
+    uniqueNames: Set<string>,
+    dupFlexCardNames: Set<String>
+  ): Promise<FlexCardAssessmentInfo> {
     const flexCardName = flexCard['Name'];
     Logger.info(this.messages.getMessage('processingFlexCard', [flexCardName]));
     const version = flexCard[this.namespacePrefix + CardMigrationTool.VERSION_PROP];
@@ -230,11 +235,23 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     }
 
     // Check for duplicate names (include version when allVersions is true)
+    // A Set that can only store original flexcard names to avoid conflicts with cleaned name
     const uniqueCleanedName = this.allVersions ? `${cleanedName}_${version}` : cleanedName;
-    if (uniqueNames.has(uniqueCleanedName)) {
-      flexCardAssessmentInfo.warnings.push(this.messages.getMessage('duplicateCardNameMessage', [uniqueCleanedName]));
+    if (uniqueNames.has(uniqueCleanedName) || dupFlexCardNames.has(originalName)) {
+      // Add the original flexcard name to the set
+      if (this.allVersions && !dupFlexCardNames.has(originalName)) {
+        dupFlexCardNames.add(originalName);
+      }
+      if (uniqueNames.has(uniqueCleanedName)) {
+        flexCardAssessmentInfo.warnings.push(this.messages.getMessage('duplicateCardNameMessage', [uniqueCleanedName]));
+      } else {
+        flexCardAssessmentInfo.warnings.push(
+          this.messages.getMessage('lowerVersionDuplicateCardNameMessage', [uniqueCleanedName])
+        );
+      }
       assessmentStatus = getUpdatedAssessmentStatus(assessmentStatus, 'Needs manual intervention');
     }
+
     uniqueNames.add(uniqueCleanedName);
 
     // Check for author name changes
@@ -721,11 +738,12 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     const cardsUploadInfo = new Map<string, UploadRecordResult>();
     const originalRecords = new Map<string, any>();
     const uniqueNames = new Set<string>();
+    const dupFlexCardNames: Set<string> = new Set<string>();
 
     let progressCounter = 0;
     progressBar.start(cards.length, progressCounter);
     for (let card of cards) {
-      await this.uploadCard(cards, card, cardsUploadInfo, originalRecords, uniqueNames);
+      await this.uploadCard(cards, card, cardsUploadInfo, originalRecords, uniqueNames, dupFlexCardNames);
       progressBar.update(++progressCounter);
     }
 
@@ -741,7 +759,8 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     card: AnyJson,
     cardsUploadInfo: Map<string, UploadRecordResult>,
     originalRecords: Map<string, any>,
-    uniqueNames: Set<string>
+    uniqueNames: Set<string>,
+    dupFlexCardNames: Set<String>
   ) {
     const recordId = card['Id'];
 
@@ -758,7 +777,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           // Upload child cards
           const childCard = allCards.find((c) => c['Name'] === childCardName);
           if (childCard) {
-            await this.uploadCard(allCards, childCard, cardsUploadInfo, originalRecords, uniqueNames);
+            await this.uploadCard(allCards, childCard, cardsUploadInfo, originalRecords, uniqueNames, dupFlexCardNames);
           }
         }
 
@@ -783,8 +802,16 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         ? `${transformedCard['Name']}_${transformedCard['VersionNumber']}`
         : transformedCard['Name'];
 
-      if (uniqueNames.has(uniqueCheckName)) {
-        this.setRecordErrors(card, this.messages.getMessage('duplicatedCardName', [uniqueCheckName]));
+      if (uniqueNames.has(uniqueCheckName) || dupFlexCardNames.has(transformedCard['Name'])) {
+        if (this.allVersions && !dupFlexCardNames.has(transformedCard['Name'])) {
+          dupFlexCardNames.add(transformedCard['Name']);
+        }
+        // change error message
+        if (uniqueNames.has(uniqueCheckName)) {
+          this.setRecordErrors(card, this.messages.getMessage('duplicatedCardName', [uniqueCheckName]));
+        } else {
+          this.setRecordErrors(card, this.messages.getMessage('lowerVersionDuplicateCardName', [uniqueCheckName]));
+        }
         originalRecords.set(recordId, card);
         return;
       }
