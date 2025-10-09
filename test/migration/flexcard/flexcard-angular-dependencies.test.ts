@@ -257,8 +257,8 @@ describe('FlexCard Angular Dependency Validation', () => {
         }),
       };
 
-      // Mock getAllActiveCards method
-      (cardTool as any).getAllActiveCards = () => Promise.resolve([mockFlexCardWithAngular, mockFlexCardWithLWC]);
+      // Mock getAllCards method
+      (cardTool as any).getAllCards = () => Promise.resolve([mockFlexCardWithAngular, mockFlexCardWithLWC]);
 
       // Mock uploadAllCards method to track which cards are processed
       const processedCards: any[] = [];
@@ -293,7 +293,7 @@ describe('FlexCard Angular Dependency Validation', () => {
         }),
       };
 
-      (cardTool as any).getAllActiveCards = () => Promise.resolve([mockFlexCardWithAngular]);
+      (cardTool as any).getAllCards = () => Promise.resolve([mockFlexCardWithAngular]);
       (cardTool as any).uploadAllCards = () => Promise.resolve(new Map());
 
       const result = await cardTool.migrate();

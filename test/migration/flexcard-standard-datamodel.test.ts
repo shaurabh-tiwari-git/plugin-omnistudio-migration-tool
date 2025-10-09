@@ -30,9 +30,6 @@ describe('FlexCard Standard Data Model (Metadata API Disabled) - Assessment and 
     mockConnection = {};
     mockMessages = {
       getMessage: (key: string, args?: string[]) => {
-        if (key === 'needManualInterventionAsSpecialCharsInFlexcardName') {
-          return 'FlexCard name contains special characters and cannot be auto-migrated';
-        }
         if (key === 'cardNameChangeMessage') {
           return `The card name '${args?.[0]}' will be changed to '${args?.[1]}'`;
         }
@@ -117,9 +114,10 @@ describe('FlexCard Standard Data Model (Metadata API Disabled) - Assessment and 
       expect(result.name).to.equal('CustomerProfileCard');
       expect(result.oldName).to.equal('Customer-Profile@Card!');
 
-      // Should add warning for manual intervention due to special characters
-      expect(result.warnings).to.include('FlexCard name contains special characters and cannot be auto-migrated');
-      expect(result.migrationStatus).to.equal('Needs Manual Intervention');
+      // Should add warning about name change (name updates are now allowed, so status is Warnings not Manual Intervention)
+      expect(result.warnings).to.have.length.greaterThan(0);
+      expect(result.warnings[0]).to.include("will be changed to 'CustomerProfileCard'");
+      expect(result.migrationStatus).to.equal('Warnings');
 
       // Dependencies should still be detected for assessment
       expect(result.dependenciesDR).to.have.length.greaterThan(0);
@@ -193,7 +191,7 @@ describe('FlexCard Standard Data Model (Metadata API Disabled) - Assessment and 
     it('should map OmniUiCard fields correctly for Standard Data Model', () => {
       const mockCardRecord = {
         Id: 'fc1',
-        Name: 'TestCard',
+        Name: 'TestCard!@#',
         DataSourceConfig: JSON.stringify({
           type: 'DataRaptor',
           value: { bundle: 'TestBundle' },
@@ -218,7 +216,7 @@ describe('FlexCard Standard Data Model (Metadata API Disabled) - Assessment and 
       expect(result.AuthorName).to.equal('TestAuthor');
       expect(result.VersionNumber).to.equal(2);
       expect(result.OmniUiCardType).to.equal('Parent');
-      expect(result.OmniUiCardKey).to.equal('test-card-key');
+      expect(result.OmniUiCardKey).to.equal('TestCard/TestAuthor/2.0');
     });
 
     it('should process DataRaptor data source and preserve registry mapping functionality', () => {
@@ -612,7 +610,7 @@ describe('FlexCard Standard Data Model (Metadata API Disabled) - Assessment and 
       expect(result.StylingConfiguration).to.equal('style-config');
       expect(result.OmniUiCardType).to.equal('Parent');
       expect(result.VersionNumber).to.equal(1);
-      expect(result.OmniUiCardKey).to.equal('card-key');
+      expect(result.OmniUiCardKey).to.equal('TestCard/TestAuthor/1.0');
     });
   });
 });
