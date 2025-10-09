@@ -89,8 +89,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
   // Perform Records Migration from VlocityCard__c to OmniUiCard
   async migrate(): Promise<MigrationResult[]> {
-    // Get All the Active VlocityCard__c records
-    const allCards = await this.getAllActiveCards();
+    const allCards = await this.getAllCards();
 
     Logger.log(this.messages.getMessage('foundFlexCardsToMigrate', [allCards.length]));
 
@@ -156,7 +155,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   public async assess(): Promise<FlexCardAssessmentInfo[]> {
     try {
       Logger.log(this.messages.getMessage('startingFlexCardAssessment'));
-      const flexCards = await this.getAllActiveCards();
+      const flexCards = await this.getAllCards();
       Logger.log(this.messages.getMessage('foundFlexCardsToAssess', [flexCards.length]));
 
       const flexCardsAssessmentInfos = await this.processCardComponents(flexCards);
@@ -234,20 +233,10 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       'Ready for migration';
     flexCardAssessmentInfo.name = this.allVersions ? `${cleanedName}_${version}` : cleanedName;
     if (cleanedName !== originalName) {
-      if (!this.IS_STANDARD_DATA_MODEL) {
-        flexCardAssessmentInfo.warnings.push(
-          this.messages.getMessage('cardNameChangeMessage', [originalName, cleanedName])
-        );
-        assessmentStatus = getUpdatedAssessmentStatus(assessmentStatus, 'Warnings');
-      } else {
-        flexCardAssessmentInfo.warnings.push(
-          this.messages.getMessage('needManualInterventionAsSpecialCharsInFlexcardName')
-        );
-        flexCardAssessmentInfo.errors.push(
-          this.messages.getMessage('needManualInterventionAsSpecialCharsInFlexcardName')
-        );
-        assessmentStatus = 'Needs Manual Intervention';
-      }
+      flexCardAssessmentInfo.warnings.push(
+        this.messages.getMessage('cardNameChangeMessage', [originalName, cleanedName])
+      );
+      assessmentStatus = getUpdatedAssessmentStatus(assessmentStatus, 'Warnings');
     }
 
     // Check for duplicate names
@@ -404,23 +393,13 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
         // Add warning if child card name will change
         if (childCardName !== cleanedChildCardName) {
-          if (!this.IS_STANDARD_DATA_MODEL) {
-            flexCardAssessmentInfo.warnings.push(
-              this.messages.getMessage('cardNameChangeMessage', [childCardName, cleanedChildCardName])
-            );
-            flexCardAssessmentInfo.migrationStatus = getUpdatedAssessmentStatus(
-              flexCardAssessmentInfo.migrationStatus,
-              'Warnings'
-            );
-          } else {
-            flexCardAssessmentInfo.warnings.push(
-              this.messages.getMessage('needManualInterventionAsSpecialCharsInChildFlexcardName')
-            );
-            flexCardAssessmentInfo.errors.push(
-              this.messages.getMessage('needManualInterventionAsSpecialCharsInChildFlexcardName')
-            );
-            flexCardAssessmentInfo.migrationStatus = 'Needs Manual Intervention';
-          }
+          flexCardAssessmentInfo.warnings.push(
+            this.messages.getMessage('cardNameChangeMessage', [childCardName, cleanedChildCardName])
+          );
+          flexCardAssessmentInfo.migrationStatus = getUpdatedAssessmentStatus(
+            flexCardAssessmentInfo.migrationStatus,
+            'Warnings'
+          );
         }
       }
     } catch (err) {
@@ -694,8 +673,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     }
   }
 
-  // Query all cards that are active
-  private async getAllActiveCards(): Promise<AnyJson[]> {
+  private async getAllCards(): Promise<AnyJson[]> {
     //DebugTimer.getInstance().lap('Query Vlocity Cards');
     const filters = new Map<string, any>();
 
@@ -740,7 +718,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     }
   }
 
-  // Upload All the VlocityCard__c records to OmniUiCard
+  // Upload All the VlocityCard__c records to OmniUiCard for custom model and update references for standard
   private async uploadAllCards(
     cards: any[],
     progressBar: ReturnType<typeof createProgressBar>
@@ -789,41 +767,12 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           }
         }
 
-        const isChildCardUpdated: boolean = this.updateChildCards(card);
-
-        if (this.IS_STANDARD_DATA_MODEL && isChildCardUpdated) {
-          originalRecords.set(recordId, card);
-
-          cardsUploadInfo.set(recordId, {
-            referenceId: recordId,
-            hasErrors: true,
-            success: false,
-            errors: [this.messages.getMessage('needManualInterventionAsSpecialCharsInChildFlexcardName')],
-            warnings: [],
-          });
-
-          return;
-        }
+        this.updateChildCards(card);
       }
 
       // Perform the transformation
       const invalidIpNames = new Map<string, string>();
       const transformedCard = this.mapVlocityCardRecord(card, cardsUploadInfo, invalidIpNames); // This only has the card structure, card definition is not there
-
-      if (this.IS_STANDARD_DATA_MODEL) {
-        if (transformedCard['Name'] != card['Name']) {
-          originalRecords.set(recordId, card);
-
-          cardsUploadInfo.set(recordId, {
-            referenceId: recordId,
-            hasErrors: true,
-            success: false,
-            errors: [this.messages.getMessage('needManualInterventionAsSpecialCharsInFlexcardName')],
-            warnings: [],
-          });
-          return;
-        }
-      }
 
       // Verify duplicated names
       let transformedCardName: string;
@@ -1051,11 +1000,9 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     return childs;
   }
 
-  private updateChildCards(card: AnyJson): boolean {
+  private updateChildCards(card: AnyJson): void {
     const definition = JSON.parse(card[this.getFieldKey('Definition__c')]);
-    if (!definition) return false;
-
-    let hasNameChanges = false;
+    if (!definition) return;
 
     for (let state of definition.states || []) {
       if (state.childCards && Array.isArray(state.childCards)) {
@@ -1065,14 +1012,12 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         // Check if any child card name was changed
         for (let i = 0; i < originalChildCards.length; i++) {
           if (originalChildCards[i] !== state.childCards[i]) {
-            hasNameChanges = true;
           }
         }
       }
     }
 
     card[this.getFieldKey('Definition__c')] = JSON.stringify(definition);
-    return hasNameChanges;
   }
 
   // Maps an indivitdual VlocityCard__c record to an OmniUiCard record.
@@ -1125,6 +1070,18 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     mappedObject[CardMappings.Author__c] = this.cleanName(mappedObject[CardMappings.Author__c]);
     mappedObject[CardMappings.Active__c] = false;
 
+    if (this.IS_STANDARD_DATA_MODEL) {
+      if (mappedObject['OmniUiCardKey']) {
+        mappedObject['OmniUiCardKey'] =
+          mappedObject['Name'] +
+          '/' +
+          mappedObject[CardMappings.Author__c] +
+          '/' +
+          mappedObject[CardMappings.Version__c] +
+          '.0';
+      }
+    }
+
     // Update the datasource
     const datasource = JSON.parse(mappedObject[CardMappings.Datasource__c] || '{}');
     if (datasource.dataSource) {
@@ -1146,8 +1103,10 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       mappedObject[CardMappings.Datasource__c] = JSON.stringify(datasource);
     }
 
-    const isCardActive: boolean = cardRecord[`${this.namespacePrefix}Active__c`];
-    this.ensureCommunityTargets(mappedObject, isCardActive);
+    if (!this.IS_STANDARD_DATA_MODEL) {
+      const isCardActive: boolean = cardRecord[this.getFieldKey('Active__c')];
+      this.ensureCommunityTargets(mappedObject, isCardActive);
+    }
 
     // Update all dependencies comprehensively
     this.updateAllDependenciesWithRegistry(mappedObject, invalidIpNames);
