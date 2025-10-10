@@ -973,8 +973,6 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       if (this.allVersions) {
         const storedValue = storage.fcStorage.get(finalKey);
         if (this.isDifferentFlexcard(storedValue, originalName)) {
-          // same version, no need to do anything
-        } else {
           this.markDuplicateKeyInStorage(value, finalKey, storage);
         }
       } else {

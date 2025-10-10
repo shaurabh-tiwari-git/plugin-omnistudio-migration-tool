@@ -198,7 +198,7 @@ export interface OmniScriptStorage extends Storage {
   subtype: string;
   language: string;
   originalType: string;
-  orignalSubtype: string;
+  originalSubtype: string;
   originalLanguage: string;
 }
 

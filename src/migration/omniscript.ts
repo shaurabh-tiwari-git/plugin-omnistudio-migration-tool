@@ -641,7 +641,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         }
 
         const originalType: string = nameMapping.oldType;
-        const orignalSubtype: string = nameMapping.oldSubtype;
+        const originalSubtype: string = nameMapping.oldSubtype;
         const originalLanguage: string = nameMapping.oldLanguage;
 
         let value: OmniScriptStorage = {
@@ -650,7 +650,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           language: nameMapping.newLanguage,
           isDuplicate: false,
           originalType: originalType,
-          orignalSubtype: orignalSubtype,
+          originalSubtype: originalSubtype,
           originalLanguage: originalLanguage,
         };
 
@@ -661,7 +661,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           value.migrationSuccess = true;
         }
 
-        this.addKeyToStorage(originalType, orignalSubtype, originalLanguage, storage, value);
+        this.addKeyToStorage(originalType, originalSubtype, originalLanguage, storage, value);
       } catch (error) {
         Logger.error(error);
       }
@@ -672,7 +672,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
   private addKeyToStorage(
     originalType: string,
-    orignalSubtype: string,
+    originalSubtype: string,
     originalLanguage: string,
     storage: MigrationStorage,
     value: OmniScriptStorage
@@ -681,18 +681,18 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       // Create object key for new storage format
       const keyObject: OmniScriptStandardKey = {
         type: originalType,
-        subtype: orignalSubtype,
+        subtype: originalSubtype,
         language: originalLanguage,
       };
       StorageUtil.addStandardOmniScriptToStorage(storage, keyObject, value);
     }
 
-    let finalKey = `${originalType}${orignalSubtype}${this.cleanLanguageName(originalLanguage)}`;
+    let finalKey = `${originalType}${originalSubtype}${this.cleanLanguageName(originalLanguage)}`;
     finalKey = finalKey.toLowerCase();
     if (storage.osStorage.has(finalKey)) {
       if (this.allVersions) {
         const storedValue = storage.osStorage.get(finalKey);
-        if (this.isDifferentOmniscript(storedValue, originalType, orignalSubtype, originalLanguage)) {
+        if (this.isDifferentOmniscript(storedValue, originalType, originalSubtype, originalLanguage)) {
           this.markDuplicateKeyInStorage(value, finalKey, storage);
         }
       } else {
@@ -713,7 +713,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
   private isDifferentOmniscript(storedValue, type, subtype, language) {
     if (
       storedValue.originalType === type &&
-      storedValue.originalSubType === subtype &&
+      storedValue.originalSubtype === subtype &&
       storedValue.originalLanguage === language
     ) {
       return false;
@@ -1204,7 +1204,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
             language: newrecord['language'],
             isDuplicate: false,
             originalType: oldrecord[this.getFieldKey('Type__c')],
-            orignalSubtype: oldrecord[this.getFieldKey('SubType__c')],
+            originalSubtype: oldrecord[this.getFieldKey('SubType__c')],
             originalLanguage: oldrecord[this.getFieldKey('Language__c')],
           };
 
