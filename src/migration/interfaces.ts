@@ -197,10 +197,14 @@ export interface OmniScriptStorage extends Storage {
   type: string;
   subtype: string;
   language: string;
+  originalType: string;
+  orignalSubtype: string;
+  originalLanguage: string;
 }
 
 export interface FlexcardStorage extends Storage {
   name: string;
+  originalName: string;
 }
 
 export class InvalidEntityTypeError extends Error {
