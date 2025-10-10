@@ -845,5 +845,320 @@ describe('Storage Duplicate Logic - Multiple Versions Handling', () => {
       expect(storage.osStorage.get(englishKey).isDuplicate).to.be.false;
       expect(storage.osStorage.get(frenchKey).isDuplicate).to.be.false;
     });
+
+    it('should handle multiple OmniScripts with multiple versions each', () => {
+      // Enable Standard Data Model for this test to populate osStandardStorage
+      const mockStandardOrgDetails: OmnistudioOrgDetails = {
+        packageDetails: { version: '1.0.0', namespace: 'vlocity_ins' },
+        omniStudioOrgPermissionEnabled: true, // Enable Standard Data Model
+        orgDetails: { Name: 'Test Org', Id: '00D000000000000' },
+        dataModel: 'Standard',
+        hasValidNamespace: true,
+      };
+      initializeDataModelService(mockStandardOrgDetails);
+
+      const omniScriptTool = new OmniScriptMigrationTool(
+        OmniScriptExportType.OS,
+        'vlocity_ins',
+        mockConnection,
+        mockLogger,
+        mockMessages,
+        mockUx,
+        true // allVersions = true
+      );
+
+      const osAssessmentInfos = [
+        // Aa/Bb/English - Version 1
+        {
+          name: 'Aa_Bb_English_1',
+          oldName: 'Aa_Bb_English_1',
+          id: 'os1',
+          type: 'OmniScript',
+          dependenciesIP: [],
+          dependenciesDR: [],
+          dependenciesOS: [],
+          dependenciesRemoteAction: [],
+          dependenciesLWC: [],
+          missingIP: [],
+          missingDR: [],
+          missingOS: [],
+          infos: [],
+          warnings: [],
+          errors: [],
+          migrationStatus: 'Ready for migration' as const,
+          nameMapping: {
+            oldType: 'Aa',
+            oldSubtype: 'Bb',
+            oldLanguage: 'English',
+            newType: 'Aa',
+            newSubType: 'Bb',
+            newLanguage: 'English',
+          },
+        },
+        // Aa/Bb/English - Version 2
+        {
+          name: 'Aa_Bb_English_2',
+          oldName: 'Aa_Bb_English_2',
+          id: 'os2',
+          type: 'OmniScript',
+          dependenciesIP: [],
+          dependenciesDR: [],
+          dependenciesOS: [],
+          dependenciesRemoteAction: [],
+          dependenciesLWC: [],
+          missingIP: [],
+          missingDR: [],
+          missingOS: [],
+          infos: [],
+          warnings: [],
+          errors: [],
+          migrationStatus: 'Ready for migration' as const,
+          nameMapping: {
+            oldType: 'Aa',
+            oldSubtype: 'Bb',
+            oldLanguage: 'English',
+            newType: 'Aa',
+            newSubType: 'Bb',
+            newLanguage: 'English',
+          },
+        },
+        // Aa/Bb/English - Version 3
+        {
+          name: 'Aa_Bb_English_3',
+          oldName: 'Aa_Bb_English_3',
+          id: 'os3',
+          type: 'OmniScript',
+          dependenciesIP: [],
+          dependenciesDR: [],
+          dependenciesOS: [],
+          dependenciesRemoteAction: [],
+          dependenciesLWC: [],
+          missingIP: [],
+          missingDR: [],
+          missingOS: [],
+          infos: [],
+          warnings: [],
+          errors: [],
+          migrationStatus: 'Ready for migration' as const,
+          nameMapping: {
+            oldType: 'Aa',
+            oldSubtype: 'Bb',
+            oldLanguage: 'English',
+            newType: 'Aa',
+            newSubType: 'Bb',
+            newLanguage: 'English',
+          },
+        },
+        // Aa$/Bb$/English - Version 1
+        {
+          name: 'Aa_Bb_English_1',
+          oldName: 'Aa$_Bb$_English_1',
+          id: 'os4',
+          type: 'OmniScript',
+          dependenciesIP: [],
+          dependenciesDR: [],
+          dependenciesOS: [],
+          dependenciesRemoteAction: [],
+          dependenciesLWC: [],
+          missingIP: [],
+          missingDR: [],
+          missingOS: [],
+          infos: [],
+          warnings: ['Type changed from Aa$ to Aa', 'SubType changed from Bb$ to Bb'],
+          errors: [
+            'Omniscript with duplicate name, type, subtype, or language found in this org. Modify your Omniscript and try again. Omniscript Aa_Bb_English_1',
+          ],
+          migrationStatus: 'Needs Manual Intervention' as const,
+          nameMapping: {
+            oldType: 'Aa$',
+            oldSubtype: 'Bb$',
+            oldLanguage: 'English',
+            newType: 'Aa',
+            newSubType: 'Bb',
+            newLanguage: 'English',
+          },
+        },
+        // Aa$/Bb$/English - Version 2
+        {
+          name: 'Aa_Bb_English_2',
+          oldName: 'Aa$_Bb$_English_2',
+          id: 'os5',
+          type: 'OmniScript',
+          dependenciesIP: [],
+          dependenciesDR: [],
+          dependenciesOS: [],
+          dependenciesRemoteAction: [],
+          dependenciesLWC: [],
+          missingIP: [],
+          missingDR: [],
+          missingOS: [],
+          infos: [],
+          warnings: ['Type changed from Aa$ to Aa', 'SubType changed from Bb$ to Bb'],
+          errors: [
+            'Omniscript with duplicate name, type, subtype, or language found in this org. Modify your Omniscript and try again. Omniscript Aa_Bb_English_2',
+          ],
+          migrationStatus: 'Needs Manual Intervention' as const,
+          nameMapping: {
+            oldType: 'Aa$',
+            oldSubtype: 'Bb$',
+            oldLanguage: 'English',
+            newType: 'Aa',
+            newSubType: 'Bb',
+            newLanguage: 'English',
+          },
+        },
+        // Aa$/Bb$/English - Version 3
+        {
+          name: 'Aa_Bb_English_3',
+          oldName: 'Aa$_Bb$_English_3',
+          id: 'os6',
+          type: 'OmniScript',
+          dependenciesIP: [],
+          dependenciesDR: [],
+          dependenciesOS: [],
+          dependenciesRemoteAction: [],
+          dependenciesLWC: [],
+          missingIP: [],
+          missingDR: [],
+          missingOS: [],
+          infos: [],
+          warnings: ['Type changed from Aa$ to Aa', 'SubType changed from Bb$ to Bb'],
+          errors: [
+            'Omniscript with duplicate name, type, subtype, or language found in this org. Modify your Omniscript and try again. Omniscript Aa_Bb_English_3',
+          ],
+          migrationStatus: 'Needs Manual Intervention' as const,
+          nameMapping: {
+            oldType: 'Aa$',
+            oldSubtype: 'Bb$',
+            oldLanguage: 'English',
+            newType: 'Aa',
+            newSubType: 'Bb',
+            newLanguage: 'English',
+          },
+        },
+        // AaB/b/English - Version 1
+        {
+          name: 'AaB_b_English_1',
+          oldName: 'AaB_b_English_1',
+          id: 'os7',
+          type: 'OmniScript',
+          dependenciesIP: [],
+          dependenciesDR: [],
+          dependenciesOS: [],
+          dependenciesRemoteAction: [],
+          dependenciesLWC: [],
+          missingIP: [],
+          missingDR: [],
+          missingOS: [],
+          infos: [],
+          warnings: [],
+          errors: [],
+          migrationStatus: 'Ready for migration' as const,
+          nameMapping: {
+            oldType: 'AaB',
+            oldSubtype: 'b',
+            oldLanguage: 'English',
+            newType: 'AaB',
+            newSubType: 'b',
+            newLanguage: 'English',
+          },
+        },
+        // AaB/b/English - Version 2
+        {
+          name: 'AaB_b_English_2',
+          oldName: 'AaB_b_English_2',
+          id: 'os8',
+          type: 'OmniScript',
+          dependenciesIP: [],
+          dependenciesDR: [],
+          dependenciesOS: [],
+          dependenciesRemoteAction: [],
+          dependenciesLWC: [],
+          missingIP: [],
+          missingDR: [],
+          missingOS: [],
+          infos: [],
+          warnings: [],
+          errors: [],
+          migrationStatus: 'Ready for migration' as const,
+          nameMapping: {
+            oldType: 'AaB',
+            oldSubtype: 'b',
+            oldLanguage: 'English',
+            newType: 'AaB',
+            newSubType: 'b',
+            newLanguage: 'English',
+          },
+        },
+      ];
+
+      (omniScriptTool as any).updateStorageForOmniscriptAssessment(osAssessmentInfos);
+
+      const storage = StorageUtil.getOmnistudioAssessmentStorage();
+
+      // Keys for each OmniScript (lowercased concatenation)
+      const keyAaBb = 'aabbenglish'; // Aa + Bb + English (also same as AaB + b + English)
+      const keyAaDollarBbDollar = 'aa$bb$english'; // Aa$ + Bb$ + English
+
+      // Verify osStorage (non-standard data model)
+      // When allVersions=true: first version of each unique original Type/Subtype/Language is stored,
+      // but if a DIFFERENT OmniScript collides on the same key, it replaces and marks as duplicate
+      expect(storage.osStorage.has(keyAaBb)).to.be.true;
+      expect(storage.osStorage.has(keyAaDollarBbDollar)).to.be.true;
+
+      const storedAaBb = storage.osStorage.get(keyAaBb);
+      const storedAaDollarBbDollar = storage.osStorage.get(keyAaDollarBbDollar);
+
+      // Check key collision: AaB/b/English replaces Aa/Bb/English at key 'aabbenglish'
+      // Last entry wins with isDuplicate=true
+      expect(storedAaBb.originalType).to.equal('AaB');
+      expect(storedAaBb.originalSubtype).to.equal('b');
+      expect(storedAaBb.originalLanguage).to.equal('English');
+      expect(storedAaBb.type).to.equal('AaB');
+      expect(storedAaBb.subtype).to.equal('b');
+      expect(storedAaBb.language).to.equal('English');
+      expect(storedAaBb.isDuplicate).to.be.true; // Marked as duplicate due to collision
+      expect(storedAaBb.migrationSuccess).to.be.true;
+
+      // Check Aa$/Bb$/English (first version stored)
+      expect(storedAaDollarBbDollar.originalType).to.equal('Aa$');
+      expect(storedAaDollarBbDollar.originalSubtype).to.equal('Bb$');
+      expect(storedAaDollarBbDollar.originalLanguage).to.equal('English');
+      expect(storedAaDollarBbDollar.isDuplicate).to.be.false;
+      expect(storedAaDollarBbDollar.migrationSuccess).to.be.false;
+      expect(storedAaDollarBbDollar.error).to.be.an('array').that.is.not.empty;
+
+      // Verify osStandardStorage (standard data model)
+      // Should have all versions of each OmniScript
+      const standardKeyAaBbV1 = JSON.stringify({ type: 'Aa', subtype: 'Bb', language: 'English' });
+      const standardKeyAaDollarV1 = JSON.stringify({ type: 'Aa$', subtype: 'Bb$', language: 'English' });
+      const standardKeyAaBbV2 = JSON.stringify({ type: 'AaB', subtype: 'b', language: 'English' });
+
+      expect(storage.osStandardStorage.has(standardKeyAaBbV1)).to.be.true;
+      expect(storage.osStandardStorage.has(standardKeyAaDollarV1)).to.be.true;
+      expect(storage.osStandardStorage.has(standardKeyAaBbV2)).to.be.true;
+
+      // Verify standard storage entries
+      const standardAaBb = storage.osStandardStorage.get(standardKeyAaBbV1);
+      expect(standardAaBb.originalType).to.equal('Aa');
+      expect(standardAaBb.originalSubtype).to.equal('Bb');
+      expect(standardAaBb.originalLanguage).to.equal('English');
+      expect(standardAaBb.isDuplicate).to.be.false;
+      expect(standardAaBb.migrationSuccess).to.be.true;
+
+      const standardAaDollar = storage.osStandardStorage.get(standardKeyAaDollarV1);
+      expect(standardAaDollar.originalType).to.equal('Aa$');
+      expect(standardAaDollar.originalSubtype).to.equal('Bb$');
+      expect(standardAaDollar.originalLanguage).to.equal('English');
+      expect(standardAaDollar.isDuplicate).to.be.false;
+      expect(standardAaDollar.migrationSuccess).to.be.false;
+
+      const standardAaBb2 = storage.osStandardStorage.get(standardKeyAaBbV2);
+      expect(standardAaBb2.originalType).to.equal('AaB');
+      expect(standardAaBb2.originalSubtype).to.equal('b');
+      expect(standardAaBb2.originalLanguage).to.equal('English');
+      expect(standardAaBb2.isDuplicate).to.be.false;
+      expect(standardAaBb2.migrationSuccess).to.be.true;
+    });
   });
 });

@@ -654,8 +654,11 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           originalLanguage: originalLanguage,
         };
 
-        if (currentOsRecordInfo.errors && currentOsRecordInfo.errors.length > 0) {
-          value.error = currentOsRecordInfo.errors;
+        if (
+          (currentOsRecordInfo.errors && currentOsRecordInfo.errors.length > 0) ||
+          currentOsRecordInfo.migrationStatus === 'Needs Manual Intervention'
+        ) {
+          value.error = [...(currentOsRecordInfo.errors || []), ...(currentOsRecordInfo.warnings || [])];
           value.migrationSuccess = false;
         } else {
           value.migrationSuccess = true;
@@ -1212,8 +1215,8 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           if (newrecord === undefined) {
             value.migrationSuccess = false;
           } else {
-            if (newrecord.hasErrors) {
-              value.error = newrecord.errors;
+            if (newrecord.hasErrors || newrecord.success === false) {
+              value.error = [...(newrecord.errors || []), ...(newrecord.warnings || [])];
               value.migrationSuccess = false;
             } else {
               value.migrationSuccess = true;
