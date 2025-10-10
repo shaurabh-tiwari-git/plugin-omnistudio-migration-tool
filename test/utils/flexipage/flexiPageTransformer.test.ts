@@ -50,7 +50,18 @@ describe('transformFlexipageBundle', () => {
     // Mock StorageUtil
     const mockStorage = {
       osStorage: new Map([
-        ['subtype', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
+        [
+          'subtype',
+          {
+            type: 'OSForCustomLWC',
+            originalType: 'OSForCustomLWC',
+            subtype: 'OSForCustomLWC',
+            originalSubtype: 'OSForCustomLWC',
+            language: 'English',
+            originalLanguage: 'English',
+            isDuplicate: false,
+          },
+        ],
       ]),
       osStandardStorage: new Map(),
       fcStorage: new Map(),
@@ -111,7 +122,18 @@ describe('transformFlexipageBundle', () => {
     // Mock StorageUtil
     const mockStorage = {
       osStorage: new Map([
-        ['subtype', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
+        [
+          'subtype',
+          {
+            type: 'OSForCustomLWC',
+            originalType: 'OSForCustomLWC',
+            subtype: 'OSForCustomLWC',
+            originalSubtype: 'OSForCustomLWC',
+            language: 'English',
+            originalLanguage: 'English',
+            isDuplicate: false,
+          },
+        ],
       ]),
       osStandardStorage: new Map(),
       fcStorage: new Map(),
@@ -137,9 +159,42 @@ describe('transformFlexipageBundle', () => {
     // Mock StorageUtil
     const mockStorage = {
       osStorage: new Map([
-        ['subtype1', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
-        ['subtype2', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
-        ['subtype3', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
+        [
+          'subtype1',
+          {
+            type: 'OSForCustomLWC',
+            originalType: 'OSForCustomLWC',
+            subtype: 'OSForCustomLWC',
+            originalSubtype: 'OSForCustomLWC',
+            language: 'English',
+            originalLanguage: 'English',
+            isDuplicate: false,
+          },
+        ],
+        [
+          'subtype2',
+          {
+            type: 'OSForCustomLWC',
+            originalType: 'OSForCustomLWC',
+            subtype: 'OSForCustomLWC',
+            originalSubtype: 'OSForCustomLWC',
+            language: 'English',
+            originalLanguage: 'English',
+            isDuplicate: false,
+          },
+        ],
+        [
+          'subtype3',
+          {
+            type: 'OSForCustomLWC',
+            originalType: 'OSForCustomLWC',
+            subtype: 'OSForCustomLWC',
+            originalSubtype: 'OSForCustomLWC',
+            language: 'English',
+            originalLanguage: 'English',
+            isDuplicate: false,
+          },
+        ],
       ]),
       osStandardStorage: new Map(),
       fcStorage: new Map(),
@@ -171,9 +226,9 @@ describe('transformFlexipageBundle', () => {
       osStorage: new Map(),
       osStandardStorage: new Map(),
       fcStorage: new Map([
-        ['card1', { name: 'Card1', isDuplicate: false }],
-        ['card2', { name: 'Card2', isDuplicate: false }],
-        ['card3', { name: 'Card3', isDuplicate: false }],
+        ['card1', { name: 'Card1', originalName: 'Card1', isDuplicate: false }],
+        ['card2', { name: 'Card2', originalName: 'Card2', isDuplicate: false }],
+        ['card3', { name: 'Card3', originalName: 'Card3', isDuplicate: false }],
       ]),
     };
     sandbox.stub(StorageUtil, 'getOmnistudioMigrationStorage').returns(mockStorage);
@@ -207,13 +262,35 @@ describe('transformFlexipageBundle', () => {
     // Mock StorageUtil
     const mockStorage = {
       osStorage: new Map([
-        ['subtype1', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
-        ['subtype2', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
+        [
+          'subtype1',
+          {
+            type: 'OSForCustomLWC',
+            originalType: 'OSForCustomLWC',
+            subtype: 'OSForCustomLWC',
+            originalSubtype: 'OSForCustomLWC',
+            language: 'English',
+            originalLanguage: 'English',
+            isDuplicate: false,
+          },
+        ],
+        [
+          'subtype2',
+          {
+            type: 'OSForCustomLWC',
+            originalType: 'OSForCustomLWC',
+            subtype: 'OSForCustomLWC',
+            originalSubtype: 'OSForCustomLWC',
+            language: 'English',
+            originalLanguage: 'English',
+            isDuplicate: false,
+          },
+        ],
       ]),
       osStandardStorage: new Map(),
       fcStorage: new Map([
-        ['card1', { name: 'Card1', isDuplicate: false }],
-        ['card2', { name: 'Card2', isDuplicate: false }],
+        ['card1', { name: 'Card1', originalName: 'Card1', isDuplicate: false }],
+        ['card2', { name: 'Card2', originalName: 'Card2', isDuplicate: false }],
       ]),
     };
     sandbox.stub(StorageUtil, 'getOmnistudioMigrationStorage').returns(mockStorage);
@@ -247,13 +324,35 @@ describe('transformFlexipageBundle', () => {
     // Mock StorageUtil
     const mockStorage = {
       osStorage: new Map([
-        ['subtype1', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
-        ['subtype2', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
+        [
+          'subtype1',
+          {
+            type: 'OSForCustomLWC',
+            originalType: 'OSForCustomLWC',
+            subtype: 'OSForCustomLWC',
+            originalSubtype: 'OSForCustomLWC',
+            language: 'English',
+            originalLanguage: 'English',
+            isDuplicate: false,
+          },
+        ],
+        [
+          'subtype2',
+          {
+            type: 'OSForCustomLWC',
+            originalType: 'OSForCustomLWC',
+            subtype: 'OSForCustomLWC',
+            originalSubtype: 'OSForCustomLWC',
+            language: 'English',
+            originalLanguage: 'English',
+            isDuplicate: false,
+          },
+        ],
       ]),
       osStandardStorage: new Map(),
       fcStorage: new Map([
-        ['card1', { name: 'Card1', isDuplicate: false }],
-        ['card2', { name: 'Card2', isDuplicate: false }],
+        ['card1', { name: 'Card1', originalName: 'Card1', isDuplicate: false }],
+        ['card2', { name: 'Card2', originalName: 'Card2', isDuplicate: false }],
       ]),
     };
     sandbox.stub(StorageUtil, 'getOmnistudioMigrationStorage').returns(mockStorage);
@@ -299,8 +398,30 @@ describe('transformFlexipageBundle', () => {
     // Mock StorageUtil
     const mockStorage = {
       osStorage: new Map([
-        ['mixedcase', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
-        ['lowercase', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
+        [
+          'mixedcase',
+          {
+            type: 'OSForCustomLWC',
+            originalType: 'OSForCustomLWC',
+            subtype: 'OSForCustomLWC',
+            originalSubtype: 'OSForCustomLWC',
+            language: 'English',
+            originalLanguage: 'English',
+            isDuplicate: false,
+          },
+        ],
+        [
+          'lowercase',
+          {
+            type: 'OSForCustomLWC',
+            originalType: 'OSForCustomLWC',
+            subtype: 'OSForCustomLWC',
+            originalSubtype: 'OSForCustomLWC',
+            language: 'English',
+            originalLanguage: 'English',
+            isDuplicate: false,
+          },
+        ],
       ]),
       osStandardStorage: new Map(),
       fcStorage: new Map(),
@@ -330,8 +451,8 @@ describe('transformFlexipageBundle', () => {
       osStorage: new Map(),
       osStandardStorage: new Map(),
       fcStorage: new Map([
-        ['mixedcase', { name: 'MixedCaseCard', isDuplicate: false }],
-        ['lowercase', { name: 'lowercasecard', isDuplicate: false }],
+        ['mixedcase', { name: 'MixedCaseCard', originalName: 'MixedCaseCard', isDuplicate: false }],
+        ['lowercase', { name: 'lowercasecard', originalName: 'lowercasecard', isDuplicate: false }],
       ]),
     };
     sandbox.stub(StorageUtil, 'getOmnistudioMigrationStorage').returns(mockStorage);
@@ -361,7 +482,18 @@ describe('transformFlexipageBundle', () => {
     // Mock StorageUtil for assess mode
     const mockStorage = {
       osStorage: new Map([
-        ['mixedcase', { type: 'OSForCustomLWC', subtype: 'OSForCustomLWC', language: 'English', isDuplicate: false }],
+        [
+          'mixedcase',
+          {
+            type: 'OSForCustomLWC',
+            originalType: 'OSForCustomLWC',
+            subtype: 'OSForCustomLWC',
+            originalSubtype: 'OSForCustomLWC',
+            language: 'English',
+            originalLanguage: 'English',
+            isDuplicate: false,
+          },
+        ],
       ]),
       osStandardStorage: new Map(),
       fcStorage: new Map(),
@@ -383,7 +515,7 @@ describe('transformFlexipageBundle', () => {
     const mockStorage = {
       osStorage: new Map(),
       osStandardStorage: new Map(),
-      fcStorage: new Map([['mixedcase', { name: 'MixedCaseCard', isDuplicate: false }]]),
+      fcStorage: new Map([['mixedcase', { name: 'MixedCaseCard', originalName: 'MixedCaseCard', isDuplicate: false }]]),
     };
     sandbox.stub(StorageUtil, 'getOmnistudioAssessmentStorage').returns(mockStorage);
 
@@ -428,7 +560,15 @@ describe('transformFlexipageBundle', () => {
         osStandardStorage: new Map([
           [
             JSON.stringify({ type: 'TestType', subtype: 'TestSubtype', language: 'English' }),
-            { type: 'UpdatedType', subtype: 'UpdatedSubtype', language: 'Spanish', isDuplicate: false },
+            {
+              type: 'UpdatedType',
+              originalType: 'UpdatedType',
+              subtype: 'UpdatedSubtype',
+              originalSubtype: 'UpdatedSubtype',
+              language: 'Spanish',
+              originalLanguage: 'Spanish',
+              isDuplicate: false,
+            },
           ],
         ]),
         fcStorage: new Map(),
@@ -466,7 +606,9 @@ describe('transformFlexipageBundle', () => {
       const mockStorage = {
         osStorage: new Map(),
         osStandardStorage: new Map(),
-        fcStorage: new Map([['testflexcard', { name: 'UpdatedFlexCard', isDuplicate: false }]]),
+        fcStorage: new Map([
+          ['testflexcard', { name: 'UpdatedFlexCard', originalName: 'TestFlexCard', isDuplicate: false }],
+        ]),
       };
       sandbox.stub(StorageUtil, 'getOmnistudioMigrationStorage').returns(mockStorage);
 
