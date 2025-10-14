@@ -937,7 +937,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
     for (let flexCardAssessmentInfo of flexcardAssessmentInfos) {
       try {
-        if (!flexCardAssessmentInfo.nameMapping) {
+        if (!flexCardAssessmentInfo?.nameMapping) {
           Logger.error(this.messages.getMessage('missingInfo'));
           return;
         }
