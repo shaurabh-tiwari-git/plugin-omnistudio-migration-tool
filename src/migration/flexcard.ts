@@ -1103,10 +1103,8 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       mappedObject[CardMappings.Datasource__c] = JSON.stringify(datasource);
     }
 
-    if (!this.IS_STANDARD_DATA_MODEL) {
-      const isCardActive: boolean = cardRecord[this.getFieldKey('Active__c')];
-      this.ensureCommunityTargets(mappedObject, isCardActive);
-    }
+    const isCardActive: boolean = cardRecord[this.getFieldKey('Active__c')];
+    this.ensureCommunityTargets(mappedObject, isCardActive);
 
     // Update all dependencies comprehensively
     this.updateAllDependenciesWithRegistry(mappedObject, invalidIpNames);
@@ -1617,6 +1615,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   /**
    * Ensures that the FlexCard Definition includes required Lightning Community targets
    * Adds "lightningCommunity__Page" and "lightningCommunity__Default" if missing
+   * This is needed as vlocity wrapper can have flexcard which is unpublished but omniwapper needs published card
    */
   private ensureCommunityTargets(mappedObject: any, isCardActive: boolean): void {
     if (!isCardActive) {
