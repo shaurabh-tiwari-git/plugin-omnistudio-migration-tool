@@ -1,8 +1,10 @@
-# OmniStudio Migration Assistant
+# Omnistudio Migration Assistant
 
 The Omnistudio Migration Assistant is a Salesforce CLI plugin that automates the migration of Omnistudio components. When run on a custom data model with managed package runtime, it migrates components to the standard data model and switches them to the Omnistudio standard runtime. When run on a standard data model with managed package, it cleans record names, enables the metadata API, and switches to the Omnistudio standard runtime.
 
-### Before You Begin
+## 🚀 Before You Begin
+
+⚠️ IMPORTANT: Before installing and using the Omnistudio Migration Assistant, contact Salesforce support.
 
 - Review the migration phases in [Migration Process from Omnistudio for Managed Packages to Omnistudio](https://help.salesforce.com/s/articleView?id=xcloud.os_migrate_omnistudio_custom_objects_to_standard_objects.htm&language=en_US&type=5)
 
@@ -32,7 +34,7 @@ You can also authenticate using a consumer key (client ID) and secret key throug
 3. In a new terminal session, Install the Omnistudio Migration Assistant by running the `sf plugins install` command. For example
 
 ```
-sf plugins install @salesforce/plugin-omnistudio-migration-tool@2.0.0-rc.43
+sf plugins install @salesforce/plugin-omnistudio-migration-tool@2.0.0-dev.1
 ```
 
 4. Run the Omnistudio Migration Assistant from the Salesforce CLI:

@@ -10,8 +10,10 @@ import { OmnistudioSettingsPrefManager } from '../utils/OmnistudioSettingsPrefMa
 import { OrgPreferences } from '../utils/orgPreferences';
 import { BaseMigrationTool } from './base';
 import { Deployer } from './deployer';
+import { OmniscriptPackageDeploymentError } from '../error/deploymentErrors';
 import * as fs from 'fs';
 import * as path from 'path';
+import { documentRegistry } from '../utils/constants/documentRegistry';
 import { isStandardDataModel } from '../utils/dataModelService';
 import { OmniStudioMetadataCleanupService } from '../utils/config/OmniStudioMetadataCleanupService';
 
@@ -196,10 +198,12 @@ export class PostMigrate extends BaseMigrationTool {
     }
   }
 
-  public deploy(): void {
+  public async deploy(userActionMessage: string[]): Promise<void> {
     if (!this.deploymentConfig.autoDeploy || !fs.existsSync(path.join(process.cwd(), 'package.xml'))) {
+      Logger.logVerbose(this.messages.getMessage('deploymentSkipped'));
       return;
     }
+
     try {
       const deployer = new Deployer(
         this.projectPath,
@@ -207,10 +211,26 @@ export class PostMigrate extends BaseMigrationTool {
         this.org.getUsername(),
         this.deploymentConfig.authKey
       );
-      deployer.deploy();
-      Logger.logVerbose('Deployment completed');
+
+      await deployer.deploy();
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       Logger.error(this.messages.getMessage('errorDeployingComponents'), error);
+
+      // Handle specific omniscript package deployment failures by error type (not message)
+      if (error instanceof OmniscriptPackageDeploymentError) {
+        userActionMessage.push(
+          this.messages.getMessage('deployOmniscriptPackageManually', [documentRegistry.manualDeploymentSteps])
+        );
+        Logger.logVerbose(this.messages.getMessage('omniscriptDeploymentFailedContinuing'));
+      } else {
+        // Handle general deployment failures
+        userActionMessage.push(this.messages.getMessage('deployComponentsManually'));
+        Logger.logVerbose(this.messages.getMessage('deploymentFailedContinuing'));
+      }
+
+      // Log the specific error details for troubleshooting
+      Logger.logVerbose(`Deployment error details: ${errorMessage}`);
     }
   }
 }
