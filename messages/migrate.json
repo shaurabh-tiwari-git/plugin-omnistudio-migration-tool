@@ -263,5 +263,8 @@
   "errorEnablingOmniStudioSettingsMetadata": "We couldn't enable the Omnistudio Metadata setting: %s. Enable it manually.",
   "manuallyEnableOmniStudioSettingsMetadata": "Manually enable the Omnistudio Metadata setting in your org’s Omnistudio Settings page.",
   "omniStudioMetadataEnableConsentNotGiven": "You’ve not consented to proceed with enabling the Omnistudio Metadata setting. We’ll not be able to proceed with the migration.",
-  "enablingOmniStudioSettingsMetadataStatus": "Enabling Omnistudio Metadata setting…"
+  "enablingOmniStudioSettingsMetadataStatus": "Enabling Omnistudio Metadata setting…",
+  "omniStudioAllVersionsMigrationConsent": "Org uses the standard data model. All versions of Omnistudio components such as Omniscripts, Data Mappers, Integration Procedures, and Flexcards must be migrated to enable the Omnistudio Metadata API setting. But you’ve not specified -a  or allversions flag in the command.  Proceed to migrate all versions of the Omnistudio components? [y/n]",
+  "omniStudioAllVersionsMigrationConsentNotGiven": "You've not consented to migrate all versions of the Omnistudio components. We cannot proceed with the migration.",
+  "omniStudioAllVersionsMigrationConsentGiven": "You've consented to migrate all versions of the Omnistudio components."
 }

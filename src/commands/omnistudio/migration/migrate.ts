@@ -89,7 +89,7 @@ export default class Migrate extends OmniStudioBaseCommand {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async runMigration(): Promise<any> {
     const migrateOnly = (this.flags.only || '') as string;
-    const allVersions = this.flags.allversions || (false as boolean);
+    let allVersions = this.flags.allversions || (false as boolean);
     const relatedObjects = (this.flags.relatedobjects || '') as string;
     // this.org is guaranteed because requiresUsername=true, as opposed to supportsUsername
     const conn = this.org.getConnection();
@@ -132,18 +132,8 @@ export default class Migrate extends OmniStudioBaseCommand {
     const isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean } = { value: false };
 
     if (isStandardDataModel()) {
-      // Get user consent to enable OmniStudio Metadata for standard data model migration
-      const omniStudioMetadataEnableConsent = await preMigrate.getOmniStudioMetadataEnableConsent();
-      if (!omniStudioMetadataEnableConsent) {
-        Logger.error(messages.getMessage('omniStudioMetadataEnableConsentNotGiven'));
-        return;
-      }
-
-      // Handle config tables cleanup for standard data model migration
-      const isMetadataCleanupSuccess = await preMigrate.handleOmniStudioMetadataCleanup();
-      if (!isMetadataCleanupSuccess) {
-        return;
-      }
+      allVersions = await preMigrate.handleAllVersionsPrerequisites(allVersions);
+      await preMigrate.handleOmnistudioMetadataPrerequisites();
     }
 
     let actionItems = [];

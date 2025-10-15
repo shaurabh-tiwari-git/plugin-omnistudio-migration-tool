@@ -17,6 +17,43 @@ export class PreMigrate extends BaseMigrationTool {
     super(namespace, connection, logger, messages, ux);
   }
 
+  /**
+   * Ensures all versions are migrated when on standard data model.
+   * If the -a flag was not provided, prompts user for consent.
+   *
+   * @param allVersionsFlagFromCLI - The allVersions flag value from CLI (-a flag)
+   * @returns true if all versions should be migrated, false otherwise
+   */
+  public async handleAllVersionsPrerequisites(allVersionsFlagFromCLI: boolean): Promise<boolean> {
+    if (allVersionsFlagFromCLI === false) {
+      // Get user consent to migrate allversions of OmniStudio components for standard data model migration
+      const omniStudioAllVersionsMigrationConsent = await this.getOmnistudioAllVersionsMigrationConsent();
+      if (!omniStudioAllVersionsMigrationConsent) {
+        Logger.error(this.messages.getMessage('omniStudioAllVersionsMigrationConsentNotGiven'));
+        process.exit(1);
+      }
+
+      Logger.logVerbose(this.messages.getMessage('omniStudioAllVersionsMigrationConsentGiven'));
+      return true;
+    }
+    return allVersionsFlagFromCLI;
+  }
+
+  public async handleOmnistudioMetadataPrerequisites(): Promise<void> {
+    // Get user consent to enable OmniStudio Metadata for standard data model migration
+    const omniStudioMetadataEnableConsent = await this.getOmniStudioMetadataEnableConsent();
+    if (!omniStudioMetadataEnableConsent) {
+      Logger.error(this.messages.getMessage('omniStudioMetadataEnableConsentNotGiven'));
+      process.exit(1);
+    }
+
+    // Handle config tables cleanup for standard data model migration
+    const isMetadataCleanupSuccess = await this.handleOmniStudioMetadataCleanup();
+    if (!isMetadataCleanupSuccess) {
+      process.exit(1);
+    }
+  }
+
   public async handleExperienceSitePrerequisites(
     objectsToProcess: string[],
     conn: Connection,
@@ -222,6 +259,41 @@ export class PreMigrate extends BaseMigrationTool {
         const resp = await askWithTimeOut(
           Logger.prompt.bind(Logger),
           this.messages.getMessage('metadataCleanupConsentMessage')
+        );
+        const response = typeof resp === 'string' ? resp.trim().toLowerCase() : '';
+
+        if (response === YES_SHORT || response === YES_LONG) {
+          consent = true;
+          validResponse = true;
+        } else if (response === NO_SHORT || response === NO_LONG) {
+          consent = false;
+          validResponse = true;
+        } else {
+          Logger.error(this.messages.getMessage('invalidYesNoResponse'));
+        }
+      } catch (err) {
+        Logger.error(this.messages.getMessage('requestTimedOut'));
+        process.exit(1);
+      }
+    }
+    return consent;
+  }
+
+  /**
+   * Gets user consent for OmniStudio migrating all versions of Omnistudio Components
+   *
+   * @returns Promise<boolean> - true if user consents, false otherwise
+   */
+  private async getOmnistudioAllVersionsMigrationConsent(): Promise<boolean> {
+    const askWithTimeOut = PromptUtil.askWithTimeOut(this.messages);
+    let validResponse = false;
+    let consent = false;
+
+    while (!validResponse) {
+      try {
+        const resp = await askWithTimeOut(
+          Logger.prompt.bind(Logger),
+          this.messages.getMessage('omniStudioAllVersionsMigrationConsent')
         );
         const response = typeof resp === 'string' ? resp.trim().toLowerCase() : '';
 
