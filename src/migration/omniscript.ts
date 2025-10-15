@@ -1296,7 +1296,6 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       ? filters.set('OmniProcessId', recordId)
       : filters.set(this.namespacePrefix + 'OmniScriptId__c', recordId);
 
-    // const queryFilterStr = ` Where ${this.namespacePrefix}OmniScriptId__c = '${omniScriptData.keys().next().value}'`;
     return await QueryTools.queryWithFilter(
       this.connection,
       this.getQueryNamespace(),
@@ -1314,7 +1313,6 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       ? filters.set('OmniProcessId', recordId)
       : filters.set(this.namespacePrefix + 'OmniScriptId__c', recordId);
 
-    // const queryFilterStr = ` Where ${this.namespacePrefix}OmniScriptId__c = '${omniScriptData.keys().next().value}'`;
     return await QueryTools.queryWithFilter(
       this.connection,
       this.getQueryNamespace(),
@@ -1540,10 +1538,10 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
           if (
             cleanFieldName === 'ParentElementId__c' &&
-            parentElementUploadResponse.has(elementRecord[`${this.namespacePrefix}ParentElementId__c`])
+            parentElementUploadResponse.has(elementRecord[this.getElementFieldKey('ParentElementId__c')])
           ) {
             mappedObject[ElementMappings[cleanFieldName]] = parentElementUploadResponse.get(
-              elementRecord[`${this.namespacePrefix}ParentElementId__c`]
+              elementRecord[this.getElementFieldKey('ParentElementId__c')]
             ).id;
           }
         }

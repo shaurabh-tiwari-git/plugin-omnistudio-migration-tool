@@ -386,7 +386,6 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     const drItems = dataRaptorItemsMap.get(drName);
     if (drItems) {
       for (const drItem of drItems) {
-        // Logger.log(dataRaptor[this.namespacePrefix + 'Formula__c']);
         const formula = drItem[this.getItemFieldKey('Formula__c')];
         if (formula) {
           try {
