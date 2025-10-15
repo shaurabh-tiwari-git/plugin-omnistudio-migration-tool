@@ -640,50 +640,88 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           continue;
         }
 
+        const originalType: string = nameMapping.oldType;
+        const originalSubtype: string = nameMapping.oldSubtype;
+        const originalLanguage: string = nameMapping.oldLanguage;
+
         let value: OmniScriptStorage = {
           type: nameMapping.newType,
           subtype: nameMapping.newSubType,
           language: nameMapping.newLanguage,
           isDuplicate: false,
+          originalType: originalType,
+          originalSubtype: originalSubtype,
+          originalLanguage: originalLanguage,
         };
 
-        if (currentOsRecordInfo.errors && currentOsRecordInfo.errors.length > 0) {
-          value.error = currentOsRecordInfo.errors;
+        if (
+          (currentOsRecordInfo.errors && currentOsRecordInfo.errors.length > 0) ||
+          currentOsRecordInfo.migrationStatus === 'Needs Manual Intervention'
+        ) {
+          value.error = [...(currentOsRecordInfo.errors || []), ...(currentOsRecordInfo.warnings || [])];
           value.migrationSuccess = false;
         } else {
           value.migrationSuccess = true;
         }
 
-        let finalKey = `${nameMapping.oldType}${nameMapping.oldSubtype}${this.cleanLanguageName(
-          nameMapping.oldLanguage
-        )}`;
-
-        if (this.IS_STANDARD_DATA_MODEL) {
-          // Create object key for new storage format
-          const keyObject: OmniScriptStandardKey = {
-            type: nameMapping.oldType,
-            subtype: nameMapping.oldSubtype,
-            language: nameMapping.oldLanguage,
-          };
-          StorageUtil.addStandardOmniScriptToStorage(storage, keyObject, value);
-        }
-
-        finalKey = finalKey.toLowerCase();
-        if (storage.osStorage.has(finalKey)) {
-          // Key already exists - handle accordingly
-          Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', ['Omniscript', finalKey]));
-          value.isDuplicate = true;
-          storage.osStorage.set(finalKey, value);
-        } else {
-          // Key doesn't exist - safe to set
-          storage.osStorage.set(finalKey, value);
-        }
+        this.addKeyToStorage(originalType, originalSubtype, originalLanguage, storage, value);
       } catch (error) {
         Logger.error(error);
       }
     }
 
     StorageUtil.printAssessmentStorage();
+  }
+
+  private addKeyToStorage(
+    originalType: string,
+    originalSubtype: string,
+    originalLanguage: string,
+    storage: MigrationStorage,
+    value: OmniScriptStorage
+  ): void {
+    if (this.IS_STANDARD_DATA_MODEL) {
+      // Create object key for new storage format
+      const keyObject: OmniScriptStandardKey = {
+        type: originalType,
+        subtype: originalSubtype,
+        language: originalLanguage,
+      };
+      StorageUtil.addStandardOmniScriptToStorage(storage, keyObject, value);
+    }
+
+    let finalKey = `${originalType}${originalSubtype}${this.cleanLanguageName(originalLanguage)}`;
+    finalKey = finalKey.toLowerCase();
+    if (storage.osStorage.has(finalKey)) {
+      if (this.allVersions) {
+        const storedValue = storage.osStorage.get(finalKey);
+        if (this.isDifferentOmniscript(storedValue, originalType, originalSubtype, originalLanguage)) {
+          this.markDuplicateKeyInStorage(value, finalKey, storage);
+        }
+      } else {
+        this.markDuplicateKeyInStorage(value, finalKey, storage);
+      }
+    } else {
+      // Key doesn't exist - safe to set
+      storage.osStorage.set(finalKey, value);
+    }
+  }
+
+  private markDuplicateKeyInStorage(value: OmniScriptStorage, finalKey: string, storage: MigrationStorage) {
+    Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', ['Omniscript', finalKey]));
+    value.isDuplicate = true;
+    storage.osStorage.set(finalKey, value);
+  }
+
+  private isDifferentOmniscript(storedValue, type, subtype, language) {
+    if (
+      storedValue.originalType === type &&
+      storedValue.originalSubtype === subtype &&
+      storedValue.originalLanguage === language
+    ) {
+      return false;
+    }
+    return true;
   }
 
   private cleanLanguageName(language: string): string {
@@ -1168,47 +1206,33 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
             subtype: newrecord['subtype'],
             language: newrecord['language'],
             isDuplicate: false,
+            originalType: oldrecord[this.getFieldKey('Type__c')],
+            originalSubtype: oldrecord[this.getFieldKey('SubType__c')],
+            originalLanguage: oldrecord[this.getFieldKey('Language__c')],
           };
 
           // New record can be undefined
           if (newrecord === undefined) {
             value.migrationSuccess = false;
           } else {
-            if (newrecord.hasErrors) {
-              value.error = newrecord.errors;
+            if (newrecord.hasErrors || newrecord.success === false) {
+              value.error = [...(newrecord.errors || []), ...(newrecord.warnings || [])];
               value.migrationSuccess = false;
             } else {
               value.migrationSuccess = true;
             }
           }
 
-          let finalKey = `${oldrecord[this.getFieldKey('Type__c')]}${
-            oldrecord[this.getFieldKey('SubType__c')]
-          }${this.cleanLanguageName(oldrecord[this.getFieldKey('Language__c')])}`;
-
-          if (this.IS_STANDARD_DATA_MODEL) {
-            // Create object key for new storage format
-            const keyObject: OmniScriptStandardKey = {
-              type: oldrecord[this.getFieldKey('Type__c')],
-              subtype: oldrecord[this.getFieldKey('SubType__c')],
-              language: oldrecord[this.getFieldKey('Language__c')],
-            };
-            StorageUtil.addStandardOmniScriptToStorage(storage, keyObject, value);
-          }
-
-          finalKey = finalKey.toLowerCase();
-          if (storage.osStorage.has(finalKey)) {
-            // Key already exists - handle accordingly
-            Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', ['Omniscript', finalKey]));
-            value.isDuplicate = true;
-            storage.osStorage.set(finalKey, value);
-          } else {
-            // Key doesn't exist - safe to set
-            storage.osStorage.set(finalKey, value);
-          }
+          this.addKeyToStorage(
+            oldrecord[this.getFieldKey('Type__c')],
+            oldrecord[this.getFieldKey('SubType__c')],
+            oldrecord[this.getFieldKey('Language__c')],
+            storage,
+            value
+          );
         }
       } catch (error) {
-        Logger.logVerbose(error);
+        Logger.error(error);
       }
     }
     StorageUtil.printMigrationStorage();

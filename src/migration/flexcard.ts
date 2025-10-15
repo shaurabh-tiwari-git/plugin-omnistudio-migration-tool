@@ -946,19 +946,17 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
     for (let flexCardAssessmentInfo of flexcardAssessmentInfos) {
       try {
-        if (
-          flexCardAssessmentInfo === undefined ||
-          flexCardAssessmentInfo === null ||
-          flexCardAssessmentInfo.nameMapping === undefined ||
-          flexCardAssessmentInfo.nameMapping === null
-        ) {
+        if (!flexCardAssessmentInfo?.nameMapping) {
           Logger.error(this.messages.getMessage('missingInfo'));
           return;
         }
 
+        const originalName: string = flexCardAssessmentInfo.nameMapping.oldName;
+
         let value: FlexcardStorage = {
           name: flexCardAssessmentInfo.nameMapping.newName,
           isDuplicate: false,
+          originalName: originalName,
         };
 
         if (flexCardAssessmentInfo.errors && flexCardAssessmentInfo.errors.length > 0) {
@@ -967,23 +965,46 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         } else {
           value.migrationSuccess = true;
         }
-        let finalKey = `${flexCardAssessmentInfo.nameMapping.oldName}`;
-        finalKey = finalKey.toLowerCase();
-        if (storage.fcStorage.has(finalKey)) {
-          // Key already exists - handle accordingly
-          Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', ['Flexcard', finalKey]));
-          value.isDuplicate = true;
-          storage.fcStorage.set(finalKey, value);
-        } else {
-          // Key doesn't exist - safe to set
-          storage.fcStorage.set(finalKey, value);
-        }
+        this.addKeyToStorage(originalName, value, storage);
       } catch (error) {
         Logger.logVerbose(this.messages.getMessage('errorWhileProcessingFlexcardStorage'));
         Logger.error(error);
       }
     }
     StorageUtil.printAssessmentStorage();
+  }
+
+  private addKeyToStorage(originalName: string, value: FlexcardStorage, storage: MigrationStorage) {
+    let finalKey = `${originalName}`;
+    finalKey = finalKey.toLowerCase();
+
+    if (storage.fcStorage.has(finalKey)) {
+      if (this.allVersions) {
+        const storedValue = storage.fcStorage.get(finalKey);
+        if (this.isDifferentFlexcard(storedValue, originalName)) {
+          this.markDuplicateKeyInStorage(value, finalKey, storage);
+        }
+      } else {
+        this.markDuplicateKeyInStorage(value, finalKey, storage);
+      }
+    } else {
+      // Key doesn't exist - safe to set
+      storage.fcStorage.set(finalKey, value);
+    }
+  }
+
+  private markDuplicateKeyInStorage(value: FlexcardStorage, finalKey: string, storage: MigrationStorage) {
+    // Key already exists - handle accordingly
+    Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', ['Flexcard', finalKey]));
+    value.isDuplicate = true;
+    storage.fcStorage.set(finalKey, value);
+  }
+
+  isDifferentFlexcard(storedValue: FlexcardStorage, originalName: string) {
+    if (storedValue.originalName === originalName) {
+      return false;
+    }
+    return true;
   }
 
   private prepareStorageForFlexcards(
@@ -998,9 +1019,11 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         let oldrecord = originalRecords.get(key);
         let newrecord = cardsUploadInfo.get(key);
 
+        const originalName: string = oldrecord['Name'];
         let value: FlexcardStorage = {
           name: newrecord?.newName,
           isDuplicate: false,
+          originalName: originalName,
         };
 
         if (newrecord === undefined) {
@@ -1014,17 +1037,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           }
         }
 
-        let finalKey = `${oldrecord['Name']}`;
-        finalKey = finalKey.toLowerCase();
-        if (storage.fcStorage.has(finalKey)) {
-          // Key already exists - handle accordingly
-          Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', ['Flexcard', finalKey]));
-          value.isDuplicate = true;
-          storage.fcStorage.set(finalKey, value);
-        } else {
-          // Key doesn't exist - safe to set
-          storage.fcStorage.set(finalKey, value);
-        }
+        this.addKeyToStorage(originalName, value, storage);
       } catch (error) {
         Logger.logVerbose(this.messages.getMessage('errorWhileProcessingFlexcardStorage'));
         Logger.error(error);

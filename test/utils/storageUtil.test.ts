@@ -83,11 +83,15 @@ describe('StorageUtil', () => {
         type: 'TestType',
         subtype: 'TestSubtype',
         language: 'English',
+        originalType: 'TestType',
+        originalSubtype: 'TestSubtype',
+        originalLanguage: 'English',
         isDuplicate: false,
         migrationSuccess: true,
       };
       const fcData: FlexcardStorage = {
         name: 'TestFlexcard',
+        originalName: 'TestFlexcard',
         isDuplicate: false,
         migrationSuccess: true,
       };
@@ -146,6 +150,9 @@ describe('StorageUtil', () => {
         type: 'ModifiedType',
         subtype: 'ModifiedSubtype',
         language: 'Spanish',
+        originalType: 'ModifiedType',
+        originalSubtype: 'ModifiedSubtype',
+        originalLanguage: 'Spanish',
         isDuplicate: true,
         migrationSuccess: false,
         error: ['Migration failed'],
@@ -165,6 +172,7 @@ describe('StorageUtil', () => {
       const storage = StorageUtil.getOmnistudioMigrationStorage();
       const fcData: FlexcardStorage = {
         name: 'ModifiedFlexcard',
+        originalName: 'ModifiedFlexcard',
         isDuplicate: true,
         migrationSuccess: false,
         error: ['Flexcard migration failed'],
@@ -186,20 +194,28 @@ describe('StorageUtil', () => {
         type: 'Type1',
         subtype: 'Subtype1',
         language: 'English',
+        originalType: 'Type1',
+        originalSubtype: 'Subtype1',
+        originalLanguage: 'English',
         isDuplicate: false,
       };
       const osData2: OmniScriptStorage = {
         type: 'Type2',
         subtype: 'Subtype2',
         language: 'French',
+        originalType: 'Type2',
+        originalSubtype: 'Subtype2',
+        originalLanguage: 'French',
         isDuplicate: true,
       };
       const fcData1: FlexcardStorage = {
         name: 'Flexcard1',
+        originalName: 'Flexcard1',
         isDuplicate: false,
       };
       const fcData2: FlexcardStorage = {
         name: 'Flexcard2',
+        originalName: 'Flexcard2',
         isDuplicate: true,
       };
 
@@ -227,6 +243,9 @@ describe('StorageUtil', () => {
         type: 'DeleteType',
         subtype: 'DeleteSubtype',
         language: 'German',
+        originalType: 'DeleteType',
+        originalSubtype: 'DeleteSubtype',
+        originalLanguage: 'German',
         isDuplicate: false,
       };
 
@@ -252,6 +271,9 @@ describe('StorageUtil', () => {
         type: 'TestType',
         subtype: 'TestSubtype',
         language: 'English',
+        originalType: 'TestType',
+        originalSubtype: 'TestSubtype',
+        originalLanguage: 'English',
         isDuplicate: false,
       });
 

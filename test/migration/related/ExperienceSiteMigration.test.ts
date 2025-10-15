@@ -267,8 +267,11 @@ describe('ExperienceSiteMigration', () => {
 
       const mockOSStorage: OmniScriptStorage = {
         type: 'TestType',
+        originalType: 'TestType',
         subtype: 'TestSubtype',
+        originalSubtype: 'TestSubtype',
         language: 'English',
+        originalLanguage: 'English',
         isDuplicate: false,
         migrationSuccess: true,
       };
@@ -352,8 +355,11 @@ describe('ExperienceSiteMigration', () => {
 
       const failedOSStorage: OmniScriptStorage = {
         type: 'TestType',
+        originalType: 'TestType',
         subtype: 'TestSubtype',
+        originalSubtype: 'TestSubtype',
         language: 'English',
+        originalLanguage: 'English',
         isDuplicate: false,
         migrationSuccess: false,
       };
@@ -380,8 +386,11 @@ describe('ExperienceSiteMigration', () => {
 
       const duplicateOSStorage: OmniScriptStorage = {
         type: 'TestType',
+        originalType: 'TestType',
         subtype: 'TestSubtype',
+        originalSubtype: 'TestSubtype',
         language: 'English',
+        originalLanguage: 'English',
         isDuplicate: true,
         migrationSuccess: true,
       };
@@ -453,8 +462,11 @@ describe('ExperienceSiteMigration', () => {
 
       const mockOSStorage: OmniScriptStorage = {
         type: 'TestType',
+        originalType: 'TestType',
         subtype: 'TestSubtype',
+        originalSubtype: 'TestSubtype',
         language: 'English',
+        originalLanguage: 'English',
         isDuplicate: false,
         migrationSuccess: true,
       };
@@ -513,8 +525,11 @@ describe('ExperienceSiteMigration', () => {
 
       const mockOSStorage: OmniScriptStorage = {
         type: 'TestType',
+        originalType: 'TestType',
         subtype: 'TestSubtype',
+        originalSubtype: 'TestSubtype',
         language: 'English',
+        originalLanguage: 'English',
         isDuplicate: false,
         migrationSuccess: true,
       };
@@ -562,8 +577,11 @@ describe('ExperienceSiteMigration', () => {
 
       const failedOSStorage: OmniScriptStorage = {
         type: 'FailedType',
+        originalType: 'FailedType',
         subtype: 'FailedSubtype',
+        originalSubtype: 'FailedSubtype',
         language: 'English',
+        originalLanguage: 'English',
         isDuplicate: false,
         migrationSuccess: false,
       };
@@ -591,8 +609,11 @@ describe('ExperienceSiteMigration', () => {
 
       const duplicateOSStorage: OmniScriptStorage = {
         type: 'DuplicateType',
+        originalType: 'DuplicateType',
         subtype: 'DuplicateSubtype',
+        originalSubtype: 'DuplicateSubtype',
         language: 'English',
+        originalLanguage: 'English',
         isDuplicate: true,
         migrationSuccess: true,
       };
@@ -640,16 +661,22 @@ describe('ExperienceSiteMigration', () => {
       // One successful, one duplicate
       const successfulStorage: OmniScriptStorage = {
         type: 'SuccessType',
+        originalType: 'SuccessType',
         subtype: 'SuccessSubtype',
+        originalSubtype: 'SuccessSubtype',
         language: 'English',
+        originalLanguage: 'English',
         isDuplicate: false,
         migrationSuccess: true,
       };
 
       const duplicateStorage: OmniScriptStorage = {
         type: 'DuplicateType',
+        originalType: 'DuplicateType',
         subtype: 'DuplicateSubtype',
+        originalSubtype: 'DuplicateSubtype',
         language: 'English',
+        originalLanguage: 'English',
         isDuplicate: true,
         migrationSuccess: true,
       };
@@ -787,8 +814,11 @@ describe('ExperienceSiteMigration', () => {
 
       const mockOSStandardStorage: OmniScriptStorage = {
         type: 'UpdatedType',
+        originalType: 'UpdatedType',
         subtype: 'UpdatedSubtype',
+        originalSubtype: 'UpdatedSubtype',
         language: 'Spanish',
+        originalLanguage: 'Spanish',
         isDuplicate: false,
         migrationSuccess: true,
       };
@@ -892,6 +922,7 @@ describe('ExperienceSiteMigration', () => {
 
       const mockFlexCardStorage = {
         name: 'UpdatedFlexCard',
+        originalName: 'TestFlexCard',
         isDuplicate: false,
         migrationSuccess: true,
       };
