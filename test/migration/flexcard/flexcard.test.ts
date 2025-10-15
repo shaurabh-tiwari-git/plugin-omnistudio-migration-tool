@@ -404,4 +404,109 @@ describe('FlexCard Community Targets Functionality', () => {
       expect(definition.someProperty).to.equal('value');
     });
   });
+
+  describe('Custom LWC with cf prefix handling', () => {
+    it('should update customlwcname with cf prefix when FlexCard name changes', () => {
+      // Add a FlexCard mapping to the registry
+      nameRegistry.registerNameMapping({
+        originalName: 'Test_childchard',
+        cleanedName: 'TestChildCard',
+        componentType: 'FlexCard',
+        recordId: 'test-record-id',
+      });
+
+      const testCard = {
+        Id: 'test-id',
+        Name: 'Parent_test_Card',
+        vlocity_ins__Definition__c: JSON.stringify({
+          states: [
+            {
+              components: {
+                'layer-0': {
+                  children: [
+                    {
+                      element: 'customLwc',
+                      property: {
+                        customlwcname: 'cfTest_childchard',
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        }),
+      };
+
+      const result = (cardTool as any).mapVlocityCardRecord(testCard, new Map(), new Map());
+      const definition = JSON.parse(result['PropertySetConfig']);
+
+      // Verify that the customlwcname was updated with the cleaned FlexCard name
+      expect(definition.states[0].components['layer-0'].children[0].property.customlwcname).to.equal('cfTestChildCard');
+    });
+
+    it('should not modify customlwcname without cf prefix', () => {
+      const testCard = {
+        Id: 'test-id',
+        Name: 'Parent_test_Card',
+        vlocity_ins__Definition__c: JSON.stringify({
+          states: [
+            {
+              components: {
+                'layer-0': {
+                  children: [
+                    {
+                      element: 'customLwc',
+                      property: {
+                        customlwcname: 'regularCustomLwc',
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        }),
+      };
+
+      const result = (cardTool as any).mapVlocityCardRecord(testCard, new Map(), new Map());
+      const definition = JSON.parse(result['PropertySetConfig']);
+
+      // Verify that the customlwcname was not modified
+      expect(definition.states[0].components['layer-0'].children[0].property.customlwcname).to.equal(
+        'regularCustomLwc'
+      );
+    });
+
+    it('should handle cf prefix with fallback cleaning when no registry mapping exists', () => {
+      const testCard = {
+        Id: 'test-id',
+        Name: 'Parent_test_Card',
+        vlocity_ins__Definition__c: JSON.stringify({
+          states: [
+            {
+              components: {
+                'layer-0': {
+                  children: [
+                    {
+                      element: 'customLwc',
+                      property: {
+                        customlwcname: 'cfTest-Child-Card',
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        }),
+      };
+
+      const result = (cardTool as any).mapVlocityCardRecord(testCard, new Map(), new Map());
+      const definition = JSON.parse(result['PropertySetConfig']);
+
+      // Verify that the customlwcname was updated with fallback cleaning
+      expect(definition.states[0].components['layer-0'].children[0].property.customlwcname).to.equal('cfTestChildCard');
+    });
+  });
 });
