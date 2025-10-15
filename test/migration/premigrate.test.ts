@@ -1,0 +1,124 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/unbound-method */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+import { expect } from '@salesforce/command/lib/test';
+import { Connection, Messages } from '@salesforce/core';
+import { UX } from '@salesforce/command';
+import sinon = require('sinon');
+import { PreMigrate } from '../../src/migration/premigrate';
+import { Logger } from '../../src/utils/logger';
+import { PromptUtil } from '../../src/utils/promptUtil';
+
+describe('PreMigrate - handleAllVersionsPrerequisites for Standard Data Model', () => {
+  let preMigrate: PreMigrate;
+  let connection: Connection;
+  let logger: Logger;
+  let messages: Messages;
+  let ux: UX;
+  let sandbox: sinon.SinonSandbox;
+  let getMessageStub: sinon.SinonStub;
+  let logErrorStub: sinon.SinonStub;
+  let logVerboseStub: sinon.SinonStub;
+  let processExitStub: sinon.SinonStub;
+  let askWithTimeOutStub: sinon.SinonStub;
+
+  const testNamespace = 'test_namespace';
+
+  beforeEach(() => {
+    sandbox = sinon.createSandbox();
+
+    // Mock connection
+    connection = {
+      query: sandbox.stub(),
+    } as unknown as Connection;
+
+    // Mock logger
+    logger = {
+      log: sandbox.stub(),
+      logVerbose: sandbox.stub(),
+      error: sandbox.stub(),
+    } as unknown as Logger;
+
+    // Mock messages
+    messages = {
+      getMessage: sandbox.stub(),
+    } as unknown as Messages;
+    getMessageStub = messages.getMessage as sinon.SinonStub;
+
+    // Mock UX
+    ux = {
+      log: sandbox.stub(),
+      error: sandbox.stub(),
+    } as unknown as UX;
+
+    // Set up default message returns
+    getMessageStub
+      .withArgs('omniStudioAllVersionsMigrationConsent')
+      .returns(
+        'All Versions of omnistudio components [Omniscript, Data Mapper, Integration Procedure, Flexcard] need to be migrated for metadata to be enabled as org is on Standard Data Model. Do you agree to migrate all versions? [y/n]'
+      );
+    getMessageStub
+      .withArgs('omniStudioAllVersionsMigrationConsentNotGiven')
+      .returns(
+        "You've not consented to proceed with the all versions migration. We'll not be able to proceed with the migration."
+      );
+    getMessageStub
+      .withArgs('omniStudioAllVersionsMigrationConsentGiven')
+      .returns("You've consented to proceed with the all versions migration.");
+    getMessageStub.withArgs('requestTimedOut').returns('Request timed out');
+    getMessageStub.withArgs('invalidYesNoResponse').returns('Invalid response. Please answer y or n.');
+
+    // Mock Logger static methods
+    logErrorStub = sandbox.stub(Logger, 'error');
+    logVerboseStub = sandbox.stub(Logger, 'logVerbose');
+
+    // Mock process.exit to prevent actual exit
+    processExitStub = sandbox.stub(process, 'exit');
+
+    // Mock PromptUtil
+    askWithTimeOutStub = sandbox.stub(PromptUtil, 'askWithTimeOut');
+
+    preMigrate = new PreMigrate(testNamespace, connection, logger, messages, ux);
+  });
+
+  afterEach(() => {
+    sandbox.restore();
+  });
+
+  describe('Standard Data Model - allVersions flag handling', () => {
+    it('should prompt for consent and return true when allVersions flag is NOT passed (false) and user consents', async () => {
+      // Arrange - Simulates: Standard Data Model + no -a flag
+      const allVersionsFlagFromCLI = false;
+      const mockAskFunction = sandbox.stub().resolves('y');
+      askWithTimeOutStub.returns(mockAskFunction);
+
+      // Act - This is what happens in migrate.ts line 135
+      const result = await preMigrate.handleAllVersionsPrerequisites(allVersionsFlagFromCLI);
+
+      // Assert
+      expect(mockAskFunction.calledOnce).to.be.true; // User was prompted
+      expect(result).to.equal(true); // allVersions is now true
+      expect(logVerboseStub.calledWith("You've consented to proceed with the all versions migration.")).to.be.true;
+      expect(logErrorStub.called).to.be.false;
+      expect(processExitStub.called).to.be.false;
+    });
+
+    it('should NOT prompt and return true when allVersions flag IS passed (true)', async () => {
+      // Arrange - Simulates: Standard Data Model + user provided -a flag
+      const allVersionsFlagFromCLI = true;
+      const mockAskFunction = sandbox.stub();
+      askWithTimeOutStub.returns(mockAskFunction);
+
+      // Act - This is what happens in migrate.ts line 135
+      const result = await preMigrate.handleAllVersionsPrerequisites(allVersionsFlagFromCLI);
+
+      // Assert
+      expect(mockAskFunction.called).to.be.false; // User was NOT prompted
+      expect(result).to.equal(true); // allVersions remains true
+      expect(logVerboseStub.called).to.be.false; // No logging since flag was already set
+      expect(logErrorStub.called).to.be.false;
+      expect(processExitStub.called).to.be.false;
+    });
+  });
+});
