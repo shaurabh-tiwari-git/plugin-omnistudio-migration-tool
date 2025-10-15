@@ -50,7 +50,7 @@ describe('FlexCard Multiple Versions Duplicate Check', () => {
   describe('Assessment Mode - allVersions=false', () => {
     it('should flag duplicate cards with same name but different versions as duplicate', async () => {
       const uniqueNames = new Set<string>();
-      const dupFlexCardNames = new Set<string>();
+      const dupFlexCardNames = new Map<string, string>();
 
       const card1 = {
         Id: 'card1',
@@ -83,7 +83,7 @@ describe('FlexCard Multiple Versions Duplicate Check', () => {
 
     it('should not include version in card name when allVersions=false', async () => {
       const uniqueNames = new Set<string>();
-      const dupFlexCardNames = new Set<string>();
+      const dupFlexCardNames = new Map<string, string>();
 
       const card = {
         Id: 'card1',
@@ -105,7 +105,7 @@ describe('FlexCard Multiple Versions Duplicate Check', () => {
   describe('Assessment Mode - allVersions=true', () => {
     it('should NOT flag cards with same name but different versions as duplicate', async () => {
       const uniqueNames = new Set<string>();
-      const dupFlexCardNames = new Set<string>();
+      const dupFlexCardNames = new Map<string, string>();
 
       const card1 = {
         Id: 'card1',
@@ -136,7 +136,7 @@ describe('FlexCard Multiple Versions Duplicate Check', () => {
 
     it('should flag cards with same name AND same version as duplicate', async () => {
       const uniqueNames = new Set<string>();
-      const dupFlexCardNames = new Set<string>();
+      const dupFlexCardNames = new Map<string, string>();
 
       const card1 = {
         Id: 'card1',
@@ -170,7 +170,7 @@ describe('FlexCard Multiple Versions Duplicate Check', () => {
 
     it('should include version in card name when allVersions=true', async () => {
       const uniqueNames = new Set<string>();
-      const dupFlexCardNames = new Set<string>();
+      const dupFlexCardNames = new Map<string, string>();
 
       const card = {
         Id: 'card1',
@@ -189,7 +189,7 @@ describe('FlexCard Multiple Versions Duplicate Check', () => {
 
     it('should handle multiple versions of same card correctly', async () => {
       const uniqueNames = new Set<string>();
-      const dupFlexCardNames = new Set<string>();
+      const dupFlexCardNames = new Map<string, string>();
 
       const cards = [
         {
@@ -237,7 +237,7 @@ describe('FlexCard Multiple Versions Duplicate Check', () => {
 
     it('should handle name cleaning with versions correctly', async () => {
       const uniqueNames = new Set<string>();
-      const dupFlexCardNames = new Set<string>();
+      const dupFlexCardNames = new Map<string, string>();
 
       const card1 = {
         Id: 'card1',
@@ -270,6 +270,142 @@ describe('FlexCard Multiple Versions Duplicate Check', () => {
       // Both should be ready for migration (not duplicates)
       expect(result1.migrationStatus).to.equal('Warnings');
       expect(result2.migrationStatus).to.equal('Warnings');
+    });
+
+    it('should flag different cards that clean to same name - Use Case: A_1, A_2, A$_1, A$_2, A$_3', async () => {
+      const uniqueNames = new Set<string>();
+      const dupFlexCardNames = new Map<string, string>();
+
+      // Card A with versions 1 and 2
+      const cardA1 = {
+        Id: 'cardA1',
+        Name: 'A',
+        vlocity_ins__Version__c: 1,
+        vlocity_ins__Definition__c: '{}',
+        vlocity_ins__Datasource__c: '{}',
+      };
+
+      const cardA2 = {
+        Id: 'cardA2',
+        Name: 'A',
+        vlocity_ins__Version__c: 2,
+        vlocity_ins__Definition__c: '{}',
+        vlocity_ins__Datasource__c: '{}',
+      };
+
+      // Card A$ with versions 1, 2, and 3 (cleans to A)
+      const cardAS1 = {
+        Id: 'cardAS1',
+        Name: 'A$',
+        vlocity_ins__Version__c: 1,
+        vlocity_ins__Definition__c: '{}',
+        vlocity_ins__Datasource__c: '{}',
+      };
+
+      const cardAS2 = {
+        Id: 'cardAS2',
+        Name: 'A$',
+        vlocity_ins__Version__c: 2,
+        vlocity_ins__Definition__c: '{}',
+        vlocity_ins__Datasource__c: '{}',
+      };
+
+      const cardAS3 = {
+        Id: 'cardAS3',
+        Name: 'A$',
+        vlocity_ins__Version__c: 3,
+        vlocity_ins__Definition__c: '{}',
+        vlocity_ins__Datasource__c: '{}',
+      };
+
+      // Process cards in order
+      const resultA1 = await (cardToolAllVersions as any).processFlexCard(cardA1, uniqueNames, dupFlexCardNames);
+      const resultA2 = await (cardToolAllVersions as any).processFlexCard(cardA2, uniqueNames, dupFlexCardNames);
+      const resultAS1 = await (cardToolAllVersions as any).processFlexCard(cardAS1, uniqueNames, dupFlexCardNames);
+      const resultAS2 = await (cardToolAllVersions as any).processFlexCard(cardAS2, uniqueNames, dupFlexCardNames);
+      const resultAS3 = await (cardToolAllVersions as any).processFlexCard(cardAS3, uniqueNames, dupFlexCardNames);
+
+      // A_1 and A_2 should pass (same card, different versions)
+      expect(resultA1.migrationStatus).to.equal('Ready for migration');
+      expect(resultA1.name).to.equal('A_1');
+      expect(resultA1.warnings).to.have.length(0);
+
+      expect(resultA2.migrationStatus).to.equal('Ready for migration');
+      expect(resultA2.name).to.equal('A_2');
+      expect(resultA2.warnings).to.have.length(0);
+
+      // A$_1 should be flagged as exact duplicate (A$ cleans to A, and A_1 already exists)
+      // Note: Will have 2 warnings - one for name change (A$ -> A), one for duplicate
+      expect(resultAS1.migrationStatus).to.equal('Needs manual intervention');
+      expect(resultAS1.name).to.equal('A_1');
+      expect(resultAS1.warnings.length).to.be.greaterThan(0);
+      expect(resultAS1.warnings.some((w) => w.includes('Duplicate card name'))).to.be.true;
+
+      // A$_2 should be flagged as exact duplicate (A$ cleans to A, and A_2 already exists)
+      // Note: Will have 2 warnings - one for name change (A$ -> A), one for duplicate
+      expect(resultAS2.migrationStatus).to.equal('Needs manual intervention');
+      expect(resultAS2.name).to.equal('A_2');
+      expect(resultAS2.warnings.length).to.be.greaterThan(0);
+      expect(resultAS2.warnings.some((w) => w.includes('Duplicate card name'))).to.be.true;
+
+      // A$_3 should be flagged as lower version duplicate (different original name)
+      // Note: Will have 2 warnings - one for name change (A$ -> A), one for lower version duplicate
+      expect(resultAS3.migrationStatus).to.equal('Needs manual intervention');
+      expect(resultAS3.name).to.equal('A_3');
+      expect(resultAS3.warnings.length).to.be.greaterThan(0);
+      expect(resultAS3.warnings.some((w) => w.includes('Lower version duplicate'))).to.be.true;
+    });
+
+    it('should flag different cards that clean to same name - Use Case: A_1, A_2, A$_3', async () => {
+      const uniqueNames = new Set<string>();
+      const dupFlexCardNames = new Map<string, string>();
+
+      // Card A with versions 1 and 2
+      const cardA1 = {
+        Id: 'cardA1',
+        Name: 'A',
+        vlocity_ins__Version__c: 1,
+        vlocity_ins__Definition__c: '{}',
+        vlocity_ins__Datasource__c: '{}',
+      };
+
+      const cardA2 = {
+        Id: 'cardA2',
+        Name: 'A',
+        vlocity_ins__Version__c: 2,
+        vlocity_ins__Definition__c: '{}',
+        vlocity_ins__Datasource__c: '{}',
+      };
+
+      // Card A$ with version 3 (cleans to A)
+      const cardAS3 = {
+        Id: 'cardAS3',
+        Name: 'A$',
+        vlocity_ins__Version__c: 3,
+        vlocity_ins__Definition__c: '{}',
+        vlocity_ins__Datasource__c: '{}',
+      };
+
+      // Process cards in order
+      const resultA1 = await (cardToolAllVersions as any).processFlexCard(cardA1, uniqueNames, dupFlexCardNames);
+      const resultA2 = await (cardToolAllVersions as any).processFlexCard(cardA2, uniqueNames, dupFlexCardNames);
+      const resultAS3 = await (cardToolAllVersions as any).processFlexCard(cardAS3, uniqueNames, dupFlexCardNames);
+
+      // A_1 and A_2 should pass (same card, different versions)
+      expect(resultA1.migrationStatus).to.equal('Ready for migration');
+      expect(resultA1.name).to.equal('A_1');
+      expect(resultA1.warnings).to.have.length(0);
+
+      expect(resultA2.migrationStatus).to.equal('Ready for migration');
+      expect(resultA2.name).to.equal('A_2');
+      expect(resultA2.warnings).to.have.length(0);
+
+      // A$_3 should be flagged as lower version duplicate (different original name cleaning to A)
+      // Note: Will have 2 warnings - one for name change (A$ -> A), one for lower version duplicate
+      expect(resultAS3.migrationStatus).to.equal('Needs manual intervention');
+      expect(resultAS3.name).to.equal('A_3');
+      expect(resultAS3.warnings.length).to.be.greaterThan(0);
+      expect(resultAS3.warnings.some((w) => w.includes('Lower version duplicate'))).to.be.true;
     });
   });
 
@@ -354,7 +490,7 @@ describe('FlexCard Multiple Versions Duplicate Check', () => {
   describe('Edge Cases', () => {
     it('should handle cards with version 0', async () => {
       const uniqueNames = new Set<string>();
-      const dupFlexCardNames = new Set<string>();
+      const dupFlexCardNames = new Map<string, string>();
 
       const card = {
         Id: 'card1',
@@ -372,7 +508,7 @@ describe('FlexCard Multiple Versions Duplicate Check', () => {
 
     it('should handle cards with very large version numbers', async () => {
       const uniqueNames = new Set<string>();
-      const dupFlexCardNames = new Set<string>();
+      const dupFlexCardNames = new Map<string, string>();
 
       const card = {
         Id: 'card1',
@@ -390,7 +526,7 @@ describe('FlexCard Multiple Versions Duplicate Check', () => {
 
     it('should handle mixed scenarios with duplicates and unique versions', async () => {
       const uniqueNames = new Set<string>();
-      const dupFlexCardNames = new Set<string>();
+      const dupFlexCardNames = new Map<string, string>();
 
       const cards = [
         {
@@ -449,7 +585,7 @@ describe('FlexCard Multiple Versions Duplicate Check', () => {
 
     it('should handle lower version appearing after higher version', async () => {
       const uniqueNames = new Set<string>();
-      const dupFlexCardNames = new Set<string>();
+      const dupFlexCardNames = new Map<string, string>();
 
       // Process version 3 first
       const card3 = {

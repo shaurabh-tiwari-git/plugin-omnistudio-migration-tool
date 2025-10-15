@@ -238,7 +238,8 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     const ipAssessmentInfos: IPAssessmentInfo[] = [];
 
     // Create a set to store existing OmniScript names and also extract DataRaptor and FlexCard names
-    const duplicateOmniscriptNames = new Set<string>();
+    // Map to track cleanedName (without version) -> originalName (without version) for duplicate detection
+    const duplicateOmniscriptNames: Map<string, string> = new Map<string, string>();
     const existingOmniscriptNames = new Set<string>();
     const existingDataRaptorNames = new Set(dataRaptorAssessmentInfos.map((info) => info.name));
     const existingFlexCardNames = new Set(flexCardAssessmentInfos.map((info) => info.name));
@@ -359,7 +360,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     existingOmniscriptNames: Set<string>,
     existingDataRaptorNames: Set<string>,
     existingFlexCardNames: Set<string>,
-    duplicateOmniscriptNames: Set<string>
+    duplicateOmniscriptNames: Map<string, string>
   ): Promise<OSAssessmentInfo> {
     const elements = await this.getAllElementsForOmniScript(omniscript['Id']);
 
@@ -570,35 +571,28 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       );
       assessmentStatus = 'Warnings';
     }
-    // Duplicate check logic:
-    // - When allVersions=false: check without version (using recordNameWithoutVersion)
-    // - When allVersions=true: check with version (using recordName)
+    // Duplicate check logic using Map to track originalName -> cleanedName
+    // This allows us to detect both exact duplicates and name cleaning conflicts
     const nameToCheck = this.allVersions ? recordName : recordNameWithoutVersion;
 
-    if (existingOmniscriptNames.has(nameToCheck) || duplicateOmniscriptNames.has(recordNameWithoutVersion)) {
-      // Mark the base name as duplicate for subsequent versions when allVersions=true
-      if (this.allVersions && !duplicateOmniscriptNames.has(recordNameWithoutVersion)) {
-        duplicateOmniscriptNames.add(recordNameWithoutVersion);
-      }
+    // Get the original name parts (before cleaning)
+    const originalType = omniscript[this.namespacePrefix + 'Type__c'];
+    const originalSubType = omniscript[this.namespacePrefix + 'SubType__c'];
+    const originalLanguage = omniscript[this.namespacePrefix + 'Language__c'] || '';
+    const originalNameWithoutVersion = originalLanguage
+      ? `${originalType}_${originalSubType}_${originalLanguage}`
+      : `${originalType}_${originalSubType}`;
 
-      // Message selection logic:
-      // - When allVersions=false: always use "duplicatedName" (comparing without version)
-      // - When allVersions=true:
-      //   - If exact match in existingOmniscriptNames (same name+version): use "duplicatedName"
-      //   - If base name in duplicateOmniscriptNames (different version): use "lowerVersionDuplicateOmniscriptName"
-      let shouldUseDuplicatedNameMessage = false;
-
-      if (!this.allVersions) {
-        // allVersions=false: always use duplicatedName message
-        shouldUseDuplicatedNameMessage = true;
-      } else {
-        // allVersions=true: use duplicatedName only if exact match (same name+version)
-        shouldUseDuplicatedNameMessage = existingOmniscriptNames.has(recordName);
-      }
-
-      if (shouldUseDuplicatedNameMessage) {
-        warnings.push(this.messages.getMessage('duplicatedName', [recordName]));
-      } else {
+    // Check for exact duplicate (same name + version)
+    if (existingOmniscriptNames.has(nameToCheck)) {
+      warnings.push(this.messages.getMessage('duplicatedName', [recordName]));
+      assessmentStatus = 'Needs manual intervention';
+    }
+    // Check for naming conflict: different original names cleaning to same name
+    else if (this.allVersions && duplicateOmniscriptNames.has(recordNameWithoutVersion)) {
+      const existingOriginalName = duplicateOmniscriptNames.get(recordNameWithoutVersion);
+      // Only flag if the original names are different (indicates a naming conflict)
+      if (existingOriginalName !== originalNameWithoutVersion) {
         warnings.push(
           this.messages.getMessage('lowerVersionDuplicateOmniscriptName', [
             this.getName(true),
@@ -606,11 +600,14 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
             this.getName(true),
           ])
         );
+        assessmentStatus = 'Needs manual intervention';
       }
+    }
 
-      assessmentStatus = 'Needs manual intervention';
-    } else {
-      existingOmniscriptNames.add(nameToCheck);
+    // Add to tracking structures
+    existingOmniscriptNames.add(nameToCheck);
+    if (this.allVersions && !duplicateOmniscriptNames.has(recordNameWithoutVersion)) {
+      duplicateOmniscriptNames.set(recordNameWithoutVersion, originalNameWithoutVersion);
     }
 
     // Add warning for duplicate element names within the same OmniScript
@@ -736,7 +733,8 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     populateRegexForFunctionMetadata(functionDefinitionMetadata);
 
     const duplicatedNames = new Set<string>();
-    const duplicateOmniscriptNames = new Set<string>();
+    // Map to track cleanedName (without version) -> originalName (without version) for duplicate detection
+    const duplicateOmniscriptNames: Map<string, string> = new Map<string, string>();
 
     // Variables to be returned After Migration
     let originalOsRecords = new Map<string, any>();
@@ -1048,24 +1046,17 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           '_1';
       }
 
-      if (duplicatedNames.has(mappedOsName) || duplicateOmniscriptNames.has(mappedOsNameWithoutVersion)) {
-        originalOsRecords.set(recordId, omniscript);
-        if (this.allVersions && !duplicateOmniscriptNames.has(mappedOsNameWithoutVersion)) {
-          duplicateOmniscriptNames.add(mappedOsNameWithoutVersion);
-        }
+      // Get original name parts for tracking
+      const originalType = omniscript[this.namespacePrefix + 'Type__c'];
+      const originalSubType = omniscript[this.namespacePrefix + 'SubType__c'];
+      const originalLanguage = omniscript[this.namespacePrefix + 'Language__c'] || '';
+      const originalNameWithoutVersion = originalLanguage
+        ? `${originalType}_${originalSubType}_${originalLanguage}`
+        : `${originalType}_${originalSubType}`;
 
-        let warningMessage: string;
-        if (duplicatedNames.has(mappedOsName)) {
-          warningMessage = this.messages.getMessage('duplicatedOSName', [this.getName(true), mappedOsName]);
-        } else {
-          warningMessage = this.messages.getMessage('lowerVersionDuplicateOSName', [
-            this.getName(true),
-            mappedOsName,
-            this.getName(true),
-            this.getName(true),
-          ]);
-        }
-
+      // Check for exact duplicate (same name + same version)
+      if (duplicatedNames.has(mappedOsName)) {
+        const warningMessage = this.messages.getMessage('duplicatedOSName', [this.getName(true), mappedOsName]);
         const skippedResponse: UploadRecordResult = {
           referenceId: recordId,
           id: '',
@@ -1077,7 +1068,34 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           skipped: true,
         };
         osUploadInfo.set(recordId, skippedResponse);
+        originalOsRecords.set(recordId, omniscript);
         continue;
+      }
+      // Check for naming conflict: different original names cleaning to same name
+      else if (this.allVersions && duplicateOmniscriptNames.has(mappedOsNameWithoutVersion)) {
+        const existingOriginalName = duplicateOmniscriptNames.get(mappedOsNameWithoutVersion);
+        // Only flag if the original names are different (indicates a naming conflict)
+        if (existingOriginalName !== originalNameWithoutVersion) {
+          const warningMessage = this.messages.getMessage('lowerVersionDuplicateOSName', [
+            this.getName(true),
+            mappedOsName,
+            this.getName(true),
+            this.getName(true),
+          ]);
+          const skippedResponse: UploadRecordResult = {
+            referenceId: recordId,
+            id: '',
+            success: false,
+            hasErrors: false,
+            errors: [],
+            warnings: [warningMessage],
+            newName: '',
+            skipped: true,
+          };
+          osUploadInfo.set(recordId, skippedResponse);
+          originalOsRecords.set(recordId, omniscript);
+          continue;
+        }
       }
 
       // Save the mapped record
@@ -1128,8 +1146,14 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
             '_1';
         }
         // Always set the new name to show the migrated name
-        // Add the processednew name to the duplicated set
+        // Add the processed new name to the duplicated set
         duplicatedNames.add(mappedOsName);
+
+        // Add to map for tracking naming conflicts (only when allVersions=true)
+        if (this.allVersions && !duplicateOmniscriptNames.has(mappedOsNameWithoutVersion)) {
+          duplicateOmniscriptNames.set(mappedOsNameWithoutVersion, originalNameWithoutVersion);
+        }
+
         osUploadResponse.newName = mappedOsName;
 
         // Only add warning if the name was actually modified

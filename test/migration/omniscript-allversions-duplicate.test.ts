@@ -75,7 +75,7 @@ describe('OmniScript Multiple Versions Duplicate Check', () => {
   describe('Assessment Mode - allVersions=false', () => {
     it('should flag lower version OmniScripts when allVersions=false', async () => {
       const existingOmniscriptNames = new Set<string>();
-      const duplicateOmniscriptNames = new Set<string>();
+      const duplicateOmniscriptNames = new Map<string, string>();
       const existingDataRaptorNames = new Set<string>();
       const existingFlexCardNames = new Set<string>();
 
@@ -135,7 +135,7 @@ describe('OmniScript Multiple Versions Duplicate Check', () => {
   describe('Assessment Mode - allVersions=true', () => {
     it('should NOT flag OmniScripts with same name but different versions as duplicate', async () => {
       const existingOmniscriptNames = new Set<string>();
-      const duplicateOmniscriptNames = new Set<string>();
+      const duplicateOmniscriptNames = new Map<string, string>();
       const existingDataRaptorNames = new Set<string>();
       const existingFlexCardNames = new Set<string>();
 
@@ -192,7 +192,7 @@ describe('OmniScript Multiple Versions Duplicate Check', () => {
 
     it('should flag OmniScripts with same name AND same version as duplicate', async () => {
       const existingOmniscriptNames = new Set<string>();
-      const duplicateOmniscriptNames = new Set<string>();
+      const duplicateOmniscriptNames = new Map<string, string>();
       const existingDataRaptorNames = new Set<string>();
       const existingFlexCardNames = new Set<string>();
 
@@ -249,7 +249,7 @@ describe('OmniScript Multiple Versions Duplicate Check', () => {
 
     it('should handle multiple versions of same OmniScript correctly', async () => {
       const existingOmniscriptNames = new Set<string>();
-      const duplicateOmniscriptNames = new Set<string>();
+      const duplicateOmniscriptNames = new Map<string, string>();
       const existingDataRaptorNames = new Set<string>();
       const existingFlexCardNames = new Set<string>();
 
@@ -314,12 +314,230 @@ describe('OmniScript Multiple Versions Duplicate Check', () => {
       expect(results[2].name).to.equal('TestType_TestSubType_English_3');
       expect(results[2].warnings).to.have.length(0);
     });
+
+    it('should flag different OmniScripts that clean to same name - Use Case: A_1, A_2, A$_1, A$_2, A$_3', async () => {
+      const existingOmniscriptNames = new Set<string>();
+      const duplicateOmniscriptNames = new Map<string, string>();
+      const existingDataRaptorNames = new Set<string>();
+      const existingFlexCardNames = new Set<string>();
+
+      (osToolAllVersions as any).getAllElementsForOmniScript = async () => [];
+
+      // OmniScript A with versions 1 and 2
+      const osA1 = {
+        Id: 'osA1',
+        Name: 'A',
+        vlocity_ins__Type__c: 'A',
+        vlocity_ins__SubType__c: 'Type',
+        vlocity_ins__Language__c: 'English',
+        vlocity_ins__Version__c: 1,
+        vlocity_ins__IsProcedure__c: false,
+        vlocity_ins__IsLwcEnabled__c: true,
+      };
+
+      const osA2 = {
+        Id: 'osA2',
+        Name: 'A',
+        vlocity_ins__Type__c: 'A',
+        vlocity_ins__SubType__c: 'Type',
+        vlocity_ins__Language__c: 'English',
+        vlocity_ins__Version__c: 2,
+        vlocity_ins__IsProcedure__c: false,
+        vlocity_ins__IsLwcEnabled__c: true,
+      };
+
+      // OmniScript A$ with versions 1, 2, and 3 (cleans to A)
+      const osAS1 = {
+        Id: 'osAS1',
+        Name: 'A$',
+        vlocity_ins__Type__c: 'A$',
+        vlocity_ins__SubType__c: 'Type',
+        vlocity_ins__Language__c: 'English',
+        vlocity_ins__Version__c: 1,
+        vlocity_ins__IsProcedure__c: false,
+        vlocity_ins__IsLwcEnabled__c: true,
+      };
+
+      const osAS2 = {
+        Id: 'osAS2',
+        Name: 'A$',
+        vlocity_ins__Type__c: 'A$',
+        vlocity_ins__SubType__c: 'Type',
+        vlocity_ins__Language__c: 'English',
+        vlocity_ins__Version__c: 2,
+        vlocity_ins__IsProcedure__c: false,
+        vlocity_ins__IsLwcEnabled__c: true,
+      };
+
+      const osAS3 = {
+        Id: 'osAS3',
+        Name: 'A$',
+        vlocity_ins__Type__c: 'A$',
+        vlocity_ins__SubType__c: 'Type',
+        vlocity_ins__Language__c: 'English',
+        vlocity_ins__Version__c: 3,
+        vlocity_ins__IsProcedure__c: false,
+        vlocity_ins__IsLwcEnabled__c: true,
+      };
+
+      // Process OmniScripts in order
+      const resultA1 = await (osToolAllVersions as any).processOmniScript(
+        osA1,
+        existingOmniscriptNames,
+        existingDataRaptorNames,
+        existingFlexCardNames,
+        duplicateOmniscriptNames
+      );
+
+      const resultA2 = await (osToolAllVersions as any).processOmniScript(
+        osA2,
+        existingOmniscriptNames,
+        existingDataRaptorNames,
+        existingFlexCardNames,
+        duplicateOmniscriptNames
+      );
+
+      const resultAS1 = await (osToolAllVersions as any).processOmniScript(
+        osAS1,
+        existingOmniscriptNames,
+        existingDataRaptorNames,
+        existingFlexCardNames,
+        duplicateOmniscriptNames
+      );
+
+      const resultAS2 = await (osToolAllVersions as any).processOmniScript(
+        osAS2,
+        existingOmniscriptNames,
+        existingDataRaptorNames,
+        existingFlexCardNames,
+        duplicateOmniscriptNames
+      );
+
+      const resultAS3 = await (osToolAllVersions as any).processOmniScript(
+        osAS3,
+        existingOmniscriptNames,
+        existingDataRaptorNames,
+        existingFlexCardNames,
+        duplicateOmniscriptNames
+      );
+
+      // A_1 and A_2 should pass (same OmniScript, different versions)
+      expect(resultA1.migrationStatus).to.equal('Ready for migration');
+      expect(resultA1.name).to.equal('A_Type_English_1');
+      expect(resultA1.warnings).to.have.length(0);
+
+      expect(resultA2.migrationStatus).to.equal('Ready for migration');
+      expect(resultA2.name).to.equal('A_Type_English_2');
+      expect(resultA2.warnings).to.have.length(0);
+
+      // A$_1 should be flagged as exact duplicate (A$ cleans to A, and A_1 already exists)
+      expect(resultAS1.migrationStatus).to.equal('Needs manual intervention');
+      expect(resultAS1.name).to.equal('A_Type_English_1');
+      expect(resultAS1.warnings.length).to.be.greaterThan(0);
+      expect(resultAS1.warnings.some((w) => w.includes('Duplicate'))).to.be.true;
+
+      // A$_2 should be flagged as exact duplicate (A$ cleans to A, and A_2 already exists)
+      expect(resultAS2.migrationStatus).to.equal('Needs manual intervention');
+      expect(resultAS2.name).to.equal('A_Type_English_2');
+      expect(resultAS2.warnings.length).to.be.greaterThan(0);
+      expect(resultAS2.warnings.some((w) => w.includes('Duplicate'))).to.be.true;
+
+      // A$_3 should be flagged as lower version duplicate (different original name)
+      expect(resultAS3.migrationStatus).to.equal('Needs manual intervention');
+      expect(resultAS3.name).to.equal('A_Type_English_3');
+      expect(resultAS3.warnings.length).to.be.greaterThan(0);
+      expect(resultAS3.warnings.some((w) => w.includes('Lower version duplicate'))).to.be.true;
+    });
+
+    it('should flag different OmniScripts that clean to same name - Use Case: A_1, A_2, A$_3', async () => {
+      const existingOmniscriptNames = new Set<string>();
+      const duplicateOmniscriptNames = new Map<string, string>();
+      const existingDataRaptorNames = new Set<string>();
+      const existingFlexCardNames = new Set<string>();
+
+      (osToolAllVersions as any).getAllElementsForOmniScript = async () => [];
+
+      // OmniScript A with versions 1 and 2
+      const osA1 = {
+        Id: 'osA1',
+        Name: 'A',
+        vlocity_ins__Type__c: 'A',
+        vlocity_ins__SubType__c: 'Type',
+        vlocity_ins__Language__c: 'English',
+        vlocity_ins__Version__c: 1,
+        vlocity_ins__IsProcedure__c: false,
+        vlocity_ins__IsLwcEnabled__c: true,
+      };
+
+      const osA2 = {
+        Id: 'osA2',
+        Name: 'A',
+        vlocity_ins__Type__c: 'A',
+        vlocity_ins__SubType__c: 'Type',
+        vlocity_ins__Language__c: 'English',
+        vlocity_ins__Version__c: 2,
+        vlocity_ins__IsProcedure__c: false,
+        vlocity_ins__IsLwcEnabled__c: true,
+      };
+
+      // OmniScript A$ with version 3 (cleans to A)
+      const osAS3 = {
+        Id: 'osAS3',
+        Name: 'A$',
+        vlocity_ins__Type__c: 'A$',
+        vlocity_ins__SubType__c: 'Type',
+        vlocity_ins__Language__c: 'English',
+        vlocity_ins__Version__c: 3,
+        vlocity_ins__IsProcedure__c: false,
+        vlocity_ins__IsLwcEnabled__c: true,
+      };
+
+      // Process OmniScripts in order
+      const resultA1 = await (osToolAllVersions as any).processOmniScript(
+        osA1,
+        existingOmniscriptNames,
+        existingDataRaptorNames,
+        existingFlexCardNames,
+        duplicateOmniscriptNames
+      );
+
+      const resultA2 = await (osToolAllVersions as any).processOmniScript(
+        osA2,
+        existingOmniscriptNames,
+        existingDataRaptorNames,
+        existingFlexCardNames,
+        duplicateOmniscriptNames
+      );
+
+      const resultAS3 = await (osToolAllVersions as any).processOmniScript(
+        osAS3,
+        existingOmniscriptNames,
+        existingDataRaptorNames,
+        existingFlexCardNames,
+        duplicateOmniscriptNames
+      );
+
+      // A_1 and A_2 should pass (same OmniScript, different versions)
+      expect(resultA1.migrationStatus).to.equal('Ready for migration');
+      expect(resultA1.name).to.equal('A_Type_English_1');
+      expect(resultA1.warnings).to.have.length(0);
+
+      expect(resultA2.migrationStatus).to.equal('Ready for migration');
+      expect(resultA2.name).to.equal('A_Type_English_2');
+      expect(resultA2.warnings).to.have.length(0);
+
+      // A$_3 should be flagged as lower version duplicate (different original name cleaning to A)
+      expect(resultAS3.migrationStatus).to.equal('Needs manual intervention');
+      expect(resultAS3.name).to.equal('A_Type_English_3');
+      expect(resultAS3.warnings.length).to.be.greaterThan(0);
+      expect(resultAS3.warnings.some((w) => w.includes('Lower version duplicate'))).to.be.true;
+    });
   });
 
   describe('Integration Procedure - Multiple Versions', () => {
     it('should NOT flag IPs with same name but different versions as duplicate when allVersions=true', async () => {
       const existingOmniscriptNames = new Set<string>();
-      const duplicateOmniscriptNames = new Set<string>();
+      const duplicateOmniscriptNames = new Map<string, string>();
       const existingDataRaptorNames = new Set<string>();
       const existingFlexCardNames = new Set<string>();
 
@@ -376,7 +594,7 @@ describe('OmniScript Multiple Versions Duplicate Check', () => {
   describe('Edge Cases', () => {
     it('should handle OmniScripts with version 0', async () => {
       const existingOmniscriptNames = new Set<string>();
-      const duplicateOmniscriptNames = new Set<string>();
+      const duplicateOmniscriptNames = new Map<string, string>();
       const existingDataRaptorNames = new Set<string>();
       const existingFlexCardNames = new Set<string>();
 
@@ -407,7 +625,7 @@ describe('OmniScript Multiple Versions Duplicate Check', () => {
 
     it('should handle OmniScripts with very large version numbers', async () => {
       const existingOmniscriptNames = new Set<string>();
-      const duplicateOmniscriptNames = new Set<string>();
+      const duplicateOmniscriptNames = new Map<string, string>();
       const existingDataRaptorNames = new Set<string>();
       const existingFlexCardNames = new Set<string>();
 
@@ -438,7 +656,7 @@ describe('OmniScript Multiple Versions Duplicate Check', () => {
 
     it('should handle lower version appearing after higher version', async () => {
       const existingOmniscriptNames = new Set<string>();
-      const duplicateOmniscriptNames = new Set<string>();
+      const duplicateOmniscriptNames = new Map<string, string>();
       const existingDataRaptorNames = new Set<string>();
       const existingFlexCardNames = new Set<string>();
 
@@ -494,7 +712,7 @@ describe('OmniScript Multiple Versions Duplicate Check', () => {
 
     it('should handle mixed scenarios with duplicates and unique versions', async () => {
       const existingOmniscriptNames = new Set<string>();
-      const duplicateOmniscriptNames = new Set<string>();
+      const duplicateOmniscriptNames = new Map<string, string>();
       const existingDataRaptorNames = new Set<string>();
       const existingFlexCardNames = new Set<string>();
 
@@ -575,7 +793,7 @@ describe('OmniScript Multiple Versions Duplicate Check', () => {
 
     it('should handle OmniScripts without language field', async () => {
       const existingOmniscriptNames = new Set<string>();
-      const duplicateOmniscriptNames = new Set<string>();
+      const duplicateOmniscriptNames = new Map<string, string>();
       const existingDataRaptorNames = new Set<string>();
       const existingFlexCardNames = new Set<string>();
 
@@ -608,7 +826,7 @@ describe('OmniScript Multiple Versions Duplicate Check', () => {
   describe('Name Mapping with Versions', () => {
     it('should create correct name mapping with allVersions=true', async () => {
       const existingOmniscriptNames = new Set<string>();
-      const duplicateOmniscriptNames = new Set<string>();
+      const duplicateOmniscriptNames = new Map<string, string>();
       const existingDataRaptorNames = new Set<string>();
       const existingFlexCardNames = new Set<string>();
 
@@ -646,7 +864,7 @@ describe('OmniScript Multiple Versions Duplicate Check', () => {
 
     it('should create correct name mapping with allVersions=false', async () => {
       const existingOmniscriptNames = new Set<string>();
-      const duplicateOmniscriptNames = new Set<string>();
+      const duplicateOmniscriptNames = new Map<string, string>();
       const existingDataRaptorNames = new Set<string>();
       const existingFlexCardNames = new Set<string>();
 

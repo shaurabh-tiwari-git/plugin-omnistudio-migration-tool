@@ -165,7 +165,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     const progressBar = createProgressBar('Assessing', 'Flexcards');
     progressBar.start(flexCards.length, progressCounter);
     const uniqueNames = new Set<string>();
-    const dupFlexCardNames: Set<string> = new Set<string>();
+    const dupFlexCardNames: Map<string, string> = new Map<string, string>();
 
     // Now process each OmniScript and its elements
     for (const flexCard of flexCards) {
@@ -200,7 +200,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   private async processFlexCard(
     flexCard: AnyJson,
     uniqueNames: Set<string>,
-    dupFlexCardNames: Set<String>
+    dupFlexCardNames: Map<string, string>
   ): Promise<FlexCardAssessmentInfo> {
     const flexCardName = flexCard['Name'];
     Logger.info(this.messages.getMessage('processingFlexCard', [flexCardName]));
@@ -235,24 +235,30 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     }
 
     // Check for duplicate names (include version when allVersions is true)
-    // A Set that can only store original flexcard names to avoid conflicts with cleaned name
     const uniqueCleanedName = this.allVersions ? `${cleanedName}_${version}` : cleanedName;
-    if (uniqueNames.has(uniqueCleanedName) || dupFlexCardNames.has(originalName)) {
-      // Add the original flexcard name to the set
-      if (this.allVersions && !dupFlexCardNames.has(originalName)) {
-        dupFlexCardNames.add(originalName);
-      }
-      if (uniqueNames.has(uniqueCleanedName)) {
-        flexCardAssessmentInfo.warnings.push(this.messages.getMessage('duplicateCardNameMessage', [uniqueCleanedName]));
-      } else {
+
+    // Check for exact duplicate (same name + same version)
+    if (uniqueNames.has(uniqueCleanedName)) {
+      flexCardAssessmentInfo.warnings.push(this.messages.getMessage('duplicateCardNameMessage', [uniqueCleanedName]));
+      assessmentStatus = getUpdatedAssessmentStatus(assessmentStatus, 'Needs manual intervention');
+    }
+    // Check for naming conflict: different original names cleaning to same name
+    else if (this.allVersions && dupFlexCardNames.has(cleanedName)) {
+      const existingOriginalName = dupFlexCardNames.get(cleanedName);
+      // Only flag if the original names are different (indicates a naming conflict)
+      if (existingOriginalName !== originalName) {
         flexCardAssessmentInfo.warnings.push(
           this.messages.getMessage('lowerVersionDuplicateCardNameMessage', [uniqueCleanedName])
         );
+        assessmentStatus = getUpdatedAssessmentStatus(assessmentStatus, 'Needs manual intervention');
       }
-      assessmentStatus = getUpdatedAssessmentStatus(assessmentStatus, 'Needs manual intervention');
     }
 
+    // Add to tracking structures
     uniqueNames.add(uniqueCleanedName);
+    if (this.allVersions && !dupFlexCardNames.has(cleanedName)) {
+      dupFlexCardNames.set(cleanedName, originalName);
+    }
 
     // Check for author name changes
     const originalAuthor = flexCard[this.namespacePrefix + 'Author__c'];
@@ -738,7 +744,8 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     const cardsUploadInfo = new Map<string, UploadRecordResult>();
     const originalRecords = new Map<string, any>();
     const uniqueNames = new Set<string>();
-    const dupFlexCardNames: Set<string> = new Set<string>();
+    // Map to track cleanedName -> originalName for duplicate detection
+    const dupFlexCardNames: Map<string, string> = new Map<string, string>();
 
     let progressCounter = 0;
     progressBar.start(cards.length, progressCounter);
@@ -760,7 +767,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     cardsUploadInfo: Map<string, UploadRecordResult>,
     originalRecords: Map<string, any>,
     uniqueNames: Set<string>,
-    dupFlexCardNames: Set<String>
+    dupFlexCardNames: Map<string, string>
   ) {
     const recordId = card['Id'];
 
@@ -802,22 +809,31 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         ? `${transformedCard['Name']}_${transformedCard['VersionNumber']}`
         : transformedCard['Name'];
 
-      if (uniqueNames.has(uniqueCheckName) || dupFlexCardNames.has(transformedCard['Name'])) {
-        if (this.allVersions && !dupFlexCardNames.has(transformedCard['Name'])) {
-          dupFlexCardNames.add(transformedCard['Name']);
-        }
-        // change error message
-        if (uniqueNames.has(uniqueCheckName)) {
-          this.setRecordErrors(card, this.messages.getMessage('duplicatedCardName', [uniqueCheckName]));
-        } else {
-          this.setRecordErrors(card, this.messages.getMessage('lowerVersionDuplicateCardName', [uniqueCheckName]));
-        }
+      const originalCardName = card['Name'];
+      const cleanedCardName = transformedCard['Name'];
+
+      // Check for exact duplicate (same name + same version)
+      if (uniqueNames.has(uniqueCheckName)) {
+        this.setRecordErrors(card, this.messages.getMessage('duplicatedCardName', [uniqueCheckName]));
         originalRecords.set(recordId, card);
         return;
       }
+      // Check for naming conflict: different original names cleaning to same name
+      else if (this.allVersions && dupFlexCardNames.has(cleanedCardName)) {
+        const existingOriginalName = dupFlexCardNames.get(cleanedCardName);
+        // Only flag if the original names are different (indicates a naming conflict)
+        if (existingOriginalName !== originalCardName) {
+          this.setRecordErrors(card, this.messages.getMessage('lowerVersionDuplicateCardName', [uniqueCheckName]));
+          originalRecords.set(recordId, card);
+          return;
+        }
+      }
 
-      // Save the name for duplicated names check (with version if allVersions is true)
+      // Add to tracking structures
       uniqueNames.add(uniqueCheckName);
+      if (this.allVersions && !dupFlexCardNames.has(cleanedCardName)) {
+        dupFlexCardNames.set(cleanedCardName, originalCardName);
+      }
 
       // Create a map of the original records
       originalRecords.set(recordId, card);
