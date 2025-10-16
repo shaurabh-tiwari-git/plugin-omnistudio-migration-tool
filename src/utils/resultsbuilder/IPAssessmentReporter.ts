@@ -51,9 +51,9 @@ export class IPAssessmentReporter {
         cssClass: 'text-warning',
       },
       {
-        name: 'Needs Manual Intervention',
+        name: 'Needs manual intervention',
         count: ipAssessmentInfos.filter(
-          (ipAssessmentInfo) => ipAssessmentInfo.migrationStatus === 'Needs Manual Intervention'
+          (ipAssessmentInfo) => ipAssessmentInfo.migrationStatus === 'Needs manual intervention'
         ).length,
         cssClass: 'text-error',
       },
@@ -78,7 +78,7 @@ export class IPAssessmentReporter {
           false,
           undefined,
           undefined,
-          ipAssessmentInfo.migrationStatus === 'Needs Manual Intervention' ||
+          ipAssessmentInfo.migrationStatus === 'Needs manual intervention' ||
             ipAssessmentInfo.migrationStatus === 'Failed'
             ? 'invalid-icon'
             : ''
@@ -108,12 +108,7 @@ export class IPAssessmentReporter {
           1,
           false,
           undefined,
-          ipAssessmentInfo.warnings,
-          ipAssessmentInfo.migrationStatus === 'Warnings'
-            ? 'text-warning'
-            : ipAssessmentInfo.migrationStatus === 'Ready for migration'
-            ? ''
-            : 'text-error'
+          ipAssessmentInfo.warnings
         ),
         createRowDataParam(
           'integrationProcedureDependencies',

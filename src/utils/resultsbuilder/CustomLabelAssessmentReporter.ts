@@ -72,7 +72,7 @@ export class CustomLabelAssessmentReporter {
     const warnings = safeCustomLabelInfos.filter((label) => label.assessmentStatus === 'Warnings').length;
 
     const needsManualIntervention = safeCustomLabelInfos.filter(
-      (label) => label.assessmentStatus === 'Needs Manual Intervention'
+      (label) => label.assessmentStatus === 'Needs manual intervention'
     ).length;
 
     const failed = safeCustomLabelInfos.filter((label) => label.assessmentStatus === 'Failed').length;
@@ -84,7 +84,7 @@ export class CustomLabelAssessmentReporter {
         cssClass: 'text-warning',
       },
       {
-        name: 'Needs Manual Intervention',
+        name: 'Needs manual intervention',
         count: needsManualIntervention,
         cssClass: 'text-error',
       },
@@ -227,7 +227,7 @@ export class CustomLabelAssessmentReporter {
         key: 'assessmentStatus',
         filters: [
           { label: 'Ready for migration' },
-          { label: 'Needs Manual Intervention' },
+          { label: 'Needs manual intervention' },
           { label: 'Warnings' },
           { label: 'Failed' },
         ],
@@ -239,7 +239,7 @@ export class CustomLabelAssessmentReporter {
     switch (status) {
       case 'Warnings':
         return 'text-warning';
-      case 'Needs Manual Intervention':
+      case 'Needs manual intervention':
         return 'text-error';
       case 'Failed':
         return 'text-error';

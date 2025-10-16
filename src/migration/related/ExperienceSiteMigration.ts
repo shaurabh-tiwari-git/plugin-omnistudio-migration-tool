@@ -16,7 +16,7 @@ import {
   FlexcardStorage,
 } from '../interfaces';
 import { FileDiffUtil } from '../../utils/lwcparser/fileutils/FileDiffUtil';
-import { ExperienceSiteAssessmentInfo } from '../../utils';
+import { ExperienceSiteAssessmentInfo, ExperienceSiteAssessmentPageInfo } from '../../utils';
 import { StorageUtil } from '../../utils/storageUtil';
 import { createProgressBar } from '../base';
 import { BaseRelatedObjectMigration } from './BaseRealtedObjectMigration';
@@ -60,6 +60,11 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     const experienceSiteInfo = this.processExperienceSites(this.EXPERIENCE_SITES_PATH, type);
     Logger.info(this.messages.getMessage('experienceSiteSuccessfullyProcessed', [type]));
     shell.cd(pwd);
+    Logger.log(
+      this.messages.getMessage('expSitesWithChanges', [
+        experienceSiteInfo.flatMap((info) => info.experienceSiteAssessmentPageInfos).length,
+      ])
+    );
     return experienceSiteInfo;
   }
 
@@ -78,6 +83,10 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     const experienceSitesAssessmentInfo: ExperienceSiteAssessmentInfo[] = [];
     Logger.logVerbose('The namespace for expsites processing is ' + this.namespace);
     for (const directory of directoryMap.keys()) {
+      const experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo = {
+        experienceBundleName: path.basename(path.dirname(directory)),
+        experienceSiteAssessmentPageInfos: [],
+      };
       const fileArray = directoryMap.get(directory);
       if (!fileArray) {
         continue;
@@ -85,22 +94,26 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       for (const file of fileArray) {
         progressBar.update(++progressCounter);
         if (file.ext !== '.json') {
-          Logger.logVerbose(this.messages.getMessage('skipNonJsonFile ', [file.name]));
+          Logger.logVerbose(this.messages.getMessage('skipNonJsonFile', [file.name]));
           continue;
         }
         try {
-          const experienceSiteInfo = this.processExperienceSite(file, type);
-          if (experienceSiteInfo?.hasOmnistudioContent === true) {
+          const experienceSitePageInfo = this.processExperienceSite(file, type);
+          if (experienceSitePageInfo?.hasOmnistudioContent === true) {
             Logger.logVerbose(this.messages.getMessage('experienceSiteWithOmniWrapperSuccessfullyProcessed'));
-            experienceSitesAssessmentInfo.push(experienceSiteInfo);
+            experienceSiteAssessmentInfo.experienceSiteAssessmentPageInfos.push(experienceSitePageInfo);
           } else {
             Logger.logVerbose(this.messages.getMessage('fileNotHavingWrapper'));
           }
         } catch (err) {
-          this.populateExceptionInfo(file, experienceSitesAssessmentInfo);
+          this.populateExceptionInfo(file, experienceSiteAssessmentInfo.experienceSiteAssessmentPageInfos);
           Logger.error(this.messages.getMessage('errorProcessingExperienceSite', [file.name]));
           Logger.error(JSON.stringify(err));
         }
+      }
+
+      if (experienceSiteAssessmentInfo.experienceSiteAssessmentPageInfos.length > 0) {
+        experienceSitesAssessmentInfo.push(experienceSiteAssessmentInfo);
       }
     }
 
@@ -109,10 +122,10 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     return experienceSitesAssessmentInfo;
   }
 
-  public processExperienceSite(file: File, type: string): ExperienceSiteAssessmentInfo {
+  public processExperienceSite(file: File, type: string): ExperienceSiteAssessmentPageInfo {
     Logger.logVerbose(this.messages.getMessage('processingFile', [file.name]));
 
-    const experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo = {
+    const experienceSiteAssessmentInfo: ExperienceSiteAssessmentPageInfo = {
       name: file.name,
       warnings: [],
       errors: [],
@@ -170,9 +183,9 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     return experienceSiteAssessmentInfo;
   }
 
-  private populateExceptionInfo(file: File, experienceSiteAssessmentInfos: ExperienceSiteAssessmentInfo[]): void {
+  private populateExceptionInfo(file: File, experienceSiteAssessmentInfos: ExperienceSiteAssessmentPageInfo[]): void {
     try {
-      const experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo = {
+      const experienceSiteAssessmentInfo: ExperienceSiteAssessmentPageInfo = {
         name: file.name,
         warnings: ['Unknown error occurred'],
         errors: [''],
@@ -191,7 +204,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
 
   private processRegion(
     region: ExpSiteRegion,
-    experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo,
+    experienceSiteAssessmentInfo: ExperienceSiteAssessmentPageInfo,
     storage: MigrationStorage,
     lookupComponentName: string,
     type: string
@@ -213,7 +226,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
 
   private processComponent(
     component: ExpSiteComponent,
-    experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo,
+    experienceSiteAssessmentInfo: ExperienceSiteAssessmentPageInfo,
     storage: MigrationStorage,
     lookupComponentName: string,
     type: string
@@ -249,7 +262,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
   private updateComponentAndItsAttributes(
     component: ExpSiteComponent,
     currentAttribute: ExpSiteComponentAttributes,
-    experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo,
+    experienceSiteAssessmentInfo: ExperienceSiteAssessmentPageInfo,
     storage: MigrationStorage,
     type: string
   ): void {
@@ -259,7 +272,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
 
     if (currentAttribute.target === undefined || currentAttribute.target === '') {
       experienceSiteAssessmentInfo.warnings.push(this.messages.getMessage('emptyTargetData'));
-      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs Manual Intervention' : 'Skipped';
+      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs manual intervention' : 'Skipped';
       return;
     }
 
@@ -277,7 +290,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     targetName: string,
     component: ExpSiteComponent,
     currentAttribute: ExpSiteComponentAttributes,
-    experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo,
+    experienceSiteAssessmentInfo: ExperienceSiteAssessmentPageInfo,
     storage: MigrationStorage,
     type: string
   ): void {
@@ -291,7 +304,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     if (this.shouldAddWarning(targetDataFromStorageFC)) {
       const warningMsg: string = this.getWarningMessage(flexcardName, targetDataFromStorageFC);
       experienceSiteAssessmentInfo.warnings.push(warningMsg);
-      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs Manual Intervention' : 'Skipped';
+      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs manual intervention' : 'Skipped';
     } else {
       component.componentName = TARGET_COMPONENT_NAME_FC;
 
@@ -309,7 +322,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     targetName: string,
     component: ExpSiteComponent,
     currentAttribute: ExpSiteComponentAttributes,
-    experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo,
+    experienceSiteAssessmentInfo: ExperienceSiteAssessmentPageInfo,
     storage: MigrationStorage,
     type: string
   ): void {
@@ -321,7 +334,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     if (this.shouldAddWarning(targetDataFromStorage)) {
       const warningMsg: string = this.getWarningMessage(targetName, targetDataFromStorage);
       experienceSiteAssessmentInfo.warnings.push(warningMsg);
-      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs Manual Intervention' : 'Skipped';
+      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs manual intervention' : 'Skipped';
     } else {
       component.componentName = TARGET_COMPONENT_NAME_OS;
 

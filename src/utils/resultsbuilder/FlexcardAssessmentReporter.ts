@@ -50,9 +50,9 @@ export class FlexcardAssessmentReporter {
         cssClass: 'text-warning',
       },
       {
-        name: 'Needs Manual Intervention',
+        name: 'Needs manual intervention',
         count: flexCardAssessmentInfos.filter(
-          (flexCardAssessmentInfo) => flexCardAssessmentInfo.migrationStatus === 'Needs Manual Intervention'
+          (flexCardAssessmentInfo) => flexCardAssessmentInfo.migrationStatus === 'Needs manual intervention'
         ).length,
         cssClass: 'text-error',
       },
@@ -169,7 +169,7 @@ export class FlexcardAssessmentReporter {
           false,
           undefined,
           undefined,
-          flexCardAssessmentInfo.migrationStatus === 'Needs Manual Intervention' ||
+          flexCardAssessmentInfo.migrationStatus === 'Needs manual intervention' ||
             flexCardAssessmentInfo.migrationStatus === 'Failed'
             ? 'invalid-icon'
             : ''
@@ -207,12 +207,7 @@ export class FlexcardAssessmentReporter {
           1,
           false,
           undefined,
-          flexCardAssessmentInfo.warnings,
-          flexCardAssessmentInfo.migrationStatus === 'Warnings'
-            ? 'text-warning'
-            : flexCardAssessmentInfo.migrationStatus === 'Ready for migration'
-            ? ''
-            : 'text-error'
+          flexCardAssessmentInfo.warnings
         ),
         createRowDataParam(
           'omniScriptDependencies',

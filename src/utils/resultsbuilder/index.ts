@@ -15,6 +15,7 @@ import {
   RelatedObjectAssesmentInfo,
   ExperienceSiteAssessmentInfo,
   FlexiPageAssessmentInfo,
+  ExperienceSiteAssessmentPageInfo,
 } from '../interfaces';
 import {
   ReportParam,
@@ -23,6 +24,7 @@ import {
   SummaryItemParam,
   DashboardParam,
   FilterGroupParam,
+  ReportDataParam,
 } from '../reportGenerator/reportInterfaces';
 import { OmnistudioOrgDetails } from '../orgUtils';
 import { TemplateParser } from '../templateParser/generate';
@@ -51,6 +53,9 @@ export class ResultsBuilder {
   private static experienceSiteFileSuffix = '.json';
 
   private static flexiPageFileSuffix = '.flexipage-meta.xml';
+
+  private static successStatus = ['Ready for migration', 'Complete', 'Successfully migrated'];
+  private static errorStatus = ['Failed', 'Needs manual intervention'];
 
   public static async generateReport(
     results: MigratedObject[],
@@ -209,8 +214,7 @@ export class ResultsBuilder {
               1,
               false,
               undefined,
-              item.errors || [],
-              item.status === 'Successfully migrated' ? '' : 'text-error'
+              item.errors || []
             ),
             createRowDataParam(
               'summary',
@@ -220,8 +224,7 @@ export class ResultsBuilder {
               1,
               false,
               undefined,
-              item.warnings || [],
-              item.status === 'Successfully migrated' ? '' : 'text-error'
+              item.warnings || []
             ),
           ],
         })),
@@ -338,8 +341,8 @@ export class ResultsBuilder {
   ): void {
     Logger.logVerbose('Generating experience site report');
     const data: ReportParam = {
-      title: 'Experience Sites Migration Report',
-      heading: 'Experience Sites Migration Report',
+      title: 'Experience Cloud Site Pages Migration Report',
+      heading: 'Experience Cloud Site Pages Migration Report',
       org: {
         name: orgDetails.orgDetails.Name,
         id: orgDetails.orgDetails.Id,
@@ -348,12 +351,21 @@ export class ResultsBuilder {
       },
       assessmentDate: new Date().toLocaleString(),
       total: result.length,
-      filterGroups: [...this.getStatusFilterGroup(result.map((item) => item.status))],
+      filterGroups: [
+        ...this.getStatusFilterGroup(
+          result.flatMap((item) => item.experienceSiteAssessmentPageInfos.map((page) => page.status))
+        ),
+      ],
       headerGroups: [
         {
           header: [
             {
-              name: 'Experience Site Name',
+              name: 'Experience Cloud Site Name',
+              colspan: 1,
+              rowspan: 1,
+            },
+            {
+              name: 'Page Name',
               colspan: 1,
               rowspan: 1,
             },
@@ -380,45 +392,12 @@ export class ResultsBuilder {
           ],
         },
       ],
-      rows: result.map((item) => ({
-        rowId: `${this.rowClass}${this.rowId++}`,
-        data: [
-          createRowDataParam('name', item.name, true, 1, 1, false),
-          createRowDataParam('path', `${item.name}${this.experienceSiteFileSuffix}`, false, 1, 1, true, item.path),
-          createRowDataParam(
-            'status',
-            item.status,
-            false,
-            1,
-            1,
-            false,
-            undefined,
-            undefined,
-            item.status === 'Successfully migrated' ? 'text-success' : 'text-error'
-          ),
-          createRowDataParam(
-            'diff',
-            item.name + 'diff',
-            false,
-            1,
-            1,
-            false,
-            undefined,
-            FileDiffUtil.getDiffHTML(item.diff, this.rowId.toString())
-          ),
-          createRowDataParam(
-            'errors',
-            item.warnings && item.warnings.length > 0 ? 'Failed' : 'Complete',
-            false,
-            1,
-            1,
-            false,
-            undefined,
-            item.warnings,
-            item.status === 'Successfully migrated' ? '' : 'text-error'
-          ),
-        ],
-      })),
+      rows: this.getRowsForExperienceSites(result),
+      props: JSON.stringify({
+        recordName: 'Pages',
+        rowBased: true,
+        rowCount: true,
+      }),
     };
 
     const reportTemplate = fs.readFileSync(reportTemplateFilePath, 'utf8');
@@ -500,18 +479,18 @@ export class ResultsBuilder {
             undefined,
             item.status === 'Successfully migrated' ? 'text-success' : 'text-error'
           ),
-          createRowDataParam('diff', '', false, 1, 1, false, undefined, FileDiffUtil.getDiffHTML(item.diff, item.name)),
           createRowDataParam(
-            'error',
-            'error',
+            'diff',
+            '',
             false,
             1,
             1,
             false,
             undefined,
-            item.errors,
-            item.status === 'Successfully migrated' ? '' : 'text-error'
+            FileDiffUtil.getDiffHTML(item.diff, item.name),
+            'diff-cell'
           ),
+          createRowDataParam('error', 'error', false, 1, 1, false, undefined, item.errors),
         ],
       })),
     };
@@ -583,14 +562,18 @@ export class ResultsBuilder {
           createRowDataParam('path', item.name, false, 1, 1, true, item.path, item.name + '.cls'),
           createRowDataParam(
             'status',
-            this.getStatusFromErrors(item.errors),
+            item.status,
             false,
             1,
             1,
             false,
             undefined,
             undefined,
-            this.getStatusCssClass(item.errors)
+            this.successStatus.includes(item.status)
+              ? 'text-success'
+              : this.errorStatus.includes(item.status)
+              ? 'text-error'
+              : 'text-warning'
           ),
           createRowDataParam(
             'diff',
@@ -600,29 +583,22 @@ export class ResultsBuilder {
             1,
             false,
             undefined,
-            FileDiffUtil.getDiffHTML(item.diff, item.name)
+            FileDiffUtil.getDiffHTML(item.diff, item.name),
+            'diff-cell'
           ),
-          createRowDataParam(
-            'infos',
-            item.infos ? item.infos.join(', ') : '',
-            false,
-            1,
-            1,
-            false,
-            undefined,
-            item.infos,
-            this.getStatusCssClass(item.errors, true)
-          ),
+          createRowDataParam('infos', item.infos ? item.infos.join(', ') : '', false, 1, 1, false, undefined, [
+            ...item.infos,
+            ...item.warnings,
+          ]),
           createRowDataParam(
             'warnings',
-            item.warnings.length > 0 ? 'Failed' : 'Successfully Completed',
+            item.errors.length > 0 ? 'Failed' : 'Successfully Completed',
             false,
             1,
             1,
             false,
             undefined,
-            [...item.warnings, ...item.errors],
-            this.getStatusCssClass(item.errors, true)
+            item.errors
           ),
         ],
       })),
@@ -744,7 +720,8 @@ export class ResultsBuilder {
               1,
               false,
               undefined,
-              FileDiffUtil.getDiffHTML(fileChangeInfo.diff, fileChangeInfo.name)
+              FileDiffUtil.getDiffHTML(fileChangeInfo.diff, fileChangeInfo.name),
+              'diff-cell'
             ),
             ...(showCommon
               ? [
@@ -758,8 +735,7 @@ export class ResultsBuilder {
                     1,
                     false,
                     undefined,
-                    lwcAssessmentInfo.warnings || [],
-                    this.getStatusCssClass(lwcAssessmentInfo.errors, true)
+                    lwcAssessmentInfo.warnings || []
                   ),
                   createRowDataParam(
                     'errors',
@@ -769,8 +745,7 @@ export class ResultsBuilder {
                     1,
                     false,
                     undefined,
-                    lwcAssessmentInfo.errors || [],
-                    this.getStatusCssClass(lwcAssessmentInfo.errors, true)
+                    lwcAssessmentInfo.errors || []
                   ),
                 ]
               : []),
@@ -802,8 +777,11 @@ export class ResultsBuilder {
     }
     if (objectsToProcess.includes(Constants.ExpSites)) {
       relatedObjectSummaryItems.push({
-        name: 'Experience Sites',
-        total: relatedObjectMigrationResult.experienceSiteAssessmentInfos?.length || 0,
+        name: 'Experience Cloud Sites',
+        total:
+          relatedObjectMigrationResult.experienceSiteAssessmentInfos?.flatMap(
+            (item) => item.experienceSiteAssessmentPageInfos
+          ).length || 0,
         data: this.getDifferentStatusDataForExperienceSites(relatedObjectMigrationResult.experienceSiteAssessmentInfos),
         file: experienceSiteFileName,
       });
@@ -919,12 +897,12 @@ export class ResultsBuilder {
   }
 
   private static getDifferentStatusDataForApex(
-    data: ApexAssessmentInfo[] | ExperienceSiteAssessmentInfo[]
+    data: ApexAssessmentInfo[]
   ): Array<{ name: string; count: number; cssClass: string }> {
     let complete = 0;
     let error = 0;
-    data.forEach((item: ApexAssessmentInfo | ExperienceSiteAssessmentInfo) => {
-      if (this.getStatusFromErrors(item.errors) === 'Successfully migrated') complete++;
+    data.forEach((item: ApexAssessmentInfo) => {
+      if (this.successStatus.includes(item.status)) complete++;
       else error++;
     });
     return [
@@ -972,11 +950,13 @@ export class ResultsBuilder {
     let completed = 0;
     let skipped = 0;
     let failed = 0;
-    data.forEach((item) => {
-      if (item.status === 'Successfully migrated') completed++;
-      else if (item.status === 'Skipped') skipped++;
-      else failed++;
-    });
+    data
+      .flatMap((item) => item.experienceSiteAssessmentPageInfos)
+      .forEach((item) => {
+        if (item.status === 'Successfully migrated') completed++;
+        else if (item.status === 'Skipped') skipped++;
+        else failed++;
+      });
 
     return [
       { name: 'Successfully migrated', count: completed, cssClass: 'text-success' },
@@ -1000,5 +980,71 @@ export class ResultsBuilder {
     if (errors && errors.length > 0) return 'text-error';
     if (neutralSuccess) return '';
     return 'text-success';
+  }
+
+  private static getRowsForExperienceSites(result: ExperienceSiteAssessmentInfo[]): ReportRowParam[] {
+    const rows: ReportRowParam[] = [];
+
+    result.forEach((item) => {
+      const rId = `${this.rowClass}${this.rowId++}`;
+      let showBundleName = true;
+      item.experienceSiteAssessmentPageInfos.forEach((page) => {
+        rows.push({
+          rowId: rId,
+          data: this.getRowDataForExperienceSites(page, item, showBundleName),
+        });
+        showBundleName = false;
+      });
+    });
+
+    return rows;
+  }
+
+  private static getRowDataForExperienceSites(
+    page: ExperienceSiteAssessmentPageInfo,
+    item: ExperienceSiteAssessmentInfo,
+    showBundleName: boolean
+  ): ReportDataParam[] {
+    return [
+      createRowDataParam(
+        'name',
+        item.experienceBundleName,
+        true,
+        item.experienceSiteAssessmentPageInfos.length,
+        1,
+        false,
+        undefined,
+        undefined,
+        showBundleName ? '' : 'no-display'
+      ),
+      createRowDataParam('pageName', page.name, false, 1, 1, false, undefined, undefined),
+      createRowDataParam('path', page.name + this.experienceSiteFileSuffix, false, 1, 1, true, page.path),
+      createRowDataParam(
+        'status',
+        page.status,
+        false,
+        1,
+        1,
+        false,
+        undefined,
+        undefined,
+        page.status === 'Successfully migrated' ? 'text-success' : 'text-error'
+      ),
+      createRowDataParam(
+        'diff',
+        page.name + 'diff',
+        false,
+        1,
+        1,
+        false,
+        undefined,
+        FileDiffUtil.getDiffHTML(page.diff, page.name),
+        'diff-cell'
+      ),
+      createRowDataParam('errors', page.errors ? page.errors.join(', ') : '', false, 1, 1, false, undefined, [
+        ...(page.errors || []),
+        ...(page.warnings || []),
+      ]),
+    ];
   }
 }

@@ -23,6 +23,7 @@ import {
 import { StringVal } from '../utils/StringValue/stringval';
 import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
+import { Constants } from '../utils/constants/stringContants';
 
 export class DataRaptorMigrationTool extends BaseMigrationTool implements MigrationTool {
   static readonly DRBUNDLE_NAME = 'DRBundle__c';
@@ -175,8 +176,6 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
         continue;
       }
 
-      duplicatedNames.add(transformedDataRaptor['Name']);
-
       // Create a map of the original records
       originalDrRecords.set(recordId, dr);
 
@@ -191,21 +190,28 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
 
       // Always add the response to track success/failure
       if (drUploadResponse && drUploadResponse.success === true) {
-        const items = await this.getItemsForDataRaptor(dataRaptorItemsData, name, drUploadResponse.id);
+        // Append the processed DM name into duplicateNames Map
+        const dataMapperName = transformedDataRaptor[DRBundleMappings.Name];
+        duplicatedNames.add(dataMapperName);
 
-        drUploadResponse.newName = transformedDataRaptor[DRBundleMappings.Name];
+        const items = await this.getItemsForDataRaptor(dataRaptorItemsData, name, drUploadResponse.id);
+        drUploadResponse.newName = dataMapperName;
 
         // Move the items
         await this.uploadTransformedData(DataRaptorMigrationTool.OMNIDATATRANSFORMITEM_NAME, items);
       } else {
         // Handle failed migration - add error information
-        if (!drUploadResponse) {
+        if (!drUploadResponse?.success) {
+          Logger.logVerbose(
+            `\n${this.messages.getMessage('dataMapperMigrationFailed', [name]) + drUploadResponse.errors}`
+          );
+
           drUploadResponse = {
             referenceId: recordId,
             id: '',
             success: false,
             hasErrors: true,
-            errors: [this.messages.getMessage('dataMapperMigrationFailed', [name])],
+            errors: [this.messages.getMessage('dataMapperMigrationFailed', [name]) + drUploadResponse.errors],
             warnings: [],
             newName: '',
           };
@@ -312,11 +318,12 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     Logger.info(this.messages.getMessage('processingDataRaptor', [drName]));
     const warnings: string[] = [];
     const existingDRNameVal = new StringVal(drName, 'name');
-    let assessmentStatus: 'Ready for migration' | 'Warnings' | 'Needs Manual Intervention' = 'Ready for migration';
+    let assessmentStatus: 'Ready for migration' | 'Warnings' | 'Needs manual intervention' = 'Ready for migration';
 
     if (!existingDRNameVal.isNameCleaned()) {
       warnings.push(
         this.messages.getMessage('changeMessage', [
+          Constants.DataMapperComponentName,
           existingDRNameVal.type,
           existingDRNameVal.val,
           existingDRNameVal.cleanName(),
@@ -328,12 +335,12 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     if (drName && /^[0-9]/.test(drName)) {
       const proposedName = 'DM' + this.cleanName(drName);
       warnings.push(this.messages.getMessage('dataMapperNameStartsWithNumber', [drName, proposedName]));
-      assessmentStatus = 'Needs Manual Intervention';
+      assessmentStatus = 'Needs manual intervention';
     }
 
     if (existingDataRaptorNames.has(existingDRNameVal.cleanName())) {
       warnings.push(this.messages.getMessage('duplicatedName') + '  ' + existingDRNameVal.cleanName());
-      assessmentStatus = 'Needs Manual Intervention';
+      assessmentStatus = 'Needs manual intervention';
     } else {
       existingDataRaptorNames.add(existingDRNameVal.cleanName());
     }

@@ -15,7 +15,7 @@ export const Constants = {
   OmniScriptComponentName: 'OmniScript',
   OmniScriptPluralName: 'OmniScripts',
   FlexCardComponentName: 'Flexcard',
-  FlexCardPluralName: 'FlexCards',
+  FlexCardPluralName: 'Flexcards',
   IntegrationProcedureComponentName: 'IntegrationProcedure',
   IntegrationProcedurePluralName: 'IntegrationProcedures',
   DataRaptorComponentName: 'DataRaptor',
@@ -27,6 +27,7 @@ export const Constants = {
   ApexComponentName: 'Apex Classes',
   CustomLabelComponentName: 'Custom Label',
   CustomLabelPluralName: 'Custom Labels',
+  DataMapperComponentName: 'Data Mapper',
 
   // artifacts persistance folder names
   AssessmentReportsFolderName: 'assessment_reports',
@@ -37,4 +38,5 @@ export const Constants = {
   CustomLabelErrorStatus: 'error',
   CustomLabelDuplicateStatus: 'duplicate',
   CustomLabelSameValueMessage: 'same value',
+  MigrationReportsFolderName: 'migration_reports',
 };

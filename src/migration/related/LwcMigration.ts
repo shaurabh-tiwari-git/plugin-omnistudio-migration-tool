@@ -34,7 +34,7 @@ export class LwcMigration extends BaseRelatedObjectMigration {
     shell.cd(this.projectPath);
     Logger.info(assessMessages.getMessage('processingLwcsForAssessment'));
     const filesMap = this.processLwcFiles(this.projectPath);
-    Logger.info(assessMessages.getMessage('successfullyProcessedLwcsForAssessment', [filesMap.size]));
+    Logger.log(assessMessages.getMessage('successfullyProcessedLwcsForAssessment', [filesMap.size]));
     Logger.logVerbose(assessMessages.getMessage('lwcAssessmentResults', [JSON.stringify(filesMap, null, 2)]));
     shell.cd(pwd);
     return this.processFiles(filesMap, type);
@@ -47,7 +47,7 @@ export class LwcMigration extends BaseRelatedObjectMigration {
     Logger.info(migrateMessages.getMessage('processingLwcsForMigration'));
     const filesMap = this.processLwcFiles(this.projectPath);
     const LWCAssessmentInfos = this.processFiles(filesMap, 'migration');
-    Logger.info(migrateMessages.getMessage('successfullyProcessedLwcsForMigration', [LWCAssessmentInfos.length]));
+    Logger.log(migrateMessages.getMessage('successfullyProcessedLwcsForMigration', [LWCAssessmentInfos.length]));
     Logger.logVerbose(migrateMessages.getMessage('lwcMigrationResults', [JSON.stringify(LWCAssessmentInfos, null, 2)]));
     shell.cd(pwd);
     return LWCAssessmentInfos;

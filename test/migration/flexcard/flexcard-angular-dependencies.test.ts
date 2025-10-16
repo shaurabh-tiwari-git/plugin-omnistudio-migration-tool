@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return, camelcase, comma-dangle */
 import { expect } from 'chai';
-import { CardMigrationTool } from '../../src/migration/flexcard';
-import { NameMappingRegistry } from '../../src/migration/NameMappingRegistry';
+import { CardMigrationTool } from '../../../src/migration/flexcard';
+import { NameMappingRegistry } from '../../../src/migration/NameMappingRegistry';
 
 describe('FlexCard Angular Dependency Validation', () => {
   let cardTool: CardMigrationTool;

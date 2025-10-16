@@ -51,9 +51,9 @@ export class OSAssessmentReporter {
         cssClass: 'text-warning',
       },
       {
-        name: 'Needs Manual Intervention',
+        name: 'Needs manual intervention',
         count: osAssessmentInfos.filter(
-          (osAssessmentInfo) => osAssessmentInfo.migrationStatus === 'Needs Manual Intervention'
+          (osAssessmentInfo) => osAssessmentInfo.migrationStatus === 'Needs manual intervention'
         ).length,
         cssClass: 'text-error',
       },
@@ -78,7 +78,7 @@ export class OSAssessmentReporter {
           false,
           undefined,
           undefined,
-          info.migrationStatus === 'Needs Manual Intervention' || info.migrationStatus === 'Failed'
+          info.migrationStatus === 'Needs manual intervention' || info.migrationStatus === 'Failed'
             ? 'invalid-icon'
             : ''
         ),
@@ -108,12 +108,7 @@ export class OSAssessmentReporter {
           1,
           false,
           undefined,
-          info.warnings,
-          info.migrationStatus === 'Warnings'
-            ? 'text-warning'
-            : info.migrationStatus === 'Ready for migration'
-            ? ''
-            : 'text-error'
+          info.warnings
         ),
         createRowDataParam(
           'omniScriptDependencies',

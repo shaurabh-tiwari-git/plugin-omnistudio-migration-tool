@@ -91,4 +91,5 @@ export interface ReportParam {
     nextPageFile?: string;
     previousPageFile?: string;
   };
+  props?: string;
 }

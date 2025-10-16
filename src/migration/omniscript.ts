@@ -34,7 +34,6 @@ import {
   populateRegexForFunctionMetadata,
 } from '../utils/formula/FormulaUtil';
 import { StringVal } from '../utils/StringValue/stringval';
-import { formatUnicorn } from '../utils/stringUtils';
 import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
 import { StorageUtil } from '../utils/storageUtil';
@@ -44,7 +43,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
   private readonly allVersions: boolean;
 
   // Reserved keys that should not be used for storing output
-  private readonly reservedKeys = new Set<string>(['Request', 'Response', 'Condition']);
+  private readonly reservedKeys = new Set<string>(['Request', 'Response']);
 
   // Tags to validate in PropertySet for reserved key usage
   private readonly tagsToValidate = new Set<string>(['additionalOutput']);
@@ -131,7 +130,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
 
     let success: boolean = await NetUtils.delete(this.connection, ids);
     if (!success) {
-      throw new Error(formatUnicorn(this.messages.getMessage('couldNotTruncateOmnniProcess'), objectName));
+      throw new Error(this.messages.getMessage('couldNotTruncateOmnniProcess', [this.getName(), this.getName()]));
     }
   }
 
@@ -239,6 +238,8 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     const ipAssessmentInfos: IPAssessmentInfo[] = [];
 
     // Create a set to store existing OmniScript names and also extract DataRaptor and FlexCard names
+    // Map to track cleanedName (without version) -> originalName (without version) for duplicate detection
+    const duplicateOmniscriptNames: Map<string, string> = new Map<string, string>();
     const existingOmniscriptNames = new Set<string>();
     const existingDataRaptorNames = new Set(dataRaptorAssessmentInfos.map((info) => info.name));
     const existingFlexCardNames = new Set(flexCardAssessmentInfos.map((info) => info.name));
@@ -257,7 +258,8 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           omniscript,
           existingOmniscriptNames,
           existingDataRaptorNames,
-          existingFlexCardNames
+          existingFlexCardNames,
+          duplicateOmniscriptNames
         );
       } catch (e) {
         const omniProcessType = omniscript[this.namespacePrefix + 'IsProcedure__c']
@@ -357,7 +359,8 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     omniscript: AnyJson,
     existingOmniscriptNames: Set<string>,
     existingDataRaptorNames: Set<string>,
-    existingFlexCardNames: Set<string>
+    existingFlexCardNames: Set<string>,
+    duplicateOmniscriptNames: Map<string, string>
   ): Promise<OSAssessmentInfo> {
     const elements = await this.getAllElementsForOmniScript(omniscript['Id']);
 
@@ -472,7 +475,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     const existingSubTypeVal = new StringVal(existingSubType, 'sub type');
     const omniScriptName = omniscript[this.namespacePrefix + 'Name'];
     const existingOmniScriptNameVal = new StringVal(omniScriptName, 'name');
-    let assessmentStatus: 'Ready for migration' | 'Warnings' | 'Needs Manual Intervention' = 'Ready for migration';
+    let assessmentStatus: 'Ready for migration' | 'Warnings' | 'Needs manual intervention' = 'Ready for migration';
 
     const warnings: string[] = [];
     const errors: string[] = [];
@@ -481,11 +484,11 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     if (omniProcessType === 'Integration Procedure') {
       if (!existingType || existingType.trim() === '') {
         errors.push(this.messages.getMessage('missingMandatoryField', ['Type', 'Integration Procedure']));
-        assessmentStatus = 'Needs Manual Intervention';
+        assessmentStatus = 'Needs manual intervention';
       }
       if (!existingSubType || existingSubType.trim() === '') {
         errors.push(this.messages.getMessage('missingMandatoryField', ['SubType', 'Integration Procedure']));
-        assessmentStatus = 'Needs Manual Intervention';
+        assessmentStatus = 'Needs manual intervention';
       }
     }
 
@@ -493,7 +496,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     for (const osDep of dependencyOS) {
       if (this.nameRegistry.isAngularOmniScript(osDep.name)) {
         warnings.push(this.messages.getMessage('angularOmniScriptDependencyWarning', [osDep.location, osDep.name]));
-        assessmentStatus = 'Needs Manual Intervention';
+        assessmentStatus = 'Needs manual intervention';
       }
     }
 
@@ -504,6 +507,11 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     const newLanguage = omniscript[this.namespacePrefix + 'Language__c']
       ? `${omniscript[this.namespacePrefix + 'Language__c']}`
       : '';
+
+    const recordNameWithoutVersion =
+      `${newType}_` +
+      `${newSubType}` +
+      (omniscript[this.namespacePrefix + 'Language__c'] ? `_${omniscript[this.namespacePrefix + 'Language__c']}` : '');
 
     const recordName =
       `${newType}_` +
@@ -520,10 +528,11 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     if (!existingTypeVal.isNameCleaned()) {
       if (omniProcessType === 'Integration Procedure' && (!newType || newType.trim() === '')) {
         warnings.push(this.messages.getMessage('integrationProcedureTypeEmptyAfterCleaning', [existingTypeVal.val]));
-        assessmentStatus = 'Needs Manual Intervention';
+        assessmentStatus = 'Needs manual intervention';
       } else {
         warnings.push(
           this.messages.getMessage('changeMessage', [
+            omniProcessType,
             existingTypeVal.type,
             existingTypeVal.val,
             existingTypeVal.cleanName(),
@@ -537,10 +546,11 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         warnings.push(
           this.messages.getMessage('integrationProcedureSubtypeEmptyAfterCleaning', [existingSubTypeVal.val])
         );
-        assessmentStatus = 'Needs Manual Intervention';
+        assessmentStatus = 'Needs manual intervention';
       } else {
         warnings.push(
           this.messages.getMessage('changeMessage', [
+            omniProcessType,
             existingSubTypeVal.type,
             existingSubTypeVal.val,
             existingSubTypeVal.cleanName(),
@@ -553,6 +563,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     if (!existingOmniScriptNameVal.isNameCleaned()) {
       warnings.push(
         this.messages.getMessage('changeMessage', [
+          omniProcessType,
           existingOmniScriptNameVal.type,
           existingOmniScriptNameVal.val,
           existingOmniScriptNameVal.cleanName(),
@@ -560,32 +571,64 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       );
       assessmentStatus = 'Warnings';
     }
-    if (existingOmniscriptNames.has(recordName)) {
-      warnings.push(this.messages.getMessage('duplicatedName') + '  ' + recordName);
-      assessmentStatus = 'Needs Manual Intervention';
-    } else {
-      existingOmniscriptNames.add(recordName);
+    // Duplicate check logic using Map to track originalName -> cleanedName
+    // This allows us to detect both exact duplicates and name cleaning conflicts
+    const nameToCheck = this.allVersions ? recordName : recordNameWithoutVersion;
+
+    // Get the original name parts (before cleaning)
+    const originalType = omniscript[this.namespacePrefix + 'Type__c'];
+    const originalSubType = omniscript[this.namespacePrefix + 'SubType__c'];
+    const originalLanguage = omniscript[this.namespacePrefix + 'Language__c'] || '';
+    const originalNameWithoutVersion = originalLanguage
+      ? `${originalType}_${originalSubType}_${originalLanguage}`
+      : `${originalType}_${originalSubType}`;
+
+    // Check for exact duplicate (same name + version)
+    if (existingOmniscriptNames.has(nameToCheck)) {
+      warnings.push(this.messages.getMessage('duplicatedName', [recordName]));
+      assessmentStatus = 'Needs manual intervention';
+    }
+    // Check for naming conflict: different original names cleaning to same name
+    else if (this.allVersions && duplicateOmniscriptNames.has(recordNameWithoutVersion)) {
+      const existingOriginalName = duplicateOmniscriptNames.get(recordNameWithoutVersion);
+      // Only flag if the original names are different (indicates a naming conflict)
+      if (existingOriginalName !== originalNameWithoutVersion) {
+        warnings.push(
+          this.messages.getMessage('lowerVersionDuplicateOmniscriptName', [
+            this.getName(true),
+            recordName,
+            this.getName(true),
+          ])
+        );
+        assessmentStatus = 'Needs manual intervention';
+      }
+    }
+
+    // Add to tracking structures
+    existingOmniscriptNames.add(nameToCheck);
+    if (this.allVersions && !duplicateOmniscriptNames.has(recordNameWithoutVersion)) {
+      duplicateOmniscriptNames.set(recordNameWithoutVersion, originalNameWithoutVersion);
     }
 
     // Add warning for duplicate element names within the same OmniScript
     if (duplicateElementNames.size > 0) {
       const duplicateNamesList = Array.from(duplicateElementNames).join(', ');
       warnings.unshift(this.messages.getMessage('invalidOrRepeatingOmniscriptElementNames', [duplicateNamesList]));
-      assessmentStatus = 'Needs Manual Intervention';
+      assessmentStatus = 'Needs manual intervention';
     }
 
     // Add warning for reserved keys found in PropertySet
     if (foundReservedKeys.size > 0) {
       const reservedKeysList = Array.from(foundReservedKeys).join(', ');
       warnings.unshift(this.messages.getMessage('reservedKeysFoundInPropertySet', [reservedKeysList]));
-      assessmentStatus = 'Needs Manual Intervention';
+      assessmentStatus = 'Needs manual intervention';
     }
 
     if (omniProcessType === this.OMNISCRIPT) {
       const type = omniscript[this.namespacePrefix + 'IsLwcEnabled__c'] ? 'LWC' : 'Angular';
       if (type === 'Angular') {
         warnings.unshift(this.messages.getMessage('angularOSWarning'));
-        assessmentStatus = 'Needs Manual Intervention';
+        assessmentStatus = 'Needs manual intervention';
       }
     }
 
@@ -662,7 +705,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         finalKey = finalKey.toLowerCase();
         if (storage.osStorage.has(finalKey)) {
           // Key already exists - handle accordingly
-          Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', [finalKey]));
+          Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', ['Omniscript', finalKey]));
           value.isDuplicate = true;
           storage.osStorage.set(finalKey, value);
         } else {
@@ -690,6 +733,8 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     populateRegexForFunctionMetadata(functionDefinitionMetadata);
 
     const duplicatedNames = new Set<string>();
+    // Map to track cleanedName (without version) -> originalName (without version) for duplicate detection
+    const duplicateOmniscriptNames: Map<string, string> = new Map<string, string>();
 
     // Variables to be returned After Migration
     let originalOsRecords = new Map<string, any>();
@@ -824,19 +869,75 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
               const propertySet = JSON.parse(ipElement[`${this.namespacePrefix}PropertySet__c`] || '{}');
               this.collectReservedKeys(propertySet, foundReservedKeys);
 
-              var originalString = ipElement[`${this.namespacePrefix}PropertySet__c`];
-              try {
-                originalString = getReplacedString(
-                  this.namespacePrefix,
-                  ipElement[`${this.namespacePrefix}PropertySet__c`],
-                  functionDefinitionMetadata
-                );
-                ipElement[`${this.namespacePrefix}PropertySet__c`] = originalString;
-              } catch (ex) {
-                Logger.error('Error processing formula for integration procedure', ex);
-                Logger.logVerbose(
-                  this.messages.getMessage('formulaSyntaxError', [ipElement[`${this.namespacePrefix}PropertySet__c`]])
-                );
+              // Process formulas in elementValueMap instead of entire PropertySet
+              if (propertySet.elementValueMap) {
+                let elementValueMap: any = null;
+
+                try {
+                  // Handle both string and object formats for elementValueMap
+                  if (typeof propertySet.elementValueMap === 'object' && propertySet.elementValueMap !== null) {
+                    // elementValueMap is already an object, use directly
+                    elementValueMap = propertySet.elementValueMap;
+                    Logger.logVerbose(
+                      `ElementValueMap accessed as object for element: ${ipElement['Name'] || 'Unknown'}`
+                    );
+                  } else {
+                    Logger.warn(
+                      this.messages.getMessage('elementValueMapUnexpectedType', [
+                        typeof propertySet.elementValueMap,
+                        ipElement['Name'] || 'Unknown',
+                      ])
+                    );
+                  }
+
+                  if (elementValueMap) {
+                    let formulasUpdated = false;
+
+                    // Process each key-value pair in elementValueMap
+                    for (const [key, value] of Object.entries(elementValueMap)) {
+                      if (typeof value === 'string' && value.startsWith('=')) {
+                        // This is a formula that needs processing
+                        try {
+                          const updatedFormula = getReplacedString(
+                            this.namespacePrefix,
+                            value,
+                            functionDefinitionMetadata
+                          );
+                          if (updatedFormula !== value) {
+                            elementValueMap[key] = updatedFormula;
+                            formulasUpdated = true;
+                            Logger.logVerbose(`Updated formula in ${key}: ${value} -> ${updatedFormula}`);
+                          }
+                        } catch (formulaEx) {
+                          Logger.error(
+                            this.messages.getMessage('errorProcessingFormulaInElement', [
+                              key,
+                              ipElement['Name'] || 'Unknown',
+                              formulaEx.message || formulaEx,
+                            ])
+                          );
+                          Logger.logVerbose(this.messages.getMessage('formulaSyntaxError', [value]));
+                        }
+                      }
+                    }
+
+                    // Update PropertySet with modified elementValueMap if any formulas were updated
+                    if (formulasUpdated) {
+                      // Keep as object format
+                      propertySet.elementValueMap = elementValueMap;
+                    }
+                    ipElement[`${this.namespacePrefix}PropertySet__c`] = JSON.stringify(propertySet);
+                    Logger.logVerbose(`Updated PropertySet for element: ${ipElement['Name'] || 'Unknown'}`);
+                  }
+                } catch (elementValueMapEx) {
+                  Logger.error(
+                    this.messages.getMessage('errorProcessingElementValueMap', [
+                      ipElement['Name'] || 'Unknown',
+                      elementValueMapEx.message || elementValueMapEx,
+                    ])
+                  );
+                  Logger.logVerbose(`ElementValueMap content: ${JSON.stringify(propertySet.elementValueMap)}`);
+                }
               }
             }
           }
@@ -913,9 +1014,18 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       }
 
       // Check duplicated name
-      let mappedOsName;
+      let mappedOsName: string;
+      const mappedOsNameWithoutVersion =
+        mappedOmniScript[OmniScriptMappings.Type__c] +
+        '_' +
+        mappedOmniScript[OmniScriptMappings.SubType__c] +
+        (mappedOmniScript[OmniScriptMappings.Language__c]
+          ? '_' + mappedOmniScript[OmniScriptMappings.Language__c]
+          : '');
+
       if (this.allVersions) {
         mappedOmniScript[OmniScriptMappings.Version__c] = omniscript[`${this.namespacePrefix}Version__c`];
+
         mappedOsName =
           mappedOmniScript[OmniScriptMappings.Type__c] +
           '_' +
@@ -936,8 +1046,16 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           '_1';
       }
 
+      // Get original name parts for tracking
+      const originalType = omniscript[this.namespacePrefix + 'Type__c'];
+      const originalSubType = omniscript[this.namespacePrefix + 'SubType__c'];
+      const originalLanguage = omniscript[this.namespacePrefix + 'Language__c'] || '';
+      const originalNameWithoutVersion = originalLanguage
+        ? `${originalType}_${originalSubType}_${originalLanguage}`
+        : `${originalType}_${originalSubType}`;
+
+      // Check for exact duplicate (same name + same version)
       if (duplicatedNames.has(mappedOsName)) {
-        originalOsRecords.set(recordId, omniscript);
         const warningMessage = this.messages.getMessage('duplicatedOSName', [this.getName(true), mappedOsName]);
         const skippedResponse: UploadRecordResult = {
           referenceId: recordId,
@@ -950,11 +1068,37 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           skipped: true,
         };
         osUploadInfo.set(recordId, skippedResponse);
+        originalOsRecords.set(recordId, omniscript);
         continue;
+      }
+      // Check for naming conflict: different original names cleaning to same name
+      else if (this.allVersions && duplicateOmniscriptNames.has(mappedOsNameWithoutVersion)) {
+        const existingOriginalName = duplicateOmniscriptNames.get(mappedOsNameWithoutVersion);
+        // Only flag if the original names are different (indicates a naming conflict)
+        if (existingOriginalName !== originalNameWithoutVersion) {
+          const warningMessage = this.messages.getMessage('lowerVersionDuplicateOSName', [
+            this.getName(true),
+            mappedOsName,
+            this.getName(true),
+            this.getName(true),
+          ]);
+          const skippedResponse: UploadRecordResult = {
+            referenceId: recordId,
+            id: '',
+            success: false,
+            hasErrors: false,
+            errors: [],
+            warnings: [warningMessage],
+            newName: '',
+            skipped: true,
+          };
+          osUploadInfo.set(recordId, skippedResponse);
+          originalOsRecords.set(recordId, omniscript);
+          continue;
+        }
       }
 
       // Save the mapped record
-      duplicatedNames.add(mappedOsName);
       mappedRecords.push(mappedOmniScript);
 
       // Save the OmniScript__c records to Standard BPO i.e OmniProcess
@@ -1002,6 +1146,14 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
             '_1';
         }
         // Always set the new name to show the migrated name
+        // Add the processed new name to the duplicated set
+        duplicatedNames.add(mappedOsName);
+
+        // Add to map for tracking naming conflicts (only when allVersions=true)
+        if (this.allVersions && !duplicateOmniscriptNames.has(mappedOsNameWithoutVersion)) {
+          duplicateOmniscriptNames.set(mappedOsNameWithoutVersion, originalNameWithoutVersion);
+        }
+
         osUploadResponse.newName = mappedOsName;
 
         // Only add warning if the name was actually modified
@@ -1069,6 +1221,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
             }
           }
 
+          Logger.logVerbose(e.stack);
           osUploadResponse.errors.push(
             this.messages.getMessage('errorWhileCreatingElements', [this.getName(true)]) + error
           );
@@ -1167,7 +1320,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           finalKey = finalKey.toLowerCase();
           if (storage.osStorage.has(finalKey)) {
             // Key already exists - handle accordingly
-            Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', [finalKey]));
+            Logger.logVerbose(this.messages.getMessage('keyAlreadyInStorage', ['Omniscript', finalKey]));
             value.isDuplicate = true;
             storage.osStorage.set(finalKey, value);
           } else {
@@ -1620,8 +1773,14 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         content = JSON.parse(content);
         if (content && content['sOmniScriptId']) {
           content['sOmniScriptId'] = omniProcessId;
-          mappedObject[OmniScriptDefinitionMappings.Content__c] = JSON.stringify(content);
         }
+
+        // Process the nested JSON structure to update bundle/reference names
+        if (content && content['children']) {
+          this.processContentChildren(content['children']);
+        }
+
+        mappedObject[OmniScriptDefinitionMappings.Content__c] = JSON.stringify(content);
       } catch (ex) {
         // Log
       }
@@ -1634,6 +1793,210 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     };
 
     return mappedObject;
+  }
+
+  /**
+   * Recursively processes children elements in the content JSON to update bundle/reference names
+   * @param children Array of child elements from the content JSON
+   */
+  private processContentChildren(children: any[]): void {
+    if (!Array.isArray(children)) {
+      return;
+    }
+
+    children.forEach((child) => {
+      if (child && child.type && child.propSetMap) {
+        this.processContentElement(child);
+      }
+
+      // Process nested children in Step elements
+      if (child && child.children && Array.isArray(child.children)) {
+        child.children.forEach((nestedChild) => {
+          if (nestedChild && nestedChild.eleArray && Array.isArray(nestedChild.eleArray)) {
+            nestedChild.eleArray.forEach((element) => {
+              if (element && element.type && element.propSetMap) {
+                this.processContentElement(element);
+              }
+            });
+          }
+        });
+      }
+    });
+  }
+
+  /**
+   * Processes individual content element to update bundle/reference names based on type
+   * @param element Individual element from the content JSON
+   */
+  private processContentElement(element: any): void {
+    const elementType = element.type;
+    const propSetMap = element.propSetMap;
+
+    if (!elementType || !propSetMap) {
+      return;
+    }
+
+    switch (elementType) {
+      case 'Integration Procedure Action':
+        this.processIntegrationProcedureAction(propSetMap);
+        break;
+      case 'DataRaptor Turbo Action':
+      case 'DataRaptor Transform Action':
+      case 'DataRaptor Post Action':
+      case 'DataRaptor Extract Action':
+        this.processDataRaptorAction(propSetMap);
+        break;
+      case 'OmniScript':
+        this.processOmniScriptAction(propSetMap);
+        break;
+      case 'Step':
+        this.processStepAction(propSetMap);
+        break;
+      default:
+        // Handle other element types if needed
+        break;
+    }
+  }
+
+  /**
+   * Processes Integration Procedure Action elements to update reference names
+   * @param propSetMap Property set map from the element
+   */
+  private processIntegrationProcedureAction(propSetMap: any): void {
+    // Handle remoteOptions pre/post transform bundles
+    if (propSetMap.remoteOptions) {
+      if (propSetMap.remoteOptions.preTransformBundle) {
+        const bundleName = propSetMap.remoteOptions.preTransformBundle;
+        if (this.nameRegistry.hasDataMapperMapping(bundleName)) {
+          propSetMap.remoteOptions.preTransformBundle = this.nameRegistry.getDataMapperCleanedName(bundleName);
+        } else {
+          propSetMap.remoteOptions.preTransformBundle = this.cleanName(bundleName);
+        }
+      }
+
+      if (propSetMap.remoteOptions.postTransformBundle) {
+        const bundleName = propSetMap.remoteOptions.postTransformBundle;
+        if (this.nameRegistry.hasDataMapperMapping(bundleName)) {
+          propSetMap.remoteOptions.postTransformBundle = this.nameRegistry.getDataMapperCleanedName(bundleName);
+        } else {
+          propSetMap.remoteOptions.postTransformBundle = this.cleanName(bundleName);
+        }
+      }
+    }
+
+    // Handle direct pre/post transform bundles
+    if (propSetMap.preTransformBundle) {
+      const bundleName = propSetMap.preTransformBundle;
+      if (this.nameRegistry.hasDataMapperMapping(bundleName)) {
+        propSetMap.preTransformBundle = this.nameRegistry.getDataMapperCleanedName(bundleName);
+      } else {
+        propSetMap.preTransformBundle = this.cleanName(bundleName);
+      }
+    }
+
+    if (propSetMap.postTransformBundle) {
+      const bundleName = propSetMap.postTransformBundle;
+      if (this.nameRegistry.hasDataMapperMapping(bundleName)) {
+        propSetMap.postTransformBundle = this.nameRegistry.getDataMapperCleanedName(bundleName);
+      } else {
+        propSetMap.postTransformBundle = this.cleanName(bundleName);
+      }
+    }
+
+    // Handle integrationProcedureKey
+    if (propSetMap.integrationProcedureKey) {
+      const key = propSetMap.integrationProcedureKey;
+      if (this.nameRegistry.hasIntegrationProcedureMapping(key)) {
+        propSetMap.integrationProcedureKey = this.nameRegistry.getIntegrationProcedureCleanedName(key);
+      } else {
+        const parts = key.split('_');
+        // Integration Procedures should have Type_SubType format (2 parts)
+        if (parts.length > 2) {
+          Logger.logVerbose(this.messages.getMessage('integrationProcedureInvalidUnderscoreFormat', [key]));
+          return;
+        }
+
+        propSetMap.integrationProcedureKey = parts.map((p) => this.cleanName(p, true)).join('_');
+      }
+    }
+  }
+
+  /**
+   * Processes DataRaptor Action elements to update bundle names
+   * @param propSetMap Property set map from the element
+   */
+  private processDataRaptorAction(propSetMap: any): void {
+    if (propSetMap.bundle) {
+      const bundleName = propSetMap.bundle;
+      if (this.nameRegistry.hasDataMapperMapping(bundleName)) {
+        propSetMap.bundle = this.nameRegistry.getDataMapperCleanedName(bundleName);
+      } else {
+        propSetMap.bundle = this.cleanName(bundleName);
+      }
+    }
+  }
+
+  /**
+   * Processes OmniScript Action elements to update reference names
+   * @param propSetMap Property set map from the element
+   */
+  private processOmniScriptAction(propSetMap: any): void {
+    const osType = propSetMap['Type'] || '';
+    const osSubType = propSetMap['Sub Type'] || '';
+    const osLanguage = propSetMap['Language'] || 'English';
+
+    // Construct full OmniScript name to check registry
+    const fullOmniScriptName = `${osType}_${osSubType}_${osLanguage}`;
+
+    if (this.nameRegistry.isAngularOmniScript(fullOmniScriptName)) {
+      // Keep original reference as-is since Angular OmniScript won't be migrated
+      return;
+    } else if (this.nameRegistry.hasOmniScriptMapping(fullOmniScriptName)) {
+      // Registry has mapping for this LWC OmniScript - extract cleaned parts
+      const cleanedFullName = this.nameRegistry.getCleanedName(fullOmniScriptName, 'OmniScript');
+      const parts = cleanedFullName.split('_');
+
+      if (parts.length >= 2) {
+        propSetMap['Type'] = parts[0];
+        propSetMap['Sub Type'] = parts[1];
+        // Language doesn't typically change, but update if provided
+        if (parts.length >= 3) {
+          propSetMap['Language'] = parts[2];
+        }
+      }
+    } else {
+      // No registry mapping - use original fallback approach
+      propSetMap['Type'] = this.cleanName(osType);
+      propSetMap['Sub Type'] = this.cleanName(osSubType);
+    }
+  }
+
+  /**
+   * Processes Step elements to update reference names
+   * @param propSetMap Property set map from the element
+   */
+  private processStepAction(propSetMap: any): void {
+    // Handle remoteOptions pre/post transform bundles if they exist in Step elements
+    // Note: remoteClass and remoteMethod cleaning is not required for omniscript content step dependencies
+    if (propSetMap.remoteOptions) {
+      if (propSetMap.remoteOptions.preTransformBundle) {
+        const bundleName = propSetMap.remoteOptions.preTransformBundle;
+        if (this.nameRegistry.hasDataMapperMapping(bundleName)) {
+          propSetMap.remoteOptions.preTransformBundle = this.nameRegistry.getDataMapperCleanedName(bundleName);
+        } else {
+          propSetMap.remoteOptions.preTransformBundle = this.cleanName(bundleName);
+        }
+      }
+
+      if (propSetMap.remoteOptions.postTransformBundle) {
+        const bundleName = propSetMap.remoteOptions.postTransformBundle;
+        if (this.nameRegistry.hasDataMapperMapping(bundleName)) {
+          propSetMap.remoteOptions.postTransformBundle = this.nameRegistry.getDataMapperCleanedName(bundleName);
+        } else {
+          propSetMap.remoteOptions.postTransformBundle = this.cleanName(bundleName);
+        }
+      }
+    }
   }
 
   private getOmniScriptFields(): string[] {

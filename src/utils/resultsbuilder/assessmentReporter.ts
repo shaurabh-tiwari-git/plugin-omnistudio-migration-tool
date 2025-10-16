@@ -421,8 +421,8 @@ export class AssessmentReporter {
     if (reports.includes(Constants.ExpSites)) {
       // TODO - Experience Sites
       summaryItems.push({
-        name: 'Experience Sites',
-        total: result.experienceSiteAssessmentInfos.length,
+        name: 'Experience Cloud Site Pages',
+        total: result.experienceSiteAssessmentInfos.flatMap((info) => info.experienceSiteAssessmentPageInfos).length,
         data: ExperienceSiteAssessmentReporter.getSummaryData(result.experienceSiteAssessmentInfos),
         file: this.experienceSiteAssessmentFileName,
       });
@@ -452,7 +452,7 @@ export class AssessmentReporter {
             cssClass: 'text-warning',
           },
           {
-            name: 'Needs Manual Intervention',
+            name: 'Needs manual intervention',
             count: result.customLabelStatistics.needManualIntervention,
             cssClass: 'text-error',
           },

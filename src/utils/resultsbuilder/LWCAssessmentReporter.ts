@@ -48,8 +48,8 @@ export class LWCAssessmentReporter {
         cssClass: 'text-warning',
       },
       {
-        name: 'Needs Manual Intervention',
-        count: lwcAssessmentInfos.filter((info) => this.getMigrationStatus(info) === 'Needs Manual Intervention')
+        name: 'Needs manual intervention',
+        count: lwcAssessmentInfos.filter((info) => this.getMigrationStatus(info) === 'Needs manual intervention')
           .length,
         cssClass: 'text-error',
       },
@@ -85,7 +85,7 @@ export class LWCAssessmentReporter {
                     false,
                     undefined,
                     undefined,
-                    this.getMigrationStatus(lwcAssessmentInfo) === 'Needs Manual Intervention' ||
+                    this.getMigrationStatus(lwcAssessmentInfo) === 'Needs manual intervention' ||
                       this.getMigrationStatus(lwcAssessmentInfo) === 'Failed'
                       ? 'invalid-icon'
                       : ''
@@ -111,7 +111,8 @@ export class LWCAssessmentReporter {
               1,
               false,
               undefined,
-              FileDiffUtil.getDiffHTML(fileChangeInfo.diff, fileChangeInfo.name)
+              FileDiffUtil.getDiffHTML(fileChangeInfo.diff, fileChangeInfo.name),
+              'diff-cell'
             ),
             ...(fileIndex === 0
               ? [
@@ -134,8 +135,7 @@ export class LWCAssessmentReporter {
                     1,
                     false,
                     undefined,
-                    lwcAssessmentInfo.errors,
-                    this.getMigrationStatusCssClass(lwcAssessmentInfo, true)
+                    lwcAssessmentInfo.errors
                   ),
                 ]
               : []),

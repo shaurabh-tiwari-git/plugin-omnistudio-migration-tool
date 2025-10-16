@@ -9,6 +9,10 @@
   text-align: center;
 }
 
+.slds-m-around_medium {
+  margin: 1vw;
+}
+
 .filter-header-bar {
   display: flex;
   justify-content: flex-end;
@@ -306,10 +310,11 @@ html {
 .expandModalButton {
   position: absolute;
   top: 5px;
-  right: 5px;
+  right: 1.5rem;
   width: 30px;
   height: 30px;
   opacity: 0.7;
+  display: none;
 }
 .report-wrapper {
   display: flex;
@@ -386,7 +391,7 @@ html {
 .details-body {
   display: flex;
   flex-direction: row;
-  gap: 10px;
+  gap: 0.5vw;
   margin-top: 2rem;
   flex-wrap: wrap;
 }
@@ -403,7 +408,7 @@ html {
   flex-direction: column;
   gap: 10px;
   min-height: 14rem;
-  min-width: 25rem;
+  min-width: max(23.6vw, 20rem);
   background-color: #fff;
 }
 
@@ -573,4 +578,165 @@ td {
 
 .normal-td-padding {
   padding-left: 0.5rem !important;
+}
+
+.no-display {
+  display: none;
+}
+
+.diff-cell {
+  min-width: 30rem;
+}
+
+.diff-cell:hover .expandModalButton {
+  display: block;
+}
+
+/* === Dashboard Layout Changes === */
+
+/* Two-Pane Layout */
+.dashboard-layout-container {
+  display: flex;
+  gap: 1vw;
+  margin-top: 16px;
+}
+
+.dashboard-layout-container.single-pane {
+  gap: 0;
+}
+
+.dashboard-left-pane {
+  flex: 1;
+  min-width: 72vw; /* Allows flex item to shrink below content size */
+}
+
+.dashboard-layout-container.single-pane .dashboard-left-pane {
+  flex: 1;
+  width: 100%;
+}
+
+.dashboard-right-pane {
+  margin-top: 16px;
+}
+
+.dashboard-right-pane li {
+  margin-bottom: 1rem;
+}
+
+.user-actions-container {
+  background-color: #fff;
+  border-radius: 6px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  top: 20px;
+}
+
+.action-items-subtitle {
+  color: #666;
+  font-weight: 500;
+}
+
+.dashboard-common-pane {
+  display: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .dashboard-common-pane {
+    display: block;
+    margin-top: 1rem;
+  }
+
+  .dashboard-right-pane {
+    display: none;
+  }
+
+  .dashboard-layout-container {
+    flex-direction: column;
+  }
+
+  .dashboard-layout-container.single-pane {
+    flex-direction: column;
+  }
+
+  .dashboard-right-pane {
+    flex: none;
+    max-width: none;
+    margin-top: 16px;
+  }
+
+  .dashboard-right-pane li {
+    margin-bottom: 1rem;
+  }
+
+  .user-actions-container {
+    position: static;
+  }
+}
+
+/* Status Legends Styling */
+.status-legends-container {
+  background-color: #fff;
+  border-radius: 6px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 16px;
+}
+
+.status-legends h3 {
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  display: inline-block;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.legend-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.legend-green {
+  background-color: #2e844a;
+}
+
+.legend-yellow {
+  background-color: #fe9339;
+}
+
+.legend-red {
+  background-color: #ea001e;
+}
+
+.legend-text {
+  font-size: 14px;
+  color: #333;
+  font-weight: 600;
+}
+
+.legend-description {
+  font-size: 13px;
+  color: #666;
+  font-weight: 400;
+  line-height: 1.4;
 }

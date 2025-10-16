@@ -31,6 +31,7 @@ import { YES_SHORT, YES_LONG, NO_SHORT, NO_LONG } from '../../../utils/projectPa
 import { PostMigrate } from '../../../migration/postMigrate';
 import { PreMigrate } from '../../../migration/premigrate';
 import { GlobalAutoNumberMigrationTool } from '../../../migration/globalautonumber';
+import { ValidatorService } from '../../../utils/validatorService';
 import { NameMappingRegistry } from '../../../migration/NameMappingRegistry';
 
 // Initialize Messages with the current plugin directory
@@ -91,16 +92,11 @@ export default class Migrate extends OmniStudioBaseCommand {
 
     const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn);
 
-    if (!orgs.hasValidNamespace) {
-      Logger.warn(messages.getMessage('invalidNamespace') + orgs.packageDetails.namespace);
-    }
+    // Perform comprehensive validation using ValidatorService
+    const validator = new ValidatorService(orgs, conn, messages);
+    const isValidationPassed = await validator.validate();
 
-    if (!orgs.packageDetails) {
-      Logger.error(messages.getMessage('noPackageInstalled'));
-      return;
-    }
-    if (orgs.omniStudioOrgPermissionEnabled) {
-      Logger.error(messages.getMessage('alreadyStandardModel'));
+    if (!isValidationPassed) {
       return;
     }
 
@@ -231,10 +227,12 @@ export default class Migrate extends OmniStudioBaseCommand {
     );
 
     try {
-      postMigrate.deploy();
+      await postMigrate.deploy(actionItems);
     } catch (error) {
       Logger.error(messages.getMessage('errorDeployingComponents'), error);
       Logger.logVerbose(error);
+      // Even if deployment fails completely, continue with report generation
+      // Action items are already added to the array by the deploy method
     }
 
     await ResultsBuilder.generateReport(

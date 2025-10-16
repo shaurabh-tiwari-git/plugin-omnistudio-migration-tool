@@ -1,14 +1,18 @@
-# OmniStudio Migration Assistant
+# Omnistudio Migration Assistant
 
 The Omnistudio Migration Assistant is a command-line interface (CLI) plugin that you install via Salesforce CLI. It creates records for your omnistudio components on the Salesforce standard objects.
 
-### Before You Begin
+## 🚀 Before You Begin
+
+⚠️ IMPORTANT: Before installing and using the Omnistudio Migration Assistant, contact Salesforce support.
 
 - Review the migration phases in [Migration Process from Omnistudio for Managed Packages to Omnistudio](https://help.salesforce.com/s/articleView?id=xcloud.os_migrate_omnistudio_custom_objects_to_standard_objects.htm&language=en_US&type=5)
 
 - Install Salesforce CLI on your computer. See : [Install Salesforce CLI](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_install_cli.htm).
 
 - To deploy LWC as part of auto-deployment process, environment variable 'OMA_AUTH_KEY' should be set with requested NPM repository access key from Salesforce Customer Support.
+
+- LWC migration auto-deployment needs minimum node version of 18.17.1
 
 ## Install and Run the Omnistudio Migration Assistant
 
@@ -30,7 +34,7 @@ You can also authenticate using a consumer key (client ID) and secret key throug
 3. In a new terminal session, Install the Omnistudio Migration Assistant by running the `sf plugins install` command. For example
 
 ```
-sf plugins install @salesforce/plugin-omnistudio-migration-tool@2.0.0-rc.16
+sf plugins install @salesforce/plugin-omnistudio-migration-tool@2.0.0-rc.52
 ```
 
 4. Run the Omnistudio Migration Assistant from the Salesforce CLI:
@@ -43,18 +47,23 @@ sfdx omnistudio:migration:assess -u YOUR_ORG_USERNAME@DOMAIN.COM
 sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM
 
 
-// To migrate/assess specific components: FlexCards, Data Mappers, Integration Procedures, OmniScripts, or Omni Global Auto Numbers, add the following parameters:
---only=dm    // Data Mappers
---only=ip    // Integration Procedures
---only=os    // OmniScripts
---only=fc    // FlexCards
+// To migrate/assess specific components: Flexcards, Data Mappers, Integration Procedures, Omniscripts, Omni Global Auto Numbers or Custom Labels, add the following parameters:
+--only=dm           // Data Mappers
+--only=ip           // Integration Procedures
+--only=os           // Omniscripts
+--only=fc           // Flexcards
 --only=autonumber   // Omni Global Auto Numbers
+--only=cl           // Custom Labels
 
 // To migrate all versions of the components and not just the active ones:
 --allversions
 
-// To assess specific related objects:
---relatedobjects=apex    // for Apex classes only
+// To assess specific set of related objects:
+--relatedobjects=apex                             // for Apex classes only
+--relatedobjects=lwc                              // for Lightning Web Components only
+--relatedobjects=expsites                         // for Experience Sites only
+--relatedobjects=flexipage                        // for FlexiPages only
+--relatedobjects=apex,lwc,expsites,flexipage      // for all related objects
 
 ```
 
@@ -105,7 +114,7 @@ sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM --only=autonum
 
 ```
 USAGE
-  $ sf omnistudio:migration:assess [-f] [-v <string>] [-u <string>] [--loglevel
+  $ sf omnistudio:migration:assess [-v <string>] [-u <string>] [--loglevel
   trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 OPTIONS
@@ -121,19 +130,26 @@ OPTIONS
   -a, --allversions                                                                 migrate all versions and not
                                                                                     and not just the active ones.
 
-  --only=only                                                                       specify components to assess:
-                                                                                    dm (Data Mappers), ip (Integration Procedures),
-                                                                                    os (OmniScripts), fc (FlexCards), autonumber (Omni Global Auto Numbers)
+  --only=only                                                                       specify any single components to migrate:
+                                                                                    dm (Data Mappers),
+                                                                                    ip (Integration Procedures),
+                                                                                    os (Omniscripts),
+                                                                                    fc (Flexcards),
+                                                                                    autonumber (Omni Global Auto Numbers),
+                                                                                    cl (Custom Labels)
 
-  --relatedobjects=relatedobjects                                                   specify related objects to assess:
-                                                                                    'apex' for Apex classes
+  --relatedobjects=relatedobjects(comma separated)                                  specify one or more related objects to assess:
+                                                                                    'apex'       for Apex classes
+                                                                                    'lwc'        for LWC (Lightning Web Components)
+                                                                                    'expsites'   for Experience Sites
+                                                                                    'flexipage'  for FlexiPages
 ```
 
 ### Migrate Usage & parameters
 
 ```
 USAGE
-  $ sf omnistudio:migration:migrate [-f] [-v <string>] [-u <string>] [--loglevel
+  $ sf omnistudio:migration:migrate [-v <string>] [-u <string>] [--loglevel
   trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 OPTIONS
@@ -149,19 +165,20 @@ OPTIONS
   -a, --allversions                                                                 migrate all versions and not
                                                                                     and not just the active ones.
 
-  --only=only                                                                       specify components to migrate:
-                                                                                    dm (DataMappers), ip (Integration Procedures),
-                                                                                    os (OmniScripts), fc (FlexCards)
+  --only=only                                                                       specify any single components to migrate:
+                                                                                    dm (Data Mappers),
+                                                                                    ip (Integration Procedures),
+                                                                                    os (Omniscripts),
+                                                                                    fc (Flexcards),
+                                                                                    autonumber (Omni Global Auto Numbers),
+                                                                                    cl (Custom Labels)
 
-  --relatedobjects=relatedobjects                                                   specify related objects to assess:
+  --relatedobjects=relatedobjects(comma separated)                                  specify one or more related objects to assess:
                                                                                     'apex'       for Apex classes
-'lwc'        for LWC (Lightning Web Components)
-'expsites'   for Experience Sites
-'flexipage'  for Lightning record pages
-
+                                                                                    'lwc'        for LWC (Lightning Web Components)
+                                                                                    'expsites'   for Experience Sites
+                                                                                    'flexipage'  for FlexiPages
 ```
-
-> **Note:** LWC migration auto-deployment needs minimum node version of 18.17.1
 
 Terms:
 Notwithstanding anything stated in the terms and conditions agreed between Salesforce (‘SFDC’) and you (‘Customer’), the use of the OmniStudio Migration Assistant (‘Assistant’) is designed to facilitate the migration and it’s going to modify your custom code and by deploying and using the Assistant you hereby provide your consent to automate the migration process and enable a smooth transition. Customer shall access and use the Assistant only as permitted to the Customer and shall not compromise, break or circumvent any technical processes or security measures associated with the services provided by SFDC.
