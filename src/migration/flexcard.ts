@@ -1244,24 +1244,17 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         const customLwcName = component.property.customlwcname;
 
         // Check if this is a FlexCard reference (starts with "cf" prefix)
-        if (customLwcName.startsWith('cf')) {
+        if (component.property.customlwcname?.startsWith('cf')) {
           // Remove "cf" prefix to get the original FlexCard name
           const originalFlexCardName = customLwcName.substring(2);
 
           // Look up the cleaned name from registry
-          if (this.nameRegistry.hasFlexCardMapping(originalFlexCardName)) {
-            const cleanedFlexCardName = this.nameRegistry.getFlexCardCleanedName(originalFlexCardName);
-            // Update the customlwcname with the cleaned FlexCard name
-            component.property.customlwcname = `cf${cleanedFlexCardName}`;
-            Logger.logVerbose(`Updated customLwc FlexCard reference: ${customLwcName} -> cf${cleanedFlexCardName}`);
-          } else {
-            // No registry mapping - use fallback cleaning
-            Logger.logVerbose(
-              `\n${this.messages.getMessage('componentMappingNotFound', ['Flexcard', originalFlexCardName])}`
-            );
-            const cleanedFlexCardName = this.cleanName(originalFlexCardName);
-            component.property.customlwcname = `cf${cleanedFlexCardName}`;
-          }
+          const cleanedFlexCardName = this.nameRegistry.getFlexCardCleanedName(originalFlexCardName);
+          // Update the customlwcname with the cleaned FlexCard name
+          component.property.customlwcname = `cf${cleanedFlexCardName}`;
+          Logger.logVerbose(
+            this.messages.getMessage('customLWCFlexCardReferenceUpdated', [customLwcName, cleanedFlexCardName])
+          );
         }
         // Note: Other custom LWC names (not starting with "cf") typically don't need cleaning
       }
