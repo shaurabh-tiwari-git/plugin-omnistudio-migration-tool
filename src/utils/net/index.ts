@@ -124,6 +124,52 @@ class NetUtils {
     return true;
   }
 
+  public static async deleteWithFieldIntegrityException(
+    connection: Connection,
+    data: string[]
+  ): Promise<{ success: boolean; statusCode?: string; message?: string }> {
+    // Metadata API only accepts 200 records per request
+    const chunks = chunk(data, NetUtils.CHUNK_SIZE);
+    let hasFieldIntegrityException = false;
+    let hasErrors = false;
+    let errorCode: string | undefined;
+    let message: string | undefined;
+
+    for (let curr of chunks) {
+      const deleteUrl = 'composite/sobjects?allOrNone=true&ids=' + curr.join(',');
+
+      const response = await this.request<DeleteResponse[]>(connection, deleteUrl, [], RequestMethod.DELETE);
+      // Check each response for errors
+      response.forEach((result) => {
+        if (!result.success && result.errors && result.errors.length > 0) {
+          result.errors.forEach((error) => {
+            hasErrors = true;
+            // Check if this error is a FIELD_INTEGRITY_EXCEPTION
+            if (error.statusCode === 'FIELD_INTEGRITY_EXCEPTION') {
+              hasFieldIntegrityException = true;
+              message = error.message;
+              return;
+            } else {
+              errorCode = error.statusCode;
+            }
+          });
+        }
+      });
+    }
+
+    // If there are failed records, return failure with status code
+    if (hasErrors) {
+      return {
+        success: false,
+        // Override with FIELD_INTEGRITY_EXCEPTION if found, otherwise use first encountered
+        statusCode: hasFieldIntegrityException ? 'FIELD_INTEGRITY_EXCEPTION' : errorCode,
+        message: message,
+      };
+    }
+
+    return { success: true };
+  }
+
   public static async request<TResultType>(
     connection: Connection,
     url: string,
@@ -154,6 +200,16 @@ enum RequestMethod {
 interface TreeResult {
   hasErrors: boolean;
   results: UploadRecordResult[];
+}
+
+interface DeleteResponse {
+  id: string;
+  success: boolean;
+  errors: Array<{
+    statusCode: string;
+    message: string;
+    fields: string[];
+  }>;
 }
 
 export { NetUtils, RequestMethod, TreeResult };

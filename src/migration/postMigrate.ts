@@ -146,9 +146,9 @@ export class PostMigrate extends BaseMigrationTool {
         */
         const maxAttempts = 6;
         let attempts = 0;
+        const metadataService = new OmniStudioMetadataCleanupService(this.connection, this.messages);
         while (attempts < maxAttempts) {
           await new Promise((resolve) => setTimeout(resolve, 20000));
-          const metadataService = new OmniStudioMetadataCleanupService(this.connection, this.messages);
           const isConfigTablesEmpty = await metadataService.hasCleanOmniStudioMetadataTables(); //Check is the config tables are populated or not.
           if (!isConfigTablesEmpty) {
             // If the config tables are populated, means the metadata is enabled.
@@ -159,7 +159,7 @@ export class PostMigrate extends BaseMigrationTool {
         }
         if (attempts === maxAttempts) {
           // TODO: We need to figure out and show the user that what is the actual issue which is causing the metadata to not be enabled.
-          Logger.error(this.messages.getMessage('errorEnablingOmniStudioSettingsMetadata', ['Unknown error']));
+          Logger.error(this.messages.getMessage('timeoutEnablingOmniStudioSettingsMetadata', [maxAttempts * 20]));
           userActionMessage.push(this.messages.getMessage('manuallyEnableOmniStudioSettingsMetadata'));
         }
       } else {

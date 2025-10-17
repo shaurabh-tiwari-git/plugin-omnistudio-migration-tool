@@ -197,7 +197,7 @@
   "dmNameUpdateFailed": "DM reference %s can’t be updated",
   "invalidTypeAssessErrorMessage": "We couldn't assess your Omnistudio components in the %s namespace. Select the correct namespace and try again",
   "assessmentSuccessfulMessage": "Migration assessment for org %s is complete and reports are ready for review in the folder %s",
-  "errorCheckingOmniStudioMetadata": "We couldn't check whether the Omnistudio Metadata is enabled: %s. Try again later.",
-  "omniStudioSettingsMetadataAlreadyEnabled": "The Omnistudio Metadata setting is already enabled with standard data model. No need for migration.",
+  "errorCheckingOmniStudioMetadata": "Error while checking the Omnistudio settings metadata status: %s.",
+  "omniStudioSettingsMetadataAlreadyEnabled": "The Omnistudio Metadata setting is already enabled with standard data model. No need for migration."
   "missingMandatoryField": "Missing mandatory field: %s for %s"
 }
