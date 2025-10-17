@@ -21,6 +21,13 @@ export class OmniStudioMetadataCleanupService {
     'OmniDataTransformConfig',
   ];
 
+  private static readonly FIELD_MAP = {
+    OmniUiCardConfig: 'Flexcard',
+    OmniScriptConfig: 'OmniScript',
+    OmniIntegrationProcConfig: 'Integration Procedure',
+    OmniDataTransformConfig: 'Data Mapper',
+  };
+
   private readonly connection: Connection;
   private readonly messages: Messages;
 
@@ -60,15 +67,31 @@ export class OmniStudioMetadataCleanupService {
 
       let totalCleanedRecords = 0;
       const failedTables: string[] = [];
+      const tablesWithFieldIntegrityExceptions: string[] = [];
+      const toDeactivate: string[] = [];
 
       for (const tableName of OmniStudioMetadataCleanupService.CONFIG_TABLES) {
-        const recordCount = await this.cleanupOmniStudioMetadataTable(tableName);
+        const result = await this.cleanupOmniStudioMetadataTable(tableName);
 
-        if (recordCount >= 0) {
-          totalCleanedRecords += recordCount;
+        if (result.recordCount >= 0) {
+          totalCleanedRecords += result.recordCount;
         } else {
           failedTables.push(tableName);
+          if (result.statusCode === 'FIELD_INTEGRITY_EXCEPTION') {
+            tablesWithFieldIntegrityExceptions.push(tableName);
+            toDeactivate.push(OmniStudioMetadataCleanupService.FIELD_MAP[tableName]);
+          }
         }
+      }
+
+      if (tablesWithFieldIntegrityExceptions.length > 0) {
+        Logger.error(
+          this.messages.getMessage('fieldIntegrityExceptions', [
+            tablesWithFieldIntegrityExceptions.join(', '),
+            toDeactivate.join(', '),
+          ])
+        );
+        return false;
       }
 
       if (failedTables.length > 0) {
@@ -88,20 +111,21 @@ export class OmniStudioMetadataCleanupService {
    * Checks a specific table for records and cleans them if found
    *
    * @param tableName - Name of the table to check and clean
-   * @returns Promise<number> - number of cleaned records, or -1 if failed
+   * @returns Promise<{recordCount: number, statusCode?: string}> - recordCount: number of cleaned records (or -1 if failed), statusCode: optional error status code
    */
-  private async cleanupOmniStudioMetadataTable(tableName: string): Promise<number> {
+  private async cleanupOmniStudioMetadataTable(
+    tableName: string
+  ): Promise<{ recordCount: number; statusCode?: string }> {
     const recordIds = await QueryTools.queryIds(this.connection, tableName);
 
     if (recordIds.length === 0) {
-      return 0;
+      return { recordCount: 0 };
     }
 
     const deleteResult = await NetUtils.deleteWithFieldIntegrityException(this.connection, recordIds);
-    if (!deleteResult.success && deleteResult.statusCode === 'FIELD_INTEGRITY_EXCEPTION') {
-      Logger.error(this.messages.getMessage('fieldIntegrityException', [tableName, deleteResult.message || '']));
-      return -1;
+    if (!deleteResult.success) {
+      return { recordCount: -1, statusCode: deleteResult.statusCode };
     }
-    return deleteResult.success ? recordIds.length : -1;
+    return { recordCount: recordIds.length };
   }
 }
