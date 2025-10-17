@@ -35,8 +35,8 @@ describe('OmniStudioMetadataCleanupService', () => {
     // Mock QueryTools.queryIds
     queryIdsStub = sandbox.stub(QueryTools, 'queryIds');
 
-    // Mock NetUtils.delete
-    deleteStub = sandbox.stub(NetUtils, 'delete');
+    // Mock NetUtils.deleteWithFieldIntegrityException
+    deleteStub = sandbox.stub(NetUtils, 'deleteWithFieldIntegrityException');
 
     // Setup default message responses
     (messages.getMessage as sinon.SinonStub)
@@ -190,7 +190,7 @@ describe('OmniStudioMetadataCleanupService', () => {
         .resolves([]) // OmniIntegrationProcConfig
         .onCall(3)
         .resolves(['id4', 'id5', 'id6']); // OmniDataTransformConfig
-      deleteStub.resolves(true); // All deletions successful
+      deleteStub.resolves({ success: true }); // All deletions successful
       (messages.getMessage as sinon.SinonStub)
         .withArgs('metadataCleanupCompleted', ['6'])
         .returns('The Omnistudio metadata table cleanup process is complete. Total records cleaned: 6');
@@ -214,7 +214,7 @@ describe('OmniStudioMetadataCleanupService', () => {
       // Arrange
       const service = new OmniStudioMetadataCleanupService(connection, messages);
       queryIdsStub.resolves([]); // All tables empty
-      deleteStub.resolves(true);
+      deleteStub.resolves({ success: true });
       (messages.getMessage as sinon.SinonStub)
         .withArgs('metadataCleanupCompleted', ['0'])
         .returns('The Omnistudio metadata table cleanup process is complete. Total records cleaned: 0');
@@ -246,11 +246,11 @@ describe('OmniStudioMetadataCleanupService', () => {
         .resolves(['id3']); // OmniDataTransformConfig
       deleteStub
         .onFirstCall()
-        .resolves(true) // First deletion successful
+        .resolves({ success: true }) // First deletion successful
         .onSecondCall()
-        .resolves(false) // Second deletion fails
+        .resolves({ success: false, statusCode: 'SOME_ERROR' }) // Second deletion fails
         .onThirdCall()
-        .resolves(true); // Third deletion successful
+        .resolves({ success: true }); // Third deletion successful
       (messages.getMessage as sinon.SinonStub)
         .withArgs('failedToCleanTables', ['OmniScriptConfig'])
         .returns('Table cleanup failed: OmniScriptConfig');
@@ -262,7 +262,7 @@ describe('OmniStudioMetadataCleanupService', () => {
       expect(result).to.be.false;
       expect(queryIdsStub.callCount).to.equal(4);
       expect(deleteStub.callCount).to.equal(3);
-      expect(loggerErrorStub.calledOnce).to.be.true;
+      expect(loggerErrorStub.callCount).to.equal(1);
       expect(loggerErrorStub.firstCall.args[0]).to.equal('Table cleanup failed: OmniScriptConfig');
     });
 
@@ -280,13 +280,13 @@ describe('OmniStudioMetadataCleanupService', () => {
         .resolves(['id4']); // OmniDataTransformConfig
       deleteStub
         .onFirstCall()
-        .resolves(false) // First deletion fails
+        .resolves({ success: false, statusCode: 'SOME_ERROR' }) // First deletion fails
         .onSecondCall()
-        .resolves(true) // Second deletion successful
+        .resolves({ success: true }) // Second deletion successful
         .onCall(2)
-        .resolves(false) // Third deletion fails
+        .resolves({ success: false, statusCode: 'SOME_ERROR' }) // Third deletion fails
         .onCall(3)
-        .resolves(true); // Fourth deletion successful
+        .resolves({ success: true }); // Fourth deletion successful
       (messages.getMessage as sinon.SinonStub)
         .withArgs('failedToCleanTables', ['OmniUiCardConfig, OmniIntegrationProcConfig'])
         .returns('Table cleanup failed: OmniUiCardConfig, OmniIntegrationProcConfig');
@@ -298,7 +298,7 @@ describe('OmniStudioMetadataCleanupService', () => {
       expect(result).to.be.false;
       expect(queryIdsStub.callCount).to.equal(4);
       expect(deleteStub.callCount).to.equal(4);
-      expect(loggerErrorStub.calledOnce).to.be.true;
+      expect(loggerErrorStub.callCount).to.equal(1);
       expect(loggerErrorStub.firstCall.args[0]).to.equal(
         'Table cleanup failed: OmniUiCardConfig, OmniIntegrationProcConfig'
       );
@@ -338,11 +338,11 @@ describe('OmniStudioMetadataCleanupService', () => {
         .resolves(['id4', 'id5']); // OmniDataTransformConfig - 2 records
       deleteStub
         .onFirstCall()
-        .resolves(true) // OmniUiCardConfig deletion successful
+        .resolves({ success: true }) // OmniUiCardConfig deletion successful
         .onSecondCall()
-        .resolves(false) // OmniIntegrationProcConfig deletion fails
+        .resolves({ success: false, statusCode: 'SOME_ERROR' }) // OmniIntegrationProcConfig deletion fails
         .onThirdCall()
-        .resolves(true); // OmniDataTransformConfig deletion successful
+        .resolves({ success: true }); // OmniDataTransformConfig deletion successful
       (messages.getMessage as sinon.SinonStub)
         .withArgs('failedToCleanTables', ['OmniIntegrationProcConfig'])
         .returns('Table cleanup failed: OmniIntegrationProcConfig');
@@ -354,7 +354,7 @@ describe('OmniStudioMetadataCleanupService', () => {
       expect(result).to.be.false;
       expect(queryIdsStub.callCount).to.equal(4);
       expect(deleteStub.callCount).to.equal(3); // Only called for tables with records
-      expect(loggerErrorStub.calledOnce).to.be.true;
+      expect(loggerErrorStub.callCount).to.equal(1);
       expect(loggerErrorStub.firstCall.args[0]).to.equal('Table cleanup failed: OmniIntegrationProcConfig');
     });
   });
@@ -364,7 +364,7 @@ describe('OmniStudioMetadataCleanupService', () => {
       // Arrange
       const service = new OmniStudioMetadataCleanupService(connection, messages);
       queryIdsStub.resolves([]); // Empty table
-      deleteStub.resolves(true);
+      deleteStub.resolves({ success: true });
 
       // Act
       const result = await service.cleanupOmniStudioMetadataTables();
@@ -381,7 +381,7 @@ describe('OmniStudioMetadataCleanupService', () => {
       queryIdsStub.onCall(1).resolves([]); // Other tables empty
       queryIdsStub.onCall(2).resolves([]);
       queryIdsStub.onCall(3).resolves([]);
-      deleteStub.resolves(true);
+      deleteStub.resolves({ success: true });
 
       // Act
       const result = await service.cleanupOmniStudioMetadataTables();
@@ -400,7 +400,7 @@ describe('OmniStudioMetadataCleanupService', () => {
       queryIdsStub.onCall(1).resolves([]); // Other tables empty
       queryIdsStub.onCall(2).resolves([]);
       queryIdsStub.onCall(3).resolves([]);
-      deleteStub.resolves(false); // Deletion fails
+      deleteStub.resolves({ success: false, statusCode: 'SOME_ERROR' }); // Deletion fails
 
       // Act
       const result = await service.cleanupOmniStudioMetadataTables();
@@ -408,7 +408,7 @@ describe('OmniStudioMetadataCleanupService', () => {
       // Assert
       expect(result).to.be.false;
       expect(deleteStub.calledOnce).to.be.true;
-      expect(loggerErrorStub.calledOnce).to.be.true;
+      expect(loggerErrorStub.callCount).to.equal(1);
       expect(loggerErrorStub.firstCall.args[0]).to.equal('Table cleanup failed: OmniUiCardConfig');
     });
   });
@@ -466,7 +466,7 @@ describe('OmniStudioMetadataCleanupService', () => {
       queryIdsStub.onCall(1).resolves([]);
       queryIdsStub.onCall(2).resolves([]);
       queryIdsStub.onCall(3).resolves([]);
-      deleteStub.resolves(true);
+      deleteStub.resolves({ success: true });
       (messages.getMessage as sinon.SinonStub)
         .withArgs('metadataCleanupCompleted', ['1000'])
         .returns('The Omnistudio metadata table cleanup process is complete. Total records cleaned: 1000');
@@ -497,13 +497,13 @@ describe('OmniStudioMetadataCleanupService', () => {
         .resolves(['id4', 'id5', 'id6']); // OmniDataTransformConfig - 3 records
       deleteStub
         .onFirstCall()
-        .resolves(true) // OmniUiCardConfig deletion successful
+        .resolves({ success: true }) // OmniUiCardConfig deletion successful
         .onSecondCall()
-        .resolves(true) // OmniScriptConfig deletion successful
+        .resolves({ success: true }) // OmniScriptConfig deletion successful
         .onCall(2)
-        .resolves(false) // OmniDataTransformConfig deletion fails
+        .resolves({ success: false, statusCode: 'SOME_ERROR' }) // OmniDataTransformConfig deletion fails
         .onCall(3)
-        .resolves(true); // This shouldn't be called
+        .resolves({ success: true }); // This shouldn't be called
       (messages.getMessage as sinon.SinonStub)
         .withArgs('failedToCleanTables', ['OmniDataTransformConfig'])
         .returns('Table cleanup failed: OmniDataTransformConfig');
@@ -515,7 +515,7 @@ describe('OmniStudioMetadataCleanupService', () => {
       expect(result).to.be.false;
       expect(queryIdsStub.callCount).to.equal(4);
       expect(deleteStub.callCount).to.equal(3); // Only called for tables with records
-      expect(loggerErrorStub.calledOnce).to.be.true;
+      expect(loggerErrorStub.callCount).to.equal(1);
       expect(loggerErrorStub.firstCall.args[0]).to.equal('Table cleanup failed: OmniDataTransformConfig');
     });
   });
