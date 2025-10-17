@@ -2,6 +2,7 @@ import { Connection, Messages } from '@salesforce/core';
 import { Logger } from '../logger';
 import { QueryTools } from '../query';
 import { NetUtils } from '../net';
+import { getMigrationHeading } from '../stringUtils';
 
 /**
  * OmniStudioMetadataCleanupService
@@ -22,10 +23,10 @@ export class OmniStudioMetadataCleanupService {
   ];
 
   private static readonly FIELD_MAP = {
-    OmniUiCardConfig: 'Flexcard',
-    OmniScriptConfig: 'OmniScript',
-    OmniIntegrationProcConfig: 'Integration Procedure',
-    OmniDataTransformConfig: 'Data Mapper',
+    OmniUiCardConfig: getMigrationHeading('Flexcard'),
+    OmniScriptConfig: getMigrationHeading('OmniScript'),
+    OmniIntegrationProcConfig: getMigrationHeading('Integration Procedure'),
+    OmniDataTransformConfig: getMigrationHeading('Data Mapper'),
   };
 
   private readonly connection: Connection;
