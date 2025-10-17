@@ -97,7 +97,11 @@ export class OmniStudioMetadataCleanupService {
       return 0;
     }
 
-    const deleteSuccess = await NetUtils.delete(this.connection, recordIds);
-    return deleteSuccess ? recordIds.length : -1;
+    const deleteResult = await NetUtils.deleteWithFieldIntegrityException(this.connection, recordIds);
+    if (!deleteResult.success && deleteResult.statusCode === 'FIELD_INTEGRITY_EXCEPTION') {
+      Logger.error(this.messages.getMessage('fieldIntegrityException', [tableName, deleteResult.message || '']));
+      return -1;
+    }
+    return deleteResult.success ? recordIds.length : -1;
   }
 }

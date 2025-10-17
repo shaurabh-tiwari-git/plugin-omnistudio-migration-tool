@@ -260,6 +260,7 @@
   "omniStudioSettingsMetadataEnabled": "The Omnistudio Metadata setting is enabled with standard data model.",
   "timeoutEnablingOmniStudioSettingsMetadata": "Timeout while checking the metadata enablement status. Tried for %s seconds.",
   "errorEnablingOmniStudioSettingsMetadata": "Error while enabling the Omnistudio Metadata setting: %s. Enable it manually.",
+  "fieldIntegrityException": "Field integrity Exception while deleting metadata records from %s: %s",
   "manuallyEnableOmniStudioSettingsMetadata": "Manually enable the Omnistudio Metadata setting in your org’s Omnistudio Settings page.",
   "omniStudioMetadataEnableConsentNotGiven": "You’ve not consented to proceed with enabling the Omnistudio Metadata setting. We’ll not be able to proceed with the migration.",
   "enablingOmniStudioSettingsMetadataStatus": "Enabling Omnistudio Metadata setting…",
