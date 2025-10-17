@@ -285,5 +285,6 @@
   "deploymentNonRetryableError": "Deployment failed with non-retryable error: %s. Please review and fix the issue manually",
   "deploymentTriggeredSuccessfully": "Please monitor your Deployment: %s using deployment status page in Org",
   "omniscriptPackageDeploymentFailedReturnedFalse": "Omniscript package deployment failed - deployment returned false. This may be due to missing package, permissions, or deployment timeout.",
-  "omniscriptPackageDeploymentFailedWithMessage": "Omniscript package deployment failed: %s"
+  "omniscriptPackageDeploymentFailedWithMessage": "Omniscript package deployment failed: %s",
+  "customLWCFlexCardReferenceUpdated": "Updated Custom LWC FlexCard reference: %s -> cf%s"
 }
