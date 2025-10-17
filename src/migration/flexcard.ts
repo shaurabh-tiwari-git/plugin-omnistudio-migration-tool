@@ -1244,7 +1244,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         const customLwcName = component.property.customlwcname;
 
         // Check if this is a FlexCard reference (starts with "cf" prefix)
-        if (component.property.customlwcname?.startsWith('cf')) {
+        if (customLwcName?.startsWith('cf')) {
           // Remove "cf" prefix to get the original FlexCard name
           const originalFlexCardName = customLwcName.substring(2);
 
