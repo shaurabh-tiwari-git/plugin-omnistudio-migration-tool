@@ -46,8 +46,8 @@
   "allVersionsInfo": "All versions: %s",
   "assessmentInitialization": "Assessment process started. Using namespace: %s",
   "apiVersionInfo": "API version: %s",
-  "unknownNamespace": "Org doesn't have Omnistudio namespace(s) configured",
-  "noOmniStudioLicenses": "OmniStudio licenses are not found in the org. OmniStudio licenses are required for migration assessment",
+  "unknownNamespace": "Omnistudio namespace is not configured in this org. Configure the namespace and try again",
+  "noOmniStudioLicenses": "We couldn’t find Omnistudio licenses in this org. Omnistudio licenses are required for migration assessment",
   "assessmentTargets": "Assessment targets: %s",
   "relatedObjectsInfo": "Related objects: %s",
   "allVersionsFlagInfo": "All versions: %s",
@@ -199,4 +199,5 @@
   "assessmentSuccessfulMessage": "Migration assessment for org %s is complete and reports are ready for review in the folder %s",
   "errorCheckingOmniStudioMetadata": "Error while checking the Omnistudio settings metadata status: %s.",
   "omniStudioSettingsMetadataAlreadyEnabled": "The Omnistudio Metadata setting is already enabled with standard data model. No need for migration."
+  "missingMandatoryField": "Missing mandatory field: %s for %s"
 }
