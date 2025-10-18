@@ -38,5 +38,4 @@ export const Constants = {
   CustomLabelErrorStatus: 'error',
   CustomLabelDuplicateStatus: 'duplicate',
   CustomLabelSameValueMessage: 'same value',
-  MigrationReportsFolderName: 'migration_reports',
 };
