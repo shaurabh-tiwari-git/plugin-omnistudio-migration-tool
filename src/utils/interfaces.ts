@@ -4,7 +4,7 @@ import { CustomLabelAssessmentInfo, CustomLabelStatistics } from './customLabels
 export interface MigratedObject {
   name: string;
   data?: MigratedRecordInfo[];
-  records?: any; // For consolidated map approach - using any to avoid type conflicts
+  records?: Record<string, unknown>; // For consolidated map approach - using Record<string, unknown> to avoid type conflicts
   errors?: string[];
   totalCount?: number; // Optional total count for dashboard calculation
 }
