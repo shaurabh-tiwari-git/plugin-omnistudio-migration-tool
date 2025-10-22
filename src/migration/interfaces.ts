@@ -54,6 +54,7 @@ export interface MigrationResult {
   results: Map<string, UploadRecordResult>;
   records: Map<string, any>;
   errors?: string[];
+  totalCount?: number; // Optional total count for dashboard calculation
 }
 
 export interface OriginalRecordItem {

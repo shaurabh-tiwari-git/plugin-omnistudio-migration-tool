@@ -968,7 +968,7 @@ describe('Storage Duplicate Logic - Multiple Versions Handling', () => {
           errors: [
             'Omniscript with duplicate name, type, subtype, or language found in this org. Modify your Omniscript and try again. Omniscript Aa_Bb_English_1',
           ],
-          migrationStatus: 'Needs Manual Intervention' as const,
+          migrationStatus: 'Needs manual intervention' as const,
           nameMapping: {
             oldType: 'Aa$',
             oldSubtype: 'Bb$',
@@ -997,7 +997,7 @@ describe('Storage Duplicate Logic - Multiple Versions Handling', () => {
           errors: [
             'Omniscript with duplicate name, type, subtype, or language found in this org. Modify your Omniscript and try again. Omniscript Aa_Bb_English_2',
           ],
-          migrationStatus: 'Needs Manual Intervention' as const,
+          migrationStatus: 'Needs manual intervention' as const,
           nameMapping: {
             oldType: 'Aa$',
             oldSubtype: 'Bb$',
@@ -1026,7 +1026,7 @@ describe('Storage Duplicate Logic - Multiple Versions Handling', () => {
           errors: [
             'Omniscript with duplicate name, type, subtype, or language found in this org. Modify your Omniscript and try again. Omniscript Aa_Bb_English_3',
           ],
-          migrationStatus: 'Needs Manual Intervention' as const,
+          migrationStatus: 'Needs manual intervention' as const,
           nameMapping: {
             oldType: 'Aa$',
             oldSubtype: 'Bb$',

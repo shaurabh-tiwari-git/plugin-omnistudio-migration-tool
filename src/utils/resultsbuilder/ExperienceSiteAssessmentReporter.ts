@@ -62,10 +62,10 @@ export class ExperienceSiteAssessmentReporter {
         cssClass: 'text-warning',
       },
       {
-        name: 'Needs Manual Intervention',
+        name: 'Needs manual intervention',
         count: experienceSiteAssessmentInfos
           .flatMap((info) => info.experienceSiteAssessmentPageInfos)
-          .filter((info) => info.status === 'Needs Manual Intervention').length,
+          .filter((info) => info.status === 'Needs manual intervention').length,
         cssClass: 'text-error',
       },
       {

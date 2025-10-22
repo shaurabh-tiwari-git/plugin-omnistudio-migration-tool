@@ -11,7 +11,16 @@ import { BaseMigrationTool } from './base';
 import { MigrationTool, MigrationResult, ObjectMapping } from './interfaces';
 
 export interface CustomLabelMigrationResult {
-  labelName: string;
+  coreInfo: {
+    id: string;
+    value: string;
+  };
+  message: string;
+  name: string;
+  packageInfo: {
+    id: string;
+    value: string;
+  };
   status: string;
 }
 
@@ -36,7 +45,15 @@ export interface CustomLabelRecord {
   name?: string;
   status?: string;
   cloneStatus?: string;
-  localizationStatus?: Record<string, string>;
+  message?: string;
+  coreInfo?: {
+    id: string;
+    value: string;
+  };
+  packageInfo?: {
+    id: string;
+    value: string;
+  };
   errors?: string[];
   warnings?: string[];
 }
@@ -73,63 +90,82 @@ export class CustomLabelsMigrationTool extends BaseMigrationTool implements Migr
     try {
       Logger.log(this.messages.getMessage('startingCustomLabelMigration'));
 
-      const results = new Map<string, any>();
-      const records = new Map<string, any>();
+      const migrationData = new Map<string, any>();
       const errors: string[] = [];
 
-      // Call first API: clone-custom-labels
+      // Call clone-custom-labels API only
       const cloneLabelsResponse = await this.callCloneCustomLabelsAPI();
 
-      // Call second API: clone-custom-label-localizations
-      const cloneLocalizationsResponse = await this.callCloneCustomLabelLocalizationsAPI();
+      // Call localizations API but ignore response (as per requirements)
+      await this.callCloneCustomLabelLocalizationsAPI();
 
-      // Process results and include all labels
-      const allLabels = this.processMigrationResults(cloneLabelsResponse, cloneLocalizationsResponse);
-
-      // Store results using labelName as key for consistency
-      allLabels.forEach((label) => {
-        const key = label.labelName;
-        const { mappedStatus, hasErrors } = this.mapCloneStatusToMigrationStatus(label.cloneStatus);
-
-        results.set(key, {
-          referenceId: key,
-          id: label.labelName,
-          newName: label.labelName,
-          errors: label.errors || [],
-          warnings: label.warnings || [],
-          hasErrors,
-          success: label.cloneStatus === 'created',
-          skipped: label.cloneStatus === 'duplicate',
-          type: Constants.CustomLabelComponentName,
-        });
-
-        records.set(key, {
-          ...label,
-          Id: label.labelName,
-          name: label.labelName,
-          status: mappedStatus,
-          localizationStatus: label.localizationStatus,
-        });
-      });
-
+      // Get total count from API response
       const totalLabels = cloneLabelsResponse.results ? cloneLabelsResponse.results.length : 0;
-      Logger.log(this.messages.getMessage('customLabelMigrationCompleted', [allLabels.length, totalLabels]));
+
+      // Process results - only show error and duplicate (where message is not "same value")
+      if (cloneLabelsResponse.results) {
+        cloneLabelsResponse.results.forEach((labelResult) => {
+          const key = labelResult.name;
+
+          // Only include error and duplicate (where message is not "same value")
+          if (
+            Constants.CustomLabelInvalidStatuses.includes(labelResult.status) &&
+            !(labelResult.status === 'duplicate' && labelResult.message === Constants.CustomLabelSameValueMessage)
+          ) {
+            const { mappedStatus, hasErrors } = this.mapCloneStatusToMigrationStatus(labelResult.status);
+
+            // Store consolidated data that can be used for both dashboard and detailed reporting
+            const recordData = {
+              // Properties needed for dashboard status calculation
+              id: labelResult.name,
+              name: labelResult.name,
+              status: mappedStatus,
+              errors: labelResult.status === Constants.CustomLabelErrorStatus ? [labelResult.message] : [],
+              warnings: labelResult.status === Constants.CustomLabelDuplicateStatus ? [labelResult.message] : [],
+              migratedId: labelResult.name,
+              migratedName: labelResult.name,
+
+              // Additional properties needed for detailed reporting
+              labelName: labelResult.name,
+              cloneStatus: labelResult.status,
+              message: labelResult.message,
+              coreInfo: labelResult.coreInfo,
+              packageInfo: labelResult.packageInfo,
+
+              // Legacy properties for compatibility
+              referenceId: key,
+              newName: labelResult.name,
+              hasErrors,
+              success: false, // We only process error and duplicate, so success is always false
+              skipped: labelResult.status === Constants.CustomLabelDuplicateStatus,
+              type: Constants.CustomLabelComponentName,
+            };
+
+            migrationData.set(key, recordData);
+          }
+        });
+      }
+
+      const processedLabels = migrationData.size;
+      Logger.log(this.messages.getMessage('customLabelMigrationCompleted', [processedLabels, totalLabels]));
 
       return [
         {
           name: this.getName(),
-          results,
-          records,
+          results: migrationData, // Use single consolidated map
+          records: migrationData, // Both point to the same data
           errors,
+          totalCount: totalLabels, // Use totalCount instead of statistics
         },
       ];
     } catch (error) {
       Logger.error(this.messages.getMessage('errorDuringCustomLabelMigration', [(error as Error).message]));
+      const emptyMap = new Map();
       return [
         {
           name: this.getName(),
-          results: new Map(),
-          records: new Map(),
+          results: emptyMap,
+          records: emptyMap, // Both point to the same empty map
           errors: [String(error)],
         },
       ];
@@ -186,59 +222,13 @@ export class CustomLabelsMigrationTool extends BaseMigrationTool implements Migr
     }
   }
 
-  private processMigrationResults(
-    cloneLabelsResponse: CustomLabelMigrationResponse,
-    cloneLocalizationsResponse: CustomLabelLocalizationResponse
-  ): any[] {
-    const allLabels: any[] = [];
-
-    // Process clone labels results
-    if (cloneLabelsResponse.results) {
-      cloneLabelsResponse.results.forEach((labelResult) => {
-        const labelInfo: any = {
-          labelName: labelResult.labelName,
-          cloneStatus: labelResult.status,
-          localizationStatus: {},
-          errors: [],
-          warnings: [],
-        };
-
-        // Check if clone status needs attention
-        if (labelResult.status !== 'created') {
-          if (labelResult.status === 'duplicate') {
-            labelInfo.warnings.push(this.messages.getMessage('labelAlreadyExistsWarning', ['Duplicate']));
-          } else if (labelResult.status === 'error') {
-            labelInfo.errors.push(this.messages.getMessage('failedToCloneLabelError', ['Failed']));
-          }
-        }
-
-        // Process localizations for this label
-        if (cloneLocalizationsResponse.results && cloneLocalizationsResponse.results[labelResult.labelName]) {
-          const localizations = cloneLocalizationsResponse.results[labelResult.labelName];
-          labelInfo.localizationStatus = localizations;
-
-          // Check localization statuses
-          Object.entries(localizations).forEach(([languageCode, status]) => {
-            if (status !== 'created') {
-              if (status === 'duplicate') {
-                labelInfo.warnings.push(this.messages.getMessage('localizationAlreadyExistsWarning', [languageCode]));
-              } else if (status === 'error') {
-                labelInfo.errors.push(this.messages.getMessage('failedToCreateLocalizationError', [languageCode]));
-              }
-            }
-          });
-        }
-
-        // Include all labels regardless of status
-        allLabels.push(labelInfo);
-      });
-    }
-
-    return allLabels;
-  }
-
   /**
    * Maps Custom Labels API clone status to migration status format
+   *
+   * New mapping:
+   * Successfully migrated = total - error
+   * Failed = error
+   * Skipped = duplicate
    *
    * @param cloneStatus - The status returned by the clone API
    * @returns Object containing mapped status and error flag
@@ -246,7 +236,7 @@ export class CustomLabelsMigrationTool extends BaseMigrationTool implements Migr
   private mapCloneStatusToMigrationStatus(cloneStatus: string): { mappedStatus: string; hasErrors: boolean } {
     switch (cloneStatus) {
       case 'created':
-        return { mappedStatus: 'Complete', hasErrors: false };
+        return { mappedStatus: 'Successfully migrated', hasErrors: false };
       case 'error':
         return { mappedStatus: 'Failed', hasErrors: true };
       case 'duplicate':

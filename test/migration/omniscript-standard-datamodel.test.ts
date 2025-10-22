@@ -40,7 +40,7 @@ describe('OmniScript Standard Data Model (Metadata API Disabled) - Assessment an
           processingOmniScript: `Processing OmniScript: ${params?.[0]}`,
           foundOmniScriptsToMigrate: `Found ${params?.[0]} ${params?.[1]} to migrate`,
           missingMandatoryField: `Missing mandatory field '${params?.[0]}' for ${params?.[1]}`,
-          changeMessage: `The ${params?.[0]} '${params?.[1]}' will be changed to '${params?.[2]}'`,
+          changeMessage: `The ${params?.[0]} ${params?.[1]} will be changed from ${params?.[2]} to ${params?.[3]}`,
           integrationProcedureTypeEmptyAfterCleaning: `Integration Procedure Type becomes empty after cleaning: '${params?.[0]}'`,
           integrationProcedureSubtypeEmptyAfterCleaning: `Integration Procedure SubType becomes empty after cleaning: '${params?.[0]}'`,
           duplicatedName: 'Duplicated name found',
@@ -156,8 +156,8 @@ describe('OmniScript Standard Data Model (Metadata API Disabled) - Assessment an
       expect(result.name).to.equal('CustomerProfile_AccountView_English_1');
       expect(result.oldName).to.equal('Customer-Profile@_Account!View_English_1');
       expect(result.warnings).to.include.members([
-        "The type 'Customer-Profile@' will be changed to 'CustomerProfile'",
-        "The sub type 'Account!View' will be changed to 'AccountView'",
+        'The OmniScript type will be changed from Customer-Profile@ to CustomerProfile',
+        'The OmniScript sub type will be changed from Account!View to AccountView',
       ]);
       expect(result.migrationStatus).to.equal('Warnings');
     });
@@ -253,7 +253,7 @@ describe('OmniScript Standard Data Model (Metadata API Disabled) - Assessment an
       );
 
       expect(result.warnings).to.include('Reserved keys found in PropertySet: Request, Response');
-      expect(result.migrationStatus).to.equal('Needs Manual Intervention');
+      expect(result.migrationStatus).to.equal('Needs manual intervention');
     });
   });
 
@@ -541,8 +541,9 @@ describe('OmniScript Standard Data Model (Metadata API Disabled) - Assessment an
 
       // Should have warnings for special character cleaning
       expect(result.warnings).to.include.members([
-        "The type 'Complex-Type!' will be changed to 'ComplexType'",
-        "The sub type 'Test@SubType' will be changed to 'TestSubType'",
+        'The OmniScript type will be changed from Complex-Type! to ComplexType',
+        'The OmniScript sub type will be changed from Test@SubType to TestSubType',
+        'The OmniScript name will be changed from ComplexOmniScript@ to ComplexOmniScript',
       ]);
     });
 

@@ -125,16 +125,16 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
           ])
         );
       } catch (error) {
-        let status: 'Failed' | 'Needs Manual Intervention' | 'Skipped' = 'Failed';
+        let status: 'Failed' | 'Needs manual intervention' | 'Skipped' = 'Failed';
         if (error instanceof KeyNotFoundInStorageError) {
           errors.add(`${error.componentType} ${error.key} can't be migrated`);
-          status = mode === 'assess' ? 'Needs Manual Intervention' : 'Skipped';
+          status = mode === 'assess' ? 'Needs manual intervention' : 'Skipped';
         } else if (error instanceof TargetPropertyNotFoundError) {
           errors.add(error.message);
-          status = mode === 'assess' ? 'Needs Manual Intervention' : 'Skipped';
+          status = mode === 'assess' ? 'Needs manual intervention' : 'Skipped';
         } else if (error instanceof DuplicateKeyError) {
           errors.add(`${error.componentType} ${error.key} is duplicate`);
-          status = mode === 'assess' ? 'Needs Manual Intervention' : 'Skipped';
+          status = mode === 'assess' ? 'Needs manual intervention' : 'Skipped';
         } else {
           errors.add(this.messages.getMessage('errorProcessingFlexiPage', [file, error]));
           status = 'Failed';

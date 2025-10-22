@@ -175,11 +175,12 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     const progressBar = createProgressBar('Assessing', 'Flexcards');
     progressBar.start(flexCards.length, progressCounter);
     const uniqueNames = new Set<string>();
+    const dupFlexCardNames: Map<string, string> = new Map<string, string>();
 
     // Now process each OmniScript and its elements
     for (const flexCard of flexCards) {
       try {
-        const flexCardAssessmentInfo = await this.processFlexCard(flexCard, uniqueNames);
+        const flexCardAssessmentInfo = await this.processFlexCard(flexCard, uniqueNames, dupFlexCardNames);
         flexCardAssessmentInfos.push(flexCardAssessmentInfo);
       } catch (e) {
         flexCardAssessmentInfos.push({
@@ -206,7 +207,11 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     return flexCardAssessmentInfos;
   }
 
-  private async processFlexCard(flexCard: AnyJson, uniqueNames: Set<string>): Promise<FlexCardAssessmentInfo> {
+  private async processFlexCard(
+    flexCard: AnyJson,
+    uniqueNames: Set<string>,
+    dupFlexCardNames: Map<string, string>
+  ): Promise<FlexCardAssessmentInfo> {
     const flexCardName = flexCard['Name'];
     Logger.info(this.messages.getMessage('processingFlexCard', [flexCardName]));
     const version = flexCard[this.getFieldKey(CardMigrationTool.VERSION_PROP)];
@@ -229,7 +234,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     // Check for name changes due to API naming requirements
     const originalName: string = flexCardName;
     const cleanedName: string = this.cleanName(originalName);
-    let assessmentStatus: 'Ready for migration' | 'Warnings' | 'Needs Manual Intervention' | 'Failed' =
+    let assessmentStatus: 'Ready for migration' | 'Warnings' | 'Needs manual intervention' | 'Failed' =
       'Ready for migration';
     flexCardAssessmentInfo.name = this.allVersions ? `${cleanedName}_${version}` : cleanedName;
     if (cleanedName !== originalName) {
@@ -239,12 +244,31 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       assessmentStatus = getUpdatedAssessmentStatus(assessmentStatus, 'Warnings');
     }
 
-    // Check for duplicate names
-    if (uniqueNames.has(cleanedName)) {
-      flexCardAssessmentInfo.warnings.push(this.messages.getMessage('duplicateCardNameMessage', [cleanedName]));
-      assessmentStatus = getUpdatedAssessmentStatus(assessmentStatus, 'Needs Manual Intervention');
+    // Check for duplicate names (include version when allVersions is true)
+    const uniqueCleanedName = this.allVersions ? `${cleanedName}_${version}` : cleanedName;
+
+    // Check for exact duplicate (same name + same version)
+    if (uniqueNames.has(uniqueCleanedName)) {
+      flexCardAssessmentInfo.warnings.push(this.messages.getMessage('duplicateCardNameMessage', [uniqueCleanedName]));
+      assessmentStatus = getUpdatedAssessmentStatus(assessmentStatus, 'Needs manual intervention');
     }
-    uniqueNames.add(cleanedName);
+    // Check for naming conflict: different original names cleaning to same name
+    else if (this.allVersions && dupFlexCardNames.has(cleanedName)) {
+      const existingOriginalName = dupFlexCardNames.get(cleanedName);
+      // Only flag if the original names are different (indicates a naming conflict)
+      if (existingOriginalName !== originalName) {
+        flexCardAssessmentInfo.warnings.push(
+          this.messages.getMessage('lowerVersionDuplicateCardNameMessage', [uniqueCleanedName])
+        );
+        assessmentStatus = getUpdatedAssessmentStatus(assessmentStatus, 'Needs manual intervention');
+      }
+    }
+
+    // Add to tracking structures
+    uniqueNames.add(uniqueCleanedName);
+    if (this.allVersions && !dupFlexCardNames.has(cleanedName)) {
+      dupFlexCardNames.set(cleanedName, originalName);
+    }
 
     // Check for author name changes
     const originalAuthor = flexCard[this.getFieldKey('Author__c')];
@@ -325,8 +349,12 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
             this.messages.getMessage('integrationProcedureManualUpdateMessage', [originalIpMethod])
           );
           flexCardAssessmentInfo.migrationStatus = getUpdatedAssessmentStatus(
-            flexCardAssessmentInfo.migrationStatus,
-            'Needs Manual Intervention'
+            flexCardAssessmentInfo.migrationStatus as
+              | 'Warnings'
+              | 'Needs manual intervention'
+              | 'Ready for migration'
+              | 'Failed',
+            'Needs manual intervention'
           );
         }
       }
@@ -537,6 +565,28 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         const customLwcName = component.property.customlwcname;
         Logger.info(`Custom LWC name: ${customLwcName}`);
 
+        // Check if this is a FlexCard reference (starts with "cf" prefix)
+        if (customLwcName.startsWith('cf')) {
+          // Remove "cf" prefix to get the original FlexCard name
+          const originalFlexCardName = customLwcName.substring(2);
+
+          // Check if the FlexCard name will change and add warning
+          const cleanedFlexCardName = this.cleanName(originalFlexCardName);
+          if (originalFlexCardName !== cleanedFlexCardName) {
+            flexCardAssessmentInfo.warnings.push(
+              this.messages.getMessage('cardLWCNameChangeMessage', [originalFlexCardName, cleanedFlexCardName])
+            );
+            flexCardAssessmentInfo.migrationStatus = getUpdatedAssessmentStatus(
+              flexCardAssessmentInfo.migrationStatus as
+                | 'Warnings'
+                | 'Needs manual intervention'
+                | 'Ready for migration'
+                | 'Failed',
+              'Warnings'
+            );
+          }
+        }
+        // Regular custom LWC (and FlexCard reference)
         // Avoid duplicates
         if (!flexCardAssessmentInfo.dependenciesLWC.includes(customLwcName)) {
           flexCardAssessmentInfo.dependenciesLWC.push(customLwcName);
@@ -726,11 +776,13 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     const cardsUploadInfo = new Map<string, UploadRecordResult>();
     const originalRecords = new Map<string, any>();
     const uniqueNames = new Set<string>();
+    // Map to track cleanedName -> originalName for duplicate detection
+    const dupFlexCardNames: Map<string, string> = new Map<string, string>();
 
     let progressCounter = 0;
     progressBar.start(cards.length, progressCounter);
     for (let card of cards) {
-      await this.uploadCard(cards, card, cardsUploadInfo, originalRecords, uniqueNames);
+      await this.uploadCard(cards, card, cardsUploadInfo, originalRecords, uniqueNames, dupFlexCardNames);
       progressBar.update(++progressCounter);
     }
 
@@ -746,7 +798,8 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     card: AnyJson,
     cardsUploadInfo: Map<string, UploadRecordResult>,
     originalRecords: Map<string, any>,
-    uniqueNames: Set<string>
+    uniqueNames: Set<string>,
+    dupFlexCardNames: Map<string, string>
   ) {
     const recordId = card['Id'];
 
@@ -763,7 +816,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           // Upload child cards
           const childCard = allCards.find((c) => c['Name'] === childCardName);
           if (childCard) {
-            await this.uploadCard(allCards, childCard, cardsUploadInfo, originalRecords, uniqueNames);
+            await this.uploadCard(allCards, childCard, cardsUploadInfo, originalRecords, uniqueNames, dupFlexCardNames);
           }
         }
 
@@ -783,14 +836,36 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       }
       const transformedCardAuthorName = transformedCard['AuthorName'];
 
-      if (uniqueNames.has(transformedCard['Name'])) {
-        this.setRecordErrors(card, this.messages.getMessage('duplicatedCardName', [transformedCard['Name']]));
+      // Check for duplicates using version-aware name when allVersions is true
+      const uniqueCheckName = this.allVersions
+        ? `${transformedCard['Name']}_${transformedCard['VersionNumber']}`
+        : transformedCard['Name'];
+
+      const originalCardName = card['Name'];
+      const cleanedCardName = transformedCard['Name'];
+
+      // Check for exact duplicate (same name + same version)
+      if (uniqueNames.has(uniqueCheckName)) {
+        this.setRecordErrors(card, this.messages.getMessage('duplicatedCardName', [uniqueCheckName]));
         originalRecords.set(recordId, card);
         return;
       }
+      // Check for naming conflict: different original names cleaning to same name
+      else if (this.allVersions && dupFlexCardNames.has(cleanedCardName)) {
+        const existingOriginalName = dupFlexCardNames.get(cleanedCardName);
+        // Only flag if the original names are different (indicates a naming conflict)
+        if (existingOriginalName !== originalCardName) {
+          this.setRecordErrors(card, this.messages.getMessage('lowerVersionDuplicateCardName', [uniqueCheckName]));
+          originalRecords.set(recordId, card);
+          return;
+        }
+      }
 
-      // Save the name for duplicated names check
-      uniqueNames.add(transformedCard['Name']);
+      // Add to tracking structures
+      uniqueNames.add(uniqueCheckName);
+      if (this.allVersions && !dupFlexCardNames.has(cleanedCardName)) {
+        dupFlexCardNames.set(cleanedCardName, originalCardName);
+      }
 
       // Create a map of the original records
       originalRecords.set(recordId, card);
@@ -1279,9 +1354,26 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       }
     }
 
-    // Handle Custom LWC components (no cleaning needed typically)
+    // Handle Custom LWC components - special case for FlexCard references
     if (component.element === 'customLwc' && component.property) {
-      // Note: Custom LWC names typically don't need cleaning
+      if (component.property.customlwcname) {
+        const customLwcName = component.property.customlwcname;
+
+        // Check if this is a FlexCard reference (starts with "cf" prefix)
+        if (customLwcName?.startsWith('cf')) {
+          // Remove "cf" prefix to get the original FlexCard name
+          const originalFlexCardName = customLwcName.substring(2);
+
+          // Look up the cleaned name from registry
+          const cleanedFlexCardName = this.nameRegistry.getFlexCardCleanedName(originalFlexCardName);
+          // Update the customlwcname with the cleaned FlexCard name
+          component.property.customlwcname = `cf${cleanedFlexCardName}`;
+          Logger.logVerbose(
+            this.messages.getMessage('customLWCFlexCardReferenceUpdated', [customLwcName, cleanedFlexCardName])
+          );
+        }
+        // Note: Other custom LWC names (not starting with "cf") typically don't need cleaning
+      }
     }
 
     // Handle standard component actions (like assessment)
