@@ -1,73 +1,163 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 import { expect } from 'chai';
-import * as sinon from 'sinon';
-import { JavaScriptParser } from '../../../../src/utils/lwcparser/jsParser/JavaScriptParser'; // Adjust the path as necessary
-
-const mockFilePath = 'test/utils/lwc/parser/input/test.js';
+import { JavaScriptParser } from '../../../../src/utils/lwcparser/jsParser/JavaScriptParser';
 
 describe('JavaScriptParser', () => {
   let parser: JavaScriptParser;
-  let readFileSyncStub: sinon.SinonStub;
-  let writeFileSyncStub: sinon.SinonStub;
-  // let consoleLogStub: sinon.SinonStub;
+  let tempDir: string;
+  let tempFiles: string[];
 
   beforeEach(() => {
     parser = new JavaScriptParser();
-    // Stub fs methods
-    readFileSyncStub = sinon.stub(fs, 'readFileSync');
-    writeFileSyncStub = sinon.stub(fs, 'writeFileSync');
-    // consoleLogStub = sinon.stub(console, 'log');
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'js-parser-test-'));
+    tempFiles = [];
   });
 
   afterEach(() => {
-    // Restore the original methods after each test
-    sinon.restore();
+    // Clean up temp files
+    tempFiles.forEach((file) => {
+      try {
+        fs.unlinkSync(file);
+      } catch {
+        // Ignore errors
+      }
+    });
+    try {
+      fs.rmdirSync(tempDir);
+    } catch {
+      // Ignore errors
+    }
   });
 
-  it('should read the file content', () => {
-    const mockFileContent = `
-      import something from 'oldSource/module';
-    `;
+  // Helper to create a temp file with content
+  const createTempFile = (filename: string, content: string): string => {
+    const filePath = path.join(tempDir, filename);
+    fs.writeFileSync(filePath, content, 'utf-8');
+    tempFiles.push(filePath);
+    return filePath;
+  };
 
-    // Mock file reading
-    readFileSyncStub.returns(mockFileContent);
+  describe('Basic functionality', () => {
+    it('should return null when file contains "Generated class DO NOT MODIFY"', () => {
+      const mockFileContent = '// Generated class DO NOT MODIFY\nimport something from "test/module";';
+      const testFile = createTempFile('test1.js', mockFileContent);
 
-    parser.replaceImportSource(mockFilePath, 'vlocity_ins');
+      const result = parser.replaceImportSource(testFile, 'test');
 
-    // Assert that readFileSync was called with correct arguments
-    expect(readFileSyncStub.calledWith(mockFilePath, 'utf-8')).to.be.false;
+      expect(result).to.be.null;
+    });
+
+    it('should return null when file does not contain the namespace', () => {
+      const mockFileContent = 'import something from "other/module";';
+      const testFile = createTempFile('test2.js', mockFileContent);
+
+      const result = parser.replaceImportSource(testFile, 'vlocity_ins');
+
+      expect(result).to.be.null;
+    });
   });
 
-  it('should replace import source correctly', () => {
-    const mockFileContent = `
-      import something from 'vlocity_ins/module';
-    `;
+  describe('PubSub module replacement', () => {
+    it('should replace pubsub module with lightning/omnistudioPubsub', () => {
+      const mockFileContent = `import pubsub from 'vlocity_ins/pubsub';
+import OtherModule from 'vlocity_ins/otherModule';`;
 
-    // Mock file reading and writing
-    readFileSyncStub.returns(mockFileContent);
+      const testFile = createTempFile('test3.js', mockFileContent);
 
-    parser.replaceImportSource(mockFilePath, 'oldSource');
+      const result = parser.replaceImportSource(testFile, 'vlocity_ins');
 
-    // Assert that writeFileSync was called and content was modified
-    expect(writeFileSyncStub.calledOnce).to.be.false;
+      expect(result).to.not.be.null;
+      const modifiedContent = result.get('modified');
+
+      expect(modifiedContent).to.include("import pubsub from 'lightning/omnistudioPubsub'");
+      expect(modifiedContent).to.include("import OtherModule from 'c/otherModule'");
+    });
+
+    it('should handle multiple pubsub imports correctly', () => {
+      const mockFileContent = `import pubsub from 'vlocity_cmt/pubsub';
+import { something } from 'vlocity_cmt/utils';
+import anotherPubsub from 'vlocity_cmt/pubsub';`;
+
+      const testFile = createTempFile('test4.js', mockFileContent);
+
+      const result = parser.replaceImportSource(testFile, 'vlocity_cmt');
+
+      expect(result).to.not.be.null;
+      const modifiedContent = result.get('modified');
+
+      expect(modifiedContent).to.include("import pubsub from 'lightning/omnistudioPubsub'");
+      expect(modifiedContent).to.include("import anotherPubsub from 'lightning/omnistudioPubsub'");
+      expect(modifiedContent).to.include("import { something } from 'c/utils'");
+    });
+
+    it('should handle different quote styles in imports', () => {
+      const mockFileContent = `import pubsub from "vlocity_ins/pubsub";
+import OtherModule from 'vlocity_ins/otherModule';`;
+
+      const testFile = createTempFile('test5.js', mockFileContent);
+
+      const result = parser.replaceImportSource(testFile, 'vlocity_ins');
+
+      expect(result).to.not.be.null;
+      const modifiedContent = result.get('modified');
+
+      expect(modifiedContent).to.include('lightning/omnistudioPubsub');
+      expect(modifiedContent).to.include('c/otherModule');
+    });
   });
 
-  /*
-  it('should log the correct replacement message', () => {
-    const mockFileContent = `
-      import something from 'oldSource/module';
-    `;
+  describe('Namespace replacement', () => {
+    it('should replace namespace with "c" for non-pubsub modules', () => {
+      const mockFileContent = `import { something } from 'vlocity_ins/utils';
+import OtherModule from 'vlocity_ins/otherModule';`;
 
-    // Mock file reading
-    readFileSyncStub.returns(mockFileContent);
+      const testFile = createTempFile('test6.js', mockFileContent);
 
-    parser.replaceImportSource(mockFilePath, 'oldSource');
-    parser.saveToFile(mockFilePath, parser.replaceImportSource(mockFilePath, 'oldSource').get('modified'));
+      const result = parser.replaceImportSource(testFile, 'vlocity_ins');
 
-    // Assert that console.log was called with the correct message
-    expect(consoleLogStub.calledOnce).to.be.true;
+      expect(result).to.not.be.null;
+      const modifiedContent = result.get('modified');
+
+      expect(modifiedContent).to.include("import { something } from 'c/utils'");
+      expect(modifiedContent).to.include("import OtherModule from 'c/otherModule'");
+    });
+
+    it('should not modify imports that do not match the namespace', () => {
+      const mockFileContent = `import pubsub from 'vlocity_ins/pubsub';
+import OtherModule from 'different_namespace/module';`;
+
+      const testFile = createTempFile('test7.js', mockFileContent);
+
+      const result = parser.replaceImportSource(testFile, 'vlocity_ins');
+
+      expect(result).to.not.be.null;
+      const modifiedContent = result.get('modified');
+
+      expect(modifiedContent).to.include("import pubsub from 'lightning/omnistudioPubsub'");
+      expect(modifiedContent).to.include("import OtherModule from 'different_namespace/module'");
+    });
   });
-  */
+
+  describe('File saving', () => {
+    it('should save modified content to file', () => {
+      const testContent = 'test content';
+      const testFile = createTempFile('test8.js', '');
+
+      parser.saveToFile(testFile, testContent);
+
+      const savedContent = fs.readFileSync(testFile, 'utf-8');
+      expect(savedContent).to.equal(testContent);
+    });
+
+    it('should throw error when file write fails', () => {
+      const testContent = 'test content';
+      const invalidPath = '/invalid/path/that/does/not/exist/test.js';
+
+      expect(() => parser.saveToFile(invalidPath, testContent)).to.throw();
+    });
+  });
 });

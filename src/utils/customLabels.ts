@@ -83,7 +83,7 @@ export class CustomLabelsUtil {
       const warnings = processedLabels.filter((label) => label.assessmentStatus === 'Warnings');
 
       const needsManualIntervention = processedLabels.filter(
-        (label) => label.assessmentStatus === 'Needs Manual Intervention'
+        (label) => label.assessmentStatus === 'Needs manual intervention'
       );
 
       const failed = processedLabels.filter((label) => label.assessmentStatus === 'Failed');

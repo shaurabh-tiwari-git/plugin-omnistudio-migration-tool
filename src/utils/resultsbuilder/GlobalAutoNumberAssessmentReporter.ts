@@ -62,10 +62,10 @@ export class GlobalAutoNumberAssessmentReporter {
         cssClass: 'text-warning',
       },
       {
-        name: 'Needs Manual Intervention',
+        name: 'Needs manual intervention',
         count: globalAutoNumberAssessmentInfos.filter(
           (globalAutoNumberAssessmentInfo) =>
-            this.getMigrationStatus(globalAutoNumberAssessmentInfo) === 'Needs Manual Intervention'
+            this.getMigrationStatus(globalAutoNumberAssessmentInfo) === 'Needs manual intervention'
         ).length,
         cssClass: 'text-error',
       },
@@ -170,7 +170,7 @@ export class GlobalAutoNumberAssessmentReporter {
             false,
             undefined,
             undefined,
-            this.getMigrationStatus(globalAutoNumberAssessmentInfo) === 'Needs Manual Intervention' ||
+            this.getMigrationStatus(globalAutoNumberAssessmentInfo) === 'Needs manual intervention' ||
               this.getMigrationStatus(globalAutoNumberAssessmentInfo) === 'Failed'
               ? 'invalid-icon'
               : ''
@@ -213,7 +213,7 @@ export class GlobalAutoNumberAssessmentReporter {
 
   private static getMigrationStatus(globalAutoNumberAssessmentInfo: GlobalAutoNumberAssessmentInfo): string {
     if (globalAutoNumberAssessmentInfo.errors && globalAutoNumberAssessmentInfo.errors.length > 0) {
-      return 'Needs Manual Intervention';
+      return 'Needs manual intervention';
     }
     if (globalAutoNumberAssessmentInfo.warnings && globalAutoNumberAssessmentInfo.warnings.length > 0) {
       return 'Warnings';

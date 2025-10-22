@@ -10,6 +10,8 @@ import { FileConstant } from '../fileutils/FileConstant';
 import { Logger } from '../../logger';
 
 const DEFAULT_NAMESPACE = 'c';
+const PUBSUB_MODULE = 'pubsub';
+const OMNISTUDIO_PUBSUB_MODULE = 'lightning/omnistudioPubsub';
 
 export class JavaScriptParser {
   // Function to replace strings in import declarations and write back to file
@@ -43,9 +45,14 @@ export class JavaScriptParser {
 
         // Check if the import source contains the old substring
         if (importSource.includes(oldSource + '/')) {
-          // Replace the old substring with the new substring
-          const updatedSource = importSource.replace(oldSource, DEFAULT_NAMESPACE);
-          replacements.push({ original: importSource, updated: updatedSource });
+          // Special handling for pubsub module - replace with lightning/omnistudioPubsub
+          if (importSource.endsWith('/' + PUBSUB_MODULE)) {
+            replacements.push({ original: importSource, updated: OMNISTUDIO_PUBSUB_MODULE });
+          } else {
+            // Replace the old substring with the new substring (default namespace 'c')
+            const updatedSource = importSource.replace(oldSource, DEFAULT_NAMESPACE);
+            replacements.push({ original: importSource, updated: updatedSource });
+          }
         }
       },
     });

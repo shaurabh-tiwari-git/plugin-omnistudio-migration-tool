@@ -236,7 +236,7 @@ describe('ApexMigration', () => {
           ],
         ]),
       };
-      const ipNameUpdateFailed = new Set<string>();
+      const ipNameUpdateFailed = new Set<string | number>();
 
       // Act
       const result = (apexMigration as any).processApexFileForMethodCalls(mockFile, mockParser, ipNameUpdateFailed);
@@ -259,13 +259,13 @@ describe('ApexMigration', () => {
           [
             1, // ParameterType.IP_NAME
             [
-              { text: 'invalidFormat', startIndex: 100, stopIndex: 110 },
-              { text: 'testNamespace_IntegrationProcedure1', startIndex: 150, stopIndex: 180 },
+              { text: 'invalidFormat', startIndex: 100, stopIndex: 110, line: 5 },
+              { text: 'testNamespace_IntegrationProcedure1', startIndex: 150, stopIndex: 180, line: 6 },
             ],
           ],
         ]),
       };
-      const ipNameUpdateFailed = new Set<string>();
+      const ipNameUpdateFailed = new Set<string | number>();
 
       // Act
       const result = (apexMigration as any).processApexFileForMethodCalls(mockFile, mockParser, ipNameUpdateFailed);
@@ -274,7 +274,7 @@ describe('ApexMigration', () => {
       expect(result).to.be.an('array').with.length(1);
       expect(result[0].constructor.name).to.equal('SingleTokenUpdate');
       expect(result[0].newText).to.equal("'testNamespace_IntegrationProcedure1'");
-      expect(ipNameUpdateFailed.has('invalidFormat')).to.be.true;
+      expect(ipNameUpdateFailed.has(5)).to.be.true; // Changed to expect line number instead of text
       expect(ipNameUpdateFailed.size).to.equal(1);
     });
 
@@ -290,7 +290,7 @@ describe('ApexMigration', () => {
           ],
         ]),
       };
-      const ipNameUpdateFailed = new Set<string>();
+      const ipNameUpdateFailed = new Set<string | number>();
 
       // Act
       const result = (apexMigration as any).processApexFileForMethodCalls(mockFile, mockParser, ipNameUpdateFailed);
@@ -311,18 +311,18 @@ describe('ApexMigration', () => {
         methodParameters: new Map([
           [
             1, // ParameterType.IP_NAME
-            [{ text: 'part1_part2_part3', startIndex: 100, stopIndex: 115 }],
+            [{ text: 'part1_part2_part3', startIndex: 100, stopIndex: 115, line: 7 }],
           ],
         ]),
       };
-      const ipNameUpdateFailed = new Set<string>();
+      const ipNameUpdateFailed = new Set<string | number>();
 
       // Act
       const result = (apexMigration as any).processApexFileForMethodCalls(mockFile, mockParser, ipNameUpdateFailed);
 
       // Assert
       expect(result).to.be.an('array').with.length(0);
-      expect(ipNameUpdateFailed.has('part1_part2_part3')).to.be.true;
+      expect(ipNameUpdateFailed.has(7)).to.be.true; // Changed to expect line number instead of text
       expect(ipNameUpdateFailed.size).to.equal(1);
     });
 
@@ -338,7 +338,7 @@ describe('ApexMigration', () => {
           ],
         ]),
       };
-      const ipNameUpdateFailed = new Set<string>();
+      const ipNameUpdateFailed = new Set<string | number>();
 
       // Act
       const result = (apexMigration as any).processApexFileForMethodCalls(mockFile, mockParser, ipNameUpdateFailed);
@@ -355,7 +355,7 @@ describe('ApexMigration', () => {
         namespaceChanges: new Map([['testNamespace', [{ text: 'testNamespace', startIndex: 50, stopIndex: 60 }]]]),
         methodParameters: new Map(),
       };
-      const ipNameUpdateFailed = new Set<string>();
+      const ipNameUpdateFailed = new Set<string | number>();
 
       // Act
       const result = (apexMigration as any).processApexFileForMethodCalls(mockFile, mockParser, ipNameUpdateFailed);
@@ -373,7 +373,7 @@ describe('ApexMigration', () => {
         namespaceChanges: new Map(),
         methodParameters: new Map(),
       };
-      const ipNameUpdateFailed = new Set<string>();
+      const ipNameUpdateFailed = new Set<string | number>();
 
       // Act
       const result = (apexMigration as any).processApexFileForMethodCalls(mockFile, mockParser, ipNameUpdateFailed);
@@ -412,7 +412,7 @@ describe('ApexMigration', () => {
         ipVarInMethodCalls: ['ipVar1', 'ipVar2'],
         dmVarInMethodCalls: [],
       };
-      const ipNameUpdateFailed = new Set<string>();
+      const ipNameUpdateFailed = new Set<string | number>();
       const dmNameUpdateFailed = new Set<string>();
 
       // Act
@@ -433,13 +433,13 @@ describe('ApexMigration', () => {
       // Arrange
       const mockParser = {
         simpleVarDeclarations: new Map([
-          ['ipVar1', { text: "'invalidFormat'", startIndex: 100, stopIndex: 110 }],
-          ['ipVar2', { text: "'testNamespace_IntegrationProcedure1'", startIndex: 150, stopIndex: 180 }],
+          ['ipVar1', { text: "'invalidFormat'", startIndex: 100, stopIndex: 110, line: 8 }],
+          ['ipVar2', { text: "'testNamespace_IntegrationProcedure1'", startIndex: 150, stopIndex: 180, line: 9 }],
         ]),
         ipVarInMethodCalls: ['ipVar1', 'ipVar2'],
         dmVarInMethodCalls: [],
       };
-      const ipNameUpdateFailed = new Set<string>();
+      const ipNameUpdateFailed = new Set<string | number>();
       const dmNameUpdateFailed = new Set<string>();
 
       // Act
@@ -452,7 +452,7 @@ describe('ApexMigration', () => {
       // Assert
       // Since the original text doesn't have special characters, newName equals oldName, so no updates are made
       expect(result).to.be.an('array').with.length(0);
-      expect(ipNameUpdateFailed.has('ipVar1')).to.be.true;
+      expect(ipNameUpdateFailed.has(8)).to.be.true; // Changed to expect line number instead of text
       expect(ipNameUpdateFailed.size).to.equal(1);
       expect(dmNameUpdateFailed.size).to.equal(0);
     });
@@ -466,7 +466,7 @@ describe('ApexMigration', () => {
         ipVarInMethodCalls: ['ipVar1', 'missingVar'],
         dmVarInMethodCalls: [],
       };
-      const ipNameUpdateFailed = new Set<string>();
+      const ipNameUpdateFailed = new Set<string | number>();
       const dmNameUpdateFailed = new Set<string>();
 
       // Act
@@ -494,7 +494,7 @@ describe('ApexMigration', () => {
         ipVarInMethodCalls: [],
         dmVarInMethodCalls: ['dmVar1', 'dmVar2'],
       };
-      const ipNameUpdateFailed = new Set<string>();
+      const ipNameUpdateFailed = new Set<string | number>();
       const dmNameUpdateFailed = new Set<string>();
 
       // Act
@@ -523,7 +523,7 @@ describe('ApexMigration', () => {
         ipVarInMethodCalls: [],
         dmVarInMethodCalls: ['dmVar1', 'missingDmVar'],
       };
-      const ipNameUpdateFailed = new Set<string>();
+      const ipNameUpdateFailed = new Set<string | number>();
       const dmNameUpdateFailed = new Set<string>();
 
       // Act
@@ -551,7 +551,7 @@ describe('ApexMigration', () => {
         ipVarInMethodCalls: ['ipVar1'],
         dmVarInMethodCalls: [],
       };
-      const ipNameUpdateFailed = new Set<string>();
+      const ipNameUpdateFailed = new Set<string | number>();
       const dmNameUpdateFailed = new Set<string>();
 
       // Act
@@ -578,7 +578,7 @@ describe('ApexMigration', () => {
         ipVarInMethodCalls: ['ipVar1'],
         dmVarInMethodCalls: ['dmVar1'],
       };
-      const ipNameUpdateFailed = new Set<string>();
+      const ipNameUpdateFailed = new Set<string | number>();
       const dmNameUpdateFailed = new Set<string>();
 
       // Act
@@ -604,7 +604,7 @@ describe('ApexMigration', () => {
         ipVarInMethodCalls: [],
         dmVarInMethodCalls: [],
       };
-      const ipNameUpdateFailed = new Set<string>();
+      const ipNameUpdateFailed = new Set<string | number>();
       const dmNameUpdateFailed = new Set<string>();
 
       // Act

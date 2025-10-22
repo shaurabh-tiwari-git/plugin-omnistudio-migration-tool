@@ -289,7 +289,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
 
     if (currentAttribute.target === undefined || currentAttribute.target === '') {
       experienceSiteAssessmentInfo.warnings.push(this.messages.getMessage('emptyTargetData'));
-      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs Manual Intervention' : 'Skipped';
+      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs manual intervention' : 'Skipped';
       return;
     }
 
@@ -321,7 +321,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     if (this.shouldAddWarning(targetDataFromStorageFC)) {
       const warningMsg: string = this.getWarningMessage(flexcardName, targetDataFromStorageFC);
       experienceSiteAssessmentInfo.warnings.push(warningMsg);
-      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs Manual Intervention' : 'Skipped';
+      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs manual intervention' : 'Skipped';
     } else {
       component.componentName = TARGET_COMPONENT_NAME_FC;
 
@@ -351,7 +351,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     if (this.shouldAddWarning(targetDataFromStorage)) {
       const warningMsg: string = this.getWarningMessage(targetName, targetDataFromStorage);
       experienceSiteAssessmentInfo.warnings.push(warningMsg);
-      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs Manual Intervention' : 'Skipped';
+      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs manual intervention' : 'Skipped';
     } else {
       component.componentName = TARGET_COMPONENT_NAME_OS;
 
@@ -428,7 +428,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
         experienceSiteAssessmentInfo.name,
       ]);
       experienceSiteAssessmentInfo.warnings.push(warningMsg);
-      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs Manual Intervention' : 'Skipped';
+      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs manual intervention' : 'Skipped';
       return;
     }
 
@@ -445,7 +445,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       const originalKey = `${currentType}_${currentSubType}_${currentLanguage}`;
       const warningMsg: string = this.getWarningMessage(originalKey, targetDataFromStorage);
       experienceSiteAssessmentInfo.warnings.push(warningMsg);
-      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs Manual Intervention' : 'Skipped';
+      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs manual intervention' : 'Skipped';
     } else {
       // Update the attributes with the new values from storage
       attributes['type'] = targetDataFromStorage.type;
@@ -475,7 +475,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     if (this.shouldAddWarning(targetDataFromStorageFC)) {
       const warningMsg: string = this.getWarningMessage(currentFlexCardName, targetDataFromStorageFC);
       experienceSiteAssessmentInfo.warnings.push(warningMsg);
-      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs Manual Intervention' : 'Skipped';
+      experienceSiteAssessmentInfo.status = type === this.ASSESS ? 'Needs manual intervention' : 'Skipped';
     } else {
       // Update the flexcardName with the new value from storage
       attributes['flexcardName'] = targetDataFromStorageFC.name;

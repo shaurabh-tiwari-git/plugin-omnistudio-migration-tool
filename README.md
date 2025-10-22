@@ -114,7 +114,7 @@ sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM --only=autonum
 
 ```
 USAGE
-  $ sf omnistudio:migration:assess [-f] [-v <string>] [-u <string>] [--loglevel
+  $ sf omnistudio:migration:assess [-v <string>] [-u <string>] [--loglevel
   trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 OPTIONS
@@ -149,7 +149,7 @@ OPTIONS
 
 ```
 USAGE
-  $ sf omnistudio:migration:migrate [-f] [-v <string>] [-u <string>] [--loglevel
+  $ sf omnistudio:migration:migrate [-v <string>] [-u <string>] [--loglevel
   trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
 
 OPTIONS

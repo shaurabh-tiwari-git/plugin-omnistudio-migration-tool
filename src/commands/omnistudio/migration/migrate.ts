@@ -399,6 +399,7 @@ export default class Migrate extends OmniStudioBaseCommand {
               name: r.name,
               data: this.mergeRecordAndUploadResults(r, cls),
               errors: r.errors,
+              totalCount: r.totalCount, // Preserve totalCount for custom labels
             };
           })
         );
@@ -690,38 +691,59 @@ export default class Migrate extends OmniStudioBaseCommand {
     const mergedResults: MigratedRecordInfo[] = [];
 
     for (const record of Array.from(migrationResults.records.values())) {
-      const obj: MigratedRecordInfo = {
-        id: record['Id'],
-        name: migrationTool.getRecordName(record),
-        status: 'Skipped',
-        errors: record['errors'],
-        migratedId: undefined,
-        warnings: [],
-        migratedName: '',
-        localizationStatus: record['localizationStatus'] || {},
-      };
+      // For custom labels, preserve all the custom fields
+      if (migrationTool.getName().toLowerCase().includes(Constants.CustomLabelPluralName.toLowerCase())) {
+        // Use the record as-is for custom labels since it already has all the needed fields
+        const customLabelRecord = record;
+        mergedResults.push({
+          id: customLabelRecord.id || customLabelRecord.name,
+          name: customLabelRecord.name || customLabelRecord.labelName,
+          status: customLabelRecord.status || 'Skipped',
+          errors: customLabelRecord.errors || [],
+          migratedId: customLabelRecord.migratedId || customLabelRecord.id,
+          warnings: customLabelRecord.warnings || [],
+          migratedName: customLabelRecord.migratedName || customLabelRecord.name,
+          // Preserve custom fields for custom labels
+          coreInfo: customLabelRecord.coreInfo,
+          packageInfo: customLabelRecord.packageInfo,
+          message: customLabelRecord.message,
+          cloneStatus: customLabelRecord.cloneStatus,
+          labelName: customLabelRecord.labelName,
+        });
+      } else {
+        // Original logic for other components
+        const obj: MigratedRecordInfo = {
+          id: record['Id'],
+          name: migrationTool.getRecordName(record),
+          status: 'Skipped',
+          errors: record['errors'],
+          migratedId: undefined,
+          warnings: [],
+          migratedName: '',
+        };
 
-      if (migrationResults.results.has(record['Id'])) {
-        const recordResults = migrationResults.results.get(record['Id']);
+        if (migrationResults.results.has(record['Id'])) {
+          const recordResults = migrationResults.results.get(record['Id']);
 
-        let errors: any[] = obj.errors || [];
-        errors = errors.concat(recordResults.errors || []);
+          let errors: any[] = obj.errors || [];
+          errors = errors.concat(recordResults.errors || []);
 
-        if (recordResults?.skipped) {
-          obj.status = 'Skipped';
-        } else if (!recordResults || recordResults.hasErrors) {
-          obj.status = 'Failed';
-        } else {
-          obj.status = 'Successfully migrated';
+          if (recordResults?.skipped) {
+            obj.status = 'Skipped';
+          } else if (!recordResults || recordResults.hasErrors) {
+            obj.status = 'Failed';
+          } else {
+            obj.status = 'Successfully migrated';
+          }
+
+          obj.errors = errors;
+          obj.migratedId = recordResults.id;
+          obj.warnings = recordResults.warnings;
+          obj.migratedName = recordResults.newName;
         }
 
-        obj.errors = errors;
-        obj.migratedId = recordResults.id;
-        obj.warnings = recordResults.warnings;
-        obj.migratedName = recordResults.newName;
+        mergedResults.push(obj);
       }
-
-      mergedResults.push(obj);
     }
 
     return mergedResults;

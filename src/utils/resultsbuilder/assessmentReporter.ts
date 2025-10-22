@@ -452,7 +452,7 @@ export class AssessmentReporter {
             cssClass: 'text-warning',
           },
           {
-            name: 'Needs Manual Intervention',
+            name: 'Needs manual intervention',
             count: result.customLabelStatistics.needManualIntervention,
             cssClass: 'text-error',
           },

@@ -51,7 +51,7 @@ describe('DataRaptor Standard Data Model (Metadata API Disabled) - Assessment an
     mockMessages = {
       getMessage: sinon.stub().callsFake((key: string, params?: string[]) => {
         const messages: Record<string, string> = {
-          changeMessage: `The ${params?.[0]} '${params?.[1]}' will be changed to '${params?.[2]}'`,
+          changeMessage: `The ${params?.[0]} ${params?.[1]} will be changed from ${params?.[2]} to ${params?.[3]}`,
           dataMapperNameStartsWithNumber: `DataMapper name '${params?.[0]}' starts with a number, suggested name: '${params?.[1]}'`,
           duplicatedName: 'Duplicated name found',
           unexpectedError: 'An unexpected error occurred',
@@ -147,7 +147,7 @@ describe('DataRaptor Standard Data Model (Metadata API Disabled) - Assessment an
       const result = await (dataRaptorTool as any).processDataMappers(mockDataRaptor, new Set<string>(), new Map(), []);
 
       // Should require manual intervention for names starting with numbers
-      expect(result.migrationStatus).to.equal('Needs Manual Intervention');
+      expect(result.migrationStatus).to.equal('Needs manual intervention');
       expect(result.warnings).to.have.length.greaterThan(0);
       expect(result.warnings.some((warning) => warning.includes('3rdPartyDataLoader'))).to.be.true;
       expect(result.warnings.some((warning) => warning.includes('DM3rdPartyDataLoader'))).to.be.true;
@@ -168,7 +168,7 @@ describe('DataRaptor Standard Data Model (Metadata API Disabled) - Assessment an
       const result = await (dataRaptorTool as any).processDataMappers(mockDataRaptor, existingNames, new Map(), []);
 
       // Should require manual intervention for duplicated names
-      expect(result.migrationStatus).to.equal('Needs Manual Intervention');
+      expect(result.migrationStatus).to.equal('Needs manual intervention');
       expect(result.warnings).to.have.length.greaterThan(0);
       expect(result.warnings.some((warning) => warning.includes('Duplicated'))).to.be.true;
     });

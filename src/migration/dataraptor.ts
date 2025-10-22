@@ -23,6 +23,7 @@ import {
 import { StringVal } from '../utils/StringValue/stringval';
 import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
+import { Constants } from '../utils/constants/stringContants';
 import { isStandardDataModel } from '../utils/dataModelService';
 
 export class DataRaptorMigrationTool extends BaseMigrationTool implements MigrationTool {
@@ -354,11 +355,12 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     Logger.info(this.messages.getMessage('processingDataRaptor', [drName]));
     const warnings: string[] = [];
     const existingDRNameVal = new StringVal(drName, 'name');
-    let assessmentStatus: 'Ready for migration' | 'Warnings' | 'Needs Manual Intervention' = 'Ready for migration';
+    let assessmentStatus: 'Ready for migration' | 'Warnings' | 'Needs manual intervention' = 'Ready for migration';
 
     if (!existingDRNameVal.isNameCleaned()) {
       warnings.push(
         this.messages.getMessage('changeMessage', [
+          Constants.DataMapperComponentName,
           existingDRNameVal.type,
           existingDRNameVal.val,
           existingDRNameVal.cleanName(),
@@ -370,12 +372,12 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     if (drName && /^[0-9]/.test(drName)) {
       const proposedName = 'DM' + this.cleanName(drName);
       warnings.push(this.messages.getMessage('dataMapperNameStartsWithNumber', [drName, proposedName]));
-      assessmentStatus = 'Needs Manual Intervention';
+      assessmentStatus = 'Needs manual intervention';
     }
 
     if (existingDataRaptorNames.has(existingDRNameVal.cleanName())) {
       warnings.push(this.messages.getMessage('duplicatedName') + '  ' + existingDRNameVal.cleanName());
-      assessmentStatus = 'Needs Manual Intervention';
+      assessmentStatus = 'Needs manual intervention';
     } else {
       existingDataRaptorNames.add(existingDRNameVal.cleanName());
     }

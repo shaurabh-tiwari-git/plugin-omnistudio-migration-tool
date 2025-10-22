@@ -56,6 +56,9 @@ export class ResultsBuilder {
 
   private static flexiPageFileSuffix = '.flexipage-meta.xml';
 
+  private static successStatus = ['Ready for migration', 'Complete', 'Successfully migrated'];
+  private static errorStatus = ['Failed', 'Needs manual intervention'];
+
   public static async generateReport(
     results: MigratedObject[],
     relatedObjectMigrationResult: RelatedObjectAssesmentInfo,
@@ -253,7 +256,7 @@ export class ResultsBuilder {
     const customLabelMigrationInfos: CustomLabelMigrationInfo[] = [];
 
     if (result.data) {
-      result.data.forEach((record: any, index: number) => {
+      result.data.forEach((record: any) => {
         // Handle both old and new data formats
         const labelName = record.name || record.labelName;
         const cloneStatus =
@@ -264,14 +267,18 @@ export class ResultsBuilder {
             : record.status === 'Skipped'
             ? 'duplicate'
             : record.status || 'duplicate';
-        const localizationStatus = record.localizationStatus || {};
+        const message = record.message || '';
+        const coreInfo = record.coreInfo || { id: '', value: '' };
+        const packageInfo = record.packageInfo || { id: '', value: '' };
         const errors = record.errors || [];
         const warnings = record.warnings || [];
 
         customLabelMigrationInfos.push({
           labelName,
           cloneStatus,
-          localizationStatus,
+          message,
+          coreInfo,
+          packageInfo,
           errors,
           warnings,
         });
@@ -562,14 +569,18 @@ export class ResultsBuilder {
           createRowDataParam('path', item.name, false, 1, 1, true, item.path, item.name + '.cls'),
           createRowDataParam(
             'status',
-            this.getStatusFromErrors(item.errors),
+            item.status,
             false,
             1,
             1,
             false,
             undefined,
             undefined,
-            this.getStatusCssClass(item.errors)
+            this.successStatus.includes(item.status)
+              ? 'text-success'
+              : this.errorStatus.includes(item.status)
+              ? 'text-error'
+              : 'text-warning'
           ),
           createRowDataParam(
             'diff',
@@ -813,14 +824,16 @@ export class ResultsBuilder {
         ...results.map((result) => {
           // Handle custom labels specially for pagination and status calculation
           if (result.name.toLowerCase().includes('custom labels')) {
-            const totalLabels = result.data?.length || 0;
-            const totalPages = Math.ceil(totalLabels / 1000);
+            const totalLabels = result.totalCount || result.data?.length || 0;
+            // Use actual processed records for file naming, not total count
+            const processedRecords = result.data?.length || 0;
+            const totalPages = Math.ceil(processedRecords / 1000);
             const fileName = totalPages > 1 ? `Custom_Labels_Page_1_of_${totalPages}.html` : 'Custom_Labels.html';
 
             return {
               name: result.name,
               total: totalLabels,
-              data: this.getCustomLabelStatusData(result.data),
+              data: this.getCustomLabelStatusData(result.data, result.totalCount),
               file: fileName,
             };
           }
@@ -862,22 +875,31 @@ export class ResultsBuilder {
   }
 
   private static getCustomLabelStatusData(
-    data: MigratedRecordInfo[]
+    data: MigratedRecordInfo[],
+    totalCount?: number
   ): Array<{ name: string; count: number; cssClass: string }> {
-    let created = 0;
+    // For custom labels, we need to calculate based on the total from API response
+    // The data only contains error and duplicate (where message is not "same value")
+    // So we need to calculate the actual counts from the migration tool
+
     let error = 0;
     let duplicate = 0;
+
     data.forEach((item) => {
       // Handle both old and new status formats
       const status = item.status || (item as any).cloneStatus;
-      if (status === 'created' || status === 'Complete') created++;
-      else if (status === 'error' || status === 'Error') error++;
+      if (status === 'error' || status === 'Error' || status === 'Failed') error++;
       else if (status === 'duplicate' || status === 'Skipped') duplicate++;
     });
+
+    // Use totalCount if provided, otherwise fall back to data length
+    const actualTotal = totalCount || data.length;
+    const successfullyMigrated = Math.max(0, actualTotal - error - duplicate);
+
     return [
-      { name: 'Created', count: created, cssClass: 'text-success' },
+      { name: 'Successfully migrated', count: successfullyMigrated, cssClass: 'text-success' },
       { name: 'Failed', count: error, cssClass: 'text-error' },
-      { name: 'Duplicate', count: duplicate, cssClass: 'text-warning' },
+      { name: 'Skipped', count: duplicate, cssClass: 'text-warning' },
     ];
   }
 
@@ -887,7 +909,7 @@ export class ResultsBuilder {
     let complete = 0;
     let error = 0;
     data.forEach((item: ApexAssessmentInfo) => {
-      if (this.getStatusFromErrors(item.errors) === 'Successfully migrated') complete++;
+      if (this.successStatus.includes(item.status)) complete++;
       else error++;
     });
     return [

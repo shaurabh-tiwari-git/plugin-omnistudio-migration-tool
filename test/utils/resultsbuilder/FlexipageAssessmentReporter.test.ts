@@ -43,7 +43,7 @@ describe('FlexipageAssessmentReporter', () => {
           path: '/test/path2',
           diff: 'mock-diff-2',
           errors: ['Error 1', 'Error 2'],
-          status: 'Needs Manual Intervention',
+          status: 'Needs manual intervention',
         },
       ];
 
@@ -131,7 +131,7 @@ describe('FlexipageAssessmentReporter', () => {
       const mockAssessmentInfos: FlexiPageAssessmentInfo[] = [
         { name: 'Page1', path: '/path1', diff: '', errors: [], status: 'Warnings' },
         { name: 'Page2', path: '/path2', diff: '', errors: [], status: 'Ready for migration' },
-        { name: 'Page3', path: '/path3', diff: '', errors: ['Error'], status: 'Needs Manual Intervention' },
+        { name: 'Page3', path: '/path3', diff: '', errors: ['Error'], status: 'Needs manual intervention' },
         { name: 'Page4', path: '/path4', diff: '', errors: [], status: 'Warnings' },
         { name: 'Page5', path: '/path5', diff: '', errors: [], status: 'Ready for migration' },
       ];
@@ -152,7 +152,7 @@ describe('FlexipageAssessmentReporter', () => {
       expect(warnings.count).to.equal(2);
       expect(warnings.cssClass).to.equal('text-warning');
 
-      const needManualIntervention = result.find((item) => item.name === 'Needs Manual Intervention');
+      const needManualIntervention = result.find((item) => item.name === 'Needs manual intervention');
       expect(needManualIntervention).to.exist;
       expect(needManualIntervention.count).to.equal(1);
       expect(needManualIntervention.cssClass).to.equal('text-error');
@@ -191,7 +191,7 @@ describe('FlexipageAssessmentReporter', () => {
           path: '/test/path2',
           diff: 'mock-diff-2',
           errors: ['Error 1', 'Error 2'],
-          status: 'Needs Manual Intervention',
+          status: 'Needs manual intervention',
         },
       ];
 
@@ -214,7 +214,7 @@ describe('FlexipageAssessmentReporter', () => {
       // Check second row
       expect(result[1].data[0].value).to.equal('TestPage2');
       expect(result[1].data[1].value).to.equal('TestPage2.flexipage-meta.xml');
-      expect(result[1].data[2].value).to.equal('Needs Manual Intervention');
+      expect(result[1].data[2].value).to.equal('Needs manual intervention');
       expect(result[1].data[2].customClass).to.equal('text-error');
       expect(result[1].data[4].value).to.equal('Errors');
       expect(result[1].data[4].title).to.deep.equal(['Error 1', 'Error 2']);
@@ -251,7 +251,7 @@ describe('FlexipageAssessmentReporter', () => {
           path: '/test/path2',
           diff: 'mock-diff-2',
           errors: ['Error 1'],
-          status: 'Needs Manual Intervention',
+          status: 'Needs manual intervention',
         },
       ];
 
@@ -294,7 +294,7 @@ describe('FlexipageAssessmentReporter', () => {
       const mockAssessmentInfos: FlexiPageAssessmentInfo[] = [
         { name: 'Page1', path: '/path1', diff: '', errors: [], status: 'Ready for migration' },
         { name: 'Page2', path: '/path2', diff: '', errors: [], status: 'Warnings' },
-        { name: 'Page3', path: '/path3', diff: '', errors: ['Error'], status: 'Needs Manual Intervention' },
+        { name: 'Page3', path: '/path3', diff: '', errors: ['Error'], status: 'Needs manual intervention' },
       ];
 
       // Act
@@ -309,7 +309,7 @@ describe('FlexipageAssessmentReporter', () => {
       expect(statusFilter.filters).to.have.length(3);
       expect(statusFilter.filters[0].label).to.equal('Ready for migration');
       expect(statusFilter.filters[1].label).to.equal('Warnings');
-      expect(statusFilter.filters[2].label).to.equal('Needs Manual Intervention');
+      expect(statusFilter.filters[2].label).to.equal('Needs manual intervention');
     });
   });
 
@@ -319,7 +319,7 @@ describe('FlexipageAssessmentReporter', () => {
       const mockAssessmentInfos: FlexiPageAssessmentInfo[] = [
         { name: 'Page1', path: '/path1', diff: '', errors: [], status: 'Warnings' },
         { name: 'Page2', path: '/path2', diff: '', errors: [], status: 'Ready for migration' },
-        { name: 'Page3', path: '/path3', diff: '', errors: [], status: 'Needs Manual Intervention' },
+        { name: 'Page3', path: '/path3', diff: '', errors: [], status: 'Needs manual intervention' },
       ];
 
       // Act

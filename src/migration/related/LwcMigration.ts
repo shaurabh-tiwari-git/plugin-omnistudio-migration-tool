@@ -82,7 +82,6 @@ export class LwcMigration extends BaseRelatedObjectMigration {
           dir !== Constants.LWC &&
           !dir.endsWith('MultiLanguage') &&
           !dir.endsWith('English') &&
-          !dir.includes('_') &&
           !dir.startsWith('cf') &&
           !dir.startsWith('Omniscript') &&
           !dir.includes('Util') &&

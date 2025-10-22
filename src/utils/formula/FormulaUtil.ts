@@ -10,17 +10,22 @@ function getReplacedformulaString(
   formulaExpression: string,
   formulaName: string,
   className: string,
-  methodName: string
+  methodName: string,
+  namespacePrefix?: string
 ): string {
   const regExStr = new RegExp('\\b' + formulaName + '\\b', 'g');
   const startIndex = formulaExpression.search(regExStr);
   const startParanthIndex = startIndex + formulaName.length;
   const endParanthIndex = getClosingIndexOfParantheses(formulaExpression, startParanthIndex);
+
+  // If namespace prefix exists, prepend it to the class name
+  const qualifiedClassName = namespacePrefix ? `${namespacePrefix}.${className}` : className;
+
   const newFormulaExpression =
     'FUNCTION(' +
-    `'${className}'` +
+    `"${qualifiedClassName}"` +
     ',' +
-    `'${methodName}'` +
+    `"${methodName}"` +
     ',' +
     formulaExpression.substring(startParanthIndex + 1, endParanthIndex) +
     ')';
@@ -95,11 +100,15 @@ export function getReplacedString(
     const numberOfOccurances: number = match !== null ? match.length : 0;
     if (numberOfOccurances > 0) {
       for (var count: number = 1; count <= numberOfOccurances; count++) {
+        // Get the namespace from the function definition metadata
+        const functionNamespace = functionDefMd['NamespacePrefix'];
+
         formulaSyntax = getReplacedformulaString(
           formulaSyntax,
           functionDefMd['DeveloperName'],
           functionDefMd[namespacePrefix + 'ClassName__c'],
-          functionDefMd[namespacePrefix + 'MethodName__c']
+          functionDefMd[namespacePrefix + 'MethodName__c'],
+          functionNamespace
         );
       }
     }
