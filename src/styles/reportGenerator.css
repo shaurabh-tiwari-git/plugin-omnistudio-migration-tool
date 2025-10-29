@@ -322,12 +322,13 @@ body {
 
 .expandModalButton {
   position: absolute;
-  top: 5px;
-  right: 1.5rem;
+  top: 8px;
+  right: 8px;
   width: 30px;
   height: 30px;
   opacity: 0.7;
   display: none;
+  z-index: 10;
 }
 
 .report-wrapper {
@@ -601,9 +602,18 @@ td {
 
 .diff-cell {
   min-width: 30rem;
+  max-width: none !important;
+  padding: 0 !important;
+  overflow: visible !important;
 }
 
-.diff-cell:hover .expandModalButton {
+.diff-content-wrapper {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.diff-content-wrapper:hover .expandModalButton {
   display: block;
 }
 

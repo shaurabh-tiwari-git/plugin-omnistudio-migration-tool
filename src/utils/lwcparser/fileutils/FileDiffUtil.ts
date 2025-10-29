@@ -12,7 +12,9 @@ export class FileDiffUtil {
       return '';
     }
     const diffArray: DiffPair[] = JSON.parse(diff) as DiffPair[];
-    let result = '<div style="height: 120px; text-align: left; overflow-x: auto;">';
+    // Wrap everything in a positioned container so button positions correctly within table cell
+    let result = '<div class="diff-content-wrapper">';
+    result += '<div style="height: 120px; text-align: left; overflow-x: auto; padding: 0.5rem;">';
     if (diffArray.length <= 6) {
       result += this.getDiffContent(diff) + '</div>';
     } else {
@@ -30,6 +32,7 @@ export class FileDiffUtil {
         </div>
       </div>`;
     }
+    result += '</div>'; // Close diff-content-wrapper
     return result;
   }
 
