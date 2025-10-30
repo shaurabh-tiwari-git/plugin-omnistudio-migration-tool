@@ -318,7 +318,7 @@ function applySingleColumnFreeze(table, headerCell, columnWidth = 180) {
   // Default to 180px for Custom Labels, but can be overridden for other reports
 
   // Apply styles to first header cell
-  applyStickyStyles(headerCell, columnWidth, 0, 20, '#f3f3f3', true);
+  applyStickyStyles(headerCell, columnWidth, 0, 50, '#f3f3f3', true);
 
   // Ensure all other header cells in both rows are NOT sticky
   const thead = table.querySelector('thead');
@@ -336,17 +336,19 @@ function applySingleColumnFreeze(table, headerCell, columnWidth = 180) {
   if (tbody) {
     const rows = tbody.querySelectorAll('tr');
     rows.forEach((row) => {
-      const firstCell = row.querySelector('td:first-child');
+      // Use key="name" selector to handle rowspan correctly
+      const firstCell = row.querySelector('td[key="name"]');
       if (firstCell) {
-        applyStickyStyles(firstCell, columnWidth, 0, 10, '#fff', true);
+        applyStickyStyles(firstCell, columnWidth, 0, 30, '#fff', true);
       }
     });
 
     // Ensure all other columns are NOT sticky
     rows.forEach((row) => {
       const cells = Array.from(row.querySelectorAll('td'));
-      cells.forEach((cell, index) => {
-        if (index > 0) {
+      cells.forEach((cell) => {
+        // Remove sticky from any cell that's NOT the name column
+        if (cell.getAttribute('key') !== 'name') {
           removeStickyStyles(cell);
         }
       });
@@ -355,14 +357,14 @@ function applySingleColumnFreeze(table, headerCell, columnWidth = 180) {
     // Add hover effect for first column
     rows.forEach((row) => {
       row.addEventListener('mouseenter', () => {
-        const firstCell = row.querySelector('td:first-child');
+        const firstCell = row.querySelector('td[key="name"]');
         if (firstCell) {
           firstCell.style.setProperty('background-color', '#f3f3f3', 'important');
         }
       });
 
       row.addEventListener('mouseleave', () => {
-        const firstCell = row.querySelector('td:first-child');
+        const firstCell = row.querySelector('td[key="name"]');
         if (firstCell) {
           firstCell.style.setProperty('background-color', '#fff', 'important');
         }
@@ -419,7 +421,7 @@ function applyMultiColumnHeaderFreeze(firstHeaderCell, secondRow, colspan, baseC
       // Freeze this column
       const columnWidth = i === 0 ? firstColumnWidth : baseColumnWidth;
       const isLastFrozen = i === colspan - 1;
-      applyStickyStyles(header, columnWidth, cumulativeLeft, 20, '#f3f3f3', isLastFrozen);
+      applyStickyStyles(header, columnWidth, cumulativeLeft, 50, '#f3f3f3', isLastFrozen);
       cumulativeLeft += columnWidth;
     } else {
       // Ensure non-frozen columns are NOT sticky
@@ -455,7 +457,7 @@ function applyMultiColumnBodyFreeze(tbody, colspan, baseColumnWidth, firstColumn
         // Freeze this column
         const columnWidth = i === 0 ? firstColumnWidth : baseColumnWidth;
         const isLastFrozen = i === colspan - 1;
-        applyStickyStyles(cell, columnWidth, cumulativeLeft, 10, '#fff', isLastFrozen);
+        applyStickyStyles(cell, columnWidth, cumulativeLeft, 30, '#fff', isLastFrozen);
         cumulativeLeft += columnWidth;
       } else {
         // Ensure non-frozen columns are NOT sticky
