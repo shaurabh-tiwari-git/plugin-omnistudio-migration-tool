@@ -287,7 +287,7 @@ export class ResultsBuilder {
 
     const pageSize = 1000; // Smaller page size for better performance
     const totalLabels = customLabelMigrationInfos.length;
-    const totalPages = Math.ceil(totalLabels / pageSize);
+    const totalPages = Math.max(1, Math.ceil(totalLabels / pageSize));
 
     Logger.logVerbose(messages.getMessage('generatingCustomLabelsReport', [totalLabels, totalPages, pageSize]));
 
@@ -827,7 +827,7 @@ export class ResultsBuilder {
             const totalLabels = result.totalCount || result.data?.length || 0;
             // Use actual processed records for file naming, not total count
             const processedRecords = result.data?.length || 0;
-            const totalPages = Math.ceil(processedRecords / 1000);
+            const totalPages = Math.max(1, Math.ceil(processedRecords / 1000));
             const fileName = totalPages > 1 ? `Custom_Labels_Page_1_of_${totalPages}.html` : 'Custom_Labels.html';
 
             return {
