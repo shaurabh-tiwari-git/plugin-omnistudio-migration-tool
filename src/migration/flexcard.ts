@@ -64,6 +64,9 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
   // Perform Delete of OmniUiCard Records to start migration from scratch
   async truncate(): Promise<void> {
+    if (this.IS_STANDARD_DATA_MODEL) {
+      return;
+    }
     const objectName = CardMigrationTool.OMNIUICARD_NAME;
     DebugTimer.getInstance().lap('Truncating ' + objectName);
 

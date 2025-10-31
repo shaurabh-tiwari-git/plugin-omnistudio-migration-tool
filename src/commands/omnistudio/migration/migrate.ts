@@ -180,17 +180,14 @@ export default class Migrate extends OmniStudioBaseCommand {
     const debugTimer = DebugTimer.getInstance();
     // We need to truncate the standard objects first (in reverse order for cleanup)
     let objectMigrationResults;
-    const IS_STANDARD_DATA_MODEL = isStandardDataModel();
 
-    if (!IS_STANDARD_DATA_MODEL) {
-      objectMigrationResults = await this.truncateObjects([...migrationObjects].reverse(), debugTimer);
-      const allTruncateComplete = objectMigrationResults.length === 0;
+    objectMigrationResults = await this.truncateObjects([...migrationObjects].reverse(), debugTimer);
+    const allTruncateComplete = objectMigrationResults.length === 0;
 
-      // Log truncation errors if any exist
-      if (!allTruncateComplete) {
-        this.logTruncationErrors(objectMigrationResults);
-        return;
-      }
+    // Log truncation errors if any exist
+    if (!allTruncateComplete) {
+      this.logTruncationErrors(objectMigrationResults);
+      return;
     }
 
     objectMigrationResults = await this.migrateObjects(migrationObjects, debugTimer, namespace);
