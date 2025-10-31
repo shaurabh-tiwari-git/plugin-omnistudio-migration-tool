@@ -444,12 +444,12 @@ describe('reportGeneratorUtility Column Freeze Tests', () => {
               </thead>
               <tbody>
                 <tr>
-                  <td>Item 1</td>
+                  <td key="name">Item 1</td>
                   <td>Active</td>
                   <td>Type A</td>
                 </tr>
                 <tr>
-                  <td>Item 2</td>
+                  <td key="name">Item 2</td>
                   <td>Inactive</td>
                   <td>Type B</td>
                 </tr>
@@ -560,7 +560,7 @@ describe('reportGeneratorUtility Column Freeze Tests', () => {
 
       const tbody = table.querySelector('tbody');
       const firstRow = tbody?.querySelector('tr');
-      const firstCell = firstRow?.querySelector('td:first-child') as HTMLElement;
+      const firstCell = firstRow?.querySelector('td[key="name"]') as HTMLElement;
 
       expect(firstCell.style.getPropertyValue('position')).to.equal('sticky');
       expect(firstCell.style.getPropertyValue('width')).to.equal('180px');
@@ -575,7 +575,7 @@ describe('reportGeneratorUtility Column Freeze Tests', () => {
 
       const tbody = table.querySelector('tbody');
       const firstRow = tbody?.querySelector('tr') as HTMLElement;
-      const firstCell = firstRow?.querySelector('td:first-child') as HTMLElement;
+      const firstCell = firstRow?.querySelector('td[key="name"]') as HTMLElement;
 
       // Trigger mouseenter
       const mouseenterEvent = new dom.window.MouseEvent('mouseenter', { bubbles: true });
