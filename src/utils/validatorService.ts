@@ -3,6 +3,7 @@ import { Logger } from '../utils/logger';
 import { OmnistudioOrgDetails } from './orgUtils';
 import { isStandardDataModel } from './dataModelService';
 import { OmnistudioSettingsPrefManager } from './OmnistudioSettingsPrefManager';
+import { OrgPreferences } from './orgPreferences';
 
 export class ValidatorService {
   private readonly messages: Messages;
@@ -17,6 +18,11 @@ export class ValidatorService {
   public async validate(): Promise<boolean> {
     const basicValidation = this.validateNamespace() && this.validatePackageInstalled();
     if (!basicValidation) {
+      return false;
+    }
+
+    const isDRVersioningDisabled = await this.validateDrVersioningDisabled();
+    if (!isDRVersioningDisabled) {
       return false;
     }
 
@@ -82,5 +88,20 @@ export class ValidatorService {
       }
       return false;
     }
+  }
+
+  public async validateDrVersioningDisabled(): Promise<boolean> {
+    Logger.logVerbose(this.messages.getMessage('validatingDrVersioningDisabled'));
+    try {
+      const drVersion = await OrgPreferences.checkDRVersioning(this.connection);
+      if (!drVersion) {
+        Logger.logVerbose(this.messages.getMessage('drVersioningDisabled'));
+        return true;
+      }
+      Logger.error(this.messages.getMessage('drVersioningEnabled'));
+    } catch (error) {
+      Logger.error(this.messages.getMessage('errorValidatingDrVersioning'));
+    }
+    return false;
   }
 }
