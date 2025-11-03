@@ -118,6 +118,11 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
   }
 
   async truncate(): Promise<void> {
+    // Truncation is needed when we migrate from custom to standard data model, when on custom data model, no truncation is required
+    if (this.IS_STANDARD_DATA_MODEL) {
+      return;
+    }
+
     const objectName = OmniScriptMigrationTool.OMNIPROCESS_NAME;
     const allIds = await this.deactivateRecord(objectName);
     await this.truncateElements(objectName, allIds.os.parents);

@@ -75,6 +75,11 @@ export class CustomLabelMigrationReporter {
   }
 
   public static generateCustomTemplateForPage(page: number, totalPages: number): string {
+    // Don't show pagination if there's only 1 page
+    if (totalPages === 1) {
+      return '';
+    }
+
     // Calculate the range of pages to show around current page
     const range = 2; // Show 2 pages on each side of current page
     const start = Math.max(2, page - range);

@@ -305,7 +305,8 @@ export class AssessmentReporter {
   ): void {
     const pageSize = 1000;
     const totalLabels = customLabels.length;
-    const totalPages = Math.ceil(totalLabels / pageSize);
+    // Always generate at least 1 page, even if there are no labels with issues
+    const totalPages = Math.max(1, Math.ceil(totalLabels / pageSize));
 
     // Generate paginated reports
     for (let page = 1; page <= totalPages; page++) {
@@ -333,7 +334,8 @@ export class AssessmentReporter {
 
   private static getCustomLabelAssessmentFileName(totalLabels: number): string {
     const pageSize = 1000;
-    const totalPages = Math.ceil(totalLabels / pageSize);
+    // Always generate at least 1 page, even if there are no labels with issues
+    const totalPages = Math.max(1, Math.ceil(totalLabels / pageSize));
     return totalPages > 1 ? `customlabel_assessment_Page_1_of_${totalPages}.html` : this.customLabelAssessmentFileName;
   }
 

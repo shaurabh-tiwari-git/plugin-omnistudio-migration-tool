@@ -113,11 +113,14 @@ export class ResultsBuilder {
     // Determine which rollback flag to use based on component type
     let rollbackFlagNames: string[] = [];
     const componentName = result.name.toLowerCase();
+    const isGlobalAutoNumber =
+      componentName.includes('global auto number') || componentName.includes('globalautonumber');
+
     if (componentName.includes('datamapper') || componentName.includes('data mapper')) {
       rollbackFlagNames = ['RollbackDRChanges'];
     } else if (componentName.includes('omniscript') || componentName.includes('integration procedure')) {
       rollbackFlagNames = ['RollbackOSChanges', 'RollbackIPChanges'];
-    } else if (componentName.includes('global auto number') || componentName.includes('globalautonumber')) {
+    } else if (isGlobalAutoNumber) {
       rollbackFlagNames = ['RollbackDRChanges', 'RollbackIPChanges'];
     }
     const rollbackFlags = orgDetails.rollbackFlags || [];
@@ -134,15 +137,15 @@ export class ResultsBuilder {
       assessmentDate: new Date().toLocaleString(),
       total: result.data?.length || 0,
       filterGroups: [...this.getStatusFilterGroup(result.data?.map((item) => item.status) || [])],
-      headerGroups: [...this.getHeaderGroupsForReport(componentName)],
+      headerGroups: [...this.getHeaderGroupsForReport(componentName, isGlobalAutoNumber)],
       rows: [
         ...(result.data || []).map((item) => ({
           rowId: `${this.rowClass}${this.rowId++}`,
           data: [
             createRowDataParam('id', item.id, false, 1, 1, true, `${instanceUrl}/${item.id}`),
             createRowDataParam('name', item.name, true, 1, 1, false),
-            // Only include migratedId for custom data model
-            ...(isStandardDataModel()
+            // Include migratedId for custom data model OR Global Auto Number
+            ...(isStandardDataModel() && !isGlobalAutoNumber
               ? []
               : [
                   createRowDataParam(
@@ -198,9 +201,12 @@ export class ResultsBuilder {
     fs.writeFileSync(path.join(resultsDir, result.name.replace(/ /g, '_').replace(/\//g, '_') + '.html'), html);
   }
 
-  private static getHeaderGroupsForReport(componentName: string): ReportHeaderGroupParam[] {
+  private static getHeaderGroupsForReport(
+    componentName: string,
+    isGlobalAutoNumber: boolean
+  ): ReportHeaderGroupParam[] {
     const firstRowHeaders = [
-      ...this.getNameHeaders(componentName),
+      ...this.getNameHeaders(componentName, isGlobalAutoNumber),
       { name: 'Status', colspan: 1, rowspan: 2 },
       { name: 'Errors', colspan: 1, rowspan: 2 },
       { name: 'Summary', colspan: 1, rowspan: 2 },
@@ -221,19 +227,18 @@ export class ResultsBuilder {
       { name: nameLabel, colspan: 1, rowspan: 1 },
     ];
 
-    if (isStandardDataModel()) {
+    // Global Auto Number always needs 4 columns (Managed Package + Standard), even in standard data model
+    if (isStandardDataModel() && !isGlobalAutoNumber) {
       return [{ header: firstRowHeaders }, { header: secondRowHeadersForStandard }];
     } else {
       return [{ header: firstRowHeaders }, { header: secondRowHeadersForCustom }];
     }
   }
 
-  private static getNameHeaders(componentName: string): Array<{ name: string; colspan: number; rowspan: number }> {
-    let isGlobalAutoNumber = false;
-    if (componentName.includes('global auto number') || componentName.includes('globalautonumber')) {
-      isGlobalAutoNumber = true;
-    }
-
+  private static getNameHeaders(
+    componentName: string,
+    isGlobalAutoNumber: boolean
+  ): Array<{ name: string; colspan: number; rowspan: number }> {
     if (isStandardDataModel() && !isGlobalAutoNumber) {
       return [{ name: 'Standard', colspan: 3, rowspan: 1 }];
     } else {
@@ -287,7 +292,7 @@ export class ResultsBuilder {
 
     const pageSize = 1000; // Smaller page size for better performance
     const totalLabels = customLabelMigrationInfos.length;
-    const totalPages = Math.ceil(totalLabels / pageSize);
+    const totalPages = Math.max(1, Math.ceil(totalLabels / pageSize));
 
     Logger.logVerbose(messages.getMessage('generatingCustomLabelsReport', [totalLabels, totalPages, pageSize]));
 
@@ -827,7 +832,7 @@ export class ResultsBuilder {
             const totalLabels = result.totalCount || result.data?.length || 0;
             // Use actual processed records for file naming, not total count
             const processedRecords = result.data?.length || 0;
-            const totalPages = Math.ceil(processedRecords / 1000);
+            const totalPages = Math.max(1, Math.ceil(processedRecords / 1000));
             const fileName = totalPages > 1 ? `Custom_Labels_Page_1_of_${totalPages}.html` : 'Custom_Labels.html';
 
             return {
