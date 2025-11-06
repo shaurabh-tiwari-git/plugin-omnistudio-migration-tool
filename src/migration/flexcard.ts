@@ -90,9 +90,44 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     }
   }
 
+  /**
+   * Checks if a string contains only alphanumeric characters (a-z, A-Z, 0-9)
+   */
+  private hasOnlyAlphanumericCharacters(str: string): boolean {
+    return /^[a-zA-Z0-9]+$/.test(str);
+  }
+
+  /**
+   * Separates FlexCards into two buckets and merges them:
+   * Bucket 1: Name contains only alphanumeric characters (a-z, A-Z, 0-9)
+   * Bucket 2: Name contains special characters
+   * Returns Bucket 1 followed by Bucket 2 to prioritize cleaner names
+   */
+  private prioritizeFlexCardsWithoutSpecialCharacters(flexCards: AnyJson[]): AnyJson[] {
+    const bucket1: AnyJson[] = []; // Only alphanumeric in Name
+    const bucket2: AnyJson[] = []; // Has special characters in Name
+
+    for (const flexCard of flexCards) {
+      const name = flexCard['Name'] || '';
+
+      // Check if Name contains only alphanumeric characters
+      if (this.hasOnlyAlphanumericCharacters(name)) {
+        bucket1.push(flexCard);
+      } else {
+        bucket2.push(flexCard);
+      }
+    }
+
+    // Merge: Bucket 1 (clean names) first, then Bucket 2 (names with special chars)
+    return [...bucket1, ...bucket2];
+  }
+
   // Perform Records Migration from VlocityCard__c to OmniUiCard
   async migrate(): Promise<MigrationResult[]> {
-    const allCards = await this.getAllCards();
+    let allCards = await this.getAllCards();
+
+    // Prioritize records without special characters in Name
+    allCards = this.prioritizeFlexCardsWithoutSpecialCharacters(allCards);
 
     Logger.log(this.messages.getMessage('foundFlexCardsToMigrate', [allCards.length]));
 
@@ -158,7 +193,11 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   public async assess(): Promise<FlexCardAssessmentInfo[]> {
     try {
       Logger.log(this.messages.getMessage('startingFlexCardAssessment'));
-      const flexCards = await this.getAllCards();
+      let flexCards = await this.getAllCards();
+
+      // Prioritize records without special characters in Name
+      flexCards = this.prioritizeFlexCardsWithoutSpecialCharacters(flexCards);
+
       Logger.log(this.messages.getMessage('foundFlexCardsToAssess', [flexCards.length]));
 
       const flexCardsAssessmentInfos = await this.processCardComponents(flexCards);

@@ -62,6 +62,38 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     await super.truncate(DataRaptorMigrationTool.OMNIDATATRANSFORM_NAME);
   }
 
+  /**
+   * Checks if a string contains only alphanumeric characters (a-z, A-Z, 0-9)
+   */
+  private hasOnlyAlphanumericCharacters(str: string): boolean {
+    return /^[a-zA-Z0-9]+$/.test(str);
+  }
+
+  /**
+   * Separates DataRaptors into two buckets and merges them:
+   * Bucket 1: Name contains only alphanumeric characters (a-z, A-Z, 0-9)
+   * Bucket 2: Name contains special characters
+   * Returns Bucket 1 followed by Bucket 2 to prioritize cleaner names
+   */
+  private prioritizeDataRaptorsWithoutSpecialCharacters(dataRaptors: AnyJson[]): AnyJson[] {
+    const bucket1: AnyJson[] = []; // Only alphanumeric in Name
+    const bucket2: AnyJson[] = []; // Has special characters in Name
+
+    for (const dataRaptor of dataRaptors) {
+      const name = dataRaptor['Name'] || '';
+
+      // Check if Name contains only alphanumeric characters
+      if (this.hasOnlyAlphanumericCharacters(name)) {
+        bucket1.push(dataRaptor);
+      } else {
+        bucket2.push(dataRaptor);
+      }
+    }
+
+    // Merge: Bucket 1 (clean names) first, then Bucket 2 (names with special chars)
+    return [...bucket1, ...bucket2];
+  }
+
   async migrate(): Promise<MigrationResult[]> {
     return [await this.MigrateDataRaptorData()];
   }
@@ -73,7 +105,10 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
 
     // Query all dataraptors and the respective items
     DebugTimer.getInstance().lap('Query data raptors');
-    const dataRaptors = await this.getAllDataRaptors();
+    let dataRaptors = await this.getAllDataRaptors();
+
+    // Prioritize records without special characters in Name
+    dataRaptors = this.prioritizeDataRaptorsWithoutSpecialCharacters(dataRaptors);
 
     const dataRaptorItemsData = await this.getAllItems();
 
@@ -285,7 +320,10 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     try {
       DebugTimer.getInstance().lap('Query data raptors');
       Logger.log(this.messages.getMessage('startingDataRaptorAssessment'));
-      const dataRaptors = await this.getAllDataRaptors();
+      let dataRaptors = await this.getAllDataRaptors();
+
+      // Prioritize records without special characters in Name
+      dataRaptors = this.prioritizeDataRaptorsWithoutSpecialCharacters(dataRaptors);
 
       const dataRaptorAssessmentInfos = this.processDRComponents(dataRaptors);
       return dataRaptorAssessmentInfos;
