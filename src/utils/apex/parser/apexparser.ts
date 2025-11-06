@@ -260,6 +260,16 @@ export class InterfaceMatcher {
     ) {
       tokens.push(typeNameContexts[0].id().Identifier().symbol);
       tokens.push(typeNameContexts[1].id().Identifier().symbol);
+    } else if (
+      // Special case for System.Callable - "System" is a reserved keyword so Identifier() returns null
+      checkFor.namespace === 'System' &&
+      checkFor.name === 'Callable' &&
+      typeNameContexts.length === 2 &&
+      !typeNameContexts[0]?.id()?.Identifier() && // System is a reserved keyword, no Identifier
+      typeNameContexts[1]?.id()?.Identifier()?.symbol?.text === 'Callable'
+    ) {
+      tokens.push(typeNameContexts[0].start);
+      tokens.push(typeNameContexts[1].id().Identifier().symbol);
     }
     return tokens;
   }
