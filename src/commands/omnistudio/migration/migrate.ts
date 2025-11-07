@@ -13,7 +13,7 @@ import { Messages } from '@salesforce/core';
 import '../../../utils/prototypes';
 import OmniStudioBaseCommand from '../../basecommand';
 import { DataRaptorMigrationTool } from '../../../migration/dataraptor';
-import { DebugTimer, MigratedObject, MigratedRecordInfo } from '../../../utils';
+import { DebugTimer, MigratedObject, MigratedRecordInfo, OrgUtils } from '../../../utils';
 import { MigrationResult, MigrationTool } from '../../../migration/interfaces';
 import { ResultsBuilder } from '../../../utils/resultsbuilder';
 import { CardMigrationTool } from '../../../migration/flexcard';
@@ -61,6 +61,17 @@ export default class Migrate extends OmniStudioBaseCommand {
     // this.org is guaranteed because requiresUsername=true, as opposed to supportsUsername
     const conn = this.org.getConnection();
     conn.setApiVersion(apiVersion);
+
+    // Get org details and validate before proceeding with migration
+    const orgs = await OrgUtils.getOrgDetails(conn, namespace);
+
+    if (orgs.omniStudioOrgPermissionEnabled) {
+      Logger.error(messages.getMessage('alreadyStandardModel', [orgs.orgDetails.Id]));
+      return;
+    } else if (!orgs.hasValidNamespace) {
+      Logger.error(messages.getMessage('invalidNamespace', [namespace]));
+      return;
+    }
 
     // Let's time every step
     DebugTimer.getInstance().start();
