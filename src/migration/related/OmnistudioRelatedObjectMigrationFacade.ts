@@ -83,7 +83,8 @@ export default class OmnistudioRelatedObjectMigrationFacade {
       sfProject.retrieve(LWCTYPE, this.org.getUsername());
     }
     if (relatedObjects.includes(Constants.Apex)) {
-      sfProject.retrieve(APEXCLASS, this.org.getUsername());
+      Logger.logVerbose(APEXCLASS);
+      // sfProject.retrieve(APEXCLASS, this.org.getUsername());
     }
 
     if (relatedObjects.includes(Constants.FlexiPage)) {
