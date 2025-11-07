@@ -613,4 +613,95 @@ describe('FlexCard Standard Data Model (Metadata API Disabled) - Assessment and 
       expect(result.OmniUiCardKey).to.equal('TestCard/TestAuthor/1.0');
     });
   });
+
+  describe('Standard Data Model - FlexCard Prioritization with Migration Status', () => {
+    it('should set correct migration status for clean names vs special character names', async () => {
+      // Test FlexCards with clean names (should have Success status)
+      const cleanNameCards = [
+        {
+          Id: 'fc001',
+          Name: 'Flexcard001', // Clean name
+          DataSourceConfig: JSON.stringify({ type: 'None' }),
+          PropertySetConfig: JSON.stringify({ layout: 'Card' }),
+          IsActive: true,
+          OmniUiCardType: 'Parent',
+          VersionNumber: 1,
+        },
+        {
+          Id: 'fc002',
+          Name: 'Flexcard002', // Clean name
+          DataSourceConfig: JSON.stringify({ type: 'None' }),
+          PropertySetConfig: JSON.stringify({ layout: 'Card' }),
+          IsActive: true,
+          OmniUiCardType: 'Parent',
+          VersionNumber: 1,
+        },
+        {
+          Id: 'fc003',
+          Name: 'Flexcard003', // Clean name
+          DataSourceConfig: JSON.stringify({ type: 'None' }),
+          PropertySetConfig: JSON.stringify({ layout: 'Card' }),
+          IsActive: true,
+          OmniUiCardType: 'Parent',
+          VersionNumber: 1,
+        },
+      ];
+
+      // Test FlexCards with special characters (should have Warnings status)
+      const specialCharCards = [
+        {
+          Id: 'fc004',
+          Name: 'Flexcard_001', // Special character (underscore)
+          DataSourceConfig: JSON.stringify({ type: 'None' }),
+          PropertySetConfig: JSON.stringify({ layout: 'Card' }),
+          IsActive: true,
+          OmniUiCardType: 'Parent',
+          VersionNumber: 1,
+        },
+        {
+          Id: 'fc005',
+          Name: 'Flexcard_002', // Special character (underscore)
+          DataSourceConfig: JSON.stringify({ type: 'None' }),
+          PropertySetConfig: JSON.stringify({ layout: 'Card' }),
+          IsActive: true,
+          OmniUiCardType: 'Parent',
+          VersionNumber: 1,
+        },
+        {
+          Id: 'fc006',
+          Name: 'Flexcard_003', // Special character (underscore)
+          DataSourceConfig: JSON.stringify({ type: 'None' }),
+          PropertySetConfig: JSON.stringify({ layout: 'Card' }),
+          IsActive: true,
+          OmniUiCardType: 'Parent',
+          VersionNumber: 1,
+        },
+      ];
+
+      const duplicateSet = new Set<string>();
+
+      // Process clean name cards
+      for (const card of cleanNameCards) {
+        const result = await (cardTool as any).processFlexCard(card, duplicateSet);
+
+        // Verify clean names have "Ready for migration" status with no warnings
+        expect(result.name).to.equal(card.Name);
+        expect(result.oldName).to.equal(card.Name);
+        expect(result.migrationStatus).to.equal('Ready for migration');
+        expect(result.warnings).to.have.length(0);
+      }
+
+      // Process special character cards
+      for (const card of specialCharCards) {
+        const result = await (cardTool as any).processFlexCard(card, duplicateSet);
+
+        // Verify special character names have appropriate migration status
+        expect(result.oldName).to.equal(card.Name);
+        expect(result.name).to.not.equal(card.Name); // Name should be cleaned
+        // FlexCards with special characters may have different statuses based on complexity
+        expect(result.migrationStatus).to.be.oneOf(['Warnings', 'Needs manual intervention']);
+        expect(result.warnings).to.have.length.greaterThan(0);
+      }
+    });
+  });
 });
