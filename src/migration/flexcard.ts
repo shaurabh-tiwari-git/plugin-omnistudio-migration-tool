@@ -22,6 +22,7 @@ import { Constants } from '../utils/constants/stringContants';
 import { StorageUtil } from '../utils/storageUtil';
 import { getUpdatedAssessmentStatus } from '../utils/stringUtils';
 import { isStandardDataModel } from '../utils/dataModelService';
+import { prioritizeCleanNamesFirst } from '../utils/recordPrioritization';
 
 export class CardMigrationTool extends BaseMigrationTool implements MigrationTool {
   static readonly VLOCITYCARD_NAME = 'VlocityCard__c';
@@ -90,44 +91,9 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     }
   }
 
-  /**
-   * Checks if a string contains only alphanumeric characters (a-z, A-Z, 0-9)
-   */
-  private hasOnlyAlphanumericCharacters(str: string): boolean {
-    return /^[a-zA-Z0-9]+$/.test(str);
-  }
-
-  /**
-   * Separates FlexCards into two buckets and merges them:
-   * Bucket 1: Name contains only alphanumeric characters (a-z, A-Z, 0-9)
-   * Bucket 2: Name contains special characters
-   * Returns Bucket 1 followed by Bucket 2 to prioritize cleaner names
-   */
-  private prioritizeFlexCardsWithoutSpecialCharacters(flexCards: AnyJson[]): AnyJson[] {
-    const bucket1: AnyJson[] = []; // Only alphanumeric in Name
-    const bucket2: AnyJson[] = []; // Has special characters in Name
-
-    for (const flexCard of flexCards) {
-      const name = flexCard['Name'] || '';
-
-      // Check if Name contains only alphanumeric characters
-      if (this.hasOnlyAlphanumericCharacters(name)) {
-        bucket1.push(flexCard);
-      } else {
-        bucket2.push(flexCard);
-      }
-    }
-
-    // Merge: Bucket 1 (clean names) first, then Bucket 2 (names with special chars)
-    return [...bucket1, ...bucket2];
-  }
-
   // Perform Records Migration from VlocityCard__c to OmniUiCard
   async migrate(): Promise<MigrationResult[]> {
-    let allCards = await this.getAllCards();
-
-    // Prioritize records without special characters in Name
-    allCards = this.prioritizeFlexCardsWithoutSpecialCharacters(allCards);
+    const allCards = await this.getAllCards();
 
     Logger.log(this.messages.getMessage('foundFlexCardsToMigrate', [allCards.length]));
 
@@ -193,10 +159,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   public async assess(): Promise<FlexCardAssessmentInfo[]> {
     try {
       Logger.log(this.messages.getMessage('startingFlexCardAssessment'));
-      let flexCards = await this.getAllCards();
-
-      // Prioritize records without special characters in Name
-      flexCards = this.prioritizeFlexCardsWithoutSpecialCharacters(flexCards);
+      const flexCards = await this.getAllCards();
 
       Logger.log(this.messages.getMessage('foundFlexCardsToAssess', [flexCards.length]));
 
@@ -773,12 +736,14 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       filters.set(this.namespacePrefix + 'CardType__c', 'flex');
     }
 
+    let flexCards: AnyJson[];
+
     if (this.allVersions) {
       const sortFields = [
         { field: 'Name', direction: SortDirection.ASC },
         { field: this.getFieldKey('Version__c'), direction: SortDirection.ASC },
       ];
-      return await QueryTools.queryWithFilterAndSort(
+      flexCards = await QueryTools.queryWithFilterAndSort(
         this.connection,
         this.getQueryNamespace(),
         this.getCardObjectName(),
@@ -795,7 +760,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       });
     } else {
       filters.set(this.getFieldKey('Active__c'), true);
-      return await QueryTools.queryWithFilter(
+      flexCards = await QueryTools.queryWithFilter(
         this.connection,
         this.getQueryNamespace(),
         this.getCardObjectName(),
@@ -808,6 +773,13 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         throw err;
       });
     }
+
+    // Apply prioritization only for standard data model
+    if (this.IS_STANDARD_DATA_MODEL) {
+      return this.prioritizeFlexCardsWithoutSpecialCharacters(flexCards);
+    }
+
+    return flexCards;
   }
 
   // Upload All the VlocityCard__c records to OmniUiCard for custom model and update references for standard
@@ -1805,5 +1777,16 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
     // Save the updated definition back to the mappedObject
     mappedObject[CardMappings.Definition__c] = JSON.stringify(definition);
+  }
+
+  /**
+   * Prioritizes FlexCards by name characteristics:
+   * - Clean names (alphanumeric only) are processed first
+   * - Names with special characters are processed after
+   * This avoids naming conflicts during migration when special characters are cleaned
+   */
+  private prioritizeFlexCardsWithoutSpecialCharacters(flexCards: AnyJson[]): AnyJson[] {
+    const nameField = this.getFieldKey('Name');
+    return prioritizeCleanNamesFirst(flexCards, nameField);
   }
 }

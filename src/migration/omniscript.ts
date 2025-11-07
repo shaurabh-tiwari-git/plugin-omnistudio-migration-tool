@@ -39,6 +39,7 @@ import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
 import { StorageUtil } from '../utils/storageUtil';
 import { isStandardDataModel } from '../utils/dataModelService';
+import { prioritizeCleanNamesFirst } from '../utils/recordPrioritization';
 
 export class OmniScriptMigrationTool extends BaseMigrationTool implements MigrationTool {
   private readonly exportType: OmniScriptExportType;
@@ -217,10 +218,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     try {
       const exportComponentType = this.getName() as ComponentType;
       Logger.log(this.messages.getMessage('startingOmniScriptAssessment', [exportComponentType]));
-      let omniscripts = await this.getAllOmniScripts();
-
-      // Prioritize records without special characters in Type/SubType
-      omniscripts = this.prioritizeOmniscriptsWithoutSpecialCharacters(omniscripts);
+      const omniscripts = await this.getAllOmniScripts();
 
       Logger.log(this.messages.getMessage('foundOmniScriptsToAssess', [omniscripts.length, exportComponentType]));
 
@@ -781,45 +779,9 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     return language.replace(/[-() ]/g, '');
   }
 
-  /**
-   * Checks if a string contains only alphanumeric characters (a-z, A-Z, 0-9)
-   */
-  private hasOnlyAlphanumericCharacters(str: string): boolean {
-    return /^[a-zA-Z0-9]+$/.test(str);
-  }
-
-  /**
-   * Separates OmniScripts into two buckets and merges them:
-   * Bucket 1: Type and SubType contain only alphanumeric characters (a-z, A-Z, 0-9)
-   * Bucket 2: Type or SubType contain special characters
-   * Returns Bucket 1 followed by Bucket 2 to prioritize cleaner names
-   */
-  private prioritizeOmniscriptsWithoutSpecialCharacters(omniscripts: AnyJson[]): AnyJson[] {
-    const bucket1: AnyJson[] = []; // Only alphanumeric in Type/SubType
-    const bucket2: AnyJson[] = []; // Has special characters in Type/SubType
-
-    for (const omniscript of omniscripts) {
-      const type = omniscript[this.getFieldKey('Type__c')] || '';
-      const subType = omniscript[this.getFieldKey('SubType__c')] || '';
-
-      // Check if both Type and SubType contain only alphanumeric characters
-      if (this.hasOnlyAlphanumericCharacters(type) && this.hasOnlyAlphanumericCharacters(subType)) {
-        bucket1.push(omniscript);
-      } else {
-        bucket2.push(omniscript);
-      }
-    }
-
-    // Merge: Bucket 1 (clean names) first, then Bucket 2 (names with special chars)
-    return [...bucket1, ...bucket2];
-  }
-
   async migrate(): Promise<MigrationResult[]> {
     // Get All Records from OmniScript__c (IP & OS Parent Records)
-    let omniscripts = await this.getAllOmniScripts();
-
-    // Prioritize records without special characters in Type/SubType
-    omniscripts = this.prioritizeOmniscriptsWithoutSpecialCharacters(omniscripts);
+    const omniscripts = await this.getAllOmniScripts();
 
     const functionDefinitionMetadata = await getAllFunctionMetadata(this.namespace, this.connection);
     populateRegexForFunctionMetadata(functionDefinitionMetadata);
@@ -1447,13 +1409,15 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       filters.set(this.getFieldKey('IsProcedure__c'), false);
     }
 
+    let omniscripts: AnyJson[];
+
     if (this.allVersions) {
       const sortFields = [
         { field: this.getFieldKey('Type__c'), direction: SortDirection.ASC },
         { field: this.getFieldKey('SubType__c'), direction: SortDirection.ASC },
         { field: this.getFieldKey('Version__c'), direction: SortDirection.ASC },
       ];
-      return await QueryTools.queryWithFilterAndSort(
+      omniscripts = await QueryTools.queryWithFilterAndSort(
         this.connection,
         this.getQueryNamespace(),
         this.getOmniscriptObjectName(),
@@ -1470,7 +1434,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       });
     } else {
       filters.set(this.getFieldKey('IsActive__c'), true);
-      return await QueryTools.queryWithFilter(
+      omniscripts = await QueryTools.queryWithFilter(
         this.connection,
         this.getQueryNamespace(),
         this.getOmniscriptObjectName(),
@@ -1483,6 +1447,13 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         throw err;
       });
     }
+
+    // Apply prioritization only for standard data model
+    if (this.IS_STANDARD_DATA_MODEL) {
+      return this.prioritizeOmniscriptsWithoutSpecialCharacters(omniscripts);
+    }
+
+    return omniscripts;
   }
 
   // Get All Elements w.r.t OmniScript__c i.e Elements tagged to passed in IP/OS
@@ -2172,6 +2143,19 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     return this.IS_STANDARD_DATA_MODEL
       ? Object.values(OmniScriptDefinitionMappings)
       : Object.keys(OmniScriptDefinitionMappings);
+  }
+
+  /**
+   * Prioritizes OmniScripts by name characteristics:
+   * - Clean names (alphanumeric only) are processed first
+   * - Names with special characters are processed after
+   * This avoids naming conflicts during migration when special characters are cleaned
+   */
+  private prioritizeOmniscriptsWithoutSpecialCharacters(omniscripts: AnyJson[]): AnyJson[] {
+    // Check both Type__c and SubType__c fields
+    const typeField = this.getFieldKey('Type__c');
+    const subTypeField = this.getFieldKey('SubType__c');
+    return prioritizeCleanNamesFirst(omniscripts, [typeField, subTypeField]);
   }
 
   /**

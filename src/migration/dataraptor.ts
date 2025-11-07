@@ -25,6 +25,7 @@ import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
 import { Constants } from '../utils/constants/stringContants';
 import { isStandardDataModel } from '../utils/dataModelService';
+import { prioritizeCleanNamesFirst } from '../utils/recordPrioritization';
 
 export class DataRaptorMigrationTool extends BaseMigrationTool implements MigrationTool {
   static readonly DRBUNDLE_NAME = 'DRBundle__c';
@@ -62,38 +63,6 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     await super.truncate(DataRaptorMigrationTool.OMNIDATATRANSFORM_NAME);
   }
 
-  /**
-   * Checks if a string contains only alphanumeric characters (a-z, A-Z, 0-9)
-   */
-  private hasOnlyAlphanumericCharacters(str: string): boolean {
-    return /^[a-zA-Z0-9]+$/.test(str);
-  }
-
-  /**
-   * Separates DataRaptors into two buckets and merges them:
-   * Bucket 1: Name contains only alphanumeric characters (a-z, A-Z, 0-9)
-   * Bucket 2: Name contains special characters
-   * Returns Bucket 1 followed by Bucket 2 to prioritize cleaner names
-   */
-  private prioritizeDataRaptorsWithoutSpecialCharacters(dataRaptors: AnyJson[]): AnyJson[] {
-    const bucket1: AnyJson[] = []; // Only alphanumeric in Name
-    const bucket2: AnyJson[] = []; // Has special characters in Name
-
-    for (const dataRaptor of dataRaptors) {
-      const name = dataRaptor['Name'] || '';
-
-      // Check if Name contains only alphanumeric characters
-      if (this.hasOnlyAlphanumericCharacters(name)) {
-        bucket1.push(dataRaptor);
-      } else {
-        bucket2.push(dataRaptor);
-      }
-    }
-
-    // Merge: Bucket 1 (clean names) first, then Bucket 2 (names with special chars)
-    return [...bucket1, ...bucket2];
-  }
-
   async migrate(): Promise<MigrationResult[]> {
     return [await this.MigrateDataRaptorData()];
   }
@@ -105,10 +74,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
 
     // Query all dataraptors and the respective items
     DebugTimer.getInstance().lap('Query data raptors');
-    let dataRaptors = await this.getAllDataRaptors();
-
-    // Prioritize records without special characters in Name
-    dataRaptors = this.prioritizeDataRaptorsWithoutSpecialCharacters(dataRaptors);
+    const dataRaptors = await this.getAllDataRaptors();
 
     const dataRaptorItemsData = await this.getAllItems();
 
@@ -320,10 +286,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     try {
       DebugTimer.getInstance().lap('Query data raptors');
       Logger.log(this.messages.getMessage('startingDataRaptorAssessment'));
-      let dataRaptors = await this.getAllDataRaptors();
-
-      // Prioritize records without special characters in Name
-      dataRaptors = this.prioritizeDataRaptorsWithoutSpecialCharacters(dataRaptors);
+      const dataRaptors = await this.getAllDataRaptors();
 
       const dataRaptorAssessmentInfos = this.processDRComponents(dataRaptors);
       return dataRaptorAssessmentInfos;
@@ -469,7 +432,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
   // Get All DRBundle__c records
   private async getAllDataRaptors(): Promise<AnyJson[]> {
     //DebugTimer.getInstance().lap('Query DRBundle');
-    return await QueryTools.queryAll(
+    const dataRaptors = await QueryTools.queryAll(
       this.connection,
       this.getQueryNamespace(),
       this.getBundleObjectName(),
@@ -480,6 +443,13 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
       }
       throw err;
     });
+
+    // Apply prioritization only for standard data model
+    if (this.IS_STANDARD_DATA_MODEL) {
+      return this.prioritizeDataRaptorsWithoutSpecialCharacters(dataRaptors);
+    }
+
+    return dataRaptors;
   }
 
   // Get All Items
@@ -646,5 +616,16 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     return this.IS_STANDARD_DATA_MODEL
       ? DataRaptorMigrationTool.OMNIDATATRANSFORMITEM_NAME
       : DataRaptorMigrationTool.DRMAPITEM_NAME;
+  }
+
+  /**
+   * Prioritizes DataRaptors by name characteristics:
+   * - Clean names (alphanumeric only) are processed first
+   * - Names with special characters are processed after
+   * This avoids naming conflicts during migration when special characters are cleaned
+   */
+  private prioritizeDataRaptorsWithoutSpecialCharacters(dataRaptors: AnyJson[]): AnyJson[] {
+    const nameField = this.getBundleFieldKey('Name');
+    return prioritizeCleanNamesFirst(dataRaptors, nameField);
   }
 }
