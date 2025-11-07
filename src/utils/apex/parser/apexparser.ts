@@ -21,6 +21,10 @@ import { CharStreams, ParserRuleContext, Token, TokenStreamRewriter } from 'antl
 import { ParseTreeWalker } from 'antlr4ts/tree/ParseTreeWalker';
 import { Logger } from '../../logger';
 
+// Constants for reserved keywords and special interface names
+const SYSTEM_NAMESPACE = 'System';
+const CALLABLE_INTERFACE = 'Callable';
+
 export class ApexASTParser {
   private apexFileContent: string;
   private implementsInterface: Map<InterfaceImplements, Token[]> = new Map();
@@ -262,11 +266,11 @@ export class InterfaceMatcher {
       tokens.push(typeNameContexts[1].id().Identifier().symbol);
     } else if (
       // Special case for System.Callable - "System" is a reserved keyword so Identifier() returns null
-      checkFor.namespace === 'System' &&
-      checkFor.name === 'Callable' &&
+      checkFor.namespace === SYSTEM_NAMESPACE &&
+      checkFor.name === CALLABLE_INTERFACE &&
       typeNameContexts.length === 2 &&
       !typeNameContexts[0]?.id()?.Identifier() && // System is a reserved keyword, no Identifier
-      typeNameContexts[1]?.id()?.Identifier()?.symbol?.text === 'Callable'
+      typeNameContexts[1]?.id()?.Identifier()?.symbol?.text === CALLABLE_INTERFACE
     ) {
       tokens.push(typeNameContexts[0].start);
       tokens.push(typeNameContexts[1].id().Identifier().symbol);
