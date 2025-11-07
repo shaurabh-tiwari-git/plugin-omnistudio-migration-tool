@@ -1,3 +1,12 @@
+# [1.7.0](https://github.com/salesforcecli/plugin-omnistudio-migration-tool/compare/1.6.1...1.7.0) (2025-11-07)
+
+
+### Features
+
+* @W-19700286: [OMT] [Migration] Implemention of Guardrail and validation ([55fd750](https://github.com/salesforcecli/plugin-omnistudio-migration-tool/commit/55fd75039d92e42198580a577279c78122207400))
+
+
+
 ## [1.6.1](https://github.com/salesforcecli/plugin-omnistudio-migration-tool/compare/1.6.0...1.6.1) (2025-09-12)
 
 
