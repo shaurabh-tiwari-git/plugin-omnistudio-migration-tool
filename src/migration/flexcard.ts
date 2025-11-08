@@ -924,6 +924,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         }
 
         uploadResult.newName = transformedCardName;
+        uploadResult.actualName = transformedCard['Name']; // This is required as storage needs name without version, for replacement in other references
         if (transformedCard['Name'] !== card['Name']) {
           uploadResult.warnings.unshift(this.messages.getMessage('cardNameChangeMessage', [transformedCardName]));
         }
@@ -989,6 +990,10 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         if (flexCardAssessmentInfo.errors && flexCardAssessmentInfo.errors.length > 0) {
           value.error = flexCardAssessmentInfo.errors;
           value.migrationSuccess = false;
+        } else if (flexCardAssessmentInfo.migrationStatus === 'Needs manual intervention') {
+          // Duplicate name and other critical warnings
+          value.error = flexCardAssessmentInfo.warnings;
+          value.migrationSuccess = false;
         } else {
           value.migrationSuccess = true;
         }
@@ -1048,15 +1053,21 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
         const originalName: string = oldrecord['Name'];
         let value: FlexcardStorage = {
-          name: newrecord?.newName,
+          name: newrecord?.actualName,
           isDuplicate: false,
           originalName: originalName,
         };
 
         if (newrecord === undefined) {
-          value.error = ['Migration Failed'];
+          // Card was not migrated - check if original record has error details
+          if (oldrecord['errors'] && Array.isArray(oldrecord['errors'])) {
+            value.error = oldrecord['errors'];
+          } else {
+            value.error = ['Migration Failed'];
+          }
+          value.migrationSuccess = false;
         } else {
-          if (newrecord.hasErrors) {
+          if (newrecord.hasErrors || newrecord?.success === false) {
             value.error = newrecord.errors;
             value.migrationSuccess = false;
           } else {

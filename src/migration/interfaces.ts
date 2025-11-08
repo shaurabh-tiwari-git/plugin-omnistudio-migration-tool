@@ -38,7 +38,8 @@ export interface ObjectMapping {
 export interface UploadRecordResult {
   referenceId: string;
   id?: string;
-  newName?: string;
+  newName?: string; // Display name (may include version suffix for reports)
+  actualName?: string; // Actual Salesforce Name field (for references/dependencies)
   errors: string[];
   warnings: string[];
   hasErrors: boolean;
