@@ -166,15 +166,21 @@ export class FileDiffUtil {
     for (const block of diff) {
       if (block.added) {
         block.value.split('\n').forEach((line) => {
-          result.push({ old: null, new: line });
+          if (line.trim() !== '') {
+            result.push({ old: null, new: line });
+          }
         });
       } else if (block.removed) {
         block.value.split('\n').forEach((line) => {
-          result.push({ old: line, new: null });
+          if (line.trim() !== '') {
+            result.push({ old: line, new: null });
+          }
         });
       } else {
         block.value.split('\n').forEach((line) => {
-          result.push({ old: line, new: line });
+          if (line.trim() !== '') {
+            result.push({ old: line, new: line });
+          }
         });
       }
     }

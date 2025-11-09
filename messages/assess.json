@@ -138,6 +138,7 @@
   "flexipagesWithChanges": "Found %s FlexiPages with changes",
   "expSitesWithChanges": "Found %s Experience Cloud Sites with changes",
   "migratingFlexiPages": "Migrating FlexiPages",
+  "manualInterventionForFlexiPageAsDuplicateKey": "We couldn’t process the %s %s because a duplicate key was found in storage.",
   "experienceSiteMetadataConsent": "Your consent for migrating Experience Cloud sites is %s",
   "experienceSiteConsentNotProvidedWarning": "You’ve not provided consent and your Experience Cloud sites won’t be processed.",
   "relatedObjectsToProcessAfterExpSitesRemoval": "Objects to process after removing expsite are %s.",

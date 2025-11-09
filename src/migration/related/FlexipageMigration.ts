@@ -133,7 +133,9 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
           errors.add(error.message);
           status = mode === 'assess' ? 'Needs manual intervention' : 'Skipped';
         } else if (error instanceof DuplicateKeyError) {
-          errors.add(`${error.componentType} ${error.key} is duplicate`);
+          errors.add(
+            this.messages.getMessage('manualInterventionForFlexiPageAsDuplicateKey', [error.componentType, error.key])
+          );
           status = mode === 'assess' ? 'Needs manual intervention' : 'Skipped';
         } else {
           errors.add(this.messages.getMessage('errorProcessingFlexiPage', [file, error]));
@@ -192,7 +194,11 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
       Logger.logVerbose(this.messages.getMessage('updatedModifiedContent', [filePath]));
     }
 
-    const diff = new FileDiffUtil().getXMLDiff(fileContent, modifiedContent);
+    // Normalize trailing newlines to avoid false positives in diff
+    // Both original and modified content are normalized to remove trailing newlines
+    const normalizedOriginal = fileContent.replace(/\n+$/, '');
+    const normalizedModified = modifiedContent.replace(/\n+$/, '');
+    const diff = new FileDiffUtil().getXMLDiff(normalizedOriginal, normalizedModified);
     Logger.logVerbose(this.messages.getMessage('generatedDiffForFile', [fileName]));
 
     return {
