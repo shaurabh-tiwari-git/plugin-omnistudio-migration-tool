@@ -1067,7 +1067,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
           }
           value.migrationSuccess = false;
         } else {
-          if (newrecord.hasErrors || newrecord?.success === false) {
+          if (newrecord.hasErrors) {
             value.error = newrecord.errors;
             value.migrationSuccess = false;
           } else {
