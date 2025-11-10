@@ -22,6 +22,7 @@ import { Constants } from '../utils/constants/stringContants';
 import { StorageUtil } from '../utils/storageUtil';
 import { getUpdatedAssessmentStatus } from '../utils/stringUtils';
 import { isStandardDataModel } from '../utils/dataModelService';
+import { prioritizeCleanNamesFirst } from '../utils/recordPrioritization';
 
 export class CardMigrationTool extends BaseMigrationTool implements MigrationTool {
   static readonly VLOCITYCARD_NAME = 'VlocityCard__c';
@@ -159,6 +160,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     try {
       Logger.log(this.messages.getMessage('startingFlexCardAssessment'));
       const flexCards = await this.getAllCards();
+
       Logger.log(this.messages.getMessage('foundFlexCardsToAssess', [flexCards.length]));
 
       const flexCardsAssessmentInfos = await this.processCardComponents(flexCards);
@@ -734,12 +736,14 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       filters.set(this.namespacePrefix + 'CardType__c', 'flex');
     }
 
+    let flexCards: AnyJson[];
+
     if (this.allVersions) {
       const sortFields = [
         { field: 'Name', direction: SortDirection.ASC },
         { field: this.getFieldKey('Version__c'), direction: SortDirection.ASC },
       ];
-      return await QueryTools.queryWithFilterAndSort(
+      flexCards = await QueryTools.queryWithFilterAndSort(
         this.connection,
         this.getQueryNamespace(),
         this.getCardObjectName(),
@@ -756,7 +760,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       });
     } else {
       filters.set(this.getFieldKey('Active__c'), true);
-      return await QueryTools.queryWithFilter(
+      flexCards = await QueryTools.queryWithFilter(
         this.connection,
         this.getQueryNamespace(),
         this.getCardObjectName(),
@@ -769,6 +773,13 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         throw err;
       });
     }
+
+    // Apply prioritization only for standard data model
+    if (this.IS_STANDARD_DATA_MODEL) {
+      return this.prioritizeFlexCardsWithoutSpecialCharacters(flexCards);
+    }
+
+    return flexCards;
   }
 
   // Upload All the VlocityCard__c records to OmniUiCard for custom model and update references for standard
@@ -1766,5 +1777,16 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
     // Save the updated definition back to the mappedObject
     mappedObject[CardMappings.Definition__c] = JSON.stringify(definition);
+  }
+
+  /**
+   * Prioritizes FlexCards by name characteristics:
+   * - Clean names (alphanumeric only) are processed first
+   * - Names with special characters are processed after
+   * This avoids naming conflicts during migration when special characters are cleaned
+   */
+  private prioritizeFlexCardsWithoutSpecialCharacters(flexCards: AnyJson[]): AnyJson[] {
+    const nameField = this.getFieldKey('Name');
+    return prioritizeCleanNamesFirst(flexCards, nameField);
   }
 }

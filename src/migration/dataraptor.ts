@@ -25,6 +25,7 @@ import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
 import { Constants } from '../utils/constants/stringContants';
 import { isStandardDataModel } from '../utils/dataModelService';
+import { prioritizeCleanNamesFirst } from '../utils/recordPrioritization';
 
 export class DataRaptorMigrationTool extends BaseMigrationTool implements MigrationTool {
   static readonly DRBUNDLE_NAME = 'DRBundle__c';
@@ -431,7 +432,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
   // Get All DRBundle__c records
   private async getAllDataRaptors(): Promise<AnyJson[]> {
     //DebugTimer.getInstance().lap('Query DRBundle');
-    return await QueryTools.queryAll(
+    const dataRaptors = await QueryTools.queryAll(
       this.connection,
       this.getQueryNamespace(),
       this.getBundleObjectName(),
@@ -442,6 +443,13 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
       }
       throw err;
     });
+
+    // Apply prioritization only for standard data model
+    if (this.IS_STANDARD_DATA_MODEL) {
+      return this.prioritizeDataRaptorsWithoutSpecialCharacters(dataRaptors);
+    }
+
+    return dataRaptors;
   }
 
   // Get All Items
@@ -608,5 +616,16 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
     return this.IS_STANDARD_DATA_MODEL
       ? DataRaptorMigrationTool.OMNIDATATRANSFORMITEM_NAME
       : DataRaptorMigrationTool.DRMAPITEM_NAME;
+  }
+
+  /**
+   * Prioritizes DataRaptors by name characteristics:
+   * - Clean names (alphanumeric only) are processed first
+   * - Names with special characters are processed after
+   * This avoids naming conflicts during migration when special characters are cleaned
+   */
+  private prioritizeDataRaptorsWithoutSpecialCharacters(dataRaptors: AnyJson[]): AnyJson[] {
+    const nameField = this.getBundleFieldKey('Name');
+    return prioritizeCleanNamesFirst(dataRaptors, nameField);
   }
 }

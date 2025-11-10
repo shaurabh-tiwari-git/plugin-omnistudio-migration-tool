@@ -39,6 +39,7 @@ import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
 import { StorageUtil } from '../utils/storageUtil';
 import { isStandardDataModel } from '../utils/dataModelService';
+import { prioritizeCleanNamesFirst } from '../utils/recordPrioritization';
 
 export class OmniScriptMigrationTool extends BaseMigrationTool implements MigrationTool {
   private readonly exportType: OmniScriptExportType;
@@ -1408,13 +1409,15 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       filters.set(this.getFieldKey('IsProcedure__c'), false);
     }
 
+    let omniscripts: AnyJson[];
+
     if (this.allVersions) {
       const sortFields = [
         { field: this.getFieldKey('Type__c'), direction: SortDirection.ASC },
         { field: this.getFieldKey('SubType__c'), direction: SortDirection.ASC },
         { field: this.getFieldKey('Version__c'), direction: SortDirection.ASC },
       ];
-      return await QueryTools.queryWithFilterAndSort(
+      omniscripts = await QueryTools.queryWithFilterAndSort(
         this.connection,
         this.getQueryNamespace(),
         this.getOmniscriptObjectName(),
@@ -1431,7 +1434,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       });
     } else {
       filters.set(this.getFieldKey('IsActive__c'), true);
-      return await QueryTools.queryWithFilter(
+      omniscripts = await QueryTools.queryWithFilter(
         this.connection,
         this.getQueryNamespace(),
         this.getOmniscriptObjectName(),
@@ -1444,6 +1447,13 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
         throw err;
       });
     }
+
+    // Apply prioritization only for standard data model
+    if (this.IS_STANDARD_DATA_MODEL) {
+      return this.prioritizeOmniscriptsWithoutSpecialCharacters(omniscripts);
+    }
+
+    return omniscripts;
   }
 
   // Get All Elements w.r.t OmniScript__c i.e Elements tagged to passed in IP/OS
@@ -2133,6 +2143,19 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     return this.IS_STANDARD_DATA_MODEL
       ? Object.values(OmniScriptDefinitionMappings)
       : Object.keys(OmniScriptDefinitionMappings);
+  }
+
+  /**
+   * Prioritizes OmniScripts by name characteristics:
+   * - Clean names (alphanumeric only) are processed first
+   * - Names with special characters are processed after
+   * This avoids naming conflicts during migration when special characters are cleaned
+   */
+  private prioritizeOmniscriptsWithoutSpecialCharacters(omniscripts: AnyJson[]): AnyJson[] {
+    // Check both Type__c and SubType__c fields
+    const typeField = this.getFieldKey('Type__c');
+    const subTypeField = this.getFieldKey('SubType__c');
+    return prioritizeCleanNamesFirst(omniscripts, [typeField, subTypeField]);
   }
 
   /**
