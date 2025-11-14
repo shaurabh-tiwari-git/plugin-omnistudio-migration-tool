@@ -27,6 +27,7 @@ describe('DataModelService', () => {
       // Arrange
       const orgs: OmnistudioOrgDetails = {
         hasValidNamespace: true,
+        isFoundationPackage: false,
         packageDetails: { namespace: 'TestNamespace' },
         omniStudioOrgPermissionEnabled: true,
       } as OmnistudioOrgDetails;
@@ -43,6 +44,7 @@ describe('DataModelService', () => {
       // Arrange
       const orgs: OmnistudioOrgDetails = {
         hasValidNamespace: true,
+        isFoundationPackage: false,
         packageDetails: { namespace: 'TestNamespace' },
         omniStudioOrgPermissionEnabled: false,
       } as OmnistudioOrgDetails;
@@ -66,6 +68,7 @@ describe('DataModelService', () => {
       // Arrange
       const orgs: OmnistudioOrgDetails = {
         hasValidNamespace: true,
+        isFoundationPackage: false,
         packageDetails: { namespace: 'TestNamespace' },
         omniStudioOrgPermissionEnabled: false,
       } as OmnistudioOrgDetails;
@@ -78,6 +81,7 @@ describe('DataModelService', () => {
       // Arrange
       const orgs: OmnistudioOrgDetails = {
         hasValidNamespace: true,
+        isFoundationPackage: false,
         packageDetails: { namespace: 'TestNamespace' },
         omniStudioOrgPermissionEnabled: true,
       } as OmnistudioOrgDetails;
@@ -123,6 +127,7 @@ describe('DataModelService', () => {
       // Arrange
       const orgs: OmnistudioOrgDetails = {
         hasValidNamespace: true,
+        isFoundationPackage: false,
         packageDetails: { namespace: 'TestNamespace' },
         omniStudioOrgPermissionEnabled: false,
       } as OmnistudioOrgDetails;
@@ -144,6 +149,7 @@ describe('DataModelService', () => {
       // Arrange
       const orgs: OmnistudioOrgDetails = {
         hasValidNamespace: true,
+        isFoundationPackage: false,
         packageDetails: { namespace: 'TestNamespace' },
         omniStudioOrgPermissionEnabled: true,
       } as OmnistudioOrgDetails;
@@ -161,6 +167,7 @@ describe('DataModelService', () => {
       // Arrange
       const orgs: OmnistudioOrgDetails = {
         hasValidNamespace: true,
+        isFoundationPackage: false,
         packageDetails: { namespace: 'TestNamespace' },
         omniStudioOrgPermissionEnabled: false,
       } as OmnistudioOrgDetails;
@@ -178,6 +185,7 @@ describe('DataModelService', () => {
       // Arrange
       const orgs: OmnistudioOrgDetails = {
         hasValidNamespace: true,
+        isFoundationPackage: false,
         packageDetails: { namespace: 'TestNamespace' },
         omniStudioOrgPermissionEnabled: false,
       } as OmnistudioOrgDetails;
@@ -195,6 +203,7 @@ describe('DataModelService', () => {
       // Arrange
       const orgs: OmnistudioOrgDetails = {
         hasValidNamespace: true,
+        isFoundationPackage: false,
         packageDetails: { namespace: 'TestNamespace' },
         omniStudioOrgPermissionEnabled: true,
       } as OmnistudioOrgDetails;
@@ -212,11 +221,13 @@ describe('DataModelService', () => {
       // Arrange
       const orgs1: OmnistudioOrgDetails = {
         hasValidNamespace: true,
+        isFoundationPackage: false,
         packageDetails: { namespace: 'TestNamespace' },
         omniStudioOrgPermissionEnabled: false,
       } as OmnistudioOrgDetails;
       const orgs2: OmnistudioOrgDetails = {
         hasValidNamespace: true,
+        isFoundationPackage: false,
         packageDetails: { namespace: 'TestNamespace' },
         omniStudioOrgPermissionEnabled: true,
       } as OmnistudioOrgDetails;
