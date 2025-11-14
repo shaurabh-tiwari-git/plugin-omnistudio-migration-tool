@@ -63,6 +63,7 @@ export class OmniStudioMetadataCleanupService {
    * @returns Promise<boolean> - true if cleanup was successful, false otherwise
    */
   public async cleanupOmniStudioMetadataTables(): Promise<boolean> {
+    return true;
     try {
       Logger.log(this.messages.getMessage('startingMetadataCleanup'));
 

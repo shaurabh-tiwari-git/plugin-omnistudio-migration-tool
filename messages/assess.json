@@ -209,5 +209,14 @@
   "validatingDrVersioningDisabled": "Checking the Data Mapper versioning setting in your org.",
   "drVersioningDisabled": "Proceeding with the assessment as the Data Mapper versioning setting is disabled.",
   "drVersioningEnabled": "We cannot proceed with the assessment as the Data Mapper versioning setting is enabled in your org.",
-  "errorValidatingDrVersioning": "Failed to verify the status of the Data Mapper versioning setting. Try again later."
+  "errorValidatingDrVersioning": "Failed to verify the status of the Data Mapper versioning setting. Try again later.",
+  "validatingOmniInteractionConfig": "Validating omni interaction config",
+  "omniInteractionConfigInvalid": "Org has both Omnistudio Foundation and Managed Package. Please check org configuration.",
+  "queryResultSize": "Query returned result with size %s",
+  "packagesHaveSameValue": "Both TheFirstInstalledOmniPackage and InstalledIndustryPackage have same value",
+  "packagesHaveDifferentValue": "Both TheFirstInstalledOmniPackage and InstalledIndustryPackage have different value",
+  "failedToCheckPackagesValue": "Failed to check the value of packages in OmniInteractionConfig",
+  "isStandardDataModelOrg": "Is Standard Data Model Org - %s",
+  "isFoundationPackageOrg": "Is Foundation Package Org - %s",
+  "packageDetails": "Only TheFirstInstalledOmniPackage exists in the org"
 }
