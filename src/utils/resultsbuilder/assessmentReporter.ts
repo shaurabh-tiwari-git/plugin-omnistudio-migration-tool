@@ -68,7 +68,7 @@ export class AssessmentReporter {
         Constants.CustomLabel
       );
 
-      // Only add GlobalAutoNumber and CustomLabel reports if it's not a foundation package
+      // Only add GlobalAutoNumber if it's not a foundation package
       if (!isFoundationPackage()) {
         reports.push(Constants.GlobalAutoNumber);
       }
@@ -125,7 +125,7 @@ export class AssessmentReporter {
         )
       );
 
-      // Only generate GlobalAutoNumber and CustomLabel reports if it's not a foundation package
+      // Only generate GlobalAutoNumber reports if it's not a foundation package
       if (!isFoundationPackage()) {
         this.createDocument(
           path.join(this.basePath, this.globalAutoNumberAssessmentFileName),
