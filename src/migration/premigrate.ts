@@ -131,17 +131,21 @@ export class PreMigrate extends BaseMigrationTool {
       deploymentConfig.authKey = process.env[authEnvKey];
       if (!deploymentConfig.authKey) {
         Logger.warn(this.messages.getMessage('authKeyEnvVarNotSet'));
-        actionItems.push(this.messages.getMessage('authKeyEnvVarNotSet'));
+        actionItems.push(
+          `${this.messages.getMessage('authKeyEnvVarNotSet')}\n${this.messages.getMessage('manualDeploymentSteps', [
+            documentRegistry.manualDeploymentSteps,
+          ])}`
+        );
       }
     }
 
     if (!consent) {
       Logger.warn(this.messages.getMessage('deploymentConsentNotGiven'));
-      actionItems.push(this.messages.getMessage('deploymentConsentNotGiven'));
-    }
-
-    if (!consent || (includeLwc && !deploymentConfig.authKey)) {
-      actionItems.push(this.messages.getMessage('manualDeploymentSteps', [documentRegistry.manualDeploymentSteps]));
+      actionItems.push(
+        `${this.messages.getMessage('deploymentConsentNotGiven')}\n${this.messages.getMessage('manualDeploymentSteps', [
+          documentRegistry.manualDeploymentSteps,
+        ])}`
+      );
     }
 
     return deploymentConfig;
