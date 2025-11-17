@@ -620,4 +620,206 @@ describe('ApexMigration', () => {
       expect(dmNameUpdateFailed.size).to.equal(0);
     });
   });
+
+  describe('processApexFileForRemotecalls', () => {
+    it('should return empty array when class already implements only System.Callable', () => {
+      // Arrange
+      const mockFile = { name: 'TestClass.cls', location: '/test/path' };
+      const callableInterface = new InterfaceImplements('Callable', 'System');
+      const mockParser = {
+        implementsInterfaces: new Map([[callableInterface, [{ startIndex: 10, stopIndex: 25, text: 'System.Callable' }]]]),
+        hasCallMethodImplemented: true,
+        classDeclaration: {},
+      };
+
+      // Act
+      const result = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
+
+      // Assert
+      expect(result).to.be.an('array').with.length(0);
+    });
+
+    it('should replace only VlocityOpenInterface2 with System.Callable', () => {
+      // Arrange
+      const mockFile = { name: 'TestClass.cls', location: '/test/path' };
+      const vlocityOpenInterface2 = new InterfaceImplements('VlocityOpenInterface2', testNamespace);
+      const mockParser = {
+        implementsInterfaces: new Map([
+          [vlocityOpenInterface2, [{ startIndex: 10, stopIndex: 45, text: `${testNamespace}.VlocityOpenInterface2` }]],
+        ]),
+        hasCallMethodImplemented: false,
+        classDeclaration: { stopIndex: 100 },
+      };
+
+      // Act
+      const result = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
+
+      // Assert
+      expect(result).to.be.an('array').with.length(2);
+      expect(result[0].constructor.name).to.equal('RangeTokenUpdate');
+      expect(result[0].newText).to.equal('System.Callable');
+      expect(result[1].constructor.name).to.equal('InsertAfterTokenUpdate');
+    });
+
+    it('should replace only VlocityOpenInterface with System.Callable', () => {
+      // Arrange
+      const mockFile = { name: 'TestClass.cls', location: '/test/path' };
+      const vlocityOpenInterface = new InterfaceImplements('VlocityOpenInterface', testNamespace);
+      const mockParser = {
+        implementsInterfaces: new Map([
+          [vlocityOpenInterface, [{ startIndex: 10, stopIndex: 44, text: `${testNamespace}.VlocityOpenInterface` }]],
+        ]),
+        hasCallMethodImplemented: false,
+        classDeclaration: { stopIndex: 100 },
+      };
+
+      // Act
+      const result = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
+
+      // Assert
+      expect(result).to.be.an('array').with.length(2);
+      expect(result[0].constructor.name).to.equal('RangeTokenUpdate');
+      expect(result[0].newText).to.equal('System.Callable');
+      expect(result[1].constructor.name).to.equal('InsertAfterTokenUpdate');
+    });
+
+    it('should replace BOTH VlocityOpenInterface and VlocityOpenInterface2 with System.Callable', () => {
+      // Arrange - This is the FIX scenario
+      const mockFile = { name: 'TestClass.cls', location: '/test/path' };
+      const vlocityOpenInterface = new InterfaceImplements('VlocityOpenInterface', testNamespace);
+      const vlocityOpenInterface2 = new InterfaceImplements('VlocityOpenInterface2', testNamespace);
+      const mockParser = {
+        implementsInterfaces: new Map([
+          [vlocityOpenInterface, [{ startIndex: 10, stopIndex: 44, text: `${testNamespace}.VlocityOpenInterface` }]],
+          [vlocityOpenInterface2, [{ startIndex: 46, stopIndex: 81, text: `${testNamespace}.VlocityOpenInterface2` }]],
+        ]),
+        hasCallMethodImplemented: false,
+        classDeclaration: { stopIndex: 100 },
+      };
+
+      // Act
+      const result = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
+
+      // Assert
+      // Should call replaceAllInterfaces and replace entire implements clause with System.Callable
+      expect(result).to.be.an('array').with.length(2);
+      expect(result[0].constructor.name).to.equal('RangeTokenUpdate');
+      expect(result[0].newText).to.equal('System.Callable');
+      expect(result[1].constructor.name).to.equal('InsertAfterTokenUpdate');
+    });
+
+    it('should replace System.Callable with other interfaces to only System.Callable', () => {
+      // Arrange
+      const mockFile = { name: 'TestClass.cls', location: '/test/path' };
+      const callableInterface = new InterfaceImplements('Callable', 'System');
+      const vlocityOpenInterface2 = new InterfaceImplements('VlocityOpenInterface2', testNamespace);
+      const mockParser = {
+        implementsInterfaces: new Map([
+          [callableInterface, [{ startIndex: 10, stopIndex: 25, text: 'System.Callable' }]],
+          [vlocityOpenInterface2, [{ startIndex: 27, stopIndex: 62, text: `${testNamespace}.VlocityOpenInterface2` }]],
+        ]),
+        hasCallMethodImplemented: false,
+        classDeclaration: { stopIndex: 100 },
+      };
+
+      // Act
+      const result = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
+
+      // Assert
+      // Should call replaceAllInterfaces and keep only System.Callable
+      expect(result).to.be.an('array').with.length(2);
+      expect(result[0].constructor.name).to.equal('RangeTokenUpdate');
+      expect(result[0].newText).to.equal('System.Callable');
+      expect(result[1].constructor.name).to.equal('InsertAfterTokenUpdate');
+    });
+
+    it('should replace BOTH Vlocity interfaces AND System.Callable with only System.Callable', () => {
+      // Arrange - This is the FIX scenario with Callable already present
+      const mockFile = { name: 'TestClass.cls', location: '/test/path' };
+      const callableInterface = new InterfaceImplements('Callable', 'System');
+      const vlocityOpenInterface = new InterfaceImplements('VlocityOpenInterface', testNamespace);
+      const vlocityOpenInterface2 = new InterfaceImplements('VlocityOpenInterface2', testNamespace);
+      const mockParser = {
+        implementsInterfaces: new Map([
+          [callableInterface, [{ startIndex: 10, stopIndex: 25, text: 'System.Callable' }]],
+          [vlocityOpenInterface, [{ startIndex: 27, stopIndex: 61, text: `${testNamespace}.VlocityOpenInterface` }]],
+          [vlocityOpenInterface2, [{ startIndex: 63, stopIndex: 98, text: `${testNamespace}.VlocityOpenInterface2` }]],
+        ]),
+        hasCallMethodImplemented: false,
+        classDeclaration: { stopIndex: 100 },
+      };
+
+      // Act
+      const result = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
+
+      // Assert
+      // Should call replaceAllInterfaces and keep only System.Callable, removing both Vlocity interfaces
+      expect(result).to.be.an('array').with.length(2);
+      expect(result[0].constructor.name).to.equal('RangeTokenUpdate');
+      expect(result[0].newText).to.equal('System.Callable');
+      expect(result[1].constructor.name).to.equal('InsertAfterTokenUpdate');
+    });
+
+    it('should not add call method when it already exists', () => {
+      // Arrange
+      const mockFile = { name: 'TestClass.cls', location: '/test/path' };
+      const vlocityOpenInterface2 = new InterfaceImplements('VlocityOpenInterface2', testNamespace);
+      const mockParser = {
+        implementsInterfaces: new Map([
+          [vlocityOpenInterface2, [{ startIndex: 10, stopIndex: 45, text: `${testNamespace}.VlocityOpenInterface2` }]],
+        ]),
+        hasCallMethodImplemented: true,
+        classDeclaration: { stopIndex: 100 },
+      };
+
+      // Act
+      const result = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
+
+      // Assert
+      // Should only have RangeTokenUpdate, no InsertAfterTokenUpdate
+      expect(result).to.be.an('array').with.length(1);
+      expect(result[0].constructor.name).to.equal('RangeTokenUpdate');
+      expect(result[0].newText).to.equal('System.Callable');
+    });
+
+    it('should handle both Vlocity interfaces when call method already exists', () => {
+      // Arrange
+      const mockFile = { name: 'TestClass.cls', location: '/test/path' };
+      const vlocityOpenInterface = new InterfaceImplements('VlocityOpenInterface', testNamespace);
+      const vlocityOpenInterface2 = new InterfaceImplements('VlocityOpenInterface2', testNamespace);
+      const mockParser = {
+        implementsInterfaces: new Map([
+          [vlocityOpenInterface, [{ startIndex: 10, stopIndex: 44, text: `${testNamespace}.VlocityOpenInterface` }]],
+          [vlocityOpenInterface2, [{ startIndex: 46, stopIndex: 81, text: `${testNamespace}.VlocityOpenInterface2` }]],
+        ]),
+        hasCallMethodImplemented: true,
+        classDeclaration: { stopIndex: 100 },
+      };
+
+      // Act
+      const result = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
+
+      // Assert
+      // Should call replaceAllInterfaces but not add call method
+      expect(result).to.be.an('array').with.length(1);
+      expect(result[0].constructor.name).to.equal('RangeTokenUpdate');
+      expect(result[0].newText).to.equal('System.Callable');
+    });
+
+    it('should return empty array when no interfaces are present', () => {
+      // Arrange
+      const mockFile = { name: 'TestClass.cls', location: '/test/path' };
+      const mockParser = {
+        implementsInterfaces: new Map(),
+        hasCallMethodImplemented: false,
+        classDeclaration: { stopIndex: 100 },
+      };
+
+      // Act
+      const result = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
+
+      // Assert
+      expect(result).to.be.an('array').with.length(0);
+    });
+  });
 });
