@@ -18,22 +18,22 @@ export class PreMigrate extends BaseMigrationTool {
   }
 
   /**
-   * Ensures all versions are migrated when on standard data model.
+   * Ensures all versions are processed when on standard data model.
    * If the -a flag was not provided, prompts user for consent.
    *
    * @param allVersionsFlagFromCLI - The allVersions flag value from CLI (-a flag)
-   * @returns true if all versions should be migrated, false otherwise
+   * @returns true if all versions should be processed, false otherwise
    */
   public async handleAllVersionsPrerequisites(allVersionsFlagFromCLI: boolean): Promise<boolean> {
     if (allVersionsFlagFromCLI === false) {
-      // Get user consent to migrate allversions of OmniStudio components for standard data model migration
-      const omniStudioAllVersionsMigrationConsent = await this.getOmnistudioAllVersionsMigrationConsent();
-      if (!omniStudioAllVersionsMigrationConsent) {
-        Logger.error(this.messages.getMessage('omniStudioAllVersionsMigrationConsentNotGiven'));
+      // Get user consent to process allversions of OmniStudio components for standard data model migration
+      const omniStudioProcessAllVersionsConsent = await this.getOmnistudioProcessAllVersionsConsent();
+      if (!omniStudioProcessAllVersionsConsent) {
+        Logger.error(this.messages.getMessage('omniStudioAllVersionsProcessingConsentNotGiven'));
         process.exit(1);
       }
 
-      Logger.logVerbose(this.messages.getMessage('omniStudioAllVersionsMigrationConsentGiven'));
+      Logger.logVerbose(this.messages.getMessage('omniStudioAllVersionsProcessingConsentGiven'));
       return true;
     }
     return allVersionsFlagFromCLI;
@@ -288,7 +288,7 @@ export class PreMigrate extends BaseMigrationTool {
    *
    * @returns Promise<boolean> - true if user consents, false otherwise
    */
-  private async getOmnistudioAllVersionsMigrationConsent(): Promise<boolean> {
+  private async getOmnistudioProcessAllVersionsConsent(): Promise<boolean> {
     const askWithTimeOut = PromptUtil.askWithTimeOut(this.messages);
     let validResponse = false;
     let consent = false;
@@ -297,7 +297,7 @@ export class PreMigrate extends BaseMigrationTool {
       try {
         const resp = await askWithTimeOut(
           Logger.prompt.bind(Logger),
-          this.messages.getMessage('omniStudioAllVersionsMigrationConsent')
+          this.messages.getMessage('omniStudioAllVersionsProcessingConsent')
         );
         const response = typeof resp === 'string' ? resp.trim().toLowerCase() : '';
 
