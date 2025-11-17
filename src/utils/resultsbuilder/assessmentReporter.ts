@@ -134,7 +134,8 @@ export class AssessmentReporter {
             GlobalAutoNumberAssessmentReporter.getGlobalAutoNumberAssessmentData(
               result.globalAutoNumberAssessmentInfos,
               instanceUrl,
-              omnistudioOrgDetails
+              omnistudioOrgDetails,
+              false
             ),
             messages
           )
@@ -217,22 +218,20 @@ export class AssessmentReporter {
           break;
 
         case Constants.GlobalAutoNumber:
-          // Only generate GlobalAutoNumber report if it's not a foundation package
-          if (!isFoundationPackage()) {
-            reports.push(Constants.GlobalAutoNumber);
-            this.createDocument(
-              path.join(this.basePath, this.globalAutoNumberAssessmentFileName),
-              TemplateParser.generate(
-                assessmentReportTemplate,
-                GlobalAutoNumberAssessmentReporter.getGlobalAutoNumberAssessmentData(
-                  result.globalAutoNumberAssessmentInfos,
-                  instanceUrl,
-                  omnistudioOrgDetails
-                ),
-                messages
-              )
-            );
-          }
+          reports.push(Constants.GlobalAutoNumber);
+          this.createDocument(
+            path.join(this.basePath, this.globalAutoNumberAssessmentFileName),
+            TemplateParser.generate(
+              assessmentReportTemplate,
+              GlobalAutoNumberAssessmentReporter.getGlobalAutoNumberAssessmentData(
+                result.globalAutoNumberAssessmentInfos,
+                instanceUrl,
+                omnistudioOrgDetails,
+                isFoundationPackage()
+              ),
+              messages
+            )
+          );
           break;
 
         case Constants.CustomLabel:

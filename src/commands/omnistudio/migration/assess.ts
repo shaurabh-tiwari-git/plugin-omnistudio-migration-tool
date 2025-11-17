@@ -230,7 +230,9 @@ export default class Assess extends OmniStudioBaseCommand {
       await this.assessFlexCards(assesmentInfo, namespace, conn, allVersions);
       await this.assessOmniScripts(assesmentInfo, namespace, conn, allVersions, OmniScriptExportType.OS);
       await this.assessOmniScripts(assesmentInfo, namespace, conn, allVersions, OmniScriptExportType.IP);
-      await this.assessGlobalAutoNumbers(assesmentInfo, namespace, conn);
+      if (!isFoundationPackage()) {
+        await this.assessGlobalAutoNumbers(assesmentInfo, namespace, conn);
+      }
       await this.assessCustomLabels(assesmentInfo, namespace, conn);
       return;
     }
@@ -249,7 +251,9 @@ export default class Assess extends OmniStudioBaseCommand {
         await this.assessOmniScripts(assesmentInfo, namespace, conn, allVersions, OmniScriptExportType.IP);
         break;
       case Constants.GlobalAutoNumber:
-        await this.assessGlobalAutoNumbers(assesmentInfo, namespace, conn);
+        if (!isFoundationPackage()) {
+          await this.assessGlobalAutoNumbers(assesmentInfo, namespace, conn);
+        }
         break;
       case Constants.CustomLabel:
         await this.assessCustomLabels(assesmentInfo, namespace, conn);

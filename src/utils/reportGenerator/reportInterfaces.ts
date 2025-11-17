@@ -93,4 +93,5 @@ export interface ReportParam {
   };
   props?: string;
   reportType?: string; // Used to identify specific report types like 'customlabels' for custom styling
+  notSupportedMessage?: string; // Message to display when a feature is not supported
 }

@@ -125,7 +125,9 @@ export class ResultsBuilder {
     }
     const rollbackFlags = orgDetails.rollbackFlags || [];
     const flags = rollbackFlagNames.filter((flag) => rollbackFlags.includes(flag));
-    const data: ReportParam = {
+
+    // Common report fields
+    const baseData: ReportParam = {
       title: `${getMigrationHeading(result.name)} Migration Report`,
       heading: `${getMigrationHeading(result.name)} Migration Report`,
       org: {
@@ -135,19 +137,37 @@ export class ResultsBuilder {
         dataModel: orgDetails.dataModel,
       },
       assessmentDate: new Date().toLocaleString(),
-      total: result.data?.length || 0,
-      filterGroups: [...this.getStatusFilterGroup(result.data?.map((item) => item.status) || [])],
-      headerGroups: [...this.getHeaderGroupsForReport(componentName, isGlobalAutoNumber)],
-      rows: [
-        ...(result.data || []).map((item) => ({
-          rowId: `${this.rowClass}${this.rowId++}`,
-          data: [
-            createRowDataParam('id', item.id, false, 1, 1, true, `${instanceUrl}/${item.id}`),
-            createRowDataParam('name', item.name, true, 1, 1, false),
-            // Include migratedId for custom data model OR Global Auto Number
-            ...(isStandardDataModel() && !isGlobalAutoNumber
-              ? []
-              : [
+      total: 0,
+      filterGroups: [],
+      headerGroups: [],
+      rows: [],
+    };
+
+    // Determine report data based on whether feature is supported
+    let data: ReportParam;
+
+    // If Global Auto Number and foundation package, show not supported message
+    if (isGlobalAutoNumber && orgDetails.isFoundationPackage) {
+      data = {
+        ...baseData,
+        notSupportedMessage: 'Global Auto Numbers are not supported in OmniStudio package orgs.',
+      };
+    } else {
+      data = {
+        ...baseData,
+        total: result.data?.length || 0,
+        filterGroups: [...this.getStatusFilterGroup(result.data?.map((item) => item.status) || [])],
+        headerGroups: [...this.getHeaderGroupsForReport(componentName, isGlobalAutoNumber)],
+        rows: [
+          ...(result.data || []).map((item) => ({
+            rowId: `${this.rowClass}${this.rowId++}`,
+            data: [
+              createRowDataParam('id', item.id, false, 1, 1, true, `${instanceUrl}/${item.id}`),
+              createRowDataParam('name', item.name, true, 1, 1, false),
+              // Include migratedId for custom data model OR Global Auto Number
+              ...(isStandardDataModel() && !isGlobalAutoNumber
+                ? []
+                : [
                   createRowDataParam(
                     'migratedId',
                     item.migratedId,
@@ -158,43 +178,44 @@ export class ResultsBuilder {
                     `${instanceUrl}/${item.migratedId}`
                   ),
                 ]),
-            createRowDataParam('migratedName', item.migratedName, false, 1, 1, false),
-            createRowDataParam(
-              'status',
-              item.status,
-              false,
-              1,
-              1,
-              false,
-              undefined,
-              undefined,
-              item.status === 'Successfully migrated' ? 'text-success' : 'text-error'
-            ),
-            createRowDataParam(
-              'errors',
-              item.errors ? 'Failed' : 'Has No Errors',
-              false,
-              1,
-              1,
-              false,
-              undefined,
-              item.errors || []
-            ),
-            createRowDataParam(
-              'summary',
-              item.warnings ? 'Warnings' : 'Has No Warnings',
-              false,
-              1,
-              1,
-              false,
-              undefined,
-              item.warnings || []
-            ),
-          ],
-        })),
-      ],
-      rollbackFlags: flags.length > 0 ? flags : undefined,
-    };
+              createRowDataParam('migratedName', item.migratedName, false, 1, 1, false),
+              createRowDataParam(
+                'status',
+                item.status,
+                false,
+                1,
+                1,
+                false,
+                undefined,
+                undefined,
+                item.status === 'Successfully migrated' ? 'text-success' : 'text-error'
+              ),
+              createRowDataParam(
+                'errors',
+                item.errors ? 'Failed' : 'Has No Errors',
+                false,
+                1,
+                1,
+                false,
+                undefined,
+                item.errors || []
+              ),
+              createRowDataParam(
+                'summary',
+                item.warnings ? 'Warnings' : 'Has No Warnings',
+                false,
+                1,
+                1,
+                false,
+                undefined,
+                item.warnings || []
+              ),
+            ],
+          })),
+        ],
+        rollbackFlags: flags.length > 0 ? flags : undefined,
+      };
+    }
 
     const reportTemplate = fs.readFileSync(reportTemplateFilePath, 'utf8');
     const html = TemplateParser.generate(reportTemplate, data, messages);
@@ -268,10 +289,10 @@ export class ResultsBuilder {
           record.status === 'Complete'
             ? 'created'
             : record.status === 'Error'
-            ? 'error'
-            : record.status === 'Skipped'
-            ? 'duplicate'
-            : record.status || 'duplicate';
+              ? 'error'
+              : record.status === 'Skipped'
+                ? 'duplicate'
+                : record.status || 'duplicate';
         const message = record.message || '';
         const coreInfo = record.coreInfo || { id: '', value: '' };
         const packageInfo = record.packageInfo || { id: '', value: '' };
@@ -584,8 +605,8 @@ export class ResultsBuilder {
             this.successStatus.includes(item.status)
               ? 'text-success'
               : this.errorStatus.includes(item.status)
-              ? 'text-error'
-              : 'text-warning'
+                ? 'text-error'
+                : 'text-warning'
           ),
           createRowDataParam(
             'diff',
@@ -699,19 +720,19 @@ export class ResultsBuilder {
           data: [
             ...(showCommon
               ? [
-                  createRowDataParam('name', lwcAssessmentInfo.name, true, commonRowSpan, 1, false),
-                  createRowDataParam(
-                    'status',
-                    this.getStatusFromErrors(lwcAssessmentInfo.errors),
-                    false,
-                    commonRowSpan,
-                    1,
-                    false,
-                    undefined,
-                    undefined,
-                    this.getStatusCssClass(lwcAssessmentInfo.errors)
-                  ),
-                ]
+                createRowDataParam('name', lwcAssessmentInfo.name, true, commonRowSpan, 1, false),
+                createRowDataParam(
+                  'status',
+                  this.getStatusFromErrors(lwcAssessmentInfo.errors),
+                  false,
+                  commonRowSpan,
+                  1,
+                  false,
+                  undefined,
+                  undefined,
+                  this.getStatusCssClass(lwcAssessmentInfo.errors)
+                ),
+              ]
               : []),
             createRowDataParam(
               'fileReference',
@@ -737,29 +758,29 @@ export class ResultsBuilder {
             ),
             ...(showCommon
               ? [
-                  createRowDataParam(
-                    'comments',
-                    lwcAssessmentInfo.warnings && lwcAssessmentInfo.warnings.length > 0
-                      ? 'Failed'
-                      : 'Successfully Completed',
-                    false,
-                    commonRowSpan,
-                    1,
-                    false,
-                    undefined,
-                    lwcAssessmentInfo.warnings || []
-                  ),
-                  createRowDataParam(
-                    'errors',
-                    lwcAssessmentInfo.errors ? lwcAssessmentInfo.errors.join(', ') : '',
-                    false,
-                    commonRowSpan,
-                    1,
-                    false,
-                    undefined,
-                    lwcAssessmentInfo.errors || []
-                  ),
-                ]
+                createRowDataParam(
+                  'comments',
+                  lwcAssessmentInfo.warnings && lwcAssessmentInfo.warnings.length > 0
+                    ? 'Failed'
+                    : 'Successfully Completed',
+                  false,
+                  commonRowSpan,
+                  1,
+                  false,
+                  undefined,
+                  lwcAssessmentInfo.warnings || []
+                ),
+                createRowDataParam(
+                  'errors',
+                  lwcAssessmentInfo.errors ? lwcAssessmentInfo.errors.join(', ') : '',
+                  false,
+                  commonRowSpan,
+                  1,
+                  false,
+                  undefined,
+                  lwcAssessmentInfo.errors || []
+                ),
+              ]
               : []),
           ],
         });

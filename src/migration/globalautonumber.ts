@@ -66,7 +66,14 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
 
   public async migrate(): Promise<MigrationResult[]> {
     if (isFoundationPackage()) {
-      return [];
+      // Return a result with empty data so the dashboard can show a tile
+      return [
+        {
+          name: this.getName(),
+          results: new Map<string, UploadRecordResult>(),
+          records: new Map<string, any>(),
+        },
+      ];
     }
 
     // Perform pre-migration checks before migration
