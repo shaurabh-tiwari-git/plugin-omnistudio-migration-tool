@@ -7,6 +7,7 @@ import {
   MetadataInfo,
 } from './interfaces';
 import { Logger } from './logger';
+import { Constants } from './constants/stringContants';
 
 /**
  * Class to manage OmniStudio organization preferences
@@ -216,7 +217,7 @@ export class OrgPreferences {
       if (result?.totalSize === 1) {
         const records = result.records as Array<{ DeveloperName: string; Value: string }>;
 
-        if (records[0].Value === 'omnistudio') {
+        if (records[0].Value === Constants.FoundationPackageName) {
           return true;
         }
       }
