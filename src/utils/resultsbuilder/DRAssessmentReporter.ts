@@ -160,8 +160,8 @@ export class DRAssessmentReporter {
           dataRaptorAssessmentInfo.migrationStatus === 'Ready for migration'
             ? 'text-success'
             : dataRaptorAssessmentInfo.migrationStatus === 'Warnings'
-            ? 'text-warning'
-            : 'text-error'
+              ? 'text-warning'
+              : 'text-error'
         ),
         createRowDataParam(
           'summary',
@@ -173,7 +173,6 @@ export class DRAssessmentReporter {
           undefined,
           dataRaptorAssessmentInfo.warnings
         ),
-        // Only include Custom Function Dependencies if not foundation package
         createRowDataParam(
           'customFunctionDependencies',
           dataRaptorAssessmentInfo.formulaChanges

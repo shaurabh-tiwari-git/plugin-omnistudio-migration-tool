@@ -4,8 +4,7 @@ import { OmnistudioOrgDetails } from './orgUtils';
 import { isStandardDataModel } from './dataModelService';
 import { OmnistudioSettingsPrefManager } from './OmnistudioSettingsPrefManager';
 import { OrgPreferences } from './orgPreferences';
-
-const OMNISTUDIO = 'omnistudio';
+import { Constants } from './constants/stringContants';
 
 export class ValidatorService {
   private readonly messages: Messages;
@@ -124,7 +123,7 @@ export class ValidatorService {
       if (result?.totalSize === 1) {
         Logger.logVerbose(this.messages.getMessage('queryResultSize', [1]));
         const records = result.records as Array<{ DeveloperName: string; Value: string }>;
-        if (records[0].DeveloperName === 'TheFirstInstalledOmniPackage' && records[0].Value === OMNISTUDIO) {
+        if (records[0].DeveloperName === 'TheFirstInstalledOmniPackage' && records[0].Value === Constants.FoundationPackageName) {
           Logger.logVerbose(this.messages.getMessage('packageDetails'));
           return true;
         }
@@ -133,7 +132,7 @@ export class ValidatorService {
         Logger.logVerbose(this.messages.getMessage('queryResultSize', [2]));
         const records = result.records as Array<{ DeveloperName: string; Value: string }>;
 
-        if (records[0].Value === OMNISTUDIO || records[1].Value === OMNISTUDIO) {
+        if (records[0].Value === Constants.FoundationPackageName || records[1].Value === Constants.FoundationPackageName) {
           return false;
         }
 
