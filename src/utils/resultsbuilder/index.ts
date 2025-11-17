@@ -168,16 +168,16 @@ export class ResultsBuilder {
               ...(isStandardDataModel() && !isGlobalAutoNumber
                 ? []
                 : [
-                  createRowDataParam(
-                    'migratedId',
-                    item.migratedId,
-                    false,
-                    1,
-                    1,
-                    true,
-                    `${instanceUrl}/${item.migratedId}`
-                  ),
-                ]),
+                    createRowDataParam(
+                      'migratedId',
+                      item.migratedId,
+                      false,
+                      1,
+                      1,
+                      true,
+                      `${instanceUrl}/${item.migratedId}`
+                    ),
+                  ]),
               createRowDataParam('migratedName', item.migratedName, false, 1, 1, false),
               createRowDataParam(
                 'status',
@@ -289,10 +289,10 @@ export class ResultsBuilder {
           record.status === 'Complete'
             ? 'created'
             : record.status === 'Error'
-              ? 'error'
-              : record.status === 'Skipped'
-                ? 'duplicate'
-                : record.status || 'duplicate';
+            ? 'error'
+            : record.status === 'Skipped'
+            ? 'duplicate'
+            : record.status || 'duplicate';
         const message = record.message || '';
         const coreInfo = record.coreInfo || { id: '', value: '' };
         const packageInfo = record.packageInfo || { id: '', value: '' };
@@ -605,8 +605,8 @@ export class ResultsBuilder {
             this.successStatus.includes(item.status)
               ? 'text-success'
               : this.errorStatus.includes(item.status)
-                ? 'text-error'
-                : 'text-warning'
+              ? 'text-error'
+              : 'text-warning'
           ),
           createRowDataParam(
             'diff',
@@ -720,19 +720,19 @@ export class ResultsBuilder {
           data: [
             ...(showCommon
               ? [
-                createRowDataParam('name', lwcAssessmentInfo.name, true, commonRowSpan, 1, false),
-                createRowDataParam(
-                  'status',
-                  this.getStatusFromErrors(lwcAssessmentInfo.errors),
-                  false,
-                  commonRowSpan,
-                  1,
-                  false,
-                  undefined,
-                  undefined,
-                  this.getStatusCssClass(lwcAssessmentInfo.errors)
-                ),
-              ]
+                  createRowDataParam('name', lwcAssessmentInfo.name, true, commonRowSpan, 1, false),
+                  createRowDataParam(
+                    'status',
+                    this.getStatusFromErrors(lwcAssessmentInfo.errors),
+                    false,
+                    commonRowSpan,
+                    1,
+                    false,
+                    undefined,
+                    undefined,
+                    this.getStatusCssClass(lwcAssessmentInfo.errors)
+                  ),
+                ]
               : []),
             createRowDataParam(
               'fileReference',
@@ -758,29 +758,29 @@ export class ResultsBuilder {
             ),
             ...(showCommon
               ? [
-                createRowDataParam(
-                  'comments',
-                  lwcAssessmentInfo.warnings && lwcAssessmentInfo.warnings.length > 0
-                    ? 'Failed'
-                    : 'Successfully Completed',
-                  false,
-                  commonRowSpan,
-                  1,
-                  false,
-                  undefined,
-                  lwcAssessmentInfo.warnings || []
-                ),
-                createRowDataParam(
-                  'errors',
-                  lwcAssessmentInfo.errors ? lwcAssessmentInfo.errors.join(', ') : '',
-                  false,
-                  commonRowSpan,
-                  1,
-                  false,
-                  undefined,
-                  lwcAssessmentInfo.errors || []
-                ),
-              ]
+                  createRowDataParam(
+                    'comments',
+                    lwcAssessmentInfo.warnings && lwcAssessmentInfo.warnings.length > 0
+                      ? 'Failed'
+                      : 'Successfully Completed',
+                    false,
+                    commonRowSpan,
+                    1,
+                    false,
+                    undefined,
+                    lwcAssessmentInfo.warnings || []
+                  ),
+                  createRowDataParam(
+                    'errors',
+                    lwcAssessmentInfo.errors ? lwcAssessmentInfo.errors.join(', ') : '',
+                    false,
+                    commonRowSpan,
+                    1,
+                    false,
+                    undefined,
+                    lwcAssessmentInfo.errors || []
+                  ),
+                ]
               : []),
           ],
         });

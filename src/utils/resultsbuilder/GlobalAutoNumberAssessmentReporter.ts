@@ -53,10 +53,10 @@ export class GlobalAutoNumberAssessmentReporter {
       rows: this.getRowsForReport(globalAutoNumberAssessmentInfos, instanceUrl),
       rollbackFlags:
         (omnistudioOrgDetails.rollbackFlags || []).includes('RollbackIPChanges') ||
-          (omnistudioOrgDetails.rollbackFlags || []).includes('RollbackDRChanges')
+        (omnistudioOrgDetails.rollbackFlags || []).includes('RollbackDRChanges')
           ? ['RollbackIPChanges', 'RollbackDRChanges'].filter((flag) =>
-            (omnistudioOrgDetails.rollbackFlags || []).includes(flag)
-          )
+              (omnistudioOrgDetails.rollbackFlags || []).includes(flag)
+            )
           : undefined,
       callToAction: reportingHelper.getCallToAction(globalAutoNumberAssessmentInfos),
     };

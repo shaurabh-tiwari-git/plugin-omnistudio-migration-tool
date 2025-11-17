@@ -1,4 +1,4 @@
-import { isStandardDataModel, isFoundationPackage } from '../dataModelService';
+import { isStandardDataModel } from '../dataModelService';
 import { DataRaptorAssessmentInfo } from '../interfaces';
 import { Logger } from '../logger';
 import { OmnistudioOrgDetails } from '../orgUtils';
@@ -101,8 +101,7 @@ export class DRAssessmentReporter {
       { name: 'Type', colspan: 1, rowspan: 2 },
       { name: 'Assessment Status', colspan: 1, rowspan: 2 },
       { name: 'Summary', colspan: 1, rowspan: 2 },
-      // Only show Custom Function Dependencies if not foundation package
-      ...(!isFoundationPackage() ? [{ name: 'Custom Function Dependencies', colspan: 1, rowspan: 2 }] : []),
+      { name: 'Custom Function Dependencies', colspan: 1, rowspan: 2 },
       { name: 'Apex Class Dependencies', colspan: 1, rowspan: 2 },
     ];
 
@@ -161,8 +160,8 @@ export class DRAssessmentReporter {
           dataRaptorAssessmentInfo.migrationStatus === 'Ready for migration'
             ? 'text-success'
             : dataRaptorAssessmentInfo.migrationStatus === 'Warnings'
-            ? 'text-warning'
-            : 'text-error'
+              ? 'text-warning'
+              : 'text-error'
         ),
         createRowDataParam(
           'summary',
@@ -175,22 +174,18 @@ export class DRAssessmentReporter {
           dataRaptorAssessmentInfo.warnings
         ),
         // Only include Custom Function Dependencies if not foundation package
-        ...(!isFoundationPackage()
-          ? [
-              createRowDataParam(
-                'customFunctionDependencies',
-                dataRaptorAssessmentInfo.formulaChanges
-                  ? dataRaptorAssessmentInfo.formulaChanges.map((change) => `${change.old} -> ${change.new}`).join(', ')
-                  : '',
-                false,
-                1,
-                1,
-                false,
-                undefined,
-                dataRaptorAssessmentInfo.formulaChanges.map((change) => `${change.old} -> ${change.new}`)
-              ),
-            ]
-          : []),
+        createRowDataParam(
+          'customFunctionDependencies',
+          dataRaptorAssessmentInfo.formulaChanges
+            ? dataRaptorAssessmentInfo.formulaChanges.map((change) => `${change.old} -> ${change.new}`).join(', ')
+            : '',
+          false,
+          1,
+          1,
+          false,
+          undefined,
+          dataRaptorAssessmentInfo.formulaChanges.map((change) => `${change.old} -> ${change.new}`)
+        ),
         createRowDataParam(
           'apexDependencies',
           dataRaptorAssessmentInfo.apexDependencies ? dataRaptorAssessmentInfo.apexDependencies.join(', ') : '',
