@@ -280,6 +280,10 @@ export class OrgUtils {
 
   private static readonly standardDataModel = 'Standard';
   private static readonly customDataModel = 'Custom';
+
+  private static readonly omnistudioFoundationPackage = 'Omnistudio Foundation Package';
+  private static readonly vlocityIndustriesManagedPackage = 'Vlocity Industries managed package';
+
   /**
    * Fetches package details (version and namespace) for specific installed packages.
    *
@@ -367,9 +371,16 @@ export class OrgUtils {
       packageDetails.namespace
     );
 
-    const isFoundationPackage: boolean = await OrgPreferences.getIsFoundationPackage(connection);
-    Logger.log(messages.getMessage('isStandardDataModelOrg', [omniStudioOrgPermissionEnabled]));
-    Logger.log(messages.getMessage('isFoundationPackageOrg', [isFoundationPackage]));
+    const isFoundationPackage: boolean = await OrgPreferences.isFoundationPackage(connection);
+    Logger.logVerbose(messages.getMessage('isStandardDataModelOrg', [omniStudioOrgPermissionEnabled]));
+    Logger.logVerbose(messages.getMessage('isFoundationPackageOrg', [isFoundationPackage]));
+
+    const orgDataModel = omniStudioOrgPermissionEnabled ? this.standardDataModel : this.customDataModel;
+    const orgPackageType = isFoundationPackage
+      ? this.omnistudioFoundationPackage
+      : this.vlocityIndustriesManagedPackage;
+
+    Logger.log(messages.getMessage('orgUsecaseDetails', [orgDataModel, orgPackageType]));
 
     return {
       packageDetails: packageDetails,

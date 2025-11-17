@@ -160,8 +160,8 @@ export class DRAssessmentReporter {
           dataRaptorAssessmentInfo.migrationStatus === 'Ready for migration'
             ? 'text-success'
             : dataRaptorAssessmentInfo.migrationStatus === 'Warnings'
-              ? 'text-warning'
-              : 'text-error'
+            ? 'text-warning'
+            : 'text-error'
         ),
         createRowDataParam(
           'summary',

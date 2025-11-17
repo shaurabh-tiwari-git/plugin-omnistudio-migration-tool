@@ -5,6 +5,8 @@ import { isStandardDataModel } from './dataModelService';
 import { OmnistudioSettingsPrefManager } from './OmnistudioSettingsPrefManager';
 import { OrgPreferences } from './orgPreferences';
 
+const OMNISTUDIO = 'omnistudio';
+
 export class ValidatorService {
   private readonly messages: Messages;
   private readonly orgs: OmnistudioOrgDetails;
@@ -122,7 +124,7 @@ export class ValidatorService {
       if (result?.totalSize === 1) {
         Logger.logVerbose(this.messages.getMessage('queryResultSize', [1]));
         const records = result.records as Array<{ DeveloperName: string; Value: string }>;
-        if (records[0].DeveloperName === 'TheFirstInstalledOmniPackage') {
+        if (records[0].DeveloperName === 'TheFirstInstalledOmniPackage' && records[0].Value === OMNISTUDIO) {
           Logger.logVerbose(this.messages.getMessage('packageDetails'));
           return true;
         }
@@ -130,6 +132,10 @@ export class ValidatorService {
       } else if (result?.totalSize === 2) {
         Logger.logVerbose(this.messages.getMessage('queryResultSize', [2]));
         const records = result.records as Array<{ DeveloperName: string; Value: string }>;
+
+        if (records[0].Value === OMNISTUDIO || records[1].Value === OMNISTUDIO) {
+          return false;
+        }
 
         if (records[0].Value === records[1].Value) {
           Logger.logVerbose(this.messages.getMessage('packagesHaveSameValue'));

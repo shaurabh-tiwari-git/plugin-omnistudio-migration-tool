@@ -314,12 +314,13 @@
   "drVersioningEnabled": "We cannot proceed with the migration as the Data Mapper versioning setting is enabled in your org.",
   "errorValidatingDrVersioning": "Failed to verify the status of the Data Mapper versioning setting. Try again later.",
   "validatingOmniInteractionConfig": "Validating Omni Interaction Configuration",
-  "omniInteractionConfigInvalid": "The Omnistudio Migration Assistant cannot migrate components in your org as your org contains both the Omnistudio Foundation package and Omnistudio managed package.",
+  "omniInteractionConfigInvalid": "The Omnistudio Migration Assistant cannot migrate components in your org as your org contains both the Omnistudio Foundation package and Vlocity Industries managed package.",
   "queryResultSize": "Query result size: %s",
   "packagesHaveSameValue": "Both TheFirstInstalledOmniPackage and InstalledIndustryPackage have the same value.",
   "packagesHaveDifferentValue": "Both the InstalledIndustryPackage and TheFirstInstalledOmniPackage have different values.",
   "failedToCheckPackagesValue": "Failed to check the value of packages in Omni Interaction Configuration.",
   "isStandardDataModelOrg": "The org is on standard data model: %s",
   "isFoundationPackageOrg": "The org is on Omnistudio Foundation package: %s",
-  "packageDetails": "Your org contains only the TheFirstInstalledOmniPackage Omni Interaction Configuration."
+  "packageDetails": "Your org contains only the TheFirstInstalledOmniPackage Omni Interaction Configuration.",
+  "orgUsecaseDetails": "The Org is on %s Data Model with %s package"
 }

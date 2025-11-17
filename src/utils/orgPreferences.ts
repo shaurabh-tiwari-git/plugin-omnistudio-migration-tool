@@ -207,7 +207,7 @@ export class OrgPreferences {
     }
   }
 
-  public static async getIsFoundationPackage(connection: Connection): Promise<boolean> {
+  public static async isFoundationPackage(connection: Connection): Promise<boolean> {
     try {
       const query = `SELECT DeveloperName, Value FROM OmniInteractionConfig
       WHERE DeveloperName = 'TheFirstInstalledOmniPackage'`;
