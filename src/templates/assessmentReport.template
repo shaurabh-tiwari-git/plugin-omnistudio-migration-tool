@@ -246,6 +246,7 @@
               </div>
             </c:if>
           </div>
+          </c:if>
         </div>
         <div id="cta-summary-panel" class="cta-summary-panel hidden">
           <div class="cta-header">

@@ -322,5 +322,5 @@
   "isStandardDataModelOrg": "The org is on standard data model: %s",
   "isFoundationPackageOrg": "The org is on Omnistudio Foundation package: %s",
   "packageDetails": "Your org contains only the TheFirstInstalledOmniPackage Omni Interaction Configuration.",
-  "orgUsecaseDetails": "The Org is on %s Data Model with %s package"
+  "orgUsecaseDetails": "The Org is on %s Data Model with %s "
 }
