@@ -636,10 +636,10 @@ describe('ApexMigration', () => {
       };
 
       // Act
-      const result = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
+      const tokens = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
 
       // Assert
-      expect(result).to.be.an('array').with.length(0);
+      expect(tokens).to.be.an('array').with.length(0);
     });
 
     it('should replace only VlocityOpenInterface2 with System.Callable', () => {
@@ -656,13 +656,13 @@ describe('ApexMigration', () => {
       };
 
       // Act
-      const result = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
+      const tokens = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
 
       // Assert
-      expect(result).to.be.an('array').with.length(2);
-      expect(result[0].constructor.name).to.equal('RangeTokenUpdate');
-      expect(result[0].newText).to.equal('System.Callable');
-      expect(result[1].constructor.name).to.equal('InsertAfterTokenUpdate');
+      expect(tokens).to.be.an('array').with.length(2);
+      expect(tokens[0].constructor.name).to.equal('RangeTokenUpdate');
+      expect(tokens[0].newText).to.equal('System.Callable');
+      expect(tokens[1].constructor.name).to.equal('InsertAfterTokenUpdate');
     });
 
     it('should replace only VlocityOpenInterface with System.Callable', () => {
@@ -679,13 +679,13 @@ describe('ApexMigration', () => {
       };
 
       // Act
-      const result = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
+      const tokens = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
 
       // Assert
-      expect(result).to.be.an('array').with.length(2);
-      expect(result[0].constructor.name).to.equal('RangeTokenUpdate');
-      expect(result[0].newText).to.equal('System.Callable');
-      expect(result[1].constructor.name).to.equal('InsertAfterTokenUpdate');
+      expect(tokens).to.be.an('array').with.length(2);
+      expect(tokens[0].constructor.name).to.equal('RangeTokenUpdate');
+      expect(tokens[0].newText).to.equal('System.Callable');
+      expect(tokens[1].constructor.name).to.equal('InsertAfterTokenUpdate');
     });
 
     it('should replace BOTH VlocityOpenInterface and VlocityOpenInterface2 with System.Callable', () => {
@@ -704,14 +704,14 @@ describe('ApexMigration', () => {
       };
 
       // Act
-      const result = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
+      const tokens = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
 
       // Assert
       // Should call replaceAllInterfaces and replace entire implements clause with System.Callable
-      expect(result).to.be.an('array').with.length(2);
-      expect(result[0].constructor.name).to.equal('RangeTokenUpdate');
-      expect(result[0].newText).to.equal('System.Callable');
-      expect(result[1].constructor.name).to.equal('InsertAfterTokenUpdate');
+      expect(tokens).to.be.an('array').with.length(2);
+      expect(tokens[0].constructor.name).to.equal('RangeTokenUpdate');
+      expect(tokens[0].newText).to.equal('System.Callable');
+      expect(tokens[1].constructor.name).to.equal('InsertAfterTokenUpdate');
     });
 
     it('should replace System.Callable with other interfaces to only System.Callable', () => {
@@ -730,14 +730,14 @@ describe('ApexMigration', () => {
       };
 
       // Act
-      const result = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
+      const tokens = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
 
       // Assert
       // Should call replaceAllInterfaces and keep only System.Callable
-      expect(result).to.be.an('array').with.length(2);
-      expect(result[0].constructor.name).to.equal('RangeTokenUpdate');
-      expect(result[0].newText).to.equal('System.Callable');
-      expect(result[1].constructor.name).to.equal('InsertAfterTokenUpdate');
+      expect(tokens).to.be.an('array').with.length(2);
+      expect(tokens[0].constructor.name).to.equal('RangeTokenUpdate');
+      expect(tokens[0].newText).to.equal('System.Callable');
+      expect(tokens[1].constructor.name).to.equal('InsertAfterTokenUpdate');
     });
 
     it('should replace BOTH Vlocity interfaces AND System.Callable with only System.Callable', () => {
@@ -758,14 +758,14 @@ describe('ApexMigration', () => {
       };
 
       // Act
-      const result = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
+      const tokens = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
 
       // Assert
       // Should call replaceAllInterfaces and keep only System.Callable, removing both Vlocity interfaces
-      expect(result).to.be.an('array').with.length(2);
-      expect(result[0].constructor.name).to.equal('RangeTokenUpdate');
-      expect(result[0].newText).to.equal('System.Callable');
-      expect(result[1].constructor.name).to.equal('InsertAfterTokenUpdate');
+      expect(tokens).to.be.an('array').with.length(2);
+      expect(tokens[0].constructor.name).to.equal('RangeTokenUpdate');
+      expect(tokens[0].newText).to.equal('System.Callable');
+      expect(tokens[1].constructor.name).to.equal('InsertAfterTokenUpdate');
     });
 
     it('should not add call method when it already exists', () => {
@@ -782,13 +782,13 @@ describe('ApexMigration', () => {
       };
 
       // Act
-      const result = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
+      const tokens = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
 
       // Assert
       // Should only have RangeTokenUpdate, no InsertAfterTokenUpdate
-      expect(result).to.be.an('array').with.length(1);
-      expect(result[0].constructor.name).to.equal('RangeTokenUpdate');
-      expect(result[0].newText).to.equal('System.Callable');
+      expect(tokens).to.be.an('array').with.length(1);
+      expect(tokens[0].constructor.name).to.equal('RangeTokenUpdate');
+      expect(tokens[0].newText).to.equal('System.Callable');
     });
 
     it('should handle both Vlocity interfaces when call method already exists', () => {
@@ -807,13 +807,13 @@ describe('ApexMigration', () => {
       };
 
       // Act
-      const result = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
+      const tokens = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
 
       // Assert
       // Should call replaceAllInterfaces but not add call method
-      expect(result).to.be.an('array').with.length(1);
-      expect(result[0].constructor.name).to.equal('RangeTokenUpdate');
-      expect(result[0].newText).to.equal('System.Callable');
+      expect(tokens).to.be.an('array').with.length(1);
+      expect(tokens[0].constructor.name).to.equal('RangeTokenUpdate');
+      expect(tokens[0].newText).to.equal('System.Callable');
     });
 
     it('should return empty array when no interfaces are present', () => {
@@ -826,10 +826,10 @@ describe('ApexMigration', () => {
       };
 
       // Act
-      const result = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
+      const tokens = (apexMigration as any).processApexFileForRemotecalls(mockFile, mockParser);
 
       // Assert
-      expect(result).to.be.an('array').with.length(0);
+      expect(tokens).to.be.an('array').with.length(0);
     });
   });
 });
