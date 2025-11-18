@@ -5,9 +5,8 @@
  * For full license text, see LICENSE.txt file in the repo root or https://opensource.org/licenses/BSD-3-Clause
  */
 import * as os from 'os';
-import { flags, SfdxCommand } from '@salesforce/command';
-import { Messages, SfError } from '@salesforce/core';
-import { AnyJson } from '@salesforce/ts-types';
+import { Messages, SfError, Org } from '@salesforce/core';
+import { SfCommand, Flags as flags } from '@salesforce/sf-plugins-core';
 import { Logger } from '../../../utils/logger';
 
 // Initialize Messages with the current plugin directory
@@ -17,40 +16,55 @@ Messages.importMessagesDirectory(__dirname);
 // or any library that is using the messages framework can also be loaded this way.
 const messages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'info');
 
-export default class Org extends SfdxCommand {
+export type InfoResult = {
+  orgId: string;
+  outputString: string;
+};
+
+interface InfoFlags {
+  'target-org'?: Org;
+  'target-dev-hub'?: Org;
+  name?: string;
+  allversions?: boolean;
+  verbose?: boolean;
+}
+
+export default class Info extends SfCommand<InfoResult> {
   public static description = messages.getMessage('commandDescription');
 
   public static examples = messages.getMessage('examples').split(os.EOL);
 
-  public static args = [{ name: 'file' }];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public static args: any = [];
 
-  protected static flagsConfig = {
-    // flag with a value (-n, --name=VALUE)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public static readonly flags: any = {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    'target-org': flags.optionalOrg({
+      summary: 'Target org username or alias',
+      required: true,
+    }),
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    'target-dev-hub': flags.optionalHub({
+      summary: 'Dev Hub username or alias',
+    }),
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     name: flags.string({
       char: 'n',
       description: messages.getMessage('nameFlagDescription'),
     }),
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     allversions: flags.boolean({
       char: 'a',
       description: messages.getMessage('allVersionsDescription'),
       required: false,
     }),
-    verbose: flags.builtin({
-      type: 'builtin',
+    verbose: flags.boolean({
       description: 'Enable verbose output',
     }),
   };
 
-  // Comment this out if your command does not require an org username
-  protected static requiresUsername = true;
-
-  // Comment this out if your command does not support a hub org username
-  protected static supportsDevhubUsername = true;
-
-  // Set this to true if your command requires a project workspace; 'requiresProject' is false by default
-  protected static requiresProject = false;
-
-  public async run(): Promise<AnyJson> {
+  public async run(): Promise<InfoResult> {
     try {
       return await this.runInfo();
     } catch (error) {
@@ -59,13 +73,15 @@ export default class Org extends SfdxCommand {
     }
   }
 
-  public async runInfo(): Promise<AnyJson> {
-    const name = (this.flags.name || 'world') as string;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const allVersions = this.flags.allversions || false;
+  public async runInfo(): Promise<InfoResult> {
+    const { flags: parsedFlags } = await this.parse(Info);
+    const name = (parsedFlags as InfoFlags).name || 'world';
+    const allVersions = (parsedFlags as InfoFlags).allversions || false;
 
-    // this.org is guaranteed because requiresUsername=true, as opposed to supportsUsername
-    const conn = this.org.getConnection();
+    // target-org is required by flag definition, so it will always be present
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const org = (parsedFlags as InfoFlags)['target-org']!;
+    const conn = org.getConnection();
     const query = 'Select Name, TrialExpirationDate from Organization';
 
     // The type we are querying for
@@ -80,7 +96,7 @@ export default class Org extends SfdxCommand {
     // Organization will always return one result, but this is an example of throwing an error
     // The output and --json will automatically be handled for you.
     if (!result.records || result.records.length <= 0) {
-      throw new SfError(messages.getMessage('errorNoOrgResults', [this.org.getOrgId()]));
+      throw new SfError(messages.getMessage('errorNoOrgResults', [org.getOrgId()]));
     }
 
     // Organization always only returns one result
@@ -96,9 +112,10 @@ export default class Org extends SfdxCommand {
     }
     Logger.log(outputString);
 
-    // this.hubOrg is NOT guaranteed because supportsHubOrgUsername=true, as opposed to requiresHubOrgUsername.
-    if (this.hubOrg) {
-      const hubOrgId = this.hubOrg.getOrgId();
+    // Check for dev hub org
+    const hubOrg = (parsedFlags as InfoFlags)['target-dev-hub'];
+    if (hubOrg) {
+      const hubOrgId = hubOrg.getOrgId();
       Logger.log(messages.getMessage('hubOrgId', [hubOrgId]));
     }
 
@@ -107,6 +124,6 @@ export default class Org extends SfdxCommand {
     }
 
     // Return an object to be displayed with --json
-    return { orgId: this.org.getOrgId(), outputString };
+    return { orgId: org.getOrgId(), outputString };
   }
 }

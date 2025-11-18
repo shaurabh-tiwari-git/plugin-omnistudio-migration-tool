@@ -7,7 +7,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { expect } from 'chai';
 import { Connection, Messages, Org } from '@salesforce/core';
-import { UX } from '@salesforce/command';
+import { Ux } from '@salesforce/sf-plugins-core';
 import type { ExecuteAnonymousResult } from '@jsforce/jsforce-node/lib/api/tooling';
 import sinon = require('sinon');
 import { PostMigrate } from '../../src/migration/postMigrate';
@@ -23,7 +23,7 @@ describe('PostMigrate', () => {
   let connection: Connection;
   let logger: Logger;
   let messages: Messages<string>;
-  let ux: UX;
+  let ux: Ux;
   let sandbox: sinon.SinonSandbox;
   let getMessageStub: sinon.SinonStub;
   let logErrorStub: sinon.SinonStub;
@@ -71,11 +71,11 @@ describe('PostMigrate', () => {
     } as unknown as Messages<string>;
     getMessageStub = messages.getMessage as sinon.SinonStub;
 
-    // Mock UX
+    // Mock Ux
     ux = {
       log: sandbox.stub(),
       error: sandbox.stub(),
-    } as unknown as UX;
+    } as unknown as Ux;
 
     // Set up default message returns
     getMessageStub.withArgs('settingDesignersToStandardModel').returns('Setting designers to standard model...');

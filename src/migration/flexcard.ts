@@ -14,7 +14,7 @@ import {
   FlexcardStorage,
 } from './interfaces';
 import { Connection, Messages } from '@salesforce/core';
-import { UX } from '@salesforce/command';
+import { Ux } from '@salesforce/sf-plugins-core';
 import { FlexCardAssessmentInfo } from '../../src/utils';
 import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
@@ -37,7 +37,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
     connection: Connection,
     logger: Logger,
     messages: Messages<string>,
-    ux: UX,
+    ux: Ux,
     allVersions: boolean
   ) {
     super(namespace, connection, logger, messages, ux);

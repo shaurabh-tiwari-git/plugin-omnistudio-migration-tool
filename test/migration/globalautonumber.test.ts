@@ -5,7 +5,7 @@
 /* eslint-disable camelcase */
 import { expect } from 'chai';
 import { Connection, Messages } from '@salesforce/core';
-import { UX } from '@salesforce/command';
+import { Ux } from '@salesforce/sf-plugins-core';
 import sinon = require('sinon');
 import { GlobalAutoNumberMigrationTool } from '../../src/migration/globalautonumber';
 import { Logger } from '../../src/utils/logger';
@@ -20,7 +20,7 @@ describe('GlobalAutoNumberMigrationTool', () => {
   let connection: Connection;
   let logger: Logger;
   let messages: Messages<string>;
-  let ux: UX;
+  let ux: Ux;
   let sandbox: sinon.SinonSandbox;
   let namespace: string;
   let getMessageStub: sinon.SinonStub;
@@ -50,11 +50,11 @@ describe('GlobalAutoNumberMigrationTool', () => {
     } as unknown as Messages<string>;
     getMessageStub = messages.getMessage as sinon.SinonStub;
 
-    // Mock UX
+    // Mock Ux
     ux = {
       log: sandbox.stub(),
       error: sandbox.stub(),
-    } as unknown as UX;
+    } as unknown as Ux;
 
     // Mock DebugTimer
     const debugTimerStub = {

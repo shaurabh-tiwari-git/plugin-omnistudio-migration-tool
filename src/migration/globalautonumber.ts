@@ -2,7 +2,7 @@
 import { AnyJson } from '@salesforce/ts-types';
 import { Connection } from '@salesforce/core';
 import { Messages } from '@salesforce/core';
-import { UX } from '@salesforce/command';
+import { Ux } from '@salesforce/sf-plugins-core';
 import GlobalAutoNumberMappings from '../mappings/GlobalAutoNumber';
 import { DebugTimer, QueryTools } from '../utils';
 import { NetUtils } from '../utils/net';
@@ -20,7 +20,7 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
   private prefManager: OmnistudioSettingsPrefManager;
   private globalAutoNumberSettings: AnyJson[] | null = null;
 
-  constructor(namespace: string, connection: Connection, logger: Logger, messages: Messages<string>, ux: UX) {
+  constructor(namespace: string, connection: Connection, logger: Logger, messages: Messages<string>, ux: Ux) {
     super(namespace, connection, logger, messages, ux);
     this.prefManager = new OmnistudioSettingsPrefManager(this.connection, this.messages);
   }
