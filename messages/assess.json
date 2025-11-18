@@ -29,7 +29,7 @@
   "changeMessage": "The %s %s will be changed from %s to %s",
   "angularOSWarning": "We couldn't migrate Angular Omniscripts. Convert all Angular Omniscripts to LWC Omniscripts, and try again.",
   "relatedObjectGA": "Select the component type that you want to migrate: 'apex' for Apex classes, 'lwc' for Lightning Web Components, 'flexipage' for FlexiPages, 'expsites' for Experience Sites, or 'apex, lwc, flexipage, expsites' if you want to include all types.",
-  "noPackageInstalled": "No managed package found in your org.",
+  "noPackageInstalled": "No valid package found in your org.",
   "alreadyStandardModel": "Your org already uses the standard data model.",
   "invalidRelatedObjectsOption": "Invalid entry for -r: %s. Enter either apex, lwc, flexipage or expsites.",
   "formulaSyntaxError": "We couldn't update the syntax of this formula. Verify the syntax and try again: %s",
@@ -47,7 +47,7 @@
   "allVersionsInfo": "All versions: %s",
   "assessmentInitialization": "Assessment process started. Using namespace: %s",
   "apiVersionInfo": "API version: %s",
-  "unknownNamespace": "Omnistudio namespace is not configured in this org. Configure the namespace and try again",
+  "unknownNamespace": "A valid namespace is not configured in this org. Configure the namespace and try again",
   "noOmniStudioLicenses": "We couldn’t find Omnistudio licenses in this org. Omnistudio licenses are required for migration assessment",
   "assessmentTargets": "Assessment targets: %s",
   "relatedObjectsInfo": "Related objects: %s",
@@ -219,5 +219,6 @@
   "isStandardDataModelOrg": "The org is on standard data model: %s",
   "isFoundationPackageOrg": "The org is on Omnistudio Foundation package: %s",
   "packageDetails": "Your org contains only the TheFirstInstalledOmniPackage Omni Interaction Configuration.",
-  "orgUsecaseDetails": "The Org is on %s Data Model with %s "
+  "orgUsecaseDetails": "The org is on %s data model with %s ",
+  "globalAutoNumberUnSupportedInOmnistudioPackage": "Omni Global Auto Number is not supported in Omnistudio package orgs."
 }

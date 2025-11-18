@@ -499,6 +499,9 @@ export default class Migrate extends OmniStudioBaseCommand {
           migrationObjects.push(new DataRaptorMigrationTool(namespace, conn, this.logger, messages, this.ux));
           break;
         case Constants.GlobalAutoNumber:
+          if (isFoundationPackage()) {
+            Logger.warn(messages.getMessage('globalAutoNumberUnSupportedInOmnistudioPackage'));
+          }
           migrationObjects.push(new GlobalAutoNumberMigrationTool(namespace, conn, this.logger, messages, this.ux));
           break;
         case Constants.CustomLabel:

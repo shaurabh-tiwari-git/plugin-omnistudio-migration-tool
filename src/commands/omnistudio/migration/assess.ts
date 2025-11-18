@@ -253,6 +253,8 @@ export default class Assess extends OmniStudioBaseCommand {
       case Constants.GlobalAutoNumber:
         if (!isFoundationPackage()) {
           await this.assessGlobalAutoNumbers(assesmentInfo, namespace, conn);
+        } else {
+          Logger.warn(messages.getMessage('globalAutoNumberUnSupportedInOmnistudioPackage'));
         }
         break;
       case Constants.CustomLabel:

@@ -380,7 +380,7 @@ export class OrgUtils {
       ? this.omnistudioFoundationPackage
       : this.vlocityIndustriesManagedPackage;
 
-    Logger.log(messages.getMessage('orgUsecaseDetails', [orgDataModel, orgPackageType]));
+    Logger.log(messages.getMessage('orgUsecaseDetails', [orgDataModel.toLowerCase(), orgPackageType]));
 
     return {
       packageDetails: packageDetails,
