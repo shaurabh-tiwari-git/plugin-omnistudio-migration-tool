@@ -52,19 +52,19 @@ describe('PreMigrate - handleAllVersionsPrerequisites for Standard Data Model', 
       error: sandbox.stub(),
     } as unknown as UX;
 
-    // Set up default message returns
+    // Set up default message returns - using correct message keys from implementation
     getMessageStub
-      .withArgs('omniStudioAllVersionsMigrationConsent')
+      .withArgs('omniStudioAllVersionsProcessingConsent')
       .returns(
         'All Versions of omnistudio components [Omniscript, Data Mapper, Integration Procedure, Flexcard] need to be migrated for metadata to be enabled as org is on Standard Data Model. Do you agree to migrate all versions? [y/n]'
       );
     getMessageStub
-      .withArgs('omniStudioAllVersionsMigrationConsentNotGiven')
+      .withArgs('omniStudioAllVersionsProcessingConsentNotGiven')
       .returns(
         "You've not consented to proceed with the all versions migration. We'll not be able to proceed with the migration."
       );
     getMessageStub
-      .withArgs('omniStudioAllVersionsMigrationConsentGiven')
+      .withArgs('omniStudioAllVersionsProcessingConsentGiven')
       .returns("You've consented to proceed with the all versions migration.");
     getMessageStub.withArgs('requestTimedOut').returns('Request timed out');
     getMessageStub.withArgs('invalidYesNoResponse').returns('Invalid response. Please answer y or n.');

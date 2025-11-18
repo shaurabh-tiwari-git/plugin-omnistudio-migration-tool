@@ -209,5 +209,8 @@
   "validatingDrVersioningDisabled": "Checking the Data Mapper versioning setting in your org.",
   "drVersioningDisabled": "Proceeding with the assessment as the Data Mapper versioning setting is disabled.",
   "drVersioningEnabled": "We cannot proceed with the assessment as the Data Mapper versioning setting is enabled in your org.",
-  "errorValidatingDrVersioning": "Failed to verify the status of the Data Mapper versioning setting. Try again later."
+  "errorValidatingDrVersioning": "Failed to verify the status of the Data Mapper versioning setting. Try again later.",
+  "omniStudioAllVersionsProcessingConsent": "Org uses the standard data model. All versions of Omnistudio components such as Omniscripts, Data Mappers, Integration Procedures, and Flexcards must be assessed. But you’ve not specified -a  or allversions flag in the command.  Proceed to assess all versions of the Omnistudio components? [y/n]",
+  "omniStudioAllVersionsProcessingConsentNotGiven": "You've not consented to assess all versions of the Omnistudio components. We cannot proceed with the assessment.",
+  "omniStudioAllVersionsProcessingConsentGiven": "You've consented to assess all versions of the Omnistudio components."
 }
