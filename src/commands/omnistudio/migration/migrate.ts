@@ -34,6 +34,7 @@ import { GlobalAutoNumberMigrationTool } from '../../../migration/globalautonumb
 import {
   getFieldKeyForOmniscript,
   initializeDataModelService,
+  isFoundationPackage,
   isStandardDataModel,
 } from '../../../utils/dataModelService';
 import { NameMappingRegistry } from '../../../migration/NameMappingRegistry';
@@ -456,9 +457,11 @@ export default class Migrate extends OmniStudioBaseCommand {
           allVersions
         ),
         new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions),
-        new GlobalAutoNumberMigrationTool(namespace, conn, this.logger, messages, this.ux),
         new CustomLabelsMigrationTool(namespace, conn, this.logger, messages, this.ux),
       ];
+      if (!isFoundationPackage()) {
+        migrationObjects.push(new GlobalAutoNumberMigrationTool(namespace, conn, this.logger, messages, this.ux));
+      }
     } else {
       // For single component migration, the order doesn't matter as much
       // but we still maintain consistency
@@ -496,6 +499,9 @@ export default class Migrate extends OmniStudioBaseCommand {
           migrationObjects.push(new DataRaptorMigrationTool(namespace, conn, this.logger, messages, this.ux));
           break;
         case Constants.GlobalAutoNumber:
+          if (isFoundationPackage()) {
+            Logger.warn(messages.getMessage('globalAutoNumberUnSupportedInOmnistudioPackage'));
+          }
           migrationObjects.push(new GlobalAutoNumberMigrationTool(namespace, conn, this.logger, messages, this.ux));
           break;
         case Constants.CustomLabel:
