@@ -1,8 +1,8 @@
-import { Org } from '@salesforce/core';
+import { Org, Connection } from '@salesforce/core';
 
 import sinon = require('sinon');
-import { expect } from '@salesforce/command/lib/test';
-import { Connection, ExecuteAnonymousResult } from 'jsforce';
+import { expect } from 'chai';
+import type { ExecuteAnonymousResult } from '@jsforce/jsforce-node/lib/api/tooling';
 import { AnonymousApexRunner } from '../../../../src/utils/apex/executor/AnonymousApexRunner';
 
 describe('AnonymusApexRunner', () => {

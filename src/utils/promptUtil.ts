@@ -42,7 +42,7 @@ async function askUserWithTimeout<T>(
 
 export class PromptUtil {
   public static askWithTimeOut(
-    messages: Messages
+    messages: Messages<string>
   ): (promptFn: (...args: unknown[]) => Promise<unknown>, ...args: unknown[]) => Promise<string> {
     return async (promptFn: (...args: unknown[]) => Promise<unknown>, ...args: unknown[]): Promise<string> => {
       const TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes

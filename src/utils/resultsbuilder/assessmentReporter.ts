@@ -33,7 +33,7 @@ export class AssessmentReporter {
     omnistudioOrgDetails: OmnistudioOrgDetails,
     assessOnly: string,
     relatedObjects: string[],
-    messages: Messages,
+    messages: Messages<string>,
     userActionMessages: string[]
   ): Promise<void> {
     fs.mkdirSync(this.basePath, { recursive: true });
@@ -111,7 +111,7 @@ export class AssessmentReporter {
     result: AssessmentInfo,
     instanceUrl: string,
     omnistudioOrgDetails: OmnistudioOrgDetails,
-    messages: Messages,
+    messages: Messages<string>,
     template: string
   ): void {
     AssessmentReportHelper.generateOmniscriptDocument(
@@ -277,7 +277,7 @@ export class AssessmentReporter {
     relatedObjects: string[],
     result: AssessmentInfo,
     omnistudioOrgDetails: OmnistudioOrgDetails,
-    messages: Messages,
+    messages: Messages<string>,
     template: string,
     reports: string[]
   ): void {

@@ -14,7 +14,7 @@ const authEnvKey = 'OMA_AUTH_KEY';
 
 export class PreMigrate extends BaseMigrationTool {
   // Source Custom Object Names
-  public constructor(namespace: string, connection: Connection, logger: Logger, messages: Messages, ux: UX) {
+  public constructor(namespace: string, connection: Connection, logger: Logger, messages: Messages<string>, ux: UX) {
     super(namespace, connection, logger, messages, ux);
   }
 

@@ -34,10 +34,10 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
   private EXPERIENCE_SITES_PATH: string;
   private MIGRATE = 'Migrate';
   private ASSESS = 'Assess';
-  private messages: Messages;
+  private messages: Messages<string>;
   private IS_STANDARD_DATA_MODEL: boolean = isStandardDataModel();
 
-  public constructor(projectPath: string, namespace: string, org: Org, messages: Messages) {
+  public constructor(projectPath: string, namespace: string, org: Org, messages: Messages<string>) {
     super(projectPath, namespace, org);
     this.messages = messages;
   }

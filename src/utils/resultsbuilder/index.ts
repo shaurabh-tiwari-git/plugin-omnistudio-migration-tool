@@ -64,7 +64,7 @@ export class ResultsBuilder {
     relatedObjectMigrationResult: RelatedObjectAssesmentInfo,
     instanceUrl: string,
     orgDetails: OmnistudioOrgDetails,
-    messages: Messages,
+    messages: Messages<string>,
     actionItems: string[],
     objectsToProcess: string[],
     migrateOnly: string
@@ -102,7 +102,7 @@ export class ResultsBuilder {
     result: MigratedObject,
     instanceUrl: string,
     orgDetails: OmnistudioOrgDetails,
-    messages: Messages
+    messages: Messages<string>
   ): void {
     Logger.captureVerboseData(`${result.name} data`, result);
 
@@ -270,7 +270,7 @@ export class ResultsBuilder {
     result: MigratedObject,
     instanceUrl: string,
     orgDetails: OmnistudioOrgDetails,
-    messages: Messages
+    messages: Messages<string>
   ): void {
     Logger.captureVerboseData(`${result.name} data`, result);
 
@@ -345,7 +345,7 @@ export class ResultsBuilder {
     result: RelatedObjectAssesmentInfo,
     instanceUrl: string,
     orgDetails: OmnistudioOrgDetails,
-    messages: Messages,
+    messages: Messages<string>,
     objectsToProcess: string[]
   ): void {
     if (objectsToProcess.includes(Constants.Apex)) {
@@ -366,7 +366,7 @@ export class ResultsBuilder {
     result: ExperienceSiteAssessmentInfo[],
     instanceUrl: string,
     orgDetails: OmnistudioOrgDetails,
-    messages: Messages
+    messages: Messages<string>
   ): void {
     Logger.logVerbose('Generating experience site report');
     const data: ReportParam = {
@@ -439,7 +439,7 @@ export class ResultsBuilder {
     result: FlexiPageAssessmentInfo[],
     instanceUrl: string,
     orgDetails: OmnistudioOrgDetails,
-    messages: Messages
+    messages: Messages<string>
   ): void {
     Logger.captureVerboseData('flexipage data', result);
     const data: ReportParam = {
@@ -533,7 +533,7 @@ export class ResultsBuilder {
     result: ApexAssessmentInfo[],
     instanceUrl: string,
     orgDetails: OmnistudioOrgDetails,
-    messages: Messages
+    messages: Messages<string>
   ): void {
     Logger.captureVerboseData('apex data', result);
     const data: ReportParam = {
@@ -644,7 +644,7 @@ export class ResultsBuilder {
     result: LWCAssessmentInfo[],
     instanceUrl: string,
     orgDetails: OmnistudioOrgDetails,
-    messages: Messages
+    messages: Messages<string>
   ): void {
     Logger.captureVerboseData('lwc data', result);
     const data: ReportParam = {
@@ -839,7 +839,7 @@ export class ResultsBuilder {
     orgDetails: OmnistudioOrgDetails,
     results: MigratedObject[],
     relatedObjectMigrationResult: RelatedObjectAssesmentInfo,
-    messages: Messages,
+    messages: Messages<string>,
     actionItems: string[],
     objectsToProcess: string[],
     migrateOnly: string

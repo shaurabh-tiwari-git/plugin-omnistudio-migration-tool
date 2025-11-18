@@ -59,7 +59,7 @@ export interface CustomLabelRecord {
 }
 
 export class CustomLabelsMigrationTool extends BaseMigrationTool implements MigrationTool {
-  public constructor(namespace: string, connection: Connection, logger: Logger, messages: Messages, ux: UX) {
+  public constructor(namespace: string, connection: Connection, logger: Logger, messages: Messages<string>, ux: UX) {
     super(namespace, connection, logger, messages, ux);
   }
 

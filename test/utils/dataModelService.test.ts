@@ -1,4 +1,4 @@
-import { expect } from '@salesforce/command/lib/test';
+import { expect } from 'chai';
 import sinon = require('sinon');
 import {
   DataModelService,

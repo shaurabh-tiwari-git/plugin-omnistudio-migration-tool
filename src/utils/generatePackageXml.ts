@@ -17,7 +17,7 @@ export class generatePackageXml {
     experienceSiteAssessmentInfo: ExperienceSiteAssessmentInfo[],
     flexipageAssessmentInfos: FlexiPageAssessmentInfo[],
     version: string,
-    messages: Messages
+    messages: Messages<string>
   ): void {
     fs.rmSync(path.join(process.cwd(), 'package.xml'), { force: true });
     const apexXml = generatePackageXml.getXmlElementforMembers(this.getApexclasses(apexAssementInfos), 'ApexClass');

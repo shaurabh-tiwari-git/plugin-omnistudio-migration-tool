@@ -12,11 +12,11 @@ export class Deployer {
   private readonly omniscriptCustomizationPackage = '@omnistudio/omniscript_customization';
   private readonly omniscriptCustomizationPackageVersion = '250.0.0';
   private readonly username: string;
-  private readonly messages: Messages;
+  private readonly messages: Messages<string>;
   private readonly omniscriptPackageConfig: OmniscriptPackageConfig;
   private omniscriptPackageManager?: OmniscriptPackageManager;
 
-  public constructor(projectPath: string, messages: Messages, username: string, authKey: string) {
+  public constructor(projectPath: string, messages: Messages<string>, username: string, authKey: string) {
     this.projectPath = projectPath;
     this.username = username;
     this.messages = messages;

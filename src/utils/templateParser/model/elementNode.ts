@@ -15,14 +15,14 @@ export class ElementNode {
   public name: string;
   public properties: Map<string, string>;
   public children: ElementNode[];
-  public messages: Messages;
+  public messages: Messages<string>;
 
   public constructor(
     type: NodeType,
     name: string,
     properties: Map<string, string>,
     children: ElementNode[],
-    messages: Messages
+    messages: Messages<string>
   ) {
     this.type = type;
     this.name = name;

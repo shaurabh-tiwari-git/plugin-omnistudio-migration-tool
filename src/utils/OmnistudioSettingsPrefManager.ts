@@ -3,13 +3,13 @@ import { Logger } from './logger';
 import { MetadataInfo } from './interfaces';
 
 export class OmnistudioSettingsPrefManager {
-  public constructor(private connection: Connection, private messages: Messages) {}
+  public constructor(private connection: Connection, private messages: Messages<string>) {}
 
   // Omni Global Auto Number methods
   public async isGlobalAutoNumberEnabled(): Promise<boolean> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const result = (await this.connection.metadata.read('OmniStudioSettings', ['OmniStudio'])) as unknown;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+      const result = (await (this.connection.metadata.read as any)('OmniStudioSettings', ['OmniStudio'])) as unknown;
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const metadata = result as MetadataInfo;
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -23,8 +23,8 @@ export class OmnistudioSettingsPrefManager {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async enableGlobalAutoNumber(): Promise<any> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return await this.connection.metadata.update('OmniStudioSettings', [
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    return await (this.connection.metadata.update as any)('OmniStudioSettings', [
       {
         fullName: 'OmniStudio',
         enableOmniGlobalAutoNumberPref: 'true',
@@ -45,8 +45,8 @@ export class OmnistudioSettingsPrefManager {
   // Standard Runtime methods
   public async isStandardRuntimeEnabled(): Promise<boolean> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const result = (await this.connection.metadata.read('OmniStudioSettings', ['OmniStudio'])) as unknown;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+      const result = (await (this.connection.metadata.read as any)('OmniStudioSettings', ['OmniStudio'])) as unknown;
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const metadata = result as MetadataInfo;
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -60,8 +60,8 @@ export class OmnistudioSettingsPrefManager {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async enableStandardRuntime(): Promise<any> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return await this.connection.metadata.update('OmniStudioSettings', [
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    return await (this.connection.metadata.update as any)('OmniStudioSettings', [
       {
         fullName: 'OmniStudio',
         enableStandardOmniStudioRuntime: 'true',
@@ -82,8 +82,8 @@ export class OmnistudioSettingsPrefManager {
   // OmniStudio Metadata methods
   public async isOmniStudioSettingsMetadataEnabled(): Promise<boolean> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const result = (await this.connection.metadata.read('OmniStudioSettings', ['OmniStudio'])) as unknown;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+      const result = (await (this.connection.metadata.read as any)('OmniStudioSettings', ['OmniStudio'])) as unknown;
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const metadata = result as MetadataInfo;
@@ -102,8 +102,8 @@ export class OmnistudioSettingsPrefManager {
     if (isMetadataEnabled) {
       return null;
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return await this.connection.metadata.update('OmniStudioSettings', [
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    return await (this.connection.metadata.update as any)('OmniStudioSettings', [
       {
         fullName: 'OmniStudio',
         enableOmniStudioMetadata: 'true',

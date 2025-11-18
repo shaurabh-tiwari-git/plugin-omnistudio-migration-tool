@@ -32,7 +32,7 @@ export class ProjectPathUtil {
    * @param enableRetrieval - Whether to enable the retrieval option for empty projects
    * @returns Promise<string> - The validated project path
    */
-  public static async getProjectPath(messages: Messages, enableRetrieval = true): Promise<string> {
+  public static async getProjectPath(messages: Messages<string>, enableRetrieval = true): Promise<string> {
     const askWithTimeout = PromptUtil.askWithTimeOut(messages);
     const mode = await ProjectPathUtil.promptForProjectType(messages, askWithTimeout);
 
@@ -47,7 +47,7 @@ export class ProjectPathUtil {
    * Prompts user to choose between existing or empty project
    */
   private static async promptForProjectType(
-    messages: Messages,
+    messages: Messages<string>,
     askWithTimeout: (promptFn: (...args: unknown[]) => Promise<unknown>, ...args: unknown[]) => Promise<string>
   ): Promise<string> {
     let validResponse = false;
@@ -80,7 +80,7 @@ export class ProjectPathUtil {
    * Prompts user to confirm if they want to retrieve APEX classes
    */
   private static async promptForRetrieval(
-    messages: Messages,
+    messages: Messages<string>,
     askWithTimeout: (promptFn: (...args: unknown[]) => Promise<unknown>, ...args: unknown[]) => Promise<string>
   ): Promise<void> {
     let validResponse = false;
@@ -109,7 +109,7 @@ export class ProjectPathUtil {
    * Prompts user for project path and validates it
    */
   private static async promptForProjectPath(
-    messages: Messages,
+    messages: Messages<string>,
     askWithTimeout: (promptFn: (...args: unknown[]) => Promise<unknown>, ...args: unknown[]) => Promise<string>,
     mode: string
   ): Promise<string> {
@@ -131,7 +131,7 @@ export class ProjectPathUtil {
    * Gets folder path input from user
    */
   private static async getFolderPathFromUser(
-    messages: Messages,
+    messages: Messages<string>,
     askWithTimeout: (promptFn: (...args: unknown[]) => Promise<unknown>, ...args: unknown[]) => Promise<string>,
     mode: string
   ): Promise<string> {
@@ -152,7 +152,7 @@ export class ProjectPathUtil {
   /**
    * Validates the folder path based on mode
    */
-  private static isValidFolderPath(folderPath: string, mode: string, messages: Messages): boolean {
+  private static isValidFolderPath(folderPath: string, mode: string, messages: Messages<string>): boolean {
     if (!fs.existsSync(folderPath) || !fs.lstatSync(folderPath).isDirectory()) {
       Logger.error(messages.getMessage('invalidProjectFolderPath'));
       return false;

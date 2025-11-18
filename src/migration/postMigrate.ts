@@ -2,7 +2,7 @@
 
 import { Connection, Messages, Org } from '@salesforce/core';
 import { UX } from '@salesforce/command';
-import { ExecuteAnonymousResult } from 'jsforce';
+import type { ExecuteAnonymousResult } from '@jsforce/jsforce-node/lib/api/tooling';
 import { Logger } from '../utils/logger';
 import { AnonymousApexRunner } from '../utils/apex/executor/AnonymousApexRunner';
 import { Constants } from '../utils/constants/stringContants';
@@ -30,7 +30,7 @@ export class PostMigrate extends BaseMigrationTool {
     namespace: string,
     connection: Connection,
     logger: Logger,
-    messages: Messages,
+    messages: Messages<string>,
     ux: UX,
     relatedObjectsToProcess: string[],
     deploymentConfig?: { autoDeploy: boolean; authKey: string | undefined },

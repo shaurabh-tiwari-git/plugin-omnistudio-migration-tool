@@ -20,7 +20,7 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
   private prefManager: OmnistudioSettingsPrefManager;
   private globalAutoNumberSettings: AnyJson[] | null = null;
 
-  constructor(namespace: string, connection: Connection, logger: Logger, messages: Messages, ux: UX) {
+  constructor(namespace: string, connection: Connection, logger: Logger, messages: Messages<string>, ux: UX) {
     super(namespace, connection, logger, messages, ux);
     this.prefManager = new OmnistudioSettingsPrefManager(this.connection, this.messages);
   }

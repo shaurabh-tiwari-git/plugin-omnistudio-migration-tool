@@ -1,4 +1,4 @@
-import { expect } from '@salesforce/command/lib/test';
+import { expect } from 'chai';
 import isEqual from 'lodash/isEqual.js';
 import { XMLUtil } from '../../src/utils/XMLUtil';
 import { FlexiPageRegion } from '../../src/migration/interfaces';

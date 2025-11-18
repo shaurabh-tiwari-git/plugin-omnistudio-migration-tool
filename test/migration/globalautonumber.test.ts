@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable camelcase */
-import { expect } from '@salesforce/command/lib/test';
+import { expect } from 'chai';
 import { Connection, Messages } from '@salesforce/core';
 import { UX } from '@salesforce/command';
 import sinon = require('sinon');
@@ -19,7 +19,7 @@ describe('GlobalAutoNumberMigrationTool', () => {
   let globalAutoNumberMigrationTool: GlobalAutoNumberMigrationTool;
   let connection: Connection;
   let logger: Logger;
-  let messages: Messages;
+  let messages: Messages<string>;
   let ux: UX;
   let sandbox: sinon.SinonSandbox;
   let namespace: string;
@@ -47,7 +47,7 @@ describe('GlobalAutoNumberMigrationTool', () => {
     // Mock messages
     messages = {
       getMessage: sandbox.stub(),
-    } as unknown as Messages;
+    } as unknown as Messages<string>;
     getMessageStub = messages.getMessage as sinon.SinonStub;
 
     // Mock UX

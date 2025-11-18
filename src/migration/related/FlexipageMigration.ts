@@ -39,7 +39,7 @@ import { BaseRelatedObjectMigration } from './BaseRealtedObjectMigration';
  */
 export class FlexipageMigration extends BaseRelatedObjectMigration {
   /** Messages instance for internationalization */
-  private messages: Messages;
+  private messages: Messages<string>;
   private xmlUtil: XMLUtil;
 
   /**
@@ -50,7 +50,7 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
    * @param org - The Salesforce org connection
    * @param messages - Messages instance for internationalization
    */
-  public constructor(projectPath: string, namespace: string, org: Org, messages: Messages) {
+  public constructor(projectPath: string, namespace: string, org: Org, messages: Messages<string>) {
     super(projectPath, namespace, org);
     this.messages = messages;
     this.xmlUtil = new XMLUtil(['flexiPageRegions', 'itemInstances', 'componentInstanceProperties']);

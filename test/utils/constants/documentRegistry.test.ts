@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer';
-import { expect } from '@salesforce/command/lib/test';
+import { expect } from 'chai';
 import { documentRegistry } from '../../../src/utils/constants/documentRegistry';
 import { Logger } from '../../../src/utils/logger';
 

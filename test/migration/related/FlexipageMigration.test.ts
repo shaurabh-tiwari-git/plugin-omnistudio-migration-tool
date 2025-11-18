@@ -4,7 +4,7 @@ import * as path from 'path';
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-import { expect } from '@salesforce/command/lib/test';
+import { expect } from 'chai';
 import { Messages, Org } from '@salesforce/core';
 import sinon = require('sinon');
 import { FlexipageMigration } from '../../../src/migration/related/FlexipageMigration';
@@ -60,7 +60,7 @@ describe('FlexipageMigration', () => {
   let flexipageMigration: FlexipageMigration;
   let sandbox: sinon.SinonSandbox;
   let mockOrg: Org;
-  let mockMessages: Messages;
+  let mockMessages: Messages<string>;
   let mockSfProject: MockSfProject;
   let mockLogger: MockLogger;
   let mockXmlUtil: MockXmlUtil;
@@ -81,7 +81,7 @@ describe('FlexipageMigration', () => {
     // Mock Messages
     mockMessages = {
       getMessage: sandbox.stub().returns('Mock message'),
-    } as unknown as Messages;
+    } as unknown as Messages<string>;
 
     // Mock sfProject
     mockSfProject = {

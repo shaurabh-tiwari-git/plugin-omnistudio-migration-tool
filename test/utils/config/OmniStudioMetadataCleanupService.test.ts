@@ -1,4 +1,4 @@
-import { expect } from '@salesforce/command/lib/test';
+import { expect } from 'chai';
 import { Connection, Messages } from '@salesforce/core';
 import sinon = require('sinon');
 import { OmniStudioMetadataCleanupService } from '../../../src/utils/config/OmniStudioMetadataCleanupService';
@@ -8,7 +8,7 @@ import { NetUtils } from '../../../src/utils/net';
 
 describe('OmniStudioMetadataCleanupService', () => {
   let connection: Connection;
-  let messages: Messages;
+  let messages: Messages<string>;
   let sandbox: sinon.SinonSandbox;
   let loggerLogStub: sinon.SinonStub;
   let loggerErrorStub: sinon.SinonStub;
@@ -26,7 +26,7 @@ describe('OmniStudioMetadataCleanupService', () => {
     // Mock Messages
     messages = {
       getMessage: sandbox.stub(),
-    } as unknown as Messages;
+    } as unknown as Messages<string>;
 
     // Mock Logger
     loggerLogStub = sandbox.stub(Logger, 'log');
