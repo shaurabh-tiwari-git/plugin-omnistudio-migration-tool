@@ -21,6 +21,7 @@ import { PreMigrate } from '../../../migration/premigrate';
 import { PostMigrate } from '../../../migration/postMigrate';
 import { CustomLabelsUtil } from '../../../utils/customLabels';
 import { initializeDataModelService, isFoundationPackage } from '../../../utils/dataModelService';
+
 import { ValidatorService } from '../../../utils/validatorService';
 
 Messages.importMessagesDirectory(__dirname);
@@ -69,7 +70,7 @@ export default class Assess extends OmniStudioBaseCommand {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async runAssess(): Promise<any> {
     DebugTimer.getInstance().start();
-    const allVersions = (this.flags.allversions || false) as boolean;
+    let allVersions = (this.flags.allversions || false) as boolean;
     const assessOnly = (this.flags.only || '') as string;
     const relatedObjects = (this.flags.relatedobjects || '') as string;
     const isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean } = { value: false };
@@ -94,6 +95,12 @@ export default class Assess extends OmniStudioBaseCommand {
     const namespace = orgs.packageDetails.namespace;
     let projectPath = '';
     const preMigrate: PreMigrate = new PreMigrate(namespace, conn, this.logger, messages, this.ux);
+
+    // Handle all versions prerequisite for standard data model
+    if (
+      DataModel()) {
+      allVersions = await preMigrate.handleAllVersionsPrerequisites(allVersions);
+    }
     if (relatedObjects) {
       objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
       projectPath = await ProjectPathUtil.getProjectPath(messages, true);
