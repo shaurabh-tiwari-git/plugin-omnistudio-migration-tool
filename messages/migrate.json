@@ -319,9 +319,7 @@
   "packagesHaveSameValue": "Both TheFirstInstalledOmniPackage and InstalledIndustryPackage have the same value.",
   "packagesHaveDifferentValue": "Both the InstalledIndustryPackage and TheFirstInstalledOmniPackage have different values.",
   "failedToCheckPackagesValue": "Failed to check the value of packages in Omni Interaction Configuration.",
-  "isStandardDataModelOrg": "The org is on standard data model: %s",
-  "isFoundationPackageOrg": "The org is on Omnistudio Foundation package: %s",
   "packageDetails": "Your org contains only the TheFirstInstalledOmniPackage Omni Interaction Configuration.",
   "orgUsecaseDetails": "The Org is on %s data model with %s ",
-  "globalAutoNumberUnSupportedInOmnistudioPackage": "Omni Global Auto Number is not supported in Omnistudio package orgs."
+  "globalAutoNumberUnSupportedInOmnistudioPackage": "Omni Global Auto Number is not supported in Omnistudio Foundation package orgs."
 }

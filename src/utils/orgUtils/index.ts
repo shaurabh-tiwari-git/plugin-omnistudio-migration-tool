@@ -372,8 +372,6 @@ export class OrgUtils {
     );
 
     const isFoundationPackage: boolean = await OrgPreferences.isFoundationPackage(connection);
-    Logger.logVerbose(messages.getMessage('isStandardDataModelOrg', [omniStudioOrgPermissionEnabled]));
-    Logger.logVerbose(messages.getMessage('isFoundationPackageOrg', [isFoundationPackage]));
 
     const orgDataModel = omniStudioOrgPermissionEnabled ? this.standardDataModel : this.customDataModel;
     const orgPackageType = isFoundationPackage

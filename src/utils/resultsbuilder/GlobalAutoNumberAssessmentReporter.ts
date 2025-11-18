@@ -40,7 +40,7 @@ export class GlobalAutoNumberAssessmentReporter {
     if (isFoundationPackage) {
       return {
         ...baseReport,
-        notSupportedMessage: 'Omni Global Auto Number is not supported in Omnistudio package orgs.',
+        notSupportedMessage: 'Omni Global Auto Number is not supported in Omnistudio Foundation package orgs.',
       };
     }
 

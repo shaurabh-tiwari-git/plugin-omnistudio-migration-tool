@@ -224,7 +224,8 @@ export class OrgPreferences {
 
       return false;
     } catch (error) {
-      Logger.error('Error checking foundation package');
+      const errMsg = error instanceof Error ? error.message : String(error);
+      Logger.error(`Error checking foundation package : ${errMsg}`);
       return false;
     }
   }
