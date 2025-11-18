@@ -625,9 +625,12 @@ describe('ApexMigration', () => {
     it('should return empty array when class already implements only System.Callable', () => {
       // Arrange
       const mockFile = { name: 'TestClass.cls', location: '/test/path' };
-      const callableInterface = new InterfaceImplements('Callable', 'System');
+      // Use the actual callableInterface instance from apexMigration
+      const callableInterface = (apexMigration as any).callableInterface;
       const mockParser = {
-        implementsInterfaces: new Map([[callableInterface, [{ startIndex: 10, stopIndex: 25, text: 'System.Callable' }]]]),
+        implementsInterfaces: new Map([
+          [callableInterface, [{ startIndex: 10, stopIndex: 25, text: 'System.Callable' }]],
+        ]),
         hasCallMethodImplemented: true,
         classDeclaration: {},
       };
@@ -642,7 +645,8 @@ describe('ApexMigration', () => {
     it('should replace only VlocityOpenInterface2 with System.Callable', () => {
       // Arrange
       const mockFile = { name: 'TestClass.cls', location: '/test/path' };
-      const vlocityOpenInterface2 = new InterfaceImplements('VlocityOpenInterface2', testNamespace);
+      // Use the actual vlocityOpenInterface2 instance from apexMigration
+      const vlocityOpenInterface2 = (apexMigration as any).vlocityOpenInterface2;
       const mockParser = {
         implementsInterfaces: new Map([
           [vlocityOpenInterface2, [{ startIndex: 10, stopIndex: 45, text: `${testNamespace}.VlocityOpenInterface2` }]],
@@ -664,7 +668,8 @@ describe('ApexMigration', () => {
     it('should replace only VlocityOpenInterface with System.Callable', () => {
       // Arrange
       const mockFile = { name: 'TestClass.cls', location: '/test/path' };
-      const vlocityOpenInterface = new InterfaceImplements('VlocityOpenInterface', testNamespace);
+      // Use the actual vlocityOpenInterface instance from apexMigration
+      const vlocityOpenInterface = (apexMigration as any).vlocityOpenInterface;
       const mockParser = {
         implementsInterfaces: new Map([
           [vlocityOpenInterface, [{ startIndex: 10, stopIndex: 44, text: `${testNamespace}.VlocityOpenInterface` }]],
@@ -686,8 +691,9 @@ describe('ApexMigration', () => {
     it('should replace BOTH VlocityOpenInterface and VlocityOpenInterface2 with System.Callable', () => {
       // Arrange - This is the FIX scenario
       const mockFile = { name: 'TestClass.cls', location: '/test/path' };
-      const vlocityOpenInterface = new InterfaceImplements('VlocityOpenInterface', testNamespace);
-      const vlocityOpenInterface2 = new InterfaceImplements('VlocityOpenInterface2', testNamespace);
+      // Use the actual interface instances from apexMigration
+      const vlocityOpenInterface = (apexMigration as any).vlocityOpenInterface;
+      const vlocityOpenInterface2 = (apexMigration as any).vlocityOpenInterface2;
       const mockParser = {
         implementsInterfaces: new Map([
           [vlocityOpenInterface, [{ startIndex: 10, stopIndex: 44, text: `${testNamespace}.VlocityOpenInterface` }]],
@@ -711,8 +717,9 @@ describe('ApexMigration', () => {
     it('should replace System.Callable with other interfaces to only System.Callable', () => {
       // Arrange
       const mockFile = { name: 'TestClass.cls', location: '/test/path' };
-      const callableInterface = new InterfaceImplements('Callable', 'System');
-      const vlocityOpenInterface2 = new InterfaceImplements('VlocityOpenInterface2', testNamespace);
+      // Use the actual interface instances from apexMigration
+      const callableInterface = (apexMigration as any).callableInterface;
+      const vlocityOpenInterface2 = (apexMigration as any).vlocityOpenInterface2;
       const mockParser = {
         implementsInterfaces: new Map([
           [callableInterface, [{ startIndex: 10, stopIndex: 25, text: 'System.Callable' }]],
@@ -736,9 +743,10 @@ describe('ApexMigration', () => {
     it('should replace BOTH Vlocity interfaces AND System.Callable with only System.Callable', () => {
       // Arrange - This is the FIX scenario with Callable already present
       const mockFile = { name: 'TestClass.cls', location: '/test/path' };
-      const callableInterface = new InterfaceImplements('Callable', 'System');
-      const vlocityOpenInterface = new InterfaceImplements('VlocityOpenInterface', testNamespace);
-      const vlocityOpenInterface2 = new InterfaceImplements('VlocityOpenInterface2', testNamespace);
+      // Use the actual interface instances from apexMigration
+      const callableInterface = (apexMigration as any).callableInterface;
+      const vlocityOpenInterface = (apexMigration as any).vlocityOpenInterface;
+      const vlocityOpenInterface2 = (apexMigration as any).vlocityOpenInterface2;
       const mockParser = {
         implementsInterfaces: new Map([
           [callableInterface, [{ startIndex: 10, stopIndex: 25, text: 'System.Callable' }]],
@@ -763,7 +771,8 @@ describe('ApexMigration', () => {
     it('should not add call method when it already exists', () => {
       // Arrange
       const mockFile = { name: 'TestClass.cls', location: '/test/path' };
-      const vlocityOpenInterface2 = new InterfaceImplements('VlocityOpenInterface2', testNamespace);
+      // Use the actual vlocityOpenInterface2 instance from apexMigration
+      const vlocityOpenInterface2 = (apexMigration as any).vlocityOpenInterface2;
       const mockParser = {
         implementsInterfaces: new Map([
           [vlocityOpenInterface2, [{ startIndex: 10, stopIndex: 45, text: `${testNamespace}.VlocityOpenInterface2` }]],
@@ -785,8 +794,9 @@ describe('ApexMigration', () => {
     it('should handle both Vlocity interfaces when call method already exists', () => {
       // Arrange
       const mockFile = { name: 'TestClass.cls', location: '/test/path' };
-      const vlocityOpenInterface = new InterfaceImplements('VlocityOpenInterface', testNamespace);
-      const vlocityOpenInterface2 = new InterfaceImplements('VlocityOpenInterface2', testNamespace);
+      // Use the actual interface instances from apexMigration
+      const vlocityOpenInterface = (apexMigration as any).vlocityOpenInterface;
+      const vlocityOpenInterface2 = (apexMigration as any).vlocityOpenInterface2;
       const mockParser = {
         implementsInterfaces: new Map([
           [vlocityOpenInterface, [{ startIndex: 10, stopIndex: 44, text: `${testNamespace}.VlocityOpenInterface` }]],
