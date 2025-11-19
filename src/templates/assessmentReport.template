@@ -73,25 +73,13 @@
               <div class="label-value">{{org.dataModel}}</div>
             </div>
 
-            <div class="org-details-section">
-              <div class="label-key">Assessment Date and Time</div>
-              <div class="label-value">{{assessmentDate}}</div>
-            </div>
+          <div class="org-details-section">
+            <div class="label-key">Assessment Date and Time</div>
+            <div class="label-value">{{assessmentDate}}</div>
           </div>
+        </div>
 
-          <c:if exp={$notSupportedMessage}>
-            <div class="slds-box slds-m-top_medium" style="text-align: center; padding: 40px 20px; background-color: #f3f2f2; border: 2px solid #c9c7c5;">
-              <div class="slds-text-heading_medium" style="color: #3e3e3c; font-weight: bold; margin-bottom: 8px;">
-                Feature Not Supported
-              </div>
-              <div style="color: #3e3e3c; font-size: 16px;">
-                {{notSupportedMessage}}
-              </div>
-            </div>
-          </c:if>
-
-          <c:if exp={!$notSupportedMessage}>
-          <div class="filter-dropdown-container">
+        <div class="filter-dropdown-container">
             <div class="filter-header-bar">
               <!-- Row count display -->
               <div class="row-count-display" id="row-count">Loading Records...</div>
@@ -246,7 +234,6 @@
               </div>
             </c:if>
           </div>
-          </c:if>
         </div>
         <div id="cta-summary-panel" class="cta-summary-panel hidden">
           <div class="cta-header">
