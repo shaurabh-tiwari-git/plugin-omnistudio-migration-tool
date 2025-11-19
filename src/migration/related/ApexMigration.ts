@@ -283,21 +283,27 @@ export class ApexMigration extends BaseRelatedObjectMigration {
     const implementsInterface = parser.implementsInterfaces;
     const tokenUpdates: TokenUpdater[] = [];
 
+    const hasCallable = implementsInterface.has(this.callableInterface);
+    const hasVlocityOpenInterface2 = implementsInterface.has(this.vlocityOpenInterface2);
+    const hasVlocityOpenInterface = implementsInterface.has(this.vlocityOpenInterface);
+
     // Case 1: Already implements just System.Callable - no changes needed
-    if (implementsInterface.has(this.callableInterface) && implementsInterface.size === 1) {
+    if (hasCallable && implementsInterface.size === 1) {
       Logger.info(assessMessages.getMessage('fileAlreadyImplementsCallable', [file.name]));
       return tokenUpdates;
     }
 
-    // Case 2: Already implements multiple interfaces including Callable - keep only System.Callable
-    if (implementsInterface.has(this.callableInterface) && implementsInterface.size > 1) {
+    // Case 2: Multiple interfaces need to be replaced with System.Callable:
+    // - Has System.Callable with other interfaces, OR
+    // - Has both VlocityOpenInterface and VlocityOpenInterface2
+    if ((hasCallable && implementsInterface.size > 1) || (hasVlocityOpenInterface2 && hasVlocityOpenInterface)) {
       Logger.logger.info(assessMessages.getMessage('apexFileHasMultipleInterfaces', [file.name]));
       // We need to identify the entire implements clause and replace it
       return this.replaceAllInterfaces(implementsInterface, tokenUpdates, parser, file.name);
     }
 
-    // Case 3: Implements VlocityOpenInterface2 - replace with System.Callable
-    if (implementsInterface.has(this.vlocityOpenInterface2)) {
+    // Case 3: Implements only VlocityOpenInterface2 - replace with System.Callable
+    if (hasVlocityOpenInterface2) {
       Logger.logger.info(assessMessages.getMessage('apexFileImplementsVlocityOpenInterface2', [file.name]));
       const tokens = implementsInterface.get(this.vlocityOpenInterface2);
       tokenUpdates.push(new RangeTokenUpdate(CALLABLE, tokens[0], tokens[1]));
@@ -306,7 +312,9 @@ export class ApexMigration extends BaseRelatedObjectMigration {
       } else {
         Logger.logger.info(assessMessages.getMessage('apexFileAlreadyHasCallMethod', [file.name]));
       }
-    } else if (implementsInterface.has(this.vlocityOpenInterface)) {
+    }
+    // Case 4: Implements only VlocityOpenInterface - replace with System.Callable
+    else if (hasVlocityOpenInterface) {
       Logger.logger.info(assessMessages.getMessage('fileImplementsVlocityOpenInterface', [file.name]));
       const tokens = implementsInterface.get(this.vlocityOpenInterface);
       tokenUpdates.push(new RangeTokenUpdate(CALLABLE, tokens[0], tokens[1]));

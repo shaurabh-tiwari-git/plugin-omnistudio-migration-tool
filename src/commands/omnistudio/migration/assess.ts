@@ -20,7 +20,8 @@ import { ProjectPathUtil } from '../../../utils/projectPathUtil';
 import { PreMigrate } from '../../../migration/premigrate';
 import { PostMigrate } from '../../../migration/postMigrate';
 import { CustomLabelsUtil } from '../../../utils/customLabels';
-import { initializeDataModelService } from '../../../utils/dataModelService';
+import { initializeDataModelService, isFoundationPackage, isStandardDataModel } from '../../../utils/dataModelService';
+
 import { ValidatorService } from '../../../utils/validatorService';
 
 Messages.importMessagesDirectory(__dirname);
@@ -69,7 +70,7 @@ export default class Assess extends OmniStudioBaseCommand {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async runAssess(): Promise<any> {
     DebugTimer.getInstance().start();
-    const allVersions = (this.flags.allversions || false) as boolean;
+    let allVersions = (this.flags.allversions || false) as boolean;
     const assessOnly = (this.flags.only || '') as string;
     const relatedObjects = (this.flags.relatedobjects || '') as string;
     const isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean } = { value: false };
@@ -94,6 +95,11 @@ export default class Assess extends OmniStudioBaseCommand {
     const namespace = orgs.packageDetails.namespace;
     let projectPath = '';
     const preMigrate: PreMigrate = new PreMigrate(namespace, conn, this.logger, messages, this.ux);
+
+    // Handle all versions prerequisite for standard data model
+    if (isStandardDataModel()) {
+      allVersions = await preMigrate.handleAllVersionsPrerequisites(allVersions);
+    }
     if (relatedObjects) {
       objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
       projectPath = await ProjectPathUtil.getProjectPath(messages, true);
@@ -230,7 +236,9 @@ export default class Assess extends OmniStudioBaseCommand {
       await this.assessFlexCards(assesmentInfo, namespace, conn, allVersions);
       await this.assessOmniScripts(assesmentInfo, namespace, conn, allVersions, OmniScriptExportType.OS);
       await this.assessOmniScripts(assesmentInfo, namespace, conn, allVersions, OmniScriptExportType.IP);
-      await this.assessGlobalAutoNumbers(assesmentInfo, namespace, conn);
+      if (!isFoundationPackage()) {
+        await this.assessGlobalAutoNumbers(assesmentInfo, namespace, conn);
+      }
       await this.assessCustomLabels(assesmentInfo, namespace, conn);
       return;
     }
@@ -249,7 +257,11 @@ export default class Assess extends OmniStudioBaseCommand {
         await this.assessOmniScripts(assesmentInfo, namespace, conn, allVersions, OmniScriptExportType.IP);
         break;
       case Constants.GlobalAutoNumber:
-        await this.assessGlobalAutoNumbers(assesmentInfo, namespace, conn);
+        if (!isFoundationPackage()) {
+          await this.assessGlobalAutoNumbers(assesmentInfo, namespace, conn);
+        } else {
+          Logger.warn(messages.getMessage('globalAutoNumberUnSupportedInOmnistudioPackage'));
+        }
         break;
       case Constants.CustomLabel:
         await this.assessCustomLabels(assesmentInfo, namespace, conn);
@@ -328,6 +340,9 @@ export default class Assess extends OmniStudioBaseCommand {
     namespace: string,
     conn: Connection
   ): Promise<void> {
+    if (isFoundationPackage()) {
+      return;
+    }
     Logger.logVerbose(messages.getMessage('startingGlobalAutoNumberAssessment'));
     const globalAutoNumberMigrationTool = new GlobalAutoNumberMigrationTool(namespace, conn, Logger, messages, this.ux);
     assesmentInfo.globalAutoNumberAssessmentInfos = await globalAutoNumberMigrationTool.assess();
