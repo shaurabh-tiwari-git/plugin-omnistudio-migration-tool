@@ -143,79 +143,73 @@ export class ResultsBuilder {
       rows: [],
     };
 
-    // Determine report data based on whether feature is supported
-    let data: ReportParam;
-
-    // If Global Auto Number and foundation package, show not supported message
+    // If Global Auto Number and foundation package, skip document creation as feature is not supported
     if (isGlobalAutoNumber && orgDetails.isFoundationPackage) {
-      data = {
-        ...baseData,
-        notSupportedMessage: 'Global Auto Numbers are not supported in OmniStudio package orgs.',
-      };
-    } else {
-      data = {
-        ...baseData,
-        total: result.data?.length || 0,
-        filterGroups: [...this.getStatusFilterGroup(result.data?.map((item) => item.status) || [])],
-        headerGroups: [...this.getHeaderGroupsForReport(componentName, isGlobalAutoNumber)],
-        rows: [
-          ...(result.data || []).map((item) => ({
-            rowId: `${this.rowClass}${this.rowId++}`,
-            data: [
-              createRowDataParam('id', item.id, false, 1, 1, true, `${instanceUrl}/${item.id}`),
-              createRowDataParam('name', item.name, true, 1, 1, false),
-              // Include migratedId for custom data model OR Global Auto Number
-              ...(isStandardDataModel() && !isGlobalAutoNumber
-                ? []
-                : [
-                    createRowDataParam(
-                      'migratedId',
-                      item.migratedId,
-                      false,
-                      1,
-                      1,
-                      true,
-                      `${instanceUrl}/${item.migratedId}`
-                    ),
-                  ]),
-              createRowDataParam('migratedName', item.migratedName, false, 1, 1, false),
-              createRowDataParam(
-                'status',
-                item.status,
-                false,
-                1,
-                1,
-                false,
-                undefined,
-                undefined,
-                item.status === 'Successfully migrated' ? 'text-success' : 'text-error'
-              ),
-              createRowDataParam(
-                'errors',
-                item.errors ? 'Failed' : 'Has No Errors',
-                false,
-                1,
-                1,
-                false,
-                undefined,
-                item.errors || []
-              ),
-              createRowDataParam(
-                'summary',
-                item.warnings ? 'Warnings' : 'Has No Warnings',
-                false,
-                1,
-                1,
-                false,
-                undefined,
-                item.warnings || []
-              ),
-            ],
-          })),
-        ],
-        rollbackFlags: flags.length > 0 ? flags : undefined,
-      };
+      return;
     }
+
+    const data: ReportParam = {
+      ...baseData,
+      total: result.data?.length || 0,
+      filterGroups: [...this.getStatusFilterGroup(result.data?.map((item) => item.status) || [])],
+      headerGroups: [...this.getHeaderGroupsForReport(componentName, isGlobalAutoNumber)],
+      rows: [
+        ...(result.data || []).map((item) => ({
+          rowId: `${this.rowClass}${this.rowId++}`,
+          data: [
+            createRowDataParam('id', item.id, false, 1, 1, true, `${instanceUrl}/${item.id}`),
+            createRowDataParam('name', item.name, true, 1, 1, false),
+            // Include migratedId for custom data model OR Global Auto Number
+            ...(isStandardDataModel() && !isGlobalAutoNumber
+              ? []
+              : [
+                  createRowDataParam(
+                    'migratedId',
+                    item.migratedId,
+                    false,
+                    1,
+                    1,
+                    true,
+                    `${instanceUrl}/${item.migratedId}`
+                  ),
+                ]),
+            createRowDataParam('migratedName', item.migratedName, false, 1, 1, false),
+            createRowDataParam(
+              'status',
+              item.status,
+              false,
+              1,
+              1,
+              false,
+              undefined,
+              undefined,
+              item.status === 'Successfully migrated' ? 'text-success' : 'text-error'
+            ),
+            createRowDataParam(
+              'errors',
+              item.errors ? 'Failed' : 'Has No Errors',
+              false,
+              1,
+              1,
+              false,
+              undefined,
+              item.errors || []
+            ),
+            createRowDataParam(
+              'summary',
+              item.warnings ? 'Warnings' : 'Has No Warnings',
+              false,
+              1,
+              1,
+              false,
+              undefined,
+              item.warnings || []
+            ),
+          ],
+        })),
+      ],
+      rollbackFlags: flags.length > 0 ? flags : undefined,
+    };
 
     const reportTemplate = fs.readFileSync(reportTemplateFilePath, 'utf8');
     const html = TemplateParser.generate(reportTemplate, data, messages);
@@ -861,6 +855,20 @@ export class ResultsBuilder {
               total: totalLabels,
               data: this.getCustomLabelStatusData(result.data, result.totalCount),
               file: fileName,
+            };
+          }
+
+          // Handle Global Auto Numbers in foundation package (not supported)
+          const isGlobalAutoNumber =
+            result.name.toLowerCase().includes('global auto number') ||
+            result.name.toLowerCase().includes('globalautonumber');
+          if (isGlobalAutoNumber && orgDetails.isFoundationPackage) {
+            return {
+              name: `${getMigrationHeading(result.name)}`,
+              total: 0,
+              data: [{ name: 'Feature not supported', count: 0, cssClass: 'text-warning' }],
+              file: result.name.replace(/ /g, '_').replace(/\//g, '_') + '.html',
+              showDetails: false,
             };
           }
 

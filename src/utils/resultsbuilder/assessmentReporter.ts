@@ -134,8 +134,7 @@ export class AssessmentReporter {
             GlobalAutoNumberAssessmentReporter.getGlobalAutoNumberAssessmentData(
               result.globalAutoNumberAssessmentInfos,
               instanceUrl,
-              omnistudioOrgDetails,
-              false
+              omnistudioOrgDetails
             ),
             messages
           )
@@ -219,19 +218,21 @@ export class AssessmentReporter {
 
         case Constants.GlobalAutoNumber:
           reports.push(Constants.GlobalAutoNumber);
-          this.createDocument(
-            path.join(this.basePath, this.globalAutoNumberAssessmentFileName),
-            TemplateParser.generate(
-              assessmentReportTemplate,
-              GlobalAutoNumberAssessmentReporter.getGlobalAutoNumberAssessmentData(
-                result.globalAutoNumberAssessmentInfos,
-                instanceUrl,
-                omnistudioOrgDetails,
-                isFoundationPackage()
-              ),
-              messages
-            )
-          );
+          // Skip document creation for foundation package as feature is not supported
+          if (!isFoundationPackage()) {
+            this.createDocument(
+              path.join(this.basePath, this.globalAutoNumberAssessmentFileName),
+              TemplateParser.generate(
+                assessmentReportTemplate,
+                GlobalAutoNumberAssessmentReporter.getGlobalAutoNumberAssessmentData(
+                  result.globalAutoNumberAssessmentInfos,
+                  instanceUrl,
+                  omnistudioOrgDetails
+                ),
+                messages
+              )
+            );
+          }
           break;
 
         case Constants.CustomLabel:
@@ -408,11 +409,16 @@ export class AssessmentReporter {
       });
     }
     if (reports.includes(Constants.GlobalAutoNumber)) {
+      // Show "Feature not supported" for foundation package orgs
+      const isFoundationPkg = omnistudioOrgDetails.isFoundationPackage;
       summaryItems.push({
         name: 'Omni Global Auto Numbers',
-        total: result.globalAutoNumberAssessmentInfos.length,
-        data: GlobalAutoNumberAssessmentReporter.getSummaryData(result.globalAutoNumberAssessmentInfos),
+        total: isFoundationPkg ? 0 : result.globalAutoNumberAssessmentInfos.length,
+        data: isFoundationPkg
+          ? [{ name: 'Feature not supported', count: 0, cssClass: 'text-warning' }]
+          : GlobalAutoNumberAssessmentReporter.getSummaryData(result.globalAutoNumberAssessmentInfos),
         file: this.globalAutoNumberAssessmentFileName,
+        ...(isFoundationPkg && { showDetails: false }),
       });
     }
     if (reports.includes(Constants.Apex)) {

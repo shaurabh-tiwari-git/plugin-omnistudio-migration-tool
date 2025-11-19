@@ -18,35 +18,16 @@ export class GlobalAutoNumberAssessmentReporter {
   public static getGlobalAutoNumberAssessmentData(
     globalAutoNumberAssessmentInfos: GlobalAutoNumberAssessmentInfo[],
     instanceUrl: string,
-    omnistudioOrgDetails: OmnistudioOrgDetails,
-    isFoundationPackage = false
+    omnistudioOrgDetails: OmnistudioOrgDetails
   ): ReportParam {
     Logger.captureVerboseData('GAN data', globalAutoNumberAssessmentInfos);
 
-    // Common fields for both supported and unsupported cases
-    const baseReport: ReportParam = {
+    return {
       title: 'Omni Global Auto Numbers Assessment Report',
       heading: 'Omni Global Auto Numbers Assessment Report',
       org: getOrgDetailsForReport(omnistudioOrgDetails),
       assessmentDate: new Date().toLocaleString(),
       reportType: 'globalautonumber',
-      total: 0,
-      filterGroups: [],
-      headerGroups: [],
-      rows: [],
-    };
-
-    // If foundation package (OmniStudio package), show not supported message
-    if (isFoundationPackage) {
-      return {
-        ...baseReport,
-        notSupportedMessage: 'Omni Global Auto Number is not supported in Omnistudio Foundation package orgs.',
-      };
-    }
-
-    // Add specific fields for supported orgs
-    return {
-      ...baseReport,
       total: globalAutoNumberAssessmentInfos?.length || 0,
       filterGroups: this.getFilterGroupsForReport(globalAutoNumberAssessmentInfos),
       headerGroups: this.getHeaderGroupsForReport(),
