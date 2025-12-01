@@ -38,8 +38,9 @@ import { StringVal } from '../utils/StringValue/stringval';
 import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
 import { StorageUtil } from '../utils/storageUtil';
-import { isStandardDataModel } from '../utils/dataModelService';
+import { isStandardDataModel, isStandardDataModelWithMetadataAPIEnabled } from '../utils/dataModelService';
 import { prioritizeCleanNamesFirst } from '../utils/recordPrioritization';
+import { Constants } from '../utils/constants/stringContants';
 
 export class OmniScriptMigrationTool extends BaseMigrationTool implements MigrationTool {
   private readonly exportType: OmniScriptExportType;
@@ -217,9 +218,14 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
   ): Promise<OmniAssessmentInfo> {
     try {
       const exportComponentType = this.getName() as ComponentType;
-      Logger.log(this.messages.getMessage('startingOmniScriptAssessment', [exportComponentType]));
       const omniscripts = await this.getAllOmniScripts();
 
+      if (isStandardDataModelWithMetadataAPIEnabled()) {
+        // For the Standard Data Model Orgs, we only need to prepare the storage
+        return this.handleAssessmentForStdDataModelOrgsWithMetadataAPIEnabled(omniscripts);
+      }
+
+      Logger.log(this.messages.getMessage('startingOmniScriptAssessment', [exportComponentType]));
       Logger.log(this.messages.getMessage('foundOmniScriptsToAssess', [omniscripts.length, exportComponentType]));
 
       const omniAssessmentInfos = await this.processOmniComponents(
@@ -237,6 +243,25 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       }
       Logger.error(this.messages.getMessage('errorDuringOmniScriptAssessment'), err);
     }
+  }
+
+  private handleAssessmentForStdDataModelOrgsWithMetadataAPIEnabled(omniscripts: AnyJson[]): OmniAssessmentInfo {
+    const assessmentInfos: OmniAssessmentInfo = {
+      osAssessmentInfos: [],
+      ipAssessmentInfos: [],
+    };
+
+    if (this.exportType === OmniScriptExportType.IP) {
+      return assessmentInfos;
+    }
+
+    Logger.logVerbose(this.messages.getMessage('preparingStorageForMetadataEnabledOrg', [Constants.Omniscript]));
+    let storage: MigrationStorage = StorageUtil.getOmnistudioAssessmentStorage();
+    Logger.logVerbose(this.messages.getMessage('updatingStorageForOmniscipt', ['Assessment']));
+
+    this.prepareStorageForRelatedObjectsWhenMetadataAPIEnabled(storage, omniscripts);
+    StorageUtil.printAssessmentStorage();
+    return assessmentInfos;
   }
 
   public async processOmniComponents(
@@ -672,6 +697,31 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     return result;
   }
 
+  private prepareStorageForRelatedObjectsWhenMetadataAPIEnabled(
+    storage: MigrationStorage,
+    omniscripts: AnyJson[]
+  ): void {
+    for (const omniscript of omniscripts) {
+      if (!omniscript[this.getFieldKey('IsProcedure__c')]) {
+        const originalType = omniscript[this.getFieldKey('Type__c')];
+        const originalSubtype = omniscript[this.getFieldKey('SubType__c')];
+        const originalLanguage = omniscript[this.getFieldKey('Language__c')];
+
+        let value: OmniScriptStorage = {
+          type: originalType,
+          subtype: originalSubtype,
+          language: originalLanguage,
+          isDuplicate: false,
+          originalType: originalType,
+          originalSubtype: originalSubtype,
+          originalLanguage: originalLanguage,
+        };
+
+        this.addKeyToStorage(originalType, originalSubtype, originalLanguage, storage, value);
+      }
+    }
+  }
+
   private updateStorageForOmniscriptAssessment(osAssessmentInfo: OSAssessmentInfo[]): void {
     if (osAssessmentInfo === undefined || osAssessmentInfo === null) {
       Logger.error(this.messages.getMessage('missingInfo'));
@@ -740,7 +790,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       StorageUtil.addStandardOmniScriptToStorage(storage, keyObject, value);
     }
 
-    let finalKey = `${originalType}${originalSubtype}${this.cleanLanguageName(originalLanguage)}`;
+    let finalKey = `${originalType}${originalSubtype}${this.cleanLanguageName(originalLanguage)}`; // For vlocity wrapper Multi-Language is specified as MultiLanguage
     finalKey = finalKey.toLowerCase();
     if (storage.osStorage.has(finalKey)) {
       if (this.allVersions) {
@@ -782,6 +832,10 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
   async migrate(): Promise<MigrationResult[]> {
     // Get All Records from OmniScript__c (IP & OS Parent Records)
     const omniscripts = await this.getAllOmniScripts();
+
+    if (isStandardDataModelWithMetadataAPIEnabled()) {
+      return this.handleMigrationForStdDataModelOrgsWithMetadataAPIEnabled(omniscripts);
+    }
 
     const functionDefinitionMetadata = await getAllFunctionMetadata(this.namespace, this.connection);
     populateRegexForFunctionMetadata(functionDefinitionMetadata);
@@ -1346,6 +1400,30 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       records: recordMap,
       results: resultMap,
     };
+  }
+
+  private handleMigrationForStdDataModelOrgsWithMetadataAPIEnabled(omniscripts: AnyJson[]) {
+    const result = [
+      {
+        name: this.getName(),
+        results: new Map<string, UploadRecordResult>(),
+        records: new Map<string, any>(),
+      },
+    ];
+
+    if (this.exportType === OmniScriptExportType.IP) {
+      return result;
+    }
+
+    Logger.log(this.messages.getMessage('preparingStorageForMetadataEnabledOrg', [Constants.Omniscript]));
+    let storage: MigrationStorage = StorageUtil.getOmnistudioMigrationStorage();
+    Logger.logVerbose(this.messages.getMessage('updatingStorageForOmniscipt', ['Migration']));
+
+    this.prepareStorageForRelatedObjectsWhenMetadataAPIEnabled(storage, omniscripts);
+    StorageUtil.printMigrationStorage();
+
+    // Return empty result structure for report generation
+    return result;
   }
 
   private updateStorageForOmniscript(

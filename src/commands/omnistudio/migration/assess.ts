@@ -20,7 +20,12 @@ import { ProjectPathUtil } from '../../../utils/projectPathUtil';
 import { PreMigrate } from '../../../migration/premigrate';
 import { PostMigrate } from '../../../migration/postMigrate';
 import { CustomLabelsUtil } from '../../../utils/customLabels';
-import { initializeDataModelService, isFoundationPackage, isStandardDataModel } from '../../../utils/dataModelService';
+import {
+  initializeDataModelService,
+  isFoundationPackage,
+  isStandardDataModel,
+  isStandardDataModelWithMetadataAPIEnabled,
+} from '../../../utils/dataModelService';
 
 import { ValidatorService } from '../../../utils/validatorService';
 
@@ -98,7 +103,9 @@ export default class Assess extends OmniStudioBaseCommand {
 
     // Handle all versions prerequisite for standard data model
     if (isStandardDataModel()) {
-      allVersions = await preMigrate.handleAllVersionsPrerequisites(allVersions);
+      if (!isStandardDataModelWithMetadataAPIEnabled()) {
+        allVersions = await preMigrate.handleAllVersionsPrerequisites(allVersions);
+      }
     }
     if (relatedObjects) {
       objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());

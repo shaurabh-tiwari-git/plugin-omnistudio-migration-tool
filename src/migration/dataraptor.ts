@@ -24,7 +24,7 @@ import { StringVal } from '../utils/StringValue/stringval';
 import { Logger } from '../utils/logger';
 import { createProgressBar } from './base';
 import { Constants } from '../utils/constants/stringContants';
-import { isStandardDataModel } from '../utils/dataModelService';
+import { isStandardDataModel, isStandardDataModelWithMetadataAPIEnabled } from '../utils/dataModelService';
 import { prioritizeCleanNamesFirst } from '../utils/recordPrioritization';
 
 export class DataRaptorMigrationTool extends BaseMigrationTool implements MigrationTool {
@@ -64,6 +64,16 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
   }
 
   async migrate(): Promise<MigrationResult[]> {
+    if (isStandardDataModelWithMetadataAPIEnabled()) {
+      // Return empty result structure for report generation
+      return [
+        {
+          name: this.getName(),
+          results: new Map<string, UploadRecordResult>(),
+          records: new Map<string, any>(),
+        },
+      ];
+    }
     return [await this.MigrateDataRaptorData()];
   }
 
@@ -284,6 +294,9 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
 
   public async assess(): Promise<DataRaptorAssessmentInfo[]> {
     try {
+      if (isStandardDataModelWithMetadataAPIEnabled()) {
+        return [];
+      }
       DebugTimer.getInstance().lap('Query data raptors');
       Logger.log(this.messages.getMessage('startingDataRaptorAssessment'));
       const dataRaptors = await this.getAllDataRaptors();

@@ -204,7 +204,7 @@
   "invalidTypeAssessErrorMessage": "We couldn't assess your Omnistudio components in the %s namespace. Select the correct namespace and try again",
   "assessmentSuccessfulMessage": "Migration assessment for org %s is complete and reports are ready for review in the folder %s",
   "errorCheckingOmniStudioMetadata": "Error while checking the Omnistudio settings metadata status: %s.",
-  "omniStudioSettingsMetadataAlreadyEnabled": "The Omnistudio Metadata setting is already enabled with standard data model. No need for migration.",
+  "omniStudioSettingsMetadataAlreadyEnabled": "The Omnistudio Metadata setting is already enabled with standard data model.",
   "missingMandatoryField": "Missing mandatory field: %s for %s",
   "validatingDrVersioningDisabled": "Checking the Data Mapper versioning setting in your org.",
   "drVersioningDisabled": "Proceeding with the assessment as the Data Mapper versioning setting is disabled.",
@@ -217,9 +217,11 @@
   "packagesHaveDifferentValue": "Both the InstalledIndustryPackage and TheFirstInstalledOmniPackage have different values.",
   "failedToCheckPackagesValue": "Failed to check the value of packages in Omni Interaction Configuration.",
   "packageDetails": "Your org contains only the TheFirstInstalledOmniPackage Omni Interaction Configuration.",
-  "orgUsecaseDetails": "The org is on %s data model with %s ",
-  "globalAutoNumberUnSupportedInOmnistudioPackage": "Omni Global Auto Number is not supported in Omnistudio Foundation package orgs.",
+  "orgUsecaseDetails": "The org is on %s data model with %s and Omnistudio Metadata API %s",
+  "globalAutoNumberUnSupportedInOmnistudioPackage": "Feature not supported - Omni Global Auto Number is not supported in Omnistudio Foundation package orgs.",
   "omniStudioAllVersionsProcessingConsent": "Org uses the standard data model. All versions of Omnistudio components such as Omniscripts, Data Mappers, Integration Procedures, and Flexcards must be assessed. But you’ve not specified -a  or allversions flag in the command.  Proceed to assess all versions of the Omnistudio components? [y/n]",
   "omniStudioAllVersionsProcessingConsentNotGiven": "You've not consented to assess all versions of the Omnistudio components. We cannot proceed with the assessment.",
-  "omniStudioAllVersionsProcessingConsentGiven": "You've consented to assess all versions of the Omnistudio components."
+  "omniStudioAllVersionsProcessingConsentGiven": "You've consented to assess all versions of the Omnistudio components.",
+  "preparingStorageForMetadataEnabledOrg": "Preparing storage for %s org on Standard Data Model with Metadata API enabled",
+  "processingNotRequired": "Assessment not required for Standard Data Model Orgs with Metadata API enabled"
 }

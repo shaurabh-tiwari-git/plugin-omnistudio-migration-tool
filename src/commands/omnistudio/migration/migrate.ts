@@ -36,6 +36,7 @@ import {
   initializeDataModelService,
   isFoundationPackage,
   isStandardDataModel,
+  isStandardDataModelWithMetadataAPIEnabled,
 } from '../../../utils/dataModelService';
 import { NameMappingRegistry } from '../../../migration/NameMappingRegistry';
 import { ValidatorService } from '../../../utils/validatorService';
@@ -133,8 +134,11 @@ export default class Migrate extends OmniStudioBaseCommand {
     const isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean } = { value: false };
 
     if (isStandardDataModel()) {
-      allVersions = await preMigrate.handleAllVersionsPrerequisites(allVersions);
-      await preMigrate.handleOmnistudioMetadataPrerequisites();
+      if (!isStandardDataModelWithMetadataAPIEnabled()) {
+        // Only if metadata API is off we need the allVersions Consent and Omnistudio Metadata Cleanup
+        allVersions = await preMigrate.handleAllVersionsPrerequisites(allVersions);
+        await preMigrate.handleOmnistudioMetadataPrerequisites();
+      }
     }
 
     let actionItems = [];
@@ -254,7 +258,8 @@ export default class Migrate extends OmniStudioBaseCommand {
       orgs,
       messages,
       actionItems,
-      objectsToProcess
+      objectsToProcess,
+      migrateOnly
     );
     Logger.log(
       messages.getMessage('migrationSuccessfulMessage', [
@@ -383,14 +388,24 @@ export default class Migrate extends OmniStudioBaseCommand {
     // Migrate in correct dependency order
     for (const cls of migrationObjects) {
       try {
-        Logger.log(messages.getMessage('migratingComponent', [cls.getName()]));
-        debugTimer.lap('Migrating: ' + cls.getName());
-        const results = await cls.migrate();
-        if (results.some((result) => result?.errors?.length > 0)) {
-          Logger.error(messages.getMessage('migrationFailed', [cls.getName()]));
-        } else {
-          Logger.log(messages.getMessage('migrationCompleted', [cls.getName()]));
+        const componentName = cls.getName();
+        const shouldSkipLogging = this.shouldSkipMigrationLogging(componentName);
+
+        if (!shouldSkipLogging) {
+          Logger.log(messages.getMessage('migratingComponent', [componentName]));
         }
+        debugTimer.lap('Migrating: ' + componentName);
+        const results = await cls.migrate();
+
+        // Skip success/failure logs for components that don't need migration when metadata API is enabled
+        if (!shouldSkipLogging) {
+          if (results.some((result) => result?.errors?.length > 0) && !isStandardDataModelWithMetadataAPIEnabled()) {
+            Logger.error(messages.getMessage('migrationFailed', [componentName]));
+          } else {
+            Logger.log(messages.getMessage('migrationCompleted', [componentName]));
+          }
+        }
+
         objectMigrationResults = objectMigrationResults.concat(
           results.map((r) => {
             return {
@@ -417,6 +432,26 @@ export default class Migrate extends OmniStudioBaseCommand {
       }
     }
     return objectMigrationResults;
+  }
+
+  /**
+   * Check if migration logging should be skipped for a component
+   * Returns true if Metadata API is enabled and the component doesn't need migration
+   */
+  private shouldSkipMigrationLogging(componentName: string): boolean {
+    if (!isStandardDataModelWithMetadataAPIEnabled()) {
+      return false;
+    }
+
+    // Skip logging for OmniStudio components that don't need migration when metadata API is enabled
+    const omnistudioComponents = [
+      Constants.Omniscript,
+      Constants.IntegrationProcedure,
+      Constants.Flexcard,
+      Constants.DataMapper,
+    ];
+
+    return omnistudioComponents.some((component) => componentName.toLowerCase().includes(component.toLowerCase()));
   }
 
   /**
@@ -519,6 +554,9 @@ export default class Migrate extends OmniStudioBaseCommand {
    */
   private async preProcessAllComponents(namespace: string, conn: any, migrateOnly: string): Promise<void> {
     try {
+      if (isStandardDataModelWithMetadataAPIEnabled()) {
+        return;
+      }
       const nameRegistry = NameMappingRegistry.getInstance();
       // Query all components that will be migrated
       const dataMappers = await this.queryDataMappers(conn, namespace);

@@ -21,7 +21,7 @@ import { createProgressBar } from './base';
 import { Constants } from '../utils/constants/stringContants';
 import { StorageUtil } from '../utils/storageUtil';
 import { getUpdatedAssessmentStatus } from '../utils/stringUtils';
-import { isStandardDataModel } from '../utils/dataModelService';
+import { isStandardDataModel, isStandardDataModelWithMetadataAPIEnabled } from '../utils/dataModelService';
 import { prioritizeCleanNamesFirst } from '../utils/recordPrioritization';
 
 export class CardMigrationTool extends BaseMigrationTool implements MigrationTool {
@@ -95,6 +95,10 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   async migrate(): Promise<MigrationResult[]> {
     const allCards = await this.getAllCards();
 
+    if (isStandardDataModelWithMetadataAPIEnabled()) {
+      return this.handleMigrationForStdDataModelOrgsWithMetadataAPIEnabled(allCards);
+    }
+
     Logger.log(this.messages.getMessage('foundFlexCardsToMigrate', [allCards.length]));
 
     // Filter out FlexCards with Angular OmniScript dependencies
@@ -158,9 +162,13 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
 
   public async assess(): Promise<FlexCardAssessmentInfo[]> {
     try {
-      Logger.log(this.messages.getMessage('startingFlexCardAssessment'));
       const flexCards = await this.getAllCards();
 
+      if (isStandardDataModelWithMetadataAPIEnabled()) {
+        return this.handleAssessmentForStdDataModelOrgsWithMetadataAPIEnabled(flexCards);
+      }
+
+      Logger.log(this.messages.getMessage('startingFlexCardAssessment'));
       Logger.log(this.messages.getMessage('foundFlexCardsToAssess', [flexCards.length]));
 
       const flexCardsAssessmentInfos = await this.processCardComponents(flexCards);
@@ -439,6 +447,30 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
       // Log the error but continue processing
       Logger.error(`Error parsing definition for card ${flexCard.Name}: ${err.message}`);
     }
+  }
+
+  private handleAssessmentForStdDataModelOrgsWithMetadataAPIEnabled(flexCards: AnyJson[]): FlexCardAssessmentInfo[] {
+    Logger.log(this.messages.getMessage('preparingStorageForMetadataEnabledOrg', [Constants.Flexcard]));
+    let storage: MigrationStorage = StorageUtil.getOmnistudioAssessmentStorage();
+    this.prepareStorageForRelatedObjectsWhenMetadataAPIEnabled(storage, flexCards);
+    StorageUtil.printAssessmentStorage();
+    return [];
+  }
+
+  private handleMigrationForStdDataModelOrgsWithMetadataAPIEnabled(flexcards: AnyJson[]): MigrationResult[] {
+    Logger.log(this.messages.getMessage('preparingStorageForMetadataEnabledOrg', [Constants.Flexcard]));
+    let storage: MigrationStorage = StorageUtil.getOmnistudioMigrationStorage();
+    this.prepareStorageForRelatedObjectsWhenMetadataAPIEnabled(storage, flexcards);
+    StorageUtil.printAssessmentStorage();
+
+    // Return empty result structure for report generation
+    return [
+      {
+        name: this.getName(),
+        results: new Map<string, UploadRecordResult>(),
+        records: new Map<string, any>(),
+      },
+    ];
   }
 
   private readChildCardsFromDefinition(card: AnyJson): string[] {
@@ -977,6 +1009,20 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         errors: err,
         warnings: [],
       });
+    }
+  }
+
+  private prepareStorageForRelatedObjectsWhenMetadataAPIEnabled(storage: MigrationStorage, flexcards: AnyJson[]): void {
+    for (const flexcard of flexcards) {
+      const originalName: string = flexcard[this.getFieldKey('Name')];
+
+      let value: FlexcardStorage = {
+        name: originalName,
+        isDuplicate: false,
+        originalName: originalName,
+      };
+
+      this.addKeyToStorage(originalName, value, storage);
     }
   }
 

@@ -26,6 +26,7 @@ describe('FlexCard Community Targets Functionality', () => {
       dataModel: 'Custom',
       hasValidNamespace: true,
       isFoundationPackage: false,
+      isStandardDataModelWithMetadataAPIEnabled: false,
     };
     initializeDataModelService(mockOrgDetails);
 

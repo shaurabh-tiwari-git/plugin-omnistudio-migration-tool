@@ -7,6 +7,7 @@ import { askStringWithTimeout, PromptUtil } from '../utils/promptUtil';
 import { YES_SHORT, YES_LONG, NO_SHORT, NO_LONG } from '../utils/projectPathUtil';
 import { documentRegistry } from '../utils/constants/documentRegistry';
 import { OmniStudioMetadataCleanupService } from '../utils/config/OmniStudioMetadataCleanupService';
+import { isStandardDataModelWithMetadataAPIEnabled } from '../utils/dataModelService';
 import { BaseMigrationTool } from './base';
 
 const authEnvKey = 'OMA_AUTH_KEY';
@@ -40,6 +41,9 @@ export class PreMigrate extends BaseMigrationTool {
   }
 
   public async handleOmnistudioMetadataPrerequisites(): Promise<void> {
+    if (isStandardDataModelWithMetadataAPIEnabled()) {
+      return;
+    }
     // Get user consent to enable OmniStudio Metadata for standard data model migration
     const omniStudioMetadataEnableConsent = await this.getOmniStudioMetadataEnableConsent();
     if (!omniStudioMetadataEnableConsent) {
@@ -192,6 +196,9 @@ export class PreMigrate extends BaseMigrationTool {
    * @returns Promise<boolean> - true if cleanup was successful, false otherwise
    */
   public async handleOmniStudioMetadataCleanup(): Promise<boolean> {
+    if (isStandardDataModelWithMetadataAPIEnabled()) {
+      return true;
+    }
     const omniStudioMetadataCleanupService = new OmniStudioMetadataCleanupService(this.connection, this.messages);
 
     if (await omniStudioMetadataCleanupService.hasCleanOmniStudioMetadataTables()) {

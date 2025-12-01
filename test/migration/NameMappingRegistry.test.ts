@@ -16,6 +16,7 @@ describe('NameMappingRegistry', () => {
       dataModel: 'Custom',
       hasValidNamespace: true,
       isFoundationPackage: false,
+      isStandardDataModelWithMetadataAPIEnabled: false,
     };
     initializeDataModelService(mockOrgDetails);
 
@@ -335,6 +336,7 @@ describe('NameMappingRegistry', () => {
         dataModel: 'Standard',
         hasValidNamespace: false,
         isFoundationPackage: false,
+        isStandardDataModelWithMetadataAPIEnabled: false,
       };
       initializeDataModelService(mockStandardOrgDetails);
 

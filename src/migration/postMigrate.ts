@@ -134,11 +134,11 @@ export class PostMigrate extends BaseMigrationTool {
 
   private async enableOmniStudioSettingsMetadataIfNeeded(userActionMessage: string[]): Promise<void> {
     try {
-      Logger.log(this.messages.getMessage('enablingOmniStudioSettingsMetadataStatus'));
       const result = await this.settingsPrefManager.enableOmniStudioSettingsMetadata();
       if (result === null) {
         Logger.logVerbose(this.messages.getMessage('omniStudioSettingsMetadataAlreadyEnabled'));
       } else if (result?.success === true) {
+        Logger.log(this.messages.getMessage('enablingOmniStudioSettingsMetadataStatus'));
         /* The API call returns true if the metadata enabling call was successful.
         But it takes time for the checks to run and the metadata to be enabled or reverted back.
         We need to wait and check if the config tables are populated or not.

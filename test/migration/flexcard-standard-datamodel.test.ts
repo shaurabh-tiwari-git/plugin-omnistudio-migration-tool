@@ -25,6 +25,7 @@ describe('FlexCard Standard Data Model (Metadata API Disabled) - Assessment and 
       dataModel: 'Standard',
       hasValidNamespace: true,
       isFoundationPackage: false,
+      isStandardDataModelWithMetadataAPIEnabled: false,
     };
     initializeDataModelService(mockOrgDetails);
 

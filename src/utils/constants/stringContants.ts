@@ -43,4 +43,8 @@ export const Constants = {
 
   // Package constants
   FoundationPackageName: 'omnistudio',
+
+  // Generic Constants
+  On: 'ON',
+  Off: 'OFF',
 };

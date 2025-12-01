@@ -25,6 +25,7 @@ describe('OmniScript Content Processing - Comprehensive Tests', () => {
       dataModel: 'Custom',
       hasValidNamespace: true,
       isFoundationPackage: false,
+      isStandardDataModelWithMetadataAPIEnabled: false,
     };
     initializeDataModelService(mockOrgDetails);
 

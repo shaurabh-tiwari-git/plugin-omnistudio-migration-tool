@@ -5,7 +5,7 @@ import path from 'path';
 import open from 'open';
 import { Messages } from '@salesforce/core';
 import { AssessmentInfo } from '../interfaces';
-import { DashboardParam } from '../reportGenerator/reportInterfaces';
+import { DashboardParam, SummaryItemDetailParam, SummaryItemParam } from '../reportGenerator/reportInterfaces';
 import { OmnistudioOrgDetails } from '../orgUtils';
 import { Constants } from '../constants/stringContants';
 import { pushAssestUtilites } from '../file/fileUtil';
@@ -13,7 +13,7 @@ import { TemplateParser } from '../templateParser/generate';
 import { getOrgDetailsForReport } from '../reportGenerator/reportUtil';
 import { CustomLabelAssessmentInfo } from '../customLabels';
 import { Logger } from '../logger';
-import { isFoundationPackage } from '../dataModelService';
+import { isFoundationPackage, isStandardDataModelWithMetadataAPIEnabled } from '../dataModelService';
 import { OSAssessmentReporter } from './OSAssessmentReporter';
 import { ApexAssessmentReporter } from './ApexAssessmentReporter';
 import { IPAssessmentReporter } from './IPAssessmentReporter';
@@ -59,186 +59,92 @@ export class AssessmentReporter {
       path.join(__dirname, '..', '..', this.templateDir, this.reportTemplateName),
       'utf8'
     );
+
     if (!assessOnly) {
-      reports.push(
-        Constants.Omniscript,
-        Constants.Flexcard,
-        Constants.IntegrationProcedure,
-        Constants.DataMapper,
-        Constants.CustomLabel
-      );
+      if (!isStandardDataModelWithMetadataAPIEnabled()) {
+        reports.push(Constants.Omniscript, Constants.Flexcard, Constants.IntegrationProcedure, Constants.DataMapper);
+      }
+
+      reports.push(Constants.CustomLabel);
 
       // Only add GlobalAutoNumber if it's not a foundation package
       if (!isFoundationPackage()) {
         reports.push(Constants.GlobalAutoNumber);
       }
 
-      this.createDocument(
-        path.join(this.basePath, this.omniscriptAssessmentFileName),
-        TemplateParser.generate(
-          assessmentReportTemplate,
-          OSAssessmentReporter.getOmniscriptAssessmentData(
-            result.omniAssessmentInfo.osAssessmentInfos,
-            instanceUrl,
-            omnistudioOrgDetails
-          ),
-          messages
-        )
-      );
-
-      this.createDocument(
-        path.join(this.basePath, this.flexcardAssessmentFileName),
-        TemplateParser.generate(
-          assessmentReportTemplate,
-          FlexcardAssessmentReporter.getFlexcardAssessmentData(
-            result.flexCardAssessmentInfos,
-            instanceUrl,
-            omnistudioOrgDetails
-          ),
-          messages
-        )
-      );
-
-      this.createDocument(
-        path.join(this.basePath, this.integrationProcedureAssessmentFileName),
-        TemplateParser.generate(
-          assessmentReportTemplate,
-          IPAssessmentReporter.getIntegrationProcedureAssessmentData(
-            result.omniAssessmentInfo.ipAssessmentInfos,
-            instanceUrl,
-            omnistudioOrgDetails
-          ),
-          messages
-        )
-      );
-
-      this.createDocument(
-        path.join(this.basePath, this.dataMapperAssessmentFileName),
-        TemplateParser.generate(
-          assessmentReportTemplate,
-          DRAssessmentReporter.getDatamapperAssessmentData(
-            result.dataRaptorAssessmentInfos,
-            instanceUrl,
-            omnistudioOrgDetails
-          ),
-          messages
-        )
-      );
-
-      // Only generate GlobalAutoNumber reports if it's not a foundation package
-      if (!isFoundationPackage()) {
-        this.createDocument(
-          path.join(this.basePath, this.globalAutoNumberAssessmentFileName),
-          TemplateParser.generate(
-            assessmentReportTemplate,
-            GlobalAutoNumberAssessmentReporter.getGlobalAutoNumberAssessmentData(
-              result.globalAutoNumberAssessmentInfos,
-              instanceUrl,
-              omnistudioOrgDetails
-            ),
-            messages
-          )
-        );
-      }
-
-      // Generate custom labels report with pagination
-      const customLabels = result.customLabelAssessmentInfos || [];
-      this.generateCustomLabelAssessmentReport(
-        customLabels,
+      this.generateOmniscriptDocument(result, instanceUrl, omnistudioOrgDetails, messages, assessmentReportTemplate);
+      this.generateFlexcardDocument(result, instanceUrl, omnistudioOrgDetails, messages, assessmentReportTemplate);
+      this.generateIntegrationProcedureDocument(
+        result,
         instanceUrl,
         omnistudioOrgDetails,
         messages,
         assessmentReportTemplate
       );
+      this.generateDataMapperDocument(result, instanceUrl, omnistudioOrgDetails, messages, assessmentReportTemplate);
+      this.generateGlobalAutoNumberDocument(
+        result,
+        instanceUrl,
+        omnistudioOrgDetails,
+        messages,
+        assessmentReportTemplate
+      );
+      this.generateCustomLabelDocument(result, instanceUrl, omnistudioOrgDetails, messages, assessmentReportTemplate);
     } else {
       switch (assessOnly) {
         case Constants.Omniscript:
           reports.push(Constants.Omniscript);
-          this.createDocument(
-            path.join(this.basePath, this.omniscriptAssessmentFileName),
-            TemplateParser.generate(
-              assessmentReportTemplate,
-              OSAssessmentReporter.getOmniscriptAssessmentData(
-                result.omniAssessmentInfo.osAssessmentInfos,
-                instanceUrl,
-                omnistudioOrgDetails
-              ),
-              messages
-            )
+          this.generateOmniscriptDocument(
+            result,
+            instanceUrl,
+            omnistudioOrgDetails,
+            messages,
+            assessmentReportTemplate
           );
           break;
 
         case Constants.Flexcard:
           reports.push(Constants.Flexcard);
-          this.createDocument(
-            path.join(this.basePath, this.flexcardAssessmentFileName),
-            TemplateParser.generate(
-              assessmentReportTemplate,
-              FlexcardAssessmentReporter.getFlexcardAssessmentData(
-                result.flexCardAssessmentInfos,
-                instanceUrl,
-                omnistudioOrgDetails
-              ),
-              messages
-            )
-          );
+          this.generateFlexcardDocument(result, instanceUrl, omnistudioOrgDetails, messages, assessmentReportTemplate);
           break;
 
         case Constants.IntegrationProcedure:
           reports.push(Constants.IntegrationProcedure);
-          this.createDocument(
-            path.join(this.basePath, this.integrationProcedureAssessmentFileName),
-            TemplateParser.generate(
-              assessmentReportTemplate,
-              IPAssessmentReporter.getIntegrationProcedureAssessmentData(
-                result.omniAssessmentInfo.ipAssessmentInfos,
-                instanceUrl,
-                omnistudioOrgDetails
-              ),
-              messages
-            )
+          this.generateIntegrationProcedureDocument(
+            result,
+            instanceUrl,
+            omnistudioOrgDetails,
+            messages,
+            assessmentReportTemplate
           );
           break;
 
         case Constants.DataMapper:
           reports.push(Constants.DataMapper);
-          this.createDocument(
-            path.join(this.basePath, this.dataMapperAssessmentFileName),
-            TemplateParser.generate(
-              assessmentReportTemplate,
-              DRAssessmentReporter.getDatamapperAssessmentData(
-                result.dataRaptorAssessmentInfos,
-                instanceUrl,
-                omnistudioOrgDetails
-              ),
-              messages
-            )
+          this.generateDataMapperDocument(
+            result,
+            instanceUrl,
+            omnistudioOrgDetails,
+            messages,
+            assessmentReportTemplate
           );
           break;
 
         case Constants.GlobalAutoNumber:
           reports.push(Constants.GlobalAutoNumber);
-          // Skip document creation for foundation package as feature is not supported
-          if (!isFoundationPackage()) {
-            this.createDocument(
-              path.join(this.basePath, this.globalAutoNumberAssessmentFileName),
-              TemplateParser.generate(
-                assessmentReportTemplate,
-                GlobalAutoNumberAssessmentReporter.getGlobalAutoNumberAssessmentData(
-                  result.globalAutoNumberAssessmentInfos,
-                  instanceUrl,
-                  omnistudioOrgDetails
-                ),
-                messages
-              )
-            );
-          }
+          this.generateGlobalAutoNumberDocument(
+            result,
+            instanceUrl,
+            omnistudioOrgDetails,
+            messages,
+            assessmentReportTemplate
+          );
           break;
 
         case Constants.CustomLabel:
           reports.push(Constants.CustomLabel);
-          this.generateCustomLabelAssessmentReport(
-            result.customLabelAssessmentInfos,
+          this.generateCustomLabelDocument(
+            result,
             instanceUrl,
             omnistudioOrgDetails,
             messages,
@@ -252,53 +158,22 @@ export class AssessmentReporter {
 
     if (relatedObjects && relatedObjects.includes(Constants.Apex)) {
       reports.push(Constants.Apex);
-      this.createDocument(
-        path.join(this.basePath, this.apexAssessmentFileName),
-        TemplateParser.generate(
-          assessmentReportTemplate,
-          ApexAssessmentReporter.getApexAssessmentData(result.apexAssessmentInfos, omnistudioOrgDetails),
-          messages
-        )
-      );
+      this.generateApexDocument(result, omnistudioOrgDetails, messages, assessmentReportTemplate);
     }
 
     if (relatedObjects && relatedObjects.includes(Constants.ExpSites)) {
       reports.push(Constants.ExpSites);
-      this.createDocument(
-        path.join(this.basePath, this.experienceSiteAssessmentFileName),
-        TemplateParser.generate(
-          assessmentReportTemplate,
-          ExperienceSiteAssessmentReporter.getExperienceSiteAssessmentData(
-            result.experienceSiteAssessmentInfos,
-            omnistudioOrgDetails
-          ),
-          messages
-        )
-      );
+      this.generateExperienceSiteDocument(result, omnistudioOrgDetails, messages, assessmentReportTemplate);
     }
 
     if (relatedObjects && relatedObjects.includes(Constants.FlexiPage)) {
       reports.push(Constants.FlexiPage);
-      this.createDocument(
-        path.join(this.basePath, this.flexipageAssessmentFileName),
-        TemplateParser.generate(
-          assessmentReportTemplate,
-          FlexipageAssessmentReporter.getFlexipageAssessmentData(result.flexipageAssessmentInfos, omnistudioOrgDetails),
-          messages
-        )
-      );
+      this.generateFlexipageDocument(result, omnistudioOrgDetails, messages, assessmentReportTemplate);
     }
 
     if (relatedObjects && relatedObjects.includes(Constants.LWC)) {
       reports.push(Constants.LWC);
-      this.createDocument(
-        path.join(this.basePath, this.lwcAssessmentFileName),
-        TemplateParser.generate(
-          assessmentReportTemplate,
-          LWCAssessmentReporter.getLwcAssessmentData(result.lwcAssessmentInfos, omnistudioOrgDetails),
-          messages
-        )
-      );
+      this.generateLWCDocument(result, omnistudioOrgDetails, messages, assessmentReportTemplate);
     }
 
     // await this.createMasterDocument(nameUrls, basePath);
@@ -364,7 +239,7 @@ export class AssessmentReporter {
       path.join(basePath, this.dashboardFileName),
       TemplateParser.generate(
         dashboardTemplate,
-        this.createDashboardParam(result, omnistudioOrgDetails, reports, userActionMessages),
+        this.createDashboardParam(result, omnistudioOrgDetails, reports, userActionMessages, messages),
         messages
       )
     );
@@ -373,117 +248,42 @@ export class AssessmentReporter {
     result: AssessmentInfo,
     omnistudioOrgDetails: OmnistudioOrgDetails,
     reports: string[],
-    userActionMessages: string[]
+    userActionMessages: string[],
+    messages: Messages
   ): DashboardParam {
-    const summaryItems = [];
+    const summaryItems: SummaryItemParam[] = [];
+
     if (reports.includes(Constants.DataMapper)) {
-      summaryItems.push({
-        name: 'Data Mappers',
-        total: result.dataRaptorAssessmentInfos.length,
-        data: DRAssessmentReporter.getSummaryData(result.dataRaptorAssessmentInfos),
-        file: this.dataMapperAssessmentFileName,
-      });
+      summaryItems.push(this.createDataMapperSummaryItem(result, messages));
     }
     if (reports.includes(Constants.IntegrationProcedure)) {
-      summaryItems.push({
-        name: 'Integration Procedures',
-        total: result.omniAssessmentInfo.ipAssessmentInfos.length,
-        data: IPAssessmentReporter.getSummaryData(result.omniAssessmentInfo.ipAssessmentInfos),
-        file: this.integrationProcedureAssessmentFileName,
-      });
+      summaryItems.push(this.createIntegrationProcedureSummaryItem(result, messages));
     }
     if (reports.includes(Constants.Omniscript)) {
-      summaryItems.push({
-        name: 'Omniscripts',
-        total: result.omniAssessmentInfo.osAssessmentInfos.length,
-        data: OSAssessmentReporter.getSummaryData(result.omniAssessmentInfo.osAssessmentInfos),
-        file: this.omniscriptAssessmentFileName,
-      });
+      summaryItems.push(this.createOmniscriptSummaryItem(result, messages));
     }
     if (reports.includes(Constants.Flexcard)) {
-      summaryItems.push({
-        name: 'Flexcards',
-        total: result.flexCardAssessmentInfos.length,
-        data: FlexcardAssessmentReporter.getSummaryData(result.flexCardAssessmentInfos),
-        file: this.flexcardAssessmentFileName,
-      });
+      summaryItems.push(this.createFlexcardSummaryItem(result, messages));
     }
     if (reports.includes(Constants.GlobalAutoNumber)) {
-      // Show "Feature not supported" for foundation package orgs
-      const isFoundationPkg = omnistudioOrgDetails.isFoundationPackage;
-      summaryItems.push({
-        name: 'Omni Global Auto Numbers',
-        total: isFoundationPkg ? 0 : result.globalAutoNumberAssessmentInfos.length,
-        data: isFoundationPkg
-          ? [{ name: 'Feature not supported', count: 0, cssClass: 'text-warning' }]
-          : GlobalAutoNumberAssessmentReporter.getSummaryData(result.globalAutoNumberAssessmentInfos),
-        file: this.globalAutoNumberAssessmentFileName,
-        ...(isFoundationPkg && { showDetails: false }),
-      });
+      summaryItems.push(this.createGlobalAutoNumberSummaryItem(result, messages, omnistudioOrgDetails));
     }
     if (reports.includes(Constants.Apex)) {
-      summaryItems.push({
-        name: 'Apex Classes',
-        total: result.apexAssessmentInfos.length,
-        data: ApexAssessmentReporter.getSummaryData(result.apexAssessmentInfos),
-        file: this.apexAssessmentFileName,
-      });
+      summaryItems.push(this.createApexSummaryItem(result));
     }
     if (reports.includes(Constants.FlexiPage)) {
-      summaryItems.push({
-        name: 'FlexiPages',
-        total: result.flexipageAssessmentInfos.length,
-        data: FlexipageAssessmentReporter.getSummaryData(result.flexipageAssessmentInfos),
-        file: this.flexipageAssessmentFileName,
-      });
+      summaryItems.push(this.createFlexipageSummaryItem(result));
     }
     if (reports.includes(Constants.ExpSites)) {
-      // TODO - Experience Sites
-      summaryItems.push({
-        name: 'Experience Cloud Site Pages',
-        total: result.experienceSiteAssessmentInfos.flatMap((info) => info.experienceSiteAssessmentPageInfos).length,
-        data: ExperienceSiteAssessmentReporter.getSummaryData(result.experienceSiteAssessmentInfos),
-        file: this.experienceSiteAssessmentFileName,
-      });
+      summaryItems.push(this.createExperienceSiteSummaryItem(result));
     }
-
     if (reports.includes(Constants.LWC)) {
-      summaryItems.push({
-        name: 'Lightning Web Components',
-        total: result.lwcAssessmentInfos.length,
-        data: LWCAssessmentReporter.getSummaryData(result.lwcAssessmentInfos),
-        file: this.lwcAssessmentFileName,
-      });
+      summaryItems.push(this.createLWCSummaryItem(result));
     }
     if (reports.includes(Constants.CustomLabel)) {
-      summaryItems.push({
-        name: 'Custom Labels',
-        total: result.customLabelStatistics.totalLabels,
-        data: [
-          {
-            name: 'Ready for migration',
-            count: result.customLabelStatistics.readyForMigration,
-            cssClass: 'text-success',
-          },
-          {
-            name: 'Warning',
-            count: result.customLabelStatistics.warnings,
-            cssClass: 'text-warning',
-          },
-          {
-            name: 'Needs manual intervention',
-            count: result.customLabelStatistics.needManualIntervention,
-            cssClass: 'text-error',
-          },
-          {
-            name: 'Failed',
-            count: result.customLabelStatistics.failed,
-            cssClass: 'text-error',
-          },
-        ],
-        file: this.getCustomLabelAssessmentFileName(result.customLabelStatistics.needManualIntervention),
-      });
+      summaryItems.push(this.createCustomLabelSummaryItem(result));
     }
+
     return {
       title: 'Omnistudio Assessment Report Dashboard',
       heading: 'Omnistudio Assessment Report Dashboard',
@@ -495,7 +295,365 @@ export class AssessmentReporter {
     };
   }
 
+  // Summary item creation helper methods
+  private static createDataMapperSummaryItem(result: AssessmentInfo, messages: Messages): SummaryItemParam {
+    return this.createSummaryItem(
+      'Data Mappers',
+      result.dataRaptorAssessmentInfos,
+      this.dataMapperAssessmentFileName,
+      DRAssessmentReporter,
+      messages.getMessage('processingNotRequired')
+    );
+  }
+
+  private static createIntegrationProcedureSummaryItem(result: AssessmentInfo, messages: Messages): SummaryItemParam {
+    return this.createSummaryItem(
+      'Integration Procedures',
+      result.omniAssessmentInfo.ipAssessmentInfos,
+      this.integrationProcedureAssessmentFileName,
+      IPAssessmentReporter,
+      messages.getMessage('processingNotRequired')
+    );
+  }
+
+  private static createOmniscriptSummaryItem(result: AssessmentInfo, messages: Messages): SummaryItemParam {
+    return this.createSummaryItem(
+      'Omniscripts',
+      result.omniAssessmentInfo.osAssessmentInfos,
+      this.omniscriptAssessmentFileName,
+      OSAssessmentReporter,
+      messages.getMessage('processingNotRequired')
+    );
+  }
+
+  private static createFlexcardSummaryItem(result: AssessmentInfo, messages: Messages): SummaryItemParam {
+    return this.createSummaryItem(
+      'Flexcards',
+      result.flexCardAssessmentInfos,
+      this.flexcardAssessmentFileName,
+      FlexcardAssessmentReporter,
+      messages.getMessage('processingNotRequired')
+    );
+  }
+
+  private static createGlobalAutoNumberSummaryItem(
+    result: AssessmentInfo,
+    messages: Messages,
+    omnistudioOrgDetails: OmnistudioOrgDetails
+  ): SummaryItemParam {
+    const isFoundationPkg = omnistudioOrgDetails.isFoundationPackage;
+    return {
+      name: 'Omni Global Auto Numbers',
+      total: isFoundationPkg ? 0 : result.globalAutoNumberAssessmentInfos.length,
+      data: isFoundationPkg
+        ? this.getSummaryDataWithCustomMessage(messages.getMessage('globalAutoNumberUnSupportedInOmnistudioPackage'))
+        : GlobalAutoNumberAssessmentReporter.getSummaryData(result.globalAutoNumberAssessmentInfos),
+      file: this.globalAutoNumberAssessmentFileName,
+      showDetails: !isFoundationPkg,
+    };
+  }
+
+  private static createApexSummaryItem(result: AssessmentInfo): SummaryItemParam {
+    return {
+      name: 'Apex Classes',
+      total: result.apexAssessmentInfos.length,
+      data: ApexAssessmentReporter.getSummaryData(result.apexAssessmentInfos),
+      file: this.apexAssessmentFileName,
+    };
+  }
+
+  private static createFlexipageSummaryItem(result: AssessmentInfo): SummaryItemParam {
+    return {
+      name: 'FlexiPages',
+      total: result.flexipageAssessmentInfos.length,
+      data: FlexipageAssessmentReporter.getSummaryData(result.flexipageAssessmentInfos),
+      file: this.flexipageAssessmentFileName,
+    };
+  }
+
+  private static createExperienceSiteSummaryItem(result: AssessmentInfo): SummaryItemParam {
+    return {
+      name: 'Experience Cloud Site Pages',
+      total: result.experienceSiteAssessmentInfos.flatMap((info) => info.experienceSiteAssessmentPageInfos).length,
+      data: ExperienceSiteAssessmentReporter.getSummaryData(result.experienceSiteAssessmentInfos),
+      file: this.experienceSiteAssessmentFileName,
+    };
+  }
+
+  private static createLWCSummaryItem(result: AssessmentInfo): SummaryItemParam {
+    return {
+      name: 'Lightning Web Components',
+      total: result.lwcAssessmentInfos.length,
+      data: LWCAssessmentReporter.getSummaryData(result.lwcAssessmentInfos),
+      file: this.lwcAssessmentFileName,
+    };
+  }
+
+  private static createCustomLabelSummaryItem(result: AssessmentInfo): SummaryItemParam {
+    return {
+      name: 'Custom Labels',
+      total: result.customLabelStatistics.totalLabels,
+      data: [
+        {
+          name: 'Ready for migration',
+          count: result.customLabelStatistics.readyForMigration,
+          cssClass: 'text-success',
+        },
+        {
+          name: 'Warning',
+          count: result.customLabelStatistics.warnings,
+          cssClass: 'text-warning',
+        },
+        {
+          name: 'Needs manual intervention',
+          count: result.customLabelStatistics.needManualIntervention,
+          cssClass: 'text-error',
+        },
+        {
+          name: 'Failed',
+          count: result.customLabelStatistics.failed,
+          cssClass: 'text-error',
+        },
+      ],
+      file: this.getCustomLabelAssessmentFileName(result.customLabelStatistics.needManualIntervention),
+    };
+  }
+
+  private static createSummaryItem<T>(
+    name: string,
+    assessmentData: T[],
+    fileName: string,
+    reporter: { getSummaryData: (data: T[]) => SummaryItemDetailParam[] },
+    customMessage: string
+  ): SummaryItemParam {
+    return {
+      name,
+      total: isStandardDataModelWithMetadataAPIEnabled() ? 0 : assessmentData.length,
+      data: isStandardDataModelWithMetadataAPIEnabled()
+        ? this.getSummaryDataWithCustomMessage(customMessage)
+        : reporter.getSummaryData(assessmentData),
+      file: fileName,
+      showDetails: !isStandardDataModelWithMetadataAPIEnabled(),
+    };
+  }
+
+  /**
+   * Helper method to return "Feature not supported" data for summary items
+   */
+  private static getSummaryDataWithCustomMessage(customMessage?: string): SummaryItemDetailParam[] {
+    return [{ name: customMessage, count: 0, cssClass: 'text-warning' }];
+  }
+
   private static createDocument(filePath: string, htmlBody: string): void {
     fs.writeFileSync(filePath, htmlBody);
+  }
+
+  // Individual assessment document generation methods
+  private static generateOmniscriptDocument(
+    result: AssessmentInfo,
+    instanceUrl: string,
+    omnistudioOrgDetails: OmnistudioOrgDetails,
+    messages: Messages,
+    template: string
+  ): void {
+    if (isStandardDataModelWithMetadataAPIEnabled()) {
+      // For the Orgs having metadata API enabled, we do not need to generate the document
+      return;
+    }
+
+    this.createDocument(
+      path.join(this.basePath, this.omniscriptAssessmentFileName),
+      TemplateParser.generate(
+        template,
+        OSAssessmentReporter.getOmniscriptAssessmentData(
+          result.omniAssessmentInfo.osAssessmentInfos,
+          instanceUrl,
+          omnistudioOrgDetails
+        ),
+        messages
+      )
+    );
+  }
+
+  private static generateFlexcardDocument(
+    result: AssessmentInfo,
+    instanceUrl: string,
+    omnistudioOrgDetails: OmnistudioOrgDetails,
+    messages: Messages,
+    template: string
+  ): void {
+    if (isStandardDataModelWithMetadataAPIEnabled()) {
+      // For the Orgs having metadata API enabled, we do not need to generate the document
+      return;
+    }
+
+    this.createDocument(
+      path.join(this.basePath, this.flexcardAssessmentFileName),
+      TemplateParser.generate(
+        template,
+        FlexcardAssessmentReporter.getFlexcardAssessmentData(
+          result.flexCardAssessmentInfos,
+          instanceUrl,
+          omnistudioOrgDetails
+        ),
+        messages
+      )
+    );
+  }
+
+  private static generateIntegrationProcedureDocument(
+    result: AssessmentInfo,
+    instanceUrl: string,
+    omnistudioOrgDetails: OmnistudioOrgDetails,
+    messages: Messages,
+    template: string
+  ): void {
+    if (isStandardDataModelWithMetadataAPIEnabled()) {
+      // For the Orgs having metadata API enabled, we do not need to generate the document
+      return;
+    }
+
+    this.createDocument(
+      path.join(this.basePath, this.integrationProcedureAssessmentFileName),
+      TemplateParser.generate(
+        template,
+        IPAssessmentReporter.getIntegrationProcedureAssessmentData(
+          result.omniAssessmentInfo.ipAssessmentInfos,
+          instanceUrl,
+          omnistudioOrgDetails
+        ),
+        messages
+      )
+    );
+  }
+
+  private static generateDataMapperDocument(
+    result: AssessmentInfo,
+    instanceUrl: string,
+    omnistudioOrgDetails: OmnistudioOrgDetails,
+    messages: Messages,
+    template: string
+  ): void {
+    if (isStandardDataModelWithMetadataAPIEnabled()) {
+      // For the Orgs having metadata API enabled, we do not need to generate the document
+      return;
+    }
+
+    this.createDocument(
+      path.join(this.basePath, this.dataMapperAssessmentFileName),
+      TemplateParser.generate(
+        template,
+        DRAssessmentReporter.getDatamapperAssessmentData(
+          result.dataRaptorAssessmentInfos,
+          instanceUrl,
+          omnistudioOrgDetails
+        ),
+        messages
+      )
+    );
+  }
+
+  private static generateGlobalAutoNumberDocument(
+    result: AssessmentInfo,
+    instanceUrl: string,
+    omnistudioOrgDetails: OmnistudioOrgDetails,
+    messages: Messages,
+    template: string
+  ): void {
+    // Only generate if not a foundation package
+    if (!isFoundationPackage()) {
+      this.createDocument(
+        path.join(this.basePath, this.globalAutoNumberAssessmentFileName),
+        TemplateParser.generate(
+          template,
+          GlobalAutoNumberAssessmentReporter.getGlobalAutoNumberAssessmentData(
+            result.globalAutoNumberAssessmentInfos,
+            instanceUrl,
+            omnistudioOrgDetails
+          ),
+          messages
+        )
+      );
+    }
+  }
+
+  private static generateApexDocument(
+    result: AssessmentInfo,
+    omnistudioOrgDetails: OmnistudioOrgDetails,
+    messages: Messages,
+    template: string
+  ): void {
+    this.createDocument(
+      path.join(this.basePath, this.apexAssessmentFileName),
+      TemplateParser.generate(
+        template,
+        ApexAssessmentReporter.getApexAssessmentData(result.apexAssessmentInfos, omnistudioOrgDetails),
+        messages
+      )
+    );
+  }
+
+  private static generateExperienceSiteDocument(
+    result: AssessmentInfo,
+    omnistudioOrgDetails: OmnistudioOrgDetails,
+    messages: Messages,
+    template: string
+  ): void {
+    this.createDocument(
+      path.join(this.basePath, this.experienceSiteAssessmentFileName),
+      TemplateParser.generate(
+        template,
+        ExperienceSiteAssessmentReporter.getExperienceSiteAssessmentData(
+          result.experienceSiteAssessmentInfos,
+          omnistudioOrgDetails
+        ),
+        messages
+      )
+    );
+  }
+
+  private static generateFlexipageDocument(
+    result: AssessmentInfo,
+    omnistudioOrgDetails: OmnistudioOrgDetails,
+    messages: Messages,
+    template: string
+  ): void {
+    this.createDocument(
+      path.join(this.basePath, this.flexipageAssessmentFileName),
+      TemplateParser.generate(
+        template,
+        FlexipageAssessmentReporter.getFlexipageAssessmentData(result.flexipageAssessmentInfos, omnistudioOrgDetails),
+        messages
+      )
+    );
+  }
+
+  private static generateLWCDocument(
+    result: AssessmentInfo,
+    omnistudioOrgDetails: OmnistudioOrgDetails,
+    messages: Messages,
+    template: string
+  ): void {
+    this.createDocument(
+      path.join(this.basePath, this.lwcAssessmentFileName),
+      TemplateParser.generate(
+        template,
+        LWCAssessmentReporter.getLwcAssessmentData(result.lwcAssessmentInfos, omnistudioOrgDetails),
+        messages
+      )
+    );
+  }
+
+  private static generateCustomLabelDocument(
+    result: AssessmentInfo,
+    instanceUrl: string,
+    omnistudioOrgDetails: OmnistudioOrgDetails,
+    messages: Messages,
+    template: string
+  ): void {
+    // Generate custom labels report with pagination
+    const customLabels = result.customLabelAssessmentInfos || [];
+
+    this.generateCustomLabelAssessmentReport(customLabels, instanceUrl, omnistudioOrgDetails, messages, template);
   }
 }

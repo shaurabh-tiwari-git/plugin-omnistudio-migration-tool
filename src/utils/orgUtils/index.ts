@@ -4,6 +4,8 @@ import { Connection, Messages } from '@salesforce/core';
 import { QueryTools } from '../query';
 import { Logger } from '../logger';
 import { OrgPreferences } from '../orgPreferences';
+import { OmnistudioSettingsPrefManager } from '../OmnistudioSettingsPrefManager';
+import { Constants } from '../constants/stringContants';
 
 // Load messages
 const messages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'migrate');
@@ -28,6 +30,7 @@ export interface OmnistudioOrgDetails {
   hasValidNamespace: boolean;
   rollbackFlags?: string[];
   isFoundationPackage: boolean;
+  isStandardDataModelWithMetadataAPIEnabled: boolean;
 }
 
 export interface PackageDetail {
@@ -362,6 +365,7 @@ export class OrgUtils {
         dataModel: undefined,
         hasValidNamespace: false,
         isFoundationPackage: false,
+        isStandardDataModelWithMetadataAPIEnabled: false,
       };
     }
 
@@ -372,13 +376,24 @@ export class OrgUtils {
     );
 
     const isFoundationPackage: boolean = await OrgPreferences.isFoundationPackage(connection);
+    const isStandardDataModelWithMetadataAPIEnabled: boolean = await this.isStandardDataModelWithMetadataAPIEnabled(
+      connection,
+      packageDetails.namespace
+    );
 
     const orgDataModel = omniStudioOrgPermissionEnabled ? this.standardDataModel : this.customDataModel;
     const orgPackageType = isFoundationPackage
       ? this.omnistudioFoundationPackage
       : this.vlocityIndustriesManagedPackage;
+    const isOmnistudioMetadataAPIEnabled = isStandardDataModelWithMetadataAPIEnabled ? Constants.On : Constants.Off;
 
-    Logger.log(messages.getMessage('orgUsecaseDetails', [orgDataModel.toLowerCase(), orgPackageType]));
+    Logger.log(
+      messages.getMessage('orgUsecaseDetails', [
+        orgDataModel.toLowerCase(),
+        orgPackageType,
+        isOmnistudioMetadataAPIEnabled,
+      ])
+    );
 
     return {
       packageDetails: packageDetails,
@@ -387,6 +402,7 @@ export class OrgUtils {
       dataModel: omniStudioOrgPermissionEnabled ? this.standardDataModel : this.customDataModel,
       hasValidNamespace: hasValidNamespace,
       isFoundationPackage: isFoundationPackage,
+      isStandardDataModelWithMetadataAPIEnabled: isStandardDataModelWithMetadataAPIEnabled,
     };
   }
 
@@ -401,6 +417,32 @@ export class OrgUtils {
     } catch (e) {
       // Any error in the apex mechanism will fallback to check the standard designer status
       return await OrgPreferences.isStandardDesignerEnabled(connection, namespace);
+    }
+  }
+
+  /**
+   * Checks if the org is on Standard data Model with Omnistudio Metadata API enabled
+   * @param connection
+   * @param namespace
+   * @returns
+   */
+  public static async isStandardDataModelWithMetadataAPIEnabled(
+    connection: Connection,
+    namespace: string
+  ): Promise<boolean> {
+    try {
+      const omniStudioSettingsPrefManager = new OmnistudioSettingsPrefManager(connection, messages);
+
+      // Run both async operations in parallel
+      const [isOmniStudioSettingsMetadataEnabled, isStandardDataModel] = await Promise.all([
+        omniStudioSettingsPrefManager.isOmniStudioSettingsMetadataEnabled(),
+        this.isOmniStudioOrgPermissionEnabled(connection, namespace),
+      ]);
+
+      return isStandardDataModel && isOmniStudioSettingsMetadataEnabled;
+    } catch (error) {
+      Logger.error(`Error checking org data model with metadata API`);
+      return false;
     }
   }
 }
