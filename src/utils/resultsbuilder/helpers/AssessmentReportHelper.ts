@@ -52,7 +52,7 @@ export class AssessmentReportHelper {
     templateDir: string,
     result: AssessmentInfo,
     omnistudioOrgDetails: OmnistudioOrgDetails,
-    messages: Messages,
+    messages: Messages<string>,
     reports: string[],
     userActionMessages: string[]
   ): void {
@@ -82,7 +82,7 @@ export class AssessmentReportHelper {
     result: AssessmentInfo,
     omnistudioOrgDetails: OmnistudioOrgDetails,
     reports: string[],
-    messages: Messages
+    messages: Messages<string>
   ): SummaryItemParam[] {
     const summaryItems: SummaryItemParam[] = [];
 
@@ -140,7 +140,7 @@ export class AssessmentReportHelper {
     result: AssessmentInfo,
     instanceUrl: string,
     omnistudioOrgDetails: OmnistudioOrgDetails,
-    messages: Messages,
+    messages: Messages<string>,
     template: string
   ): void {
     if (isStandardDataModelWithMetadataAPIEnabled()) {
@@ -170,7 +170,7 @@ export class AssessmentReportHelper {
     result: AssessmentInfo,
     instanceUrl: string,
     omnistudioOrgDetails: OmnistudioOrgDetails,
-    messages: Messages,
+    messages: Messages<string>,
     template: string
   ): void {
     if (isStandardDataModelWithMetadataAPIEnabled()) {
@@ -200,7 +200,7 @@ export class AssessmentReportHelper {
     result: AssessmentInfo,
     instanceUrl: string,
     omnistudioOrgDetails: OmnistudioOrgDetails,
-    messages: Messages,
+    messages: Messages<string>,
     template: string
   ): void {
     if (isStandardDataModelWithMetadataAPIEnabled()) {
@@ -230,7 +230,7 @@ export class AssessmentReportHelper {
     result: AssessmentInfo,
     instanceUrl: string,
     omnistudioOrgDetails: OmnistudioOrgDetails,
-    messages: Messages,
+    messages: Messages<string>,
     template: string
   ): void {
     if (isStandardDataModelWithMetadataAPIEnabled()) {
@@ -260,7 +260,7 @@ export class AssessmentReportHelper {
     result: AssessmentInfo,
     instanceUrl: string,
     omnistudioOrgDetails: OmnistudioOrgDetails,
-    messages: Messages,
+    messages: Messages<string>,
     template: string
   ): void {
     if (!isFoundationPackage()) {
@@ -287,7 +287,7 @@ export class AssessmentReportHelper {
     fileName: string,
     result: AssessmentInfo,
     omnistudioOrgDetails: OmnistudioOrgDetails,
-    messages: Messages,
+    messages: Messages<string>,
     template: string
   ): void {
     this.createDocument(
@@ -308,7 +308,7 @@ export class AssessmentReportHelper {
     fileName: string,
     result: AssessmentInfo,
     omnistudioOrgDetails: OmnistudioOrgDetails,
-    messages: Messages,
+    messages: Messages<string>,
     template: string
   ): void {
     this.createDocument(
@@ -332,7 +332,7 @@ export class AssessmentReportHelper {
     fileName: string,
     result: AssessmentInfo,
     omnistudioOrgDetails: OmnistudioOrgDetails,
-    messages: Messages,
+    messages: Messages<string>,
     template: string
   ): void {
     this.createDocument(
@@ -353,7 +353,7 @@ export class AssessmentReportHelper {
     fileName: string,
     result: AssessmentInfo,
     omnistudioOrgDetails: OmnistudioOrgDetails,
-    messages: Messages,
+    messages: Messages<string>,
     template: string
   ): void {
     this.createDocument(
@@ -375,7 +375,7 @@ export class AssessmentReportHelper {
     customLabels: CustomLabelAssessmentInfo[],
     instanceUrl: string,
     omnistudioOrgDetails: OmnistudioOrgDetails,
-    messages: Messages,
+    messages: Messages<string>,
     template: string
   ): void {
     const pageSize = 1000;
@@ -415,7 +415,7 @@ export class AssessmentReportHelper {
     omnistudioOrgDetails: OmnistudioOrgDetails,
     reports: string[],
     userActionMessages: string[],
-    messages: Messages
+    messages: Messages<string>
   ): DashboardParam {
     const summaryItems = this.createSummaryItems(result, omnistudioOrgDetails, reports, messages);
 
@@ -434,7 +434,7 @@ export class AssessmentReportHelper {
   // PRIVATE METHODS - SUMMARY ITEM CREATORS
   // =============================================================================
 
-  private static createDataMapperSummaryItem(result: AssessmentInfo, messages: Messages): SummaryItemParam {
+  private static createDataMapperSummaryItem(result: AssessmentInfo, messages: Messages<string>): SummaryItemParam {
     return this.createSummaryItem(
       'Data Mappers',
       result.dataRaptorAssessmentInfos,
@@ -444,7 +444,10 @@ export class AssessmentReportHelper {
     );
   }
 
-  private static createIntegrationProcedureSummaryItem(result: AssessmentInfo, messages: Messages): SummaryItemParam {
+  private static createIntegrationProcedureSummaryItem(
+    result: AssessmentInfo,
+    messages: Messages<string>
+  ): SummaryItemParam {
     return this.createSummaryItem(
       'Integration Procedures',
       result.omniAssessmentInfo.ipAssessmentInfos,
@@ -454,7 +457,7 @@ export class AssessmentReportHelper {
     );
   }
 
-  private static createOmniscriptSummaryItem(result: AssessmentInfo, messages: Messages): SummaryItemParam {
+  private static createOmniscriptSummaryItem(result: AssessmentInfo, messages: Messages<string>): SummaryItemParam {
     return this.createSummaryItem(
       'Omniscripts',
       result.omniAssessmentInfo.osAssessmentInfos,
@@ -464,7 +467,7 @@ export class AssessmentReportHelper {
     );
   }
 
-  private static createFlexcardSummaryItem(result: AssessmentInfo, messages: Messages): SummaryItemParam {
+  private static createFlexcardSummaryItem(result: AssessmentInfo, messages: Messages<string>): SummaryItemParam {
     return this.createSummaryItem(
       'Flexcards',
       result.flexCardAssessmentInfos,
@@ -476,7 +479,7 @@ export class AssessmentReportHelper {
 
   private static createGlobalAutoNumberSummaryItem(
     result: AssessmentInfo,
-    messages: Messages,
+    messages: Messages<string>,
     omnistudioOrgDetails: OmnistudioOrgDetails
   ): SummaryItemParam {
     const isFoundationPkg = omnistudioOrgDetails.isFoundationPackage;

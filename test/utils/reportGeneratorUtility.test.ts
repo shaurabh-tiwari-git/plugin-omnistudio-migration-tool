@@ -491,7 +491,7 @@ describe('reportGeneratorUtility Column Freeze Tests', () => {
       expect(element.style.getPropertyValue('z-index')).to.equal('20');
       // CSS colors are normalized to rgb format by JSDOM
       expect(element.style.getPropertyValue('background-color')).to.equal('rgb(243, 243, 243)');
-      // expect(element.style.getPropertyValue('border-right')).to.equal('1px solid #e5e5e5');
+      expect(element.style.getPropertyValue('border-right')).to.equal('1px solid rgb(229, 229, 229)');
     });
 
     it('should apply sticky styles without border when addBorder is false', () => {

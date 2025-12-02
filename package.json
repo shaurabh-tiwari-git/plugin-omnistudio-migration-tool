@@ -62,13 +62,15 @@
     "puppeteer": "^24.12.1",
     "sinon": "10.0.0",
     "ts-node": "^10.9.2",
-    "typescript": "^4.9.5"
+    "typescript": "^5.4.5"
   },
   "resolutions": {
     "nanoid": "^3.3.8",
     "marked": "^4.0.10",
     "semver": "^7.5.2",
     "jsonwebtoken": "^9.0.2",
+    "jws": "^3.2.3",
+    "js-yaml": "^4.1.1",
     "form-data": "^4.0.4",
     "trim-newlines": "^3.0.1",
     "minimatch": "^3.0.5",
@@ -111,7 +113,7 @@
   "license": "BSD-3-Clause",
   "oclif": {
     "commands": "./lib/commands",
-    "bin": "sfdx",
+    "bin": "sf",
     "topics": {
       "omnistudio": {
         "subtopics": {
@@ -130,18 +132,18 @@
   },
   "repository": "salesforcecli/plugin-omnistudio-migration-tool",
   "scripts": {
-    "build": "sf-build",
+    "build": "sf-build && yarn copy-assets",
     "clean": "sf-clean",
     "clean-all": "sf-clean all",
     "clean:lib": "shx rm -rf lib && shx rm -rf coverage && shx rm -rf .nyc_output && shx rm -f oclif.manifest.json",
-    "compile": "sf-compile",
+    "compile": "sf-compile && yarn copy-assets",
     "copy-assets": "shx cp -r src/templates lib/ && shx cp -r src/styles lib/ && shx cp -r src/javascripts lib/",
     "docs": "sf-docs",
     "format": "sf-format",
     "lint": "sf-lint",
     "postpack": "shx rm -f oclif.manifest.json",
     "posttest": "yarn lint && yarn test:deprecation-policy && yarn test:command-reference",
-    "prepack": "sf-prepack",
+    "prepack": "sf-prepack && yarn copy-assets",
     "prepare": "sf-install",
     "pretest": "sf-compile-test",
     "test": "sf-test",

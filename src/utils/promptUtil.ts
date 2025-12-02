@@ -1,5 +1,41 @@
 import { Messages } from '@salesforce/core';
 
+/**
+ * Asks a question and returns the user's answer as a string
+ */
+export async function askQuestion(message: string): Promise<string> {
+  const readline = await import('node:readline');
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  return new Promise<string>((resolve) => {
+    rl.question(message + ' ', (answer) => {
+      rl.close();
+      resolve(answer);
+    });
+  });
+}
+
+/**
+ * Asks a yes/no confirmation question and returns true if user answers 'y' or 'yes'
+ */
+export async function askConfirmation(message: string): Promise<boolean> {
+  const readline = await import('node:readline');
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  return new Promise<boolean>((resolve) => {
+    rl.question(message + ' (y/n) ', (answer) => {
+      rl.close();
+      resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
+    });
+  });
+}
+
 export async function askStringWithTimeout(
   promptFn: (message: string) => Promise<string>,
   question: string,

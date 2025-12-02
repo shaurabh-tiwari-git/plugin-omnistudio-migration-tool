@@ -26,7 +26,7 @@ import { OmnistudioOrgDetails, OrgUtils } from '../../../utils/orgUtils';
 import { Constants } from '../../../utils/constants/stringContants';
 import { OrgPreferences } from '../../../utils/orgPreferences';
 import { ProjectPathUtil } from '../../../utils/projectPathUtil';
-import { PromptUtil } from '../../../utils/promptUtil';
+import { PromptUtil, askQuestion } from '../../../utils/promptUtil';
 import { YES_SHORT, YES_LONG, NO_SHORT, NO_LONG } from '../../../utils/projectPathUtil';
 import { PostMigrate } from '../../../migration/postMigrate';
 import { PreMigrate } from '../../../migration/premigrate';
@@ -71,7 +71,11 @@ export default class Migrate extends SfCommand<MigrateResult> {
   public static readonly flags: any = {
     'target-org': flags.optionalOrg({
       summary: 'Target org username or alias',
+      char: 'u',
       required: true,
+      aliases: ['targetusername'],
+      deprecateAliases: true,
+      makeDefault: false, // Prevent auto-resolution during command-reference generation
     }),
     only: flags.string({
       char: 'o',
@@ -89,6 +93,12 @@ export default class Migrate extends SfCommand<MigrateResult> {
     verbose: flags.boolean({
       description: 'Enable verbose output',
     }),
+    loglevel: flags.string({
+      description: 'Logging level (deprecated, use --verbose instead)',
+      deprecated: {
+        message: messages.getMessage('loglevelFlagDeprecated'),
+      },
+    }),
   };
 
   // OmniStudio components that don't need migration logging when metadata API is enabled
@@ -97,7 +107,7 @@ export default class Migrate extends SfCommand<MigrateResult> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async run(): Promise<any> {
     const { flags: parsedFlags } = await this.parse(Migrate);
-    const ux = new Ux({ jsonEnabled: this.jsonEnabled() });
+    const ux = new Ux();
     const logger = await CoreLogger.child(this.constructor.name);
     Logger.initialiseLogger(ux, logger, 'migrate', parsedFlags.verbose);
     try {
@@ -742,20 +752,7 @@ export default class Migrate extends SfCommand<MigrateResult> {
 
   private async getTargetApexNamespace(objectsToProcess: string[], targetApexNamespace: string): Promise<string> {
     if (objectsToProcess.includes(Constants.Apex)) {
-      // Use Node.js readline for user input
-      const readline = await import('node:readline');
-      const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
-      });
-
-      targetApexNamespace = await new Promise<string>((resolve) => {
-        rl.question(messages.getMessage('enterTargetNamespace') + ' ', (answer) => {
-          rl.close();
-          resolve(answer);
-        });
-      });
-
+      targetApexNamespace = await askQuestion(messages.getMessage('enterTargetNamespace'));
       Logger.log(messages.getMessage('usingTargetNamespace', [targetApexNamespace]));
     }
     return targetApexNamespace;

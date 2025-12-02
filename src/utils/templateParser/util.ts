@@ -26,7 +26,7 @@ export class TemplateParserUtil {
       const keypair = new Map<string, any>();
       for (const key of Object.keys(data)) {
         if (Array.isArray(data[key])) {
-          keypair.set(`${prefix}${key}.length`, (data[key] as any[]).length.toString());
+          keypair.set(`${prefix}${key}.length`, data[key].length.toString());
           keypair.set(`${prefix}${key}`, data[key]);
         } else if (data[key] instanceof Object) {
           this.parseKeyPair(data[key], messages, `${prefix}${key}`).forEach((pairValue, pairKey) => {

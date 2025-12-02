@@ -52,8 +52,9 @@ export default class Assess extends SfCommand<AssessmentInfo> {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     'target-org': flags.optionalOrg({
       summary: 'Target org username or alias',
+      char: 'u',
       required: true,
-      aliases: ['targetusername', 'u'],
+      aliases: ['targetusername'],
       deprecateAliases: true,
       makeDefault: false, // Prevent auto-resolution during command-reference generation
     }),
@@ -76,11 +77,18 @@ export default class Assess extends SfCommand<AssessmentInfo> {
     verbose: flags.boolean({
       description: messages.getMessage('enableVerboseOutput'),
     }),
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    loglevel: flags.string({
+      description: 'Logging level (deprecated, use --verbose instead)',
+      deprecated: {
+        message: messages.getMessage('loglevelFlagDeprecated'),
+      },
+    }),
   };
 
   public async run(): Promise<AssessmentInfo> {
     const { flags: parsedFlags } = await this.parse(Assess);
-    const ux = new Ux({ jsonEnabled: this.jsonEnabled() });
+    const ux = new Ux();
     const logger = await CoreLogger.child(this.constructor.name);
     Logger.initialiseLogger(ux, logger, 'assess', parsedFlags.verbose);
     try {
@@ -94,7 +102,7 @@ export default class Assess extends SfCommand<AssessmentInfo> {
 
   public async runAssess(parsedFlags: AssessFlags, ux: Ux, logger: CoreLogger): Promise<AssessmentInfo> {
     DebugTimer.getInstance().start();
-    const allVersions = parsedFlags.allversions || false;
+    let allVersions = parsedFlags.allversions || false;
     const assessOnly = parsedFlags.only || '';
     const relatedObjects = parsedFlags.relatedobjects || '';
     const isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean } = { value: false };
@@ -259,7 +267,9 @@ export default class Assess extends SfCommand<AssessmentInfo> {
       await this.assessFlexCards(assesmentInfo, namespace, conn, allVersions, ux);
       await this.assessOmniScripts(assesmentInfo, namespace, conn, allVersions, OmniScriptExportType.OS, ux);
       await this.assessOmniScripts(assesmentInfo, namespace, conn, allVersions, OmniScriptExportType.IP, ux);
-      await this.assessGlobalAutoNumbers(assesmentInfo, namespace, conn, ux);
+      if (!isFoundationPackage()) {
+        await this.assessGlobalAutoNumbers(assesmentInfo, namespace, conn, ux);
+      }
       await this.assessCustomLabels(assesmentInfo, namespace, conn);
       return;
     }
@@ -278,7 +288,11 @@ export default class Assess extends SfCommand<AssessmentInfo> {
         await this.assessOmniScripts(assesmentInfo, namespace, conn, allVersions, OmniScriptExportType.IP, ux);
         break;
       case Constants.GlobalAutoNumber:
-        await this.assessGlobalAutoNumbers(assesmentInfo, namespace, conn, ux);
+        if (!isFoundationPackage()) {
+          await this.assessGlobalAutoNumbers(assesmentInfo, namespace, conn, ux);
+        } else {
+          Logger.warn(messages.getMessage('globalAutoNumberUnSupportedInOmnistudioPackage'));
+        }
         break;
       case Constants.CustomLabel:
         await this.assessCustomLabels(assesmentInfo, namespace, conn);
@@ -374,6 +388,9 @@ export default class Assess extends SfCommand<AssessmentInfo> {
     conn: Connection,
     ux: Ux
   ): Promise<void> {
+    if (isFoundationPackage()) {
+      return;
+    }
     Logger.logVerbose(messages.getMessage('startingGlobalAutoNumberAssessment'));
     const globalAutoNumberMigrationTool = new GlobalAutoNumberMigrationTool(namespace, conn, Logger, messages, ux);
     assesmentInfo.globalAutoNumberAssessmentInfos = await globalAutoNumberMigrationTool.assess();

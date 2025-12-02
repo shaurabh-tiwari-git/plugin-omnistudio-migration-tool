@@ -103,7 +103,6 @@ export class AssessmentReporter {
     pushAssestUtilites('styles', this.basePath);
     await open(path.join(this.basePath, this.dashboardFileName));
   }
-
   /**
    * Generates all OmniStudio component assessment documents
    */
@@ -183,7 +182,7 @@ export class AssessmentReporter {
     result: AssessmentInfo,
     instanceUrl: string,
     omnistudioOrgDetails: OmnistudioOrgDetails,
-    messages: Messages,
+    messages: Messages<string>,
     template: string,
     reports: string[]
   ): void {

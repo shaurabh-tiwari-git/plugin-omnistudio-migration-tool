@@ -1,6 +1,7 @@
 import { Ux } from '@salesforce/sf-plugins-core';
 import { Logger as SfLogger } from '@salesforce/core';
 import { FileLogger } from './logger/fileLogger';
+import { askQuestion, askConfirmation } from './promptUtil';
 
 export class Logger {
   private static sfUX: Ux;
@@ -90,19 +91,7 @@ export class Logger {
   public static async confirm(message: string): Promise<boolean> {
     if (Logger.sfUX) {
       FileLogger.writeLog('CONFIRM', message);
-      // Use readline for confirmation since Ux doesn't have confirm method
-      const readline = await import('node:readline');
-      const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
-      });
-
-      return new Promise<boolean>((resolve) => {
-        rl.question(message + ' (y/n) ', (answer) => {
-          rl.close();
-          resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
-        });
-      });
+      return askConfirmation(message);
     }
     return Promise.resolve(false);
   }
@@ -110,19 +99,7 @@ export class Logger {
   public static async prompt(message: string): Promise<string> {
     if (Logger.sfUX) {
       FileLogger.writeLog('PROMPT', message);
-      // Use readline for prompts since Ux doesn't have prompt method
-      const readline = await import('node:readline');
-      const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
-      });
-
-      return new Promise<string>((resolve) => {
-        rl.question(message + ' ', (answer) => {
-          rl.close();
-          resolve(answer);
-        });
-      });
+      return askQuestion(message);
     }
     return Promise.resolve('');
   }
