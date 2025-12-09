@@ -67,7 +67,7 @@ export class OmniStudioMetadataCleanupService {
     try {
       if (isStandardDataModelWithMetadataAPIEnabled()) {
         // When on Standard data model with Metadata API enabled, the metadata tables should not be cleaned
-        return true;
+        return false;
       }
 
       Logger.log(this.messages.getMessage('startingMetadataCleanup'));
