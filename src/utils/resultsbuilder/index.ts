@@ -34,7 +34,7 @@ import { FileDiffUtil } from '../lwcparser/fileutils/FileDiffUtil';
 import { Logger } from '../logger';
 import { getMigrationHeading } from '../stringUtils';
 import { Constants } from '../constants/stringContants';
-import { isStandardDataModel } from '../dataModelService';
+import { isStandardDataModel, isStandardDataModelWithMetadataAPIEnabled } from '../dataModelService';
 import { CustomLabelMigrationInfo, CustomLabelMigrationReporter } from './CustomLabelMigrationReporter';
 
 const resultsDir = path.join(process.cwd(), Constants.MigrationReportsFolderName);
@@ -66,7 +66,8 @@ export class ResultsBuilder {
     orgDetails: OmnistudioOrgDetails,
     messages: Messages,
     actionItems: string[],
-    objectsToProcess: string[]
+    objectsToProcess: string[],
+    migrateOnly: string
   ): Promise<void> {
     fs.mkdirSync(resultsDir, { recursive: true });
     Logger.info(messages.getMessage('generatingComponentReports'));
@@ -89,7 +90,8 @@ export class ResultsBuilder {
       relatedObjectMigrationResult,
       messages,
       actionItems,
-      objectsToProcess
+      objectsToProcess,
+      migrateOnly
     );
     pushAssestUtilites('javascripts', resultsDir);
     pushAssestUtilites('styles', resultsDir);
@@ -785,49 +787,76 @@ export class ResultsBuilder {
     return rows;
   }
 
+  // Related object summary item creation helper methods
+  private static createApexMigrationSummaryItem(
+    relatedObjectMigrationResult: RelatedObjectAssesmentInfo
+  ): SummaryItemParam {
+    return {
+      name: 'Apex Classes',
+      total: relatedObjectMigrationResult.apexAssessmentInfos?.length || 0,
+      data: this.getDifferentStatusDataForApex(relatedObjectMigrationResult.apexAssessmentInfos),
+      file: apexFileName,
+    };
+  }
+
+  private static createExperienceSiteMigrationSummaryItem(
+    relatedObjectMigrationResult: RelatedObjectAssesmentInfo
+  ): SummaryItemParam {
+    return {
+      name: 'Experience Cloud Sites',
+      total:
+        relatedObjectMigrationResult.experienceSiteAssessmentInfos?.flatMap(
+          (item) => item.experienceSiteAssessmentPageInfos
+        ).length || 0,
+      data: this.getDifferentStatusDataForExperienceSites(relatedObjectMigrationResult.experienceSiteAssessmentInfos),
+      file: experienceSiteFileName,
+    };
+  }
+
+  private static createFlexipageMigrationSummaryItem(
+    relatedObjectMigrationResult: RelatedObjectAssesmentInfo
+  ): SummaryItemParam {
+    return {
+      name: 'FlexiPages',
+      total: relatedObjectMigrationResult.flexipageAssessmentInfos?.length || 0,
+      data: this.getDifferentStatusDataForFlexipage(relatedObjectMigrationResult.flexipageAssessmentInfos),
+      file: flexipageFileName,
+    };
+  }
+
+  private static createLWCMigrationSummaryItem(
+    relatedObjectMigrationResult: RelatedObjectAssesmentInfo
+  ): SummaryItemParam {
+    return {
+      name: 'Lightning Web Components',
+      total: relatedObjectMigrationResult.lwcAssessmentInfos?.length || 0,
+      data: this.getDifferentStatusDataForLwc(relatedObjectMigrationResult.lwcAssessmentInfos),
+      file: lwcFileName,
+    };
+  }
+
   private static generateMigrationReportDashboard(
     orgDetails: OmnistudioOrgDetails,
     results: MigratedObject[],
     relatedObjectMigrationResult: RelatedObjectAssesmentInfo,
     messages: Messages,
     actionItems: string[],
-    objectsToProcess: string[]
+    objectsToProcess: string[],
+    migrateOnly: string
   ): void {
     const relatedObjectSummaryItems: SummaryItemParam[] = [];
+
     if (objectsToProcess.includes(Constants.Apex)) {
-      relatedObjectSummaryItems.push({
-        name: 'Apex Classes',
-        total: relatedObjectMigrationResult.apexAssessmentInfos?.length || 0,
-        data: this.getDifferentStatusDataForApex(relatedObjectMigrationResult.apexAssessmentInfos),
-        file: apexFileName,
-      });
+      relatedObjectSummaryItems.push(this.createApexMigrationSummaryItem(relatedObjectMigrationResult));
     }
     if (objectsToProcess.includes(Constants.ExpSites)) {
-      relatedObjectSummaryItems.push({
-        name: 'Experience Cloud Sites',
-        total:
-          relatedObjectMigrationResult.experienceSiteAssessmentInfos?.flatMap(
-            (item) => item.experienceSiteAssessmentPageInfos
-          ).length || 0,
-        data: this.getDifferentStatusDataForExperienceSites(relatedObjectMigrationResult.experienceSiteAssessmentInfos),
-        file: experienceSiteFileName,
-      });
+      relatedObjectSummaryItems.push(this.createExperienceSiteMigrationSummaryItem(relatedObjectMigrationResult));
     }
     if (objectsToProcess.includes(Constants.FlexiPage)) {
-      relatedObjectSummaryItems.push({
-        name: 'FlexiPages',
-        total: relatedObjectMigrationResult.flexipageAssessmentInfos?.length || 0,
-        data: this.getDifferentStatusDataForFlexipage(relatedObjectMigrationResult.flexipageAssessmentInfos),
-        file: flexipageFileName,
-      });
+      relatedObjectSummaryItems.push(this.createFlexipageMigrationSummaryItem(relatedObjectMigrationResult));
     }
     if (objectsToProcess.includes(Constants.LWC)) {
-      relatedObjectSummaryItems.push({
-        name: 'Lightning Web Components',
-        total: relatedObjectMigrationResult.lwcAssessmentInfos?.length || 0,
-        data: this.getDifferentStatusDataForLwc(relatedObjectMigrationResult.lwcAssessmentInfos),
-        file: lwcFileName,
-      });
+      relatedObjectSummaryItems.push(this.createLWCMigrationSummaryItem(relatedObjectMigrationResult));
     }
 
     const data: DashboardParam = {
@@ -841,44 +870,61 @@ export class ResultsBuilder {
       },
       assessmentDate: new Date().toLocaleString(),
       summaryItems: [
-        ...results.map((result) => {
-          // Handle custom labels specially for pagination and status calculation
-          if (result.name.toLowerCase().includes('custom labels')) {
-            const totalLabels = result.totalCount || result.data?.length || 0;
-            // Use actual processed records for file naming, not total count
-            const processedRecords = result.data?.length || 0;
-            const totalPages = Math.max(1, Math.ceil(processedRecords / 1000));
-            const fileName = totalPages > 1 ? `Custom_Labels_Page_1_of_${totalPages}.html` : 'Custom_Labels.html';
+        ...results
+          .filter((result) => {
+            // When metadata API is enabled and not migrateOnly, exclude OmniStudio components as we dont need to process them
+            if (isStandardDataModelWithMetadataAPIEnabled() && !migrateOnly) {
+              const componentName = result.name.toLowerCase();
+              // Only include Custom Labels and Global Auto Numbers
+              return (
+                componentName.includes('custom labels') ||
+                componentName.includes('global auto number') ||
+                componentName.includes('globalautonumber')
+              );
+            }
+            // Include all items in other cases
+            return true;
+          })
+          .map((result) => {
+            // Handle custom labels specially for pagination and status calculation
+            if (result.name.toLowerCase().includes('custom labels')) {
+              const totalLabels = result.totalCount || result.data?.length || 0;
+              // Use actual processed records for file naming, not total count
+              const processedRecords = result.data?.length || 0;
+              const totalPages = Math.max(1, Math.ceil(processedRecords / 1000));
+              const fileName = totalPages > 1 ? `Custom_Labels_Page_1_of_${totalPages}.html` : 'Custom_Labels.html';
 
-            return {
-              name: result.name,
-              total: totalLabels,
-              data: this.getCustomLabelStatusData(result.data, result.totalCount),
-              file: fileName,
-            };
-          }
+              return {
+                name: result.name,
+                total: totalLabels,
+                data: this.getCustomLabelStatusData(result.data, result.totalCount),
+                file: fileName,
+              };
+            }
 
-          // Handle Global Auto Numbers in foundation package (not supported)
-          const isGlobalAutoNumber =
-            result.name.toLowerCase().includes('global auto number') ||
-            result.name.toLowerCase().includes('globalautonumber');
-          if (isGlobalAutoNumber && orgDetails.isFoundationPackage) {
-            return {
-              name: `${getMigrationHeading(result.name)}`,
-              total: 0,
-              data: [{ name: 'Feature not supported', count: 0, cssClass: 'text-warning' }],
-              file: result.name.replace(/ /g, '_').replace(/\//g, '_') + '.html',
-              showDetails: false,
-            };
-          }
+            // Handle Global Auto Numbers in foundation package (not supported)
+            const isGlobalAutoNumber =
+              result.name.toLowerCase().includes('global auto number') ||
+              result.name.toLowerCase().includes('globalautonumber');
+            if (isGlobalAutoNumber) {
+              if (orgDetails.isFoundationPackage) {
+                return this.createSpecialCaseMigrationSummaryItem(
+                  result,
+                  messages.getMessage('globalAutoNumberUnSupportedInOmnistudioPackage')
+                ); // Foundation Package does not have the custom global auto number entity
+              } else {
+                return this.createMigrationSummaryItem(result);
+              }
+            }
 
-          return {
-            name: `${getMigrationHeading(result.name)}`,
-            total: result.data?.length || 0,
-            data: this.getDifferentStatusDataForResult(result.data),
-            file: result.name.replace(/ /g, '_').replace(/\//g, '_') + '.html',
-          };
-        }),
+            // Handle metadata API enabled with migrateOnly
+            if (isStandardDataModelWithMetadataAPIEnabled() && migrateOnly) {
+              return this.createSpecialCaseMigrationSummaryItem(result, messages.getMessage('processingNotRequired'));
+            }
+
+            // Default case
+            return this.createMigrationSummaryItem(result);
+          }),
         ...relatedObjectSummaryItems,
       ],
       actionItems,
@@ -888,6 +934,28 @@ export class ResultsBuilder {
     const dashboardTemplate = fs.readFileSync(dashboardTemplateFilePath, 'utf8');
     const html = TemplateParser.generate(dashboardTemplate, data, messages);
     fs.writeFileSync(path.join(resultsDir, 'dashboard.html'), html);
+  }
+
+  private static createSpecialCaseMigrationSummaryItem(
+    result: MigratedObject,
+    customMessage: string
+  ): SummaryItemParam {
+    return {
+      name: `${getMigrationHeading(result.name)}`,
+      total: 0,
+      data: [{ name: customMessage, count: 0, cssClass: 'text-warning' }],
+      file: result.name.replace(/ /g, '_').replace(/\//g, '_') + '.html',
+      showDetails: false,
+    };
+  }
+
+  private static createMigrationSummaryItem(result: MigratedObject): SummaryItemParam {
+    return {
+      name: `${getMigrationHeading(result.name)}`,
+      total: result.data?.length || 0,
+      data: this.getDifferentStatusDataForResult(result.data),
+      file: result.name.replace(/ /g, '_').replace(/\//g, '_') + '.html',
+    };
   }
 
   private static getDifferentStatusDataForResult(

@@ -60,6 +60,7 @@ describe('FlexipageAssessmentReporter', () => {
         dataModel: 'Standard',
         hasValidNamespace: true,
         isFoundationPackage: false,
+        isStandardDataModelWithMetadataAPIEnabled: false,
       };
 
       // Act
@@ -92,6 +93,7 @@ describe('FlexipageAssessmentReporter', () => {
         dataModel: 'Standard',
         hasValidNamespace: true,
         isFoundationPackage: false,
+        isStandardDataModelWithMetadataAPIEnabled: false,
       };
 
       // Act
@@ -117,6 +119,7 @@ describe('FlexipageAssessmentReporter', () => {
         dataModel: 'Standard',
         hasValidNamespace: true,
         isFoundationPackage: false,
+        isStandardDataModelWithMetadataAPIEnabled: false,
       };
 
       // Act

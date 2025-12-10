@@ -3,6 +3,7 @@ import { Logger } from '../logger';
 import { QueryTools } from '../query';
 import { NetUtils } from '../net';
 import { getMigrationHeading } from '../stringUtils';
+import { isStandardDataModelWithMetadataAPIEnabled } from '../dataModelService';
 
 /**
  * OmniStudioMetadataCleanupService
@@ -64,6 +65,11 @@ export class OmniStudioMetadataCleanupService {
    */
   public async cleanupOmniStudioMetadataTables(): Promise<boolean> {
     try {
+      if (isStandardDataModelWithMetadataAPIEnabled()) {
+        // When on Standard data model with Metadata API enabled, the metadata tables should not be cleaned
+        return false;
+      }
+
       Logger.log(this.messages.getMessage('startingMetadataCleanup'));
 
       let totalCleanedRecords = 0;

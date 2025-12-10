@@ -20,12 +20,17 @@ export class DataModelService {
   public isFoundationPackage(): boolean {
     return this.orgs.isFoundationPackage ?? false;
   }
+
+  public isStandardDesignerWithMetadataAPIEnabled(): boolean {
+    return this.orgs.isStandardDataModelWithMetadataAPIEnabled ?? false;
+  }
 }
 
 // Global instance and cached data model
 let globalDataModelService: DataModelService | null = null;
 let cachedDataModel: string | null = null;
 let cachedIsFoundationPackage: boolean | null = null;
+let cachedIsStandardDesignerWithMetadataAPIEnabled: boolean | null = null;
 
 // Initialize the global instance
 export function initializeDataModelService(orgs: OmnistudioOrgDetails): void {
@@ -52,6 +57,13 @@ export function isFoundationPackage(): boolean {
     cachedIsFoundationPackage = getDataModelService().isFoundationPackage();
   }
   return cachedIsFoundationPackage;
+}
+
+export function isStandardDataModelWithMetadataAPIEnabled(): boolean {
+  if (cachedIsStandardDesignerWithMetadataAPIEnabled === null) {
+    cachedIsStandardDesignerWithMetadataAPIEnabled = getDataModelService().isStandardDesignerWithMetadataAPIEnabled();
+  }
+  return cachedIsStandardDesignerWithMetadataAPIEnabled;
 }
 
 // Convenience function to check if data model is standard

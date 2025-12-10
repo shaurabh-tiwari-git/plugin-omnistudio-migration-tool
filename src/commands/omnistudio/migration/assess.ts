@@ -20,7 +20,12 @@ import { ProjectPathUtil } from '../../../utils/projectPathUtil';
 import { PreMigrate } from '../../../migration/premigrate';
 import { PostMigrate } from '../../../migration/postMigrate';
 import { CustomLabelsUtil } from '../../../utils/customLabels';
-import { initializeDataModelService, isFoundationPackage, isStandardDataModel } from '../../../utils/dataModelService';
+import {
+  initializeDataModelService,
+  isFoundationPackage,
+  isStandardDataModel,
+  isStandardDataModelWithMetadataAPIEnabled,
+} from '../../../utils/dataModelService';
 
 import { ValidatorService } from '../../../utils/validatorService';
 
@@ -98,7 +103,9 @@ export default class Assess extends OmniStudioBaseCommand {
 
     // Handle all versions prerequisite for standard data model
     if (isStandardDataModel()) {
-      allVersions = await preMigrate.handleAllVersionsPrerequisites(allVersions);
+      if (!isStandardDataModelWithMetadataAPIEnabled()) {
+        allVersions = await preMigrate.handleAllVersionsPrerequisites(allVersions);
+      }
     }
     if (relatedObjects) {
       objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
@@ -274,10 +281,11 @@ export default class Assess extends OmniStudioBaseCommand {
   private async assessDataRaptors(assesmentInfo: AssessmentInfo, namespace: string, conn: Connection): Promise<void> {
     const drMigrator = new DataRaptorMigrationTool(namespace, conn, Logger, messages, this.ux);
     assesmentInfo.dataRaptorAssessmentInfos = await drMigrator.assess();
-    Logger.logVerbose(
-      messages.getMessage('assessedDataRaptorsCount', [assesmentInfo.dataRaptorAssessmentInfos.length])
+    this.logAssessmentCompletionIfNeeded(
+      'assessedDataRaptorsCount',
+      'dataRaptorAssessmentCompleted',
+      assesmentInfo.dataRaptorAssessmentInfos.length
     );
-    Logger.log(messages.getMessage('dataRaptorAssessmentCompleted'));
   }
 
   private async assessFlexCards(
@@ -287,10 +295,12 @@ export default class Assess extends OmniStudioBaseCommand {
     allVersions: boolean
   ): Promise<void> {
     const flexMigrator = new CardMigrationTool(namespace, conn, Logger, messages, this.ux, allVersions);
-    Logger.logVerbose(messages.getMessage('flexCardAssessment'));
     assesmentInfo.flexCardAssessmentInfos = await flexMigrator.assess();
-    Logger.logVerbose(messages.getMessage('assessedFlexCardsCount', [assesmentInfo.flexCardAssessmentInfos.length]));
-    Logger.log(messages.getMessage('flexCardAssessmentCompleted'));
+    this.logAssessmentCompletionIfNeeded(
+      'assessedFlexCardsCount',
+      'flexCardAssessmentCompleted',
+      assesmentInfo.flexCardAssessmentInfos.length
+    );
   }
 
   private async assessOmniScripts(
@@ -301,7 +311,6 @@ export default class Assess extends OmniStudioBaseCommand {
     exportType: OmniScriptExportType
   ): Promise<void> {
     const exportComponentType = exportType === OmniScriptExportType.IP ? 'Integration Procedures' : 'Omniscripts';
-    Logger.logVerbose(messages.getMessage('omniScriptAssessment', [exportComponentType]));
     const osMigrator = new OmniScriptMigrationTool(exportType, namespace, conn, Logger, messages, this.ux, allVersions);
     const newOmniAssessmentInfo = await osMigrator.assess(
       assesmentInfo.dataRaptorAssessmentInfos,
@@ -320,19 +329,26 @@ export default class Assess extends OmniStudioBaseCommand {
     if (exportType === OmniScriptExportType.OS) {
       // For OmniScript assessment, update osAssessmentInfos
       assesmentInfo.omniAssessmentInfo.osAssessmentInfos = newOmniAssessmentInfo.osAssessmentInfos;
-      Logger.logVerbose(
-        messages.getMessage('assessedOmniScriptsCount', [assesmentInfo.omniAssessmentInfo.osAssessmentInfos.length])
-      );
     } else {
       // For Integration Procedure assessment, update ipAssessmentInfos
       assesmentInfo.omniAssessmentInfo.ipAssessmentInfos = newOmniAssessmentInfo.ipAssessmentInfos;
-      Logger.logVerbose(
-        messages.getMessage('assessedIntegrationProceduresCount', [
-          assesmentInfo.omniAssessmentInfo.ipAssessmentInfos.length,
-        ])
+    }
+
+    if (exportType === OmniScriptExportType.OS) {
+      this.logAssessmentCompletionIfNeeded(
+        'assessedOmniScriptsCount',
+        'omniScriptAssessmentCompleted',
+        assesmentInfo.omniAssessmentInfo.osAssessmentInfos.length,
+        [exportComponentType]
+      );
+    } else {
+      this.logAssessmentCompletionIfNeeded(
+        'assessedIntegrationProceduresCount',
+        'omniScriptAssessmentCompleted',
+        assesmentInfo.omniAssessmentInfo.ipAssessmentInfos.length,
+        [exportComponentType]
       );
     }
-    Logger.log(messages.getMessage('omniScriptAssessmentCompleted', [exportComponentType]));
   }
 
   private async assessGlobalAutoNumbers(
@@ -370,5 +386,22 @@ export default class Assess extends OmniStudioBaseCommand {
         failed: 0,
       };
     }
+  }
+
+  /**
+   * Logs assessment completion with count and completion message if needed
+   * Skips logging when standard data model with metadata API is enabled
+   */
+  private logAssessmentCompletionIfNeeded(
+    countMessageKey: string,
+    completionMessageKey: string,
+    count: number,
+    completionParams?: string[]
+  ): void {
+    if (isStandardDataModelWithMetadataAPIEnabled()) {
+      return;
+    }
+    Logger.logVerbose(messages.getMessage(countMessageKey, [count]));
+    Logger.log(messages.getMessage(completionMessageKey, completionParams || []));
   }
 }
