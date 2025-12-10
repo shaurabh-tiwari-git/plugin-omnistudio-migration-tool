@@ -224,5 +224,6 @@
   "omniStudioAllVersionsProcessingConsentNotGiven": "You've not consented to assess all versions of the Omnistudio components. We cannot proceed with the assessment.",
   "omniStudioAllVersionsProcessingConsentGiven": "You've consented to assess all versions of the Omnistudio components.",
   "preparingStorageForMetadataEnabledOrg": "Preparing storage for %s org on Standard Data Model with Metadata API enabled",
-  "processingNotRequired": "Assessment not required for Standard Data Model Orgs with Metadata API enabled"
+  "processingNotRequired": "Assessment not required for Standard Data Model Orgs with Metadata API enabled",
+  "skippingTruncation": "Skipping Trunction as standard data model org"
 }

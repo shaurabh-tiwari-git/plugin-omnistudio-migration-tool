@@ -58,6 +58,7 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
 
   async truncate(): Promise<void> {
     if (this.IS_STANDARD_DATA_MODEL) {
+      Logger.logVerbose(this.messages.getMessage('skippingTruncation'));
       return;
     }
     await super.truncate(DataRaptorMigrationTool.OMNIDATATRANSFORM_NAME);
@@ -295,6 +296,9 @@ export class DataRaptorMigrationTool extends BaseMigrationTool implements Migrat
   public async assess(): Promise<DataRaptorAssessmentInfo[]> {
     try {
       if (isStandardDataModelWithMetadataAPIEnabled()) {
+        Logger.log(
+          this.messages.getMessage('skippingAssessmentForStandardOrgWithMetadataAPIEnabled', [Constants.DataMapper])
+        );
         return [];
       }
       DebugTimer.getInstance().lap('Query data raptors');

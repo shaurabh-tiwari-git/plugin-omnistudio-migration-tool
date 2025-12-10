@@ -122,6 +122,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
   async truncate(): Promise<void> {
     // Truncation is needed when we migrate from custom to standard data model, when on custom data model, no truncation is required
     if (this.IS_STANDARD_DATA_MODEL) {
+      Logger.logVerbose(this.messages.getMessage('skippingTruncation'));
       return;
     }
 
@@ -1415,7 +1416,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
       return result;
     }
 
-    Logger.log(this.messages.getMessage('preparingStorageForMetadataEnabledOrg', [Constants.Omniscript]));
+    Logger.logVerbose(this.messages.getMessage('preparingStorageForMetadataEnabledOrg', [Constants.Omniscript]));
     let storage: MigrationStorage = StorageUtil.getOmnistudioMigrationStorage();
     Logger.logVerbose(this.messages.getMessage('updatingStorageForOmniscipt', ['Migration']));
 

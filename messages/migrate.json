@@ -323,5 +323,6 @@
   "globalAutoNumberUnSupportedInOmnistudioPackage": "Feature not supported - Omni Global Auto Number is not supported in Omnistudio Foundation package orgs.",
   "orgUsecaseDetails": "The Org is on %s data model with %s and Omnistudio Metadata API %s",
   "preparingStorageForMetadataEnabledOrg": "Preparing storage for %s org on Standard Data Model with Metadata API enabled",
-  "processingNotRequired": "Migration not required for Standard Data Model Orgs with Metadata API enabled"
+  "processingNotRequired": "Migration not required for Standard Data Model Orgs with Metadata API enabled",
+  "skippingTruncation": "Skipping Trunction as standard data model org"
 }

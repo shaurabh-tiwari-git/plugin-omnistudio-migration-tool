@@ -66,6 +66,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   // Perform Delete of OmniUiCard Records to start migration from scratch
   async truncate(): Promise<void> {
     if (this.IS_STANDARD_DATA_MODEL) {
+      Logger.logVerbose(this.messages.getMessage('skippingTruncation'));
       return;
     }
     const objectName = CardMigrationTool.OMNIUICARD_NAME;
@@ -450,7 +451,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   }
 
   private handleAssessmentForStdDataModelOrgsWithMetadataAPIEnabled(flexCards: AnyJson[]): FlexCardAssessmentInfo[] {
-    Logger.log(this.messages.getMessage('preparingStorageForMetadataEnabledOrg', [Constants.Flexcard]));
+    Logger.logVerbose(this.messages.getMessage('preparingStorageForMetadataEnabledOrg', [Constants.Flexcard]));
     let storage: MigrationStorage = StorageUtil.getOmnistudioAssessmentStorage();
     this.prepareStorageForRelatedObjectsWhenMetadataAPIEnabled(storage, flexCards);
     StorageUtil.printAssessmentStorage();
@@ -458,7 +459,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
   }
 
   private handleMigrationForStdDataModelOrgsWithMetadataAPIEnabled(flexcards: AnyJson[]): MigrationResult[] {
-    Logger.log(this.messages.getMessage('preparingStorageForMetadataEnabledOrg', [Constants.Flexcard]));
+    Logger.logVerbose(this.messages.getMessage('preparingStorageForMetadataEnabledOrg', [Constants.Flexcard]));
     let storage: MigrationStorage = StorageUtil.getOmnistudioMigrationStorage();
     this.prepareStorageForRelatedObjectsWhenMetadataAPIEnabled(storage, flexcards);
     StorageUtil.printAssessmentStorage();

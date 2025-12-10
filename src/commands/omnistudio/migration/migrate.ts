@@ -76,12 +76,7 @@ export default class Migrate extends OmniStudioBaseCommand {
   };
 
   // OmniStudio components that don't need migration logging when metadata API is enabled
-  private readonly OMNISTUDIO_COMPONENTS_FOR_LOGGING = [
-    Constants.Omniscript,
-    Constants.IntegrationProcedure,
-    Constants.Flexcard,
-    Constants.DataMapper,
-  ];
+  private readonly OMNISTUDIO_COMPONENTS_FOR_LOGGING = [Constants.CustomLabel, Constants.GlobalAutoNumber];
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async run(): Promise<any> {
@@ -370,10 +365,11 @@ export default class Migrate extends OmniStudioBaseCommand {
     // Truncate in reverse order (highest dependencies first) - this is correct for cleanup
     for (const cls of migrationObjects) {
       try {
-        Logger.log(messages.getMessage('cleaningComponent', [cls.getName()]));
-        debugTimer.lap('Cleaning: ' + cls.getName());
+        const componentName = cls.getName();
+
+        this.logTruncationStart(componentName, debugTimer);
         await cls.truncate();
-        Logger.log(messages.getMessage('cleaningDone', [cls.getName()]));
+        this.logTruncationComplete(componentName);
       } catch (ex: any) {
         objectMigrationResults.push({
           name: cls.getName(),
@@ -434,7 +430,7 @@ export default class Migrate extends OmniStudioBaseCommand {
    * Log the start of component migration and track timing
    */
   private logMigrationStart(componentName: string, debugTimer: DebugTimer): void {
-    const shouldSkipLogging = this.shouldSkipMigrationLogging(componentName);
+    const shouldSkipLogging = this.shouldSkipLogging(componentName);
 
     if (!shouldSkipLogging) {
       Logger.log(messages.getMessage('migratingComponent', [componentName]));
@@ -446,7 +442,7 @@ export default class Migrate extends OmniStudioBaseCommand {
    * Log the completion or failure of component migration
    */
   private logMigrationComplete(componentName: string, results: MigrationResult[]): void {
-    const shouldSkipLogging = this.shouldSkipMigrationLogging(componentName);
+    const shouldSkipLogging = this.shouldSkipLogging(componentName);
 
     if (!shouldSkipLogging) {
       if (results.some((result) => result?.errors?.length > 0) && !isStandardDataModelWithMetadataAPIEnabled()) {
@@ -461,17 +457,49 @@ export default class Migrate extends OmniStudioBaseCommand {
    * Check if migration logging should be skipped for a component
    * Returns true if Metadata API is enabled and the component doesn't need migration
    */
-  private shouldSkipMigrationLogging(componentName: string): boolean {
+  private shouldSkipTruncationLogging(componentName: string): boolean {
+    if (isStandardDataModel()) {
+      return true;
+    }
+
+    return this.shouldSkipLogging(componentName);
+  }
+
+  /**
+   * Check if migration logging should be skipped for a component
+   * Returns true if Metadata API is enabled and the component doesn't need migration
+   */
+  private shouldSkipLogging(componentName: string): boolean {
     if (!isStandardDataModelWithMetadataAPIEnabled()) {
       return false;
     }
 
     // Skip logging for OmniStudio components that don't need migration when metadata API is enabled
-    return this.OMNISTUDIO_COMPONENTS_FOR_LOGGING.some((component) =>
+    return !this.OMNISTUDIO_COMPONENTS_FOR_LOGGING.some((component) =>
       componentName.toLowerCase().includes(component.toLowerCase())
     );
   }
 
+  /**
+   * Log the start of component truncation and track timing
+   */
+  private logTruncationStart(componentName: string, debugTimer: DebugTimer): void {
+    const shouldSkipLogging = this.shouldSkipTruncationLogging(componentName);
+    if (!shouldSkipLogging) {
+      Logger.log(messages.getMessage('cleaningComponent', [componentName]));
+      debugTimer.lap('Cleaning: ' + componentName);
+    }
+  }
+  /**
+   * Log the completion of component truncation
+   */
+  private logTruncationComplete(componentName: string): void {
+    const shouldSkipLogging = this.shouldSkipTruncationLogging(componentName);
+
+    if (!shouldSkipLogging) {
+      Logger.log(messages.getMessage('cleaningDone', [componentName]));
+    }
+  }
   /**
    * Get migration objects in the correct dependency order:
    * 1. Data Mappers (lowest dependencies)
