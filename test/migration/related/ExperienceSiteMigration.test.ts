@@ -256,7 +256,11 @@ describe('ExperienceSiteMigration', () => {
       sinon.stub(require('fs'), 'writeFileSync').value(fsWriteStub);
 
       storageUtilStub = sinon.stub(StorageUtil, 'getOmnistudioMigrationStorage');
-      sinon.stub(FileDiffUtil.prototype, 'getFileDiff').returns([]);
+      // Mock FileDiffUtil to return a non-empty diff (indicating changes were made)
+      sinon.stub(FileDiffUtil.prototype, 'getFileDiff').returns([
+        { old: 'line1', new: 'line1' },
+        { old: 'oldline', new: 'newline' },
+      ]);
     });
 
     it('should replace vlocityLWCOmniWrapper component with runtime_omnistudio_omniscript', () => {
@@ -514,7 +518,11 @@ describe('ExperienceSiteMigration', () => {
       sinon.stub(require('fs'), 'writeFileSync').value(fsWriteStub);
 
       storageUtilStub = sinon.stub(StorageUtil, 'getOmnistudioAssessmentStorage');
-      sinon.stub(FileDiffUtil.prototype, 'getFileDiff').returns([]);
+      // Mock FileDiffUtil to return a non-empty diff (indicating changes were made)
+      sinon.stub(FileDiffUtil.prototype, 'getFileDiff').returns([
+        { old: 'line1', new: 'line1' },
+        { old: 'oldline', new: 'newline' },
+      ]);
     });
 
     it('should use assessment storage instead of migration storage in assess mode', () => {
@@ -782,7 +790,11 @@ describe('ExperienceSiteMigration', () => {
       sinon.stub(require('fs'), 'writeFileSync').value(fsWriteStub);
 
       storageUtilStub = sinon.stub(StorageUtil, 'getOmnistudioMigrationStorage');
-      sinon.stub(FileDiffUtil.prototype, 'getFileDiff').returns([]);
+      // Mock FileDiffUtil to return a non-empty diff (indicating changes were made)
+      sinon.stub(FileDiffUtil.prototype, 'getFileDiff').returns([
+        { old: 'line1', new: 'line1' },
+        { old: 'oldline', new: 'newline' },
+      ]);
     });
 
     it('should process standard data model OmniScript component successfully', () => {
