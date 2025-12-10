@@ -220,11 +220,6 @@ export default class Migrate extends OmniStudioBaseCommand {
     if (!migrateOnly) {
       await postMigrate.executeTasks(namespace, actionItems);
     }
-    // From here also actionItems need to be collected
-    await postMigrate.restoreExperienceAPIMetadataSettings(
-      isExperienceBundleMetadataAPIProgramaticallyEnabled,
-      actionItems
-    );
 
     const migrationActionItems = this.collectActionItems(objectMigrationResults);
     actionItems = [...actionItems, ...migrationActionItems];
