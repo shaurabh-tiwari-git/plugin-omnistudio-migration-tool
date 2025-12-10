@@ -204,7 +204,7 @@ export interface FileParser {
 export interface ExperienceSiteAssessmentPageInfo extends FileChangeInfo {
   warnings: string[];
   infos: string[];
-  hasOmnistudioContent: boolean;
+  hasOmnistudioContentWithChanges: boolean;
   errors: string[];
   status: 'Ready for migration' | 'Failed' | 'Successfully migrated' | 'Needs manual intervention' | 'Skipped';
 }

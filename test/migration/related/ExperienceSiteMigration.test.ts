@@ -183,7 +183,7 @@ describe('ExperienceSiteMigration', () => {
 
       processFileStub.onCall(0).returns({
         name: 'site1.json',
-        hasOmnistudioContent: true,
+        hasOmnistudioContentWithChanges: true,
         warnings: [],
         infos: [],
         path: '/test/path/site1.json',
@@ -193,7 +193,7 @@ describe('ExperienceSiteMigration', () => {
       });
       processFileStub.onCall(1).returns({
         name: 'site3.json',
-        hasOmnistudioContent: false,
+        hasOmnistudioContentWithChanges: false,
         warnings: [],
         infos: [],
         path: '/test/path/site3.json',
@@ -208,7 +208,7 @@ describe('ExperienceSiteMigration', () => {
       // Assert
       expect(fileUtilStub.calledOnce).to.be.true;
       expect(processFileStub.calledTwice).to.be.true; // Only called for JSON files
-      expect(result).to.have.length(1); // Only files with hasOmnistudioContent: true
+      expect(result).to.have.length(1); // Only files with hasOmnistudioContentWithChanges: true
       expect(result[0].experienceSiteAssessmentPageInfos[0].name).to.equal('site1.json');
     });
 
@@ -229,7 +229,7 @@ describe('ExperienceSiteMigration', () => {
       expect(result[0].experienceSiteAssessmentPageInfos[0].name).to.equal('error.json');
       expect(result[0].experienceSiteAssessmentPageInfos[0].status).to.equal('Failed');
       expect(result[0].experienceSiteAssessmentPageInfos[0].warnings).to.include('Unknown error occurred');
-      expect(result[0].experienceSiteAssessmentPageInfos[0].hasOmnistudioContent).to.be.false;
+      expect(result[0].experienceSiteAssessmentPageInfos[0].hasOmnistudioContentWithChanges).to.be.false;
       expect((Logger.error as sinon.SinonStub).called).to.be.true;
     });
   });
@@ -286,7 +286,7 @@ describe('ExperienceSiteMigration', () => {
       const result = experienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
-      expect(result.hasOmnistudioContent).to.be.true;
+      expect(result.hasOmnistudioContentWithChanges).to.be.true;
       expect(fsWriteStub.calledOnce).to.be.true;
 
       // Verify the file content was updated
@@ -303,7 +303,7 @@ describe('ExperienceSiteMigration', () => {
       expect(component.componentAttributes.theme).to.equal('lightning'); // Preserved from original layout
     });
 
-    it('should return hasOmnistudioContent false when no vlocityLWCOmniWrapper found', () => {
+    it('should return hasOmnistudioContentWithChanges false when no vlocityLWCOmniWrapper found', () => {
       // Arrange
       fsReadStub.returns(JSON.stringify(sampleExperienceSiteJsonWithoutWrapper));
 
@@ -311,11 +311,11 @@ describe('ExperienceSiteMigration', () => {
       const result = experienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
-      expect(result.hasOmnistudioContent).to.be.false;
+      expect(result.hasOmnistudioContentWithChanges).to.be.false;
       expect(fsWriteStub.called).to.be.false; // No changes made
     });
 
-    it('should return hasOmnistudioContent false when regions are undefined', () => {
+    it('should return hasOmnistudioContentWithChanges false when regions are undefined', () => {
       // Arrange
       const siteWithoutRegions = { ...sampleExperienceSiteJson, regions: undefined };
       fsReadStub.returns(JSON.stringify(siteWithoutRegions));
@@ -324,7 +324,7 @@ describe('ExperienceSiteMigration', () => {
       const result = experienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
-      expect(result.hasOmnistudioContent).to.be.false;
+      expect(result.hasOmnistudioContentWithChanges).to.be.false;
       expect(fsWriteStub.called).to.be.false;
     });
 
@@ -342,7 +342,7 @@ describe('ExperienceSiteMigration', () => {
       const result = experienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
-      expect(result.hasOmnistudioContent).to.be.true;
+      expect(result.hasOmnistudioContentWithChanges).to.be.true;
       expect(result.warnings).to.have.length(1);
       expect(result.warnings[0]).to.include('TestSubtype:English Needs manual intervention');
     });
@@ -374,7 +374,7 @@ describe('ExperienceSiteMigration', () => {
       const result = experienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
-      expect(result.hasOmnistudioContent).to.be.true;
+      expect(result.hasOmnistudioContentWithChanges).to.be.true;
       expect(result.warnings).to.have.length(1);
     });
 
@@ -405,7 +405,7 @@ describe('ExperienceSiteMigration', () => {
       const result = experienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
-      expect(result.hasOmnistudioContent).to.be.true;
+      expect(result.hasOmnistudioContentWithChanges).to.be.true;
       expect(result.warnings).to.have.length(1);
       expect(result.warnings[0]).to.include('Needs manual intervention as duplicated key found');
     });
@@ -427,7 +427,7 @@ describe('ExperienceSiteMigration', () => {
       const result = experienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
-      expect(result.hasOmnistudioContent).to.be.true;
+      expect(result.hasOmnistudioContentWithChanges).to.be.true;
       expect(result.warnings).to.have.length(1);
       expect(result.warnings[0]).to.include('The Target Name is empty. Check your Experience Cloud site configuration');
     });
@@ -450,7 +450,7 @@ describe('ExperienceSiteMigration', () => {
       const result = experienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
-      expect(result.hasOmnistudioContent).to.be.true;
+      expect(result.hasOmnistudioContentWithChanges).to.be.true;
       // Should not throw an error and continue processing
     });
 
@@ -545,7 +545,7 @@ describe('ExperienceSiteMigration', () => {
 
       // Assert
       expect(storageUtilStub.calledOnce).to.be.true;
-      expect(result.hasOmnistudioContent).to.be.true;
+      expect(result.hasOmnistudioContentWithChanges).to.be.true;
       expect(result.warnings).to.have.length(0);
     });
 
@@ -564,7 +564,7 @@ describe('ExperienceSiteMigration', () => {
       const result = experienceSiteMigration.processExperienceSite(mockFile, Assess);
 
       // Assert
-      expect(result.hasOmnistudioContent).to.be.true;
+      expect(result.hasOmnistudioContentWithChanges).to.be.true;
       expect(result.warnings).to.have.length(1);
       expect(result.warnings[0]).to.include('TestSubtype:English Needs manual intervention');
     });
@@ -596,7 +596,7 @@ describe('ExperienceSiteMigration', () => {
       const result = experienceSiteMigration.processExperienceSite(mockFile, Assess);
 
       // Assert
-      expect(result.hasOmnistudioContent).to.be.true;
+      expect(result.hasOmnistudioContentWithChanges).to.be.true;
       expect(result.warnings).to.have.length(1);
       expect(result.warnings[0]).to.include('Needs manual intervention as migration failed');
     });
@@ -628,12 +628,12 @@ describe('ExperienceSiteMigration', () => {
       const result = experienceSiteMigration.processExperienceSite(mockFile, Assess);
 
       // Assert
-      expect(result.hasOmnistudioContent).to.be.true;
+      expect(result.hasOmnistudioContentWithChanges).to.be.true;
       expect(result.warnings).to.have.length(1);
       expect(result.warnings[0]).to.include('Needs manual intervention as duplicated key found');
     });
 
-    it('should return false for hasOmnistudioContent when no wrapper component found in assess mode', () => {
+    it('should return false for hasOmnistudioContentWithChanges when no wrapper component found in assess mode', () => {
       // Arrange
       const mockStorage: MigrationStorage = {
         osStorage: new Map<string, OmniScriptStorage>(),
@@ -647,7 +647,7 @@ describe('ExperienceSiteMigration', () => {
       const result = experienceSiteMigration.processExperienceSite(mockFile, Assess);
 
       // Assert
-      expect(result.hasOmnistudioContent).to.be.false;
+      expect(result.hasOmnistudioContentWithChanges).to.be.false;
       expect(result.warnings).to.have.length(0);
       expect(fsWriteStub.called).to.be.false;
     });
@@ -712,7 +712,7 @@ describe('ExperienceSiteMigration', () => {
       const result = experienceSiteMigration.processExperienceSite(mockFile, Assess);
 
       // Assert
-      expect(result.hasOmnistudioContent).to.be.true;
+      expect(result.hasOmnistudioContentWithChanges).to.be.true;
       expect(result.warnings).to.have.length(1); // Only the duplicate should generate a warning
       expect(result.warnings[0]).to.include('DuplicateSubtype:English');
       expect(result.warnings[0]).to.include('duplicated key found');
@@ -732,7 +732,7 @@ describe('ExperienceSiteMigration', () => {
       const result = experienceSiteMigration.processExperienceSite(mockFile, Assess);
 
       // Assert
-      expect(result.hasOmnistudioContent).to.be.true;
+      expect(result.hasOmnistudioContentWithChanges).to.be.true;
       expect(result.warnings).to.have.length(1);
       expect(result.warnings[0]).to.include('Needs manual intervention');
       expect(result.status).to.equal('Needs manual intervention');
@@ -838,7 +838,7 @@ describe('ExperienceSiteMigration', () => {
       const result = standardDataModelExperienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
-      expect(result.hasOmnistudioContent).to.be.true;
+      expect(result.hasOmnistudioContentWithChanges).to.be.true;
       expect(fsWriteStub.calledOnce).to.be.true;
 
       // Verify the file content was updated
@@ -889,7 +889,7 @@ describe('ExperienceSiteMigration', () => {
       const result = standardDataModelExperienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
-      expect(result.hasOmnistudioContent).to.be.true;
+      expect(result.hasOmnistudioContentWithChanges).to.be.true;
       expect(result.warnings).to.have.length(1);
       expect(result.warnings[0]).to.include('standard-test.json needs manual intervention for configuration');
       expect(result.status).to.equal('Skipped');
@@ -939,7 +939,7 @@ describe('ExperienceSiteMigration', () => {
       const result = standardDataModelExperienceSiteMigration.processExperienceSite(mockFile, Migrate);
 
       // Assert
-      expect(result.hasOmnistudioContent).to.be.true;
+      expect(result.hasOmnistudioContentWithChanges).to.be.true;
       expect(fsWriteStub.calledOnce).to.be.true;
 
       // Verify the file content was updated
