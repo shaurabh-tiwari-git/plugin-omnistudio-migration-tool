@@ -130,6 +130,12 @@ export default class Migrate extends SfCommand<MigrateResult> {
     const conn = org.getConnection();
     const apiVersion = conn.getApiVersion();
 
+    // Validate that --only and --relatedobjects flags are not used together
+    if (migrateOnly && relatedObjects) {
+      Logger.error(messages.getMessage('relatedFlagsNotSupportedWithOnly'));
+      process.exit(1);
+    }
+
     const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn);
 
     // Initialize global data model service
