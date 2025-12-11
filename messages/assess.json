@@ -33,7 +33,7 @@
   "noPackageInstalled": "No valid package found in your org.",
   "alreadyStandardModel": "Your org already uses the standard data model.",
   "invalidRelatedObjectsOption": "Invalid entry for -r: %s. Enter either apex, lwc, flexipage or expsites.",
-  "relatedFlagsNotSupportedWithOnly": "Related flags are not supported with only flag.",
+  "relatedFlagsNotSupportedWithOnly": "Related objects [ex: Apex, lwc, expsites and flexipages] are not supported with only flag.",
   "formulaSyntaxError": "We couldn't update the syntax of this formula. Verify the syntax and try again: %s",
   "errorDuringFlexCardAssessment": "We've encountered errors during the Flexcard assessment: %s",
   "errorDuringOmniScriptAssessment": "We've encountered errors during the Omniscript assessment: %s",
