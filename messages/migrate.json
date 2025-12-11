@@ -35,7 +35,7 @@
   "unknownNamespace": "A valid namespace is not configured in this org. Configure the namespace and try again",
   "noOmniStudioLicenses": "OmniStudio licenses are not found in the org. OmniStudio licenses are required for migration",
   "invalidRelatedObjectsOption": "Invalid option provided for -r: %s. Valid options are apex, lwc, expsites, flexipage.",
-  "relatedFlagsNotSupportedWithOnly": "Related flags are not supported with only flag.",
+  "relatedFlagsNotSupportedWithOnly": "Related objects [ex: Apex, lwc, expsites and flexipages] are not supported with only flag.",
   "userConsentMessage": "By proceeding further, you hereby consent to accept changes to your custom code, and the accompanying terms and conditions associated with the use of the Omnistudio Migration Tool. Do you want to proceed? [y/n]",
   "existingApexPrompt": "Do you have a sfdc project that already contains the related objects retrieved from your org? [y/n]",
   "enterExistingProjectPath": "Enter the path to the project folder that contains the retrieved APEX classes",
