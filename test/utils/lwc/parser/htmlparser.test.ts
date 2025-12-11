@@ -2,7 +2,7 @@
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
 import * as fs from 'fs';
 import * as path from 'path';
-import { expect } from '@salesforce/command/lib/test';
+import { expect } from 'chai';
 import { HTMLParser } from '../../../../src/utils/lwcparser/htmlParser/HTMLParser';
 import { FileConstant } from '../../../../src/utils/lwcparser/fileutils/FileConstant';
 

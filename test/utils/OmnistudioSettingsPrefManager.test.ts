@@ -7,7 +7,7 @@ import { OmnistudioSettingsPrefManager } from '../../src/utils/OmnistudioSetting
 describe('OmnistudioSettingsPrefManager', () => {
   let prefManager: OmnistudioSettingsPrefManager;
   let connection: Connection;
-  let messages: Messages;
+  let messages: Messages<string>;
   let sandbox: sinon.SinonSandbox;
 
   beforeEach(() => {
@@ -20,7 +20,7 @@ describe('OmnistudioSettingsPrefManager', () => {
     } as unknown as Connection;
     messages = {
       getMessage: sandbox.stub().returns('Mocked error message'),
-    } as unknown as Messages;
+    } as unknown as Messages<string>;
     prefManager = new OmnistudioSettingsPrefManager(connection, messages);
   });
 

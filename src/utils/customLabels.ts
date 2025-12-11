@@ -38,7 +38,7 @@ export class CustomLabelsUtil {
   public static async fetchCustomLabels(
     connection: Connection,
     namespace: string,
-    messages: Messages
+    messages: Messages<string>
   ): Promise<CustomLabelResult> {
     try {
       const customLabels = await this.fetchExternalStringsFromTooling(connection, namespace, messages);
@@ -120,7 +120,7 @@ export class CustomLabelsUtil {
   private static async fetchExternalStringsFromTooling(
     connection: Connection,
     namespace: string,
-    messages: Messages
+    messages: Messages<string>
   ): Promise<ExternalStringRecord[]> {
     try {
       const query = `SELECT Id, Name, NamespacePrefix, Value FROM ExternalString WHERE NamespacePrefix = '${namespace}'`;

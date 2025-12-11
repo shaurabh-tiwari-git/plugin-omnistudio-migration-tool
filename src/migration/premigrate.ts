@@ -1,5 +1,5 @@
 import { Connection, Messages } from '@salesforce/core';
-import { UX } from '@salesforce/command';
+import { Ux } from '@salesforce/sf-plugins-core';
 import { Logger } from '../utils/logger';
 import { Constants } from '../utils/constants/stringContants';
 import { OrgPreferences } from '../utils/orgPreferences';
@@ -14,7 +14,7 @@ const authEnvKey = 'OMA_AUTH_KEY';
 
 export class PreMigrate extends BaseMigrationTool {
   // Source Custom Object Names
-  public constructor(namespace: string, connection: Connection, logger: Logger, messages: Messages, ux: UX) {
+  public constructor(namespace: string, connection: Connection, logger: Logger, messages: Messages<string>, ux: Ux) {
     super(namespace, connection, logger, messages, ux);
   }
 

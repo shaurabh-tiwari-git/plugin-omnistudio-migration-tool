@@ -1,8 +1,8 @@
 /* eslint-disable */
 
 import { Connection, Messages, Org } from '@salesforce/core';
-import { UX } from '@salesforce/command';
-import { ExecuteAnonymousResult } from 'jsforce';
+import { Ux } from '@salesforce/sf-plugins-core';
+import type { ExecuteAnonymousResult } from '@jsforce/jsforce-node/lib/api/tooling';
 import { Logger } from '../utils/logger';
 import { AnonymousApexRunner } from '../utils/apex/executor/AnonymousApexRunner';
 import { Constants } from '../utils/constants/stringContants';
@@ -30,8 +30,8 @@ export class PostMigrate extends BaseMigrationTool {
     namespace: string,
     connection: Connection,
     logger: Logger,
-    messages: Messages,
-    ux: UX,
+    messages: Messages<string>,
+    ux: Ux,
     relatedObjectsToProcess: string[],
     deploymentConfig?: { autoDeploy: boolean; authKey: string | undefined },
     projectPath?: string

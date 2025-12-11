@@ -1,4 +1,4 @@
-import { UX } from '@salesforce/command';
+import { Ux } from '@salesforce/sf-plugins-core';
 import { Connection, Messages } from '@salesforce/core';
 import * as cliProgress from 'cli-progress';
 import { DebugTimer, QueryTools } from '../utils';
@@ -46,11 +46,11 @@ export class BaseMigrationTool {
   protected readonly connection: Connection;
   protected readonly namespacePrefix: string;
   protected readonly logger: Logger;
-  protected readonly messages: Messages;
-  protected readonly ux: UX;
+  protected readonly messages: Messages<string>;
+  protected readonly ux: Ux;
   protected readonly nameRegistry: NameMappingRegistry;
 
-  public constructor(namespace: string, connection: Connection, logger: Logger, messages: Messages, ux: UX) {
+  public constructor(namespace: string, connection: Connection, logger: Logger, messages: Messages<string>, ux: Ux) {
     this.namespace = namespace;
     this.connection = connection;
     this.logger = logger;

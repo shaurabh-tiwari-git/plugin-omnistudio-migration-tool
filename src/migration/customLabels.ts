@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-import { UX } from '@salesforce/command';
+import { Ux } from '@salesforce/sf-plugins-core';
 import { Connection, Messages } from '@salesforce/core';
 import { NetUtils, RequestMethod } from '../utils/net';
 import { Logger } from '../utils/logger';
@@ -59,7 +59,7 @@ export interface CustomLabelRecord {
 }
 
 export class CustomLabelsMigrationTool extends BaseMigrationTool implements MigrationTool {
-  public constructor(namespace: string, connection: Connection, logger: Logger, messages: Messages, ux: UX) {
+  public constructor(namespace: string, connection: Connection, logger: Logger, messages: Messages<string>, ux: Ux) {
     super(namespace, connection, logger, messages, ux);
   }
 

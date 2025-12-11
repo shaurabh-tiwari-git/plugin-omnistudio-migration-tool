@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-import { expect } from '@salesforce/command/lib/test';
+import { expect } from 'chai';
 import sinon = require('sinon');
 import {
   ApexASTParser,

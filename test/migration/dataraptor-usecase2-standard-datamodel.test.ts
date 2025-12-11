@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
-import { expect } from '@salesforce/command/lib/test';
+import { expect } from 'chai';
 import { Connection, Messages } from '@salesforce/core';
 import * as sinon from 'sinon';
 import { DataRaptorMigrationTool } from '../../src/migration/dataraptor';
@@ -30,7 +30,7 @@ describe('DataRaptor Standard Data Model (Metadata API Disabled) - Assessment an
   let dataRaptorTool: DataRaptorMigrationTool;
   let mockConnection: Connection;
   let mockLogger: Logger;
-  let mockMessages: Messages;
+  let mockMessages: Messages<string>;
   let mockUx: any;
   let isStandardDataModelStub: sinon.SinonStub;
 
@@ -59,7 +59,7 @@ describe('DataRaptor Standard Data Model (Metadata API Disabled) - Assessment an
         };
         return messages[key] || 'Mock message for testing';
       }),
-    } as unknown as Messages;
+    } as unknown as Messages<string>;
 
     mockUx = {};
     mockLogger = {} as Logger;

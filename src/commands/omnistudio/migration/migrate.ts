@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /*
  * Copyright (c) 2020, salesforce.com, inc.
@@ -9,9 +10,8 @@
  */
 import path from 'path';
 import * as os from 'os';
-import { flags } from '@salesforce/command';
-import { Connection, Messages } from '@salesforce/core';
-import OmniStudioBaseCommand from '../../basecommand';
+import { Connection, Messages, Org, Logger as CoreLogger } from '@salesforce/core';
+import { SfCommand, Ux, Flags as flags } from '@salesforce/sf-plugins-core';
 import { DataRaptorMigrationTool } from '../../../migration/dataraptor';
 import { DebugTimer, MigratedObject, MigratedRecordInfo } from '../../../utils';
 import { InvalidEntityTypeError, MigrationResult, MigrationTool } from '../../../migration/interfaces';
@@ -26,7 +26,7 @@ import { OmnistudioOrgDetails, OrgUtils } from '../../../utils/orgUtils';
 import { Constants } from '../../../utils/constants/stringContants';
 import { OrgPreferences } from '../../../utils/orgPreferences';
 import { ProjectPathUtil } from '../../../utils/projectPathUtil';
-import { PromptUtil } from '../../../utils/promptUtil';
+import { PromptUtil, askQuestion } from '../../../utils/promptUtil';
 import { YES_SHORT, YES_LONG, NO_SHORT, NO_LONG } from '../../../utils/projectPathUtil';
 import { PostMigrate } from '../../../migration/postMigrate';
 import { PreMigrate } from '../../../migration/premigrate';
@@ -48,14 +48,35 @@ Messages.importMessagesDirectory(__dirname);
 // or any library that is using the messages framework can also be loaded this way.
 const messages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'migrate');
 
-export default class Migrate extends OmniStudioBaseCommand {
+export type MigrateResult = {
+  objectMigrationResults: any[];
+};
+
+interface MigrateFlags {
+  'target-org'?: Org;
+  only?: string;
+  allversions?: boolean;
+  relatedobjects?: string;
+  verbose?: boolean;
+}
+
+export default class Migrate extends SfCommand<MigrateResult> {
   public static description = messages.getMessage('commandDescription');
 
   public static examples = messages.getMessage('examples').split(os.EOL);
 
-  public static args = [{ name: 'file' }];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public static args: any = [];
 
-  protected static flagsConfig = {
+  public static readonly flags: any = {
+    'target-org': flags.optionalOrg({
+      summary: 'Target org username or alias',
+      char: 'u',
+      required: true,
+      aliases: ['targetusername'],
+      deprecateAliases: true,
+      makeDefault: false, // Prevent auto-resolution during command-reference generation
+    }),
     only: flags.string({
       char: 'o',
       description: messages.getMessage('onlyFlagDescription'),
@@ -69,9 +90,14 @@ export default class Migrate extends OmniStudioBaseCommand {
       char: 'r',
       description: messages.getMessage('relatedObjectGA'),
     }),
-    verbose: flags.builtin({
-      type: 'builtin',
+    verbose: flags.boolean({
       description: 'Enable verbose output',
+    }),
+    loglevel: flags.string({
+      description: 'Logging level (deprecated, use --verbose instead)',
+      deprecated: {
+        message: messages.getMessage('loglevelFlagDeprecated'),
+      },
     }),
   };
 
@@ -80,10 +106,12 @@ export default class Migrate extends OmniStudioBaseCommand {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async run(): Promise<any> {
-    Logger.initialiseLogger(this.ux, this.logger, 'migrate', this.flags.verbose);
+    const { flags: parsedFlags } = await this.parse(Migrate);
+    const ux = new Ux();
+    const logger = await CoreLogger.child(this.constructor.name);
+    Logger.initialiseLogger(ux, logger, 'migrate', parsedFlags.verbose);
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-      return await this.runMigration();
+      return await this.runMigration(parsedFlags as MigrateFlags, ux, logger);
     } catch (e) {
       const error = e as Error;
       Logger.error(messages.getMessage('errorRunningMigrate', [error.message]));
@@ -91,13 +119,15 @@ export default class Migrate extends OmniStudioBaseCommand {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public async runMigration(): Promise<any> {
-    const migrateOnly = (this.flags.only || '') as string;
-    let allVersions = this.flags.allversions || (false as boolean);
-    const relatedObjects = (this.flags.relatedobjects || '') as string;
-    // this.org is guaranteed because requiresUsername=true, as opposed to supportsUsername
-    const conn = this.org.getConnection();
+  public async runMigration(parsedFlags: MigrateFlags, ux: Ux, logger: CoreLogger): Promise<MigrateResult> {
+    const migrateOnly = parsedFlags.only || '';
+    let allVersions = parsedFlags.allversions || false;
+    const relatedObjects = parsedFlags.relatedobjects || '';
+
+    // target-org is required by flag definition, so it will always be present
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const org = parsedFlags['target-org']!;
+    const conn = org.getConnection();
     const apiVersion = conn.getApiVersion();
 
     const orgs: OmnistudioOrgDetails = await OrgUtils.getOrgDetails(conn);
@@ -133,7 +163,7 @@ export default class Migrate extends OmniStudioBaseCommand {
     let projectPath: string;
     let objectsToProcess: string[] = [];
     let targetApexNamespace: string;
-    const preMigrate: PreMigrate = new PreMigrate(namespace, conn, this.logger, messages, this.ux);
+    const preMigrate: PreMigrate = new PreMigrate(namespace, conn, logger, messages, ux);
     const isExperienceBundleMetadataAPIProgramaticallyEnabled: { value: boolean } = { value: false };
 
     if (isStandardDataModel()) {
@@ -181,7 +211,9 @@ export default class Migrate extends OmniStudioBaseCommand {
       migrationObjects,
       namespace,
       conn,
-      allVersions
+      allVersions,
+      logger,
+      ux
     );
 
     // Migrate individual objects
@@ -204,7 +236,7 @@ export default class Migrate extends OmniStudioBaseCommand {
       namespace,
       migrateOnly,
       allVersions,
-      this.org,
+      org,
       projectPath,
       targetApexNamespace
     );
@@ -213,12 +245,12 @@ export default class Migrate extends OmniStudioBaseCommand {
     // POST MIGRATION
 
     const postMigrate: PostMigrate = new PostMigrate(
-      this.org,
+      org,
       namespace,
       conn,
-      this.logger,
+      logger,
       messages,
-      this.ux,
+      ux,
       objectsToProcess,
       deploymentConfig,
       projectPath
@@ -236,7 +268,7 @@ export default class Migrate extends OmniStudioBaseCommand {
       deploymentConfig.autoDeploy && deploymentConfig.authKey ? relatedObjectMigrationResult.lwcAssessmentInfos : [],
       relatedObjectMigrationResult.experienceSiteAssessmentInfos,
       relatedObjectMigrationResult.flexipageAssessmentInfos,
-      this.org.getConnection().version,
+      org.getConnection().version,
       messages
     );
 
@@ -507,36 +539,22 @@ export default class Migrate extends OmniStudioBaseCommand {
     migrationObjects: MigrationTool[],
     namespace: string,
     conn: any,
-    allVersions: any
+    allVersions: any,
+    logger: CoreLogger,
+    ux: Ux
   ): MigrationTool[] {
     if (!migrateOnly) {
       migrationObjects = [
-        new DataRaptorMigrationTool(namespace, conn, this.logger, messages, this.ux),
+        new DataRaptorMigrationTool(namespace, conn, logger, messages, ux),
         // Integration Procedure
-        new OmniScriptMigrationTool(
-          OmniScriptExportType.IP,
-          namespace,
-          conn,
-          this.logger,
-          messages,
-          this.ux,
-          allVersions
-        ),
+        new OmniScriptMigrationTool(OmniScriptExportType.IP, namespace, conn, logger, messages, ux, allVersions),
         // OmniScript
-        new OmniScriptMigrationTool(
-          OmniScriptExportType.OS,
-          namespace,
-          conn,
-          this.logger,
-          messages,
-          this.ux,
-          allVersions
-        ),
-        new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions),
-        new CustomLabelsMigrationTool(namespace, conn, this.logger, messages, this.ux),
+        new OmniScriptMigrationTool(OmniScriptExportType.OS, namespace, conn, logger, messages, ux, allVersions),
+        new CardMigrationTool(namespace, conn, logger, messages, ux, allVersions),
+        new CustomLabelsMigrationTool(namespace, conn, logger, messages, ux),
       ];
       if (!isFoundationPackage()) {
-        migrationObjects.push(new GlobalAutoNumberMigrationTool(namespace, conn, this.logger, messages, this.ux));
+        migrationObjects.push(new GlobalAutoNumberMigrationTool(namespace, conn, logger, messages, ux));
       }
     } else {
       // For single component migration, the order doesn't matter as much
@@ -544,44 +562,28 @@ export default class Migrate extends OmniStudioBaseCommand {
       switch (migrateOnly) {
         case Constants.Omniscript:
           migrationObjects.push(
-            new OmniScriptMigrationTool(
-              OmniScriptExportType.OS,
-              namespace,
-              conn,
-              this.logger,
-              messages,
-              this.ux,
-              allVersions
-            )
+            new OmniScriptMigrationTool(OmniScriptExportType.OS, namespace, conn, logger, messages, ux, allVersions)
           );
           break;
         case Constants.IntegrationProcedure:
           migrationObjects.push(
-            new OmniScriptMigrationTool(
-              OmniScriptExportType.IP,
-              namespace,
-              conn,
-              this.logger,
-              messages,
-              this.ux,
-              allVersions
-            )
+            new OmniScriptMigrationTool(OmniScriptExportType.IP, namespace, conn, logger, messages, ux, allVersions)
           );
           break;
         case Constants.Flexcard:
-          migrationObjects.push(new CardMigrationTool(namespace, conn, this.logger, messages, this.ux, allVersions));
+          migrationObjects.push(new CardMigrationTool(namespace, conn, logger, messages, ux, allVersions));
           break;
         case Constants.DataMapper:
-          migrationObjects.push(new DataRaptorMigrationTool(namespace, conn, this.logger, messages, this.ux));
+          migrationObjects.push(new DataRaptorMigrationTool(namespace, conn, logger, messages, ux));
           break;
         case Constants.GlobalAutoNumber:
           if (isFoundationPackage()) {
             Logger.warn(messages.getMessage('globalAutoNumberUnSupportedInOmnistudioPackage'));
           }
-          migrationObjects.push(new GlobalAutoNumberMigrationTool(namespace, conn, this.logger, messages, this.ux));
+          migrationObjects.push(new GlobalAutoNumberMigrationTool(namespace, conn, logger, messages, ux));
           break;
         case Constants.CustomLabel:
-          migrationObjects.push(new CustomLabelsMigrationTool(namespace, conn, this.logger, messages, this.ux));
+          migrationObjects.push(new CustomLabelsMigrationTool(namespace, conn, logger, messages, ux));
           break;
         default:
           throw new Error(messages.getMessage('invalidOnlyFlag'));
@@ -745,7 +747,7 @@ export default class Migrate extends OmniStudioBaseCommand {
 
   private async getTargetApexNamespace(objectsToProcess: string[], targetApexNamespace: string): Promise<string> {
     if (objectsToProcess.includes(Constants.Apex)) {
-      targetApexNamespace = await this.ux.prompt(messages.getMessage('enterTargetNamespace'));
+      targetApexNamespace = await askQuestion(messages.getMessage('enterTargetNamespace'));
       Logger.log(messages.getMessage('usingTargetNamespace', [targetApexNamespace]));
     }
     return targetApexNamespace;

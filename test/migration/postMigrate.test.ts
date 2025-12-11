@@ -5,10 +5,10 @@
 /* eslint-disable camelcase */
 import * as fs from 'fs';
 import * as path from 'path';
-import { expect } from '@salesforce/command/lib/test';
+import { expect } from 'chai';
 import { Connection, Messages, Org } from '@salesforce/core';
-import { UX } from '@salesforce/command';
-import { ExecuteAnonymousResult } from 'jsforce';
+import { Ux } from '@salesforce/sf-plugins-core';
+import type { ExecuteAnonymousResult } from '@jsforce/jsforce-node/lib/api/tooling';
 import sinon = require('sinon');
 import { PostMigrate } from '../../src/migration/postMigrate';
 import { Logger } from '../../src/utils/logger';
@@ -22,8 +22,8 @@ describe('PostMigrate', () => {
   let org: Org;
   let connection: Connection;
   let logger: Logger;
-  let messages: Messages;
-  let ux: UX;
+  let messages: Messages<string>;
+  let ux: Ux;
   let sandbox: sinon.SinonSandbox;
   let getMessageStub: sinon.SinonStub;
   let logErrorStub: sinon.SinonStub;
@@ -68,14 +68,14 @@ describe('PostMigrate', () => {
     // Mock messages
     messages = {
       getMessage: sandbox.stub(),
-    } as unknown as Messages;
+    } as unknown as Messages<string>;
     getMessageStub = messages.getMessage as sinon.SinonStub;
 
-    // Mock UX
+    // Mock Ux
     ux = {
       log: sandbox.stub(),
       error: sandbox.stub(),
-    } as unknown as UX;
+    } as unknown as Ux;
 
     // Set up default message returns
     getMessageStub.withArgs('settingDesignersToStandardModel').returns('Setting designers to standard model...');

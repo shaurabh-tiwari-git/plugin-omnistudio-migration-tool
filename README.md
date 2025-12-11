@@ -4,6 +4,8 @@ The Omnistudio Migration Assistant is a Salesforce CLI plugin that automates the
 
 ## 🚀 Before You Begin
 
+> **Note:** The `sfdx` CLI has been deprecated. Please use `sf` CLI commands instead. The deprecated `sfdx` command aliases (`-u`, `--targetusername`) are still supported.
+
 ⚠️ IMPORTANT: Before installing and using the Omnistudio Migration Assistant, contact Salesforce support.
 
 - Review the migration phases in [Migration Process from Omnistudio for Managed Packages to Omnistudio](https://help.salesforce.com/s/articleView?id=xcloud.os_migrate_omnistudio_custom_objects_to_standard_objects.htm&language=en_US&type=5)
@@ -11,6 +13,8 @@ The Omnistudio Migration Assistant is a Salesforce CLI plugin that automates the
 - Install Salesforce CLI on your computer. See : [Install Salesforce CLI](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_install_cli.htm).
 
 - To deploy LWC as part of auto-deployment process, environment variable 'OMA_AUTH_KEY' should be set with requested NPM repository access key from Salesforce Customer Support.
+
+- This tool requires Node Version 18+.
 
 - LWC migration auto-deployment needs minimum node version of 18.17.1
 
@@ -41,10 +45,10 @@ sf plugins install @salesforce/plugin-omnistudio-migration-tool@2.0.0-dev.1
 
 ```
 // To assess everything without migrating
-sfdx omnistudio:migration:assess -u YOUR_ORG_USERNAME@DOMAIN.COM
+sf omnistudio:migration:assess -u YOUR_ORG_USERNAME@DOMAIN.COM
 
 // To migrate everything
-sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM
+sf omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM
 
 
 // To migrate/assess specific components: Flexcards, Data Mappers, Integration Procedures, Omniscripts, Omni Global Auto Numbers or Custom Labels, add the following parameters:
@@ -102,10 +106,10 @@ Assessment provides detailed information about:
 
 ```bash
 # Assess Omni Global Auto Numbers only
-sfdx omnistudio:migration:assess -u YOUR_ORG_USERNAME@DOMAIN.COM --only=autonumber
+sf omnistudio:migration:assess -u YOUR_ORG_USERNAME@DOMAIN.COM --only=autonumber
 
 # Migrate Omni Global Auto Numbers only
-sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM --only=autonumber
+sf omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM --only=autonumber
 ```
 
 5. An HTML page will be open in your default browser with the results of your migration/assessment job.
@@ -114,70 +118,64 @@ sfdx omnistudio:migration:migrate -u YOUR_ORG_USERNAME@DOMAIN.COM --only=autonum
 
 ```
 USAGE
-  $ sf omnistudio:migration:assess [-v <string>] [-u <string>] [--loglevel
-  trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
+  $ sf omnistudio:migration:assess -u <username> [--only <component>] [--allversions]
+    [--relatedobjects <objects>] [--verbose]
 
 OPTIONS
-  -u, --targetusername=targetusername                                               username or alias for the target
-                                                                                    org; overrides default target org
+  -u, --target-org=<username>                       (required) username or alias for the target org
+                                                    (alias: --targetusername - deprecated)
 
-  -v, --targetdevhubusername=targetdevhubusername                                   username or alias for the dev hub
-                                                                                    org; overrides default dev hub org
+  -o, --only=<component>                            specify a single component to assess:
+                                                    dm (Data Mappers),
+                                                    ip (Integration Procedures),
+                                                    os (Omniscripts),
+                                                    fc (Flexcards),
+                                                    autonumber (Omni Global Auto Numbers),
+                                                    cl (Custom Labels)
 
-  --loglevel=(trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL)  [default: warn] logging level for
-                                                                                    this command invocation
+  -a, --allversions                                 assess all versions, not just the active ones
 
-  -a, --allversions                                                                 migrate all versions and not
-                                                                                    and not just the active ones.
+  -r, --relatedobjects=<objects>                    specify one or more related objects to assess (comma separated):
+                                                    apex       - Apex classes
+                                                    lwc        - Lightning Web Components
+                                                    expsites   - Experience Sites
+                                                    flexipage  - FlexiPages
 
-  --only=only                                                                       specify any single components to migrate:
-                                                                                    dm (Data Mappers),
-                                                                                    ip (Integration Procedures),
-                                                                                    os (Omniscripts),
-                                                                                    fc (Flexcards),
-                                                                                    autonumber (Omni Global Auto Numbers),
-                                                                                    cl (Custom Labels)
+  --verbose                                         enable verbose output
 
-  --relatedobjects=relatedobjects(comma separated)                                  specify one or more related objects to assess:
-                                                                                    'apex'       for Apex classes
-                                                                                    'lwc'        for LWC (Lightning Web Components)
-                                                                                    'expsites'   for Experience Sites
-                                                                                    'flexipage'  for FlexiPages
+  --loglevel=<level>                                (deprecated) use --verbose instead
 ```
 
 ### Migrate Usage & parameters
 
 ```
 USAGE
-  $ sf omnistudio:migration:migrate [-v <string>] [-u <string>] [--loglevel
-  trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]
+  $ sf omnistudio:migration:migrate -u <username> [--only <component>] [--allversions]
+    [--relatedobjects <objects>] [--verbose]
 
 OPTIONS
-  -u, --targetusername=targetusername                                               username or alias for the target
-                                                                                    org; overrides default target org
+  -u, --target-org=<username>                       (required) username or alias for the target org
+                                                    (aliases: --targetusername - deprecated)
 
-  -v, --targetdevhubusername=targetdevhubusername                                   username or alias for the dev hub
-                                                                                    org; overrides default dev hub org
+  -o, --only=<component>                            specify a single component to migrate:
+                                                    dm (Data Mappers),
+                                                    ip (Integration Procedures),
+                                                    os (Omniscripts),
+                                                    fc (Flexcards),
+                                                    autonumber (Omni Global Auto Numbers),
+                                                    cl (Custom Labels)
 
-  --loglevel=(trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL)  [default: warn] logging level for
-                                                                                    this command invocation
+  -a, --allversions                                 migrate all versions, not just the active ones
 
-  -a, --allversions                                                                 migrate all versions and not
-                                                                                    and not just the active ones.
+  -r, --relatedobjects=<objects>                    specify one or more related objects to migrate (comma separated):
+                                                    apex       - Apex classes
+                                                    lwc        - Lightning Web Components
+                                                    expsites   - Experience Sites
+                                                    flexipage  - FlexiPages
 
-  --only=only                                                                       specify any single components to migrate:
-                                                                                    dm (Data Mappers),
-                                                                                    ip (Integration Procedures),
-                                                                                    os (Omniscripts),
-                                                                                    fc (Flexcards),
-                                                                                    autonumber (Omni Global Auto Numbers),
-                                                                                    cl (Custom Labels)
+  --verbose                                         enable verbose output
 
-  --relatedobjects=relatedobjects(comma separated)                                  specify one or more related objects to assess:
-                                                                                    'apex'       for Apex classes
-                                                                                    'lwc'        for LWC (Lightning Web Components)
-                                                                                    'expsites'   for Experience Sites
-                                                                                    'flexipage'  for FlexiPages
+  --loglevel=<level>                                (deprecated) use --verbose instead
 ```
 
 Terms:
