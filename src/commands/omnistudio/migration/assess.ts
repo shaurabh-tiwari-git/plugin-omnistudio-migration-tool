@@ -28,6 +28,7 @@ import {
 } from '../../../utils/dataModelService';
 
 import { ValidatorService } from '../../../utils/validatorService';
+import { OmniStudioMetadataCleanupService } from '../../../utils/config/OmniStudioMetadataCleanupService';
 
 Messages.importMessagesDirectory(__dirname);
 const messages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'assess');
@@ -100,10 +101,17 @@ export default class Assess extends OmniStudioBaseCommand {
     const namespace = orgs.packageDetails.namespace;
     let projectPath = '';
     const preMigrate: PreMigrate = new PreMigrate(namespace, conn, this.logger, messages, this.ux);
+    const userActionMessages: string[] = [];
 
     // Handle all versions prerequisite for standard data model
     if (isStandardDataModel()) {
       if (!isStandardDataModelWithMetadataAPIEnabled()) {
+        // Check if OmniStudio metadata tables need cleanup
+        const metadataCleanupService = new OmniStudioMetadataCleanupService(conn, messages);
+        const hasCleanTables = await metadataCleanupService.hasCleanOmniStudioMetadataTables();
+        if (!hasCleanTables) {
+          userActionMessages.push(messages.getMessage('cleanupMetadataTablesRequired'));
+        }
         allVersions = await preMigrate.handleAllVersionsPrerequisites(allVersions);
       }
     }
@@ -205,7 +213,6 @@ export default class Assess extends OmniStudioBaseCommand {
       objectsToProcess
     );
 
-    const userActionMessages: string[] = [];
     await postMigrate.restoreExperienceAPIMetadataSettings(
       isExperienceBundleMetadataAPIProgramaticallyEnabled,
       userActionMessages
