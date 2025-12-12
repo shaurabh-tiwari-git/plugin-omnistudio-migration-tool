@@ -178,7 +178,12 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     Logger.logVerbose(this.messages.getMessage('printDifference', [JSON.stringify(difference)]));
 
     // If there are no differences, mark as not having OmniStudio content to exclude from report
-    if (difference.length === 0) {
+    // Only exclude if status is 'Ready for migration' or 'Successfully migrated' (no warnings/errors)
+    if (
+      difference.length === 0 &&
+      (experienceSiteAssessmentInfo.status === 'Ready for migration' ||
+        experienceSiteAssessmentInfo.status === 'Successfully migrated')
+    ) {
       experienceSiteAssessmentInfo.hasOmnistudioContentWithChanges = false;
       return experienceSiteAssessmentInfo;
     }
