@@ -25,7 +25,7 @@ describe('FlexCard Dependency Updates with NameMappingRegistry', () => {
       dataModel: 'Custom',
       hasValidNamespace: true,
       isFoundationPackage: false,
-      isStandardDataModelWithMetadataAPIEnabled: false,
+      isOmnistudioMetadataAPIEnabled: false,
     };
     initializeDataModelService(mockOrgDetails);
 

@@ -42,7 +42,7 @@ describe('Standard Data Model with Metadata API Enabled - Storage Preparation On
       dataModel: 'Standard',
       hasValidNamespace: true,
       isFoundationPackage: false,
-      isStandardDataModelWithMetadataAPIEnabled: true, // THIS IS THE KEY FLAG
+      isOmnistudioMetadataAPIEnabled: true, // THIS IS THE KEY FLAG
     };
     initializeDataModelService(mockOrgDetails);
 
