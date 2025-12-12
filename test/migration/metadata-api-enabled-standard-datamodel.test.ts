@@ -809,7 +809,7 @@ describe('Standard Data Model with Metadata API Enabled - Storage Preparation On
   describe('Report Generation - Metadata API Enabled', () => {
     it('should generate empty results suitable for report generation', async () => {
       const omniScriptTool = new OmniScriptMigrationTool(
-        OmniScriptExportType.All,
+        OmniScriptExportType.OS,
         '',
         mockConnection,
         mockLogger,
@@ -837,7 +837,7 @@ describe('Standard Data Model with Metadata API Enabled - Storage Preparation On
 
     it('should generate consistent result structure across all component types', async () => {
       const omniScriptTool = new OmniScriptMigrationTool(
-        OmniScriptExportType.All,
+        OmniScriptExportType.OS,
         '',
         mockConnection,
         mockLogger,
