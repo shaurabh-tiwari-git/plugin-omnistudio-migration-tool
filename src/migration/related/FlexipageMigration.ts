@@ -213,7 +213,6 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
 
     // Only exclude if there are no changes AND status indicates success (no warnings/errors)
     if (!hasActualChanges && (status === 'Ready for migration' || status === 'Successfully migrated')) {
-      Logger.logVerbose(`No changes detected for ${fileName}, excluding from report`);
       return null;
     }
 
