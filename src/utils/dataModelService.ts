@@ -1,6 +1,5 @@
 import OmniScriptMappings from '../mappings/OmniScript';
 import { OmnistudioOrgDetails } from './orgUtils';
-import { Constants } from './constants/stringContants';
 
 export class DataModelService {
   private readonly orgs: OmnistudioOrgDetails;
@@ -9,73 +8,62 @@ export class DataModelService {
     this.orgs = orgs;
   }
 
-  public getDataModel(): string {
-    const { omniStudioOrgPermissionEnabled } = this.orgs;
-    if (!omniStudioOrgPermissionEnabled) {
-      return Constants.CustomDataModel;
-    }
-    return Constants.StandardDataModel;
+  public checkIfIsStandardDataModel(): boolean {
+    return this.orgs.omniStudioOrgPermissionEnabled;
   }
 
-  public isFoundationPackage(): boolean {
+  public checkIfIsCustomDataModel(): boolean {
+    return !this.orgs.omniStudioOrgPermissionEnabled;
+  }
+
+  public checkIfIsFoundationPackage(): boolean {
     return this.orgs.isFoundationPackage ?? false;
   }
 
-  public isStandardDesignerWithMetadataAPIEnabled(): boolean {
-    return this.orgs.isStandardDataModelWithMetadataAPIEnabled ?? false;
+  public checkIfIsOmnistudioMetadataAPIEnabled(): boolean {
+    return this.orgs.isOmnistudioMetadataAPIEnabled ?? false;
+  }
+
+  public checkIfIsStandardDataModelWithMetadataAPIEnabled(): boolean {
+    return this.checkIfIsStandardDataModel() && this.checkIfIsOmnistudioMetadataAPIEnabled();
   }
 }
 
-// Global instance and cached data model
 let globalDataModelService: DataModelService | null = null;
-let cachedDataModel: string | null = null;
-let cachedIsFoundationPackage: boolean | null = null;
-let cachedIsStandardDesignerWithMetadataAPIEnabled: boolean | null = null;
 
 // Initialize the global instance
 export function initializeDataModelService(orgs: OmnistudioOrgDetails): void {
   globalDataModelService = new DataModelService(orgs);
-  cachedDataModel = null; // Reset cache when reinitializing
-  cachedIsFoundationPackage = null; // Reset cache when reinitializing
 }
 
 // Get the global instance
 export function getDataModelService(): DataModelService {
+  if (!globalDataModelService) {
+    throw new Error('DataModelService not initialized');
+  }
   return globalDataModelService;
-}
-
-// Convenience function to get data model info directly (with caching)
-export function getDataModelInfo(): string {
-  if (cachedDataModel === null) {
-    cachedDataModel = getDataModelService().getDataModel();
-  }
-  return cachedDataModel;
-}
-
-export function isFoundationPackage(): boolean {
-  if (cachedIsFoundationPackage === null) {
-    cachedIsFoundationPackage = getDataModelService().isFoundationPackage();
-  }
-  return cachedIsFoundationPackage;
-}
-
-export function isStandardDataModelWithMetadataAPIEnabled(): boolean {
-  if (cachedIsStandardDesignerWithMetadataAPIEnabled === null) {
-    cachedIsStandardDesignerWithMetadataAPIEnabled = getDataModelService().isStandardDesignerWithMetadataAPIEnabled();
-  }
-  return cachedIsStandardDesignerWithMetadataAPIEnabled;
 }
 
 // Convenience function to check if data model is standard
 export function isStandardDataModel(): boolean {
-  const dataModel = getDataModelInfo();
-  return dataModel === Constants.StandardDataModel;
+  return getDataModelService().checkIfIsStandardDataModel();
 }
 
 // Convenience function to check if data model is custom
 export function isCustomDataModel(): boolean {
-  const dataModel = getDataModelInfo();
-  return dataModel === Constants.CustomDataModel;
+  return getDataModelService().checkIfIsCustomDataModel();
+}
+
+export function isFoundationPackage(): boolean {
+  return getDataModelService().checkIfIsFoundationPackage();
+}
+
+export function isStandardDataModelWithMetadataAPIEnabled(): boolean {
+  return getDataModelService().checkIfIsStandardDataModelWithMetadataAPIEnabled();
+}
+
+export function isOmnistudioMetadataAPIEnabled(): boolean {
+  return getDataModelService().checkIfIsOmnistudioMetadataAPIEnabled();
 }
 
 export function getFieldKeyForOmniscript(namespacePrefix: string, fieldName: string): string {

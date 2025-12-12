@@ -23,6 +23,7 @@ import { CustomLabelsUtil } from '../../../utils/customLabels';
 import {
   initializeDataModelService,
   isFoundationPackage,
+  isOmnistudioMetadataAPIEnabled,
   isStandardDataModel,
   isStandardDataModelWithMetadataAPIEnabled,
 } from '../../../utils/dataModelService';
@@ -104,16 +105,14 @@ export default class Assess extends OmniStudioBaseCommand {
     const userActionMessages: string[] = [];
 
     // Handle all versions prerequisite for standard data model
-    if (isStandardDataModel()) {
-      if (!isStandardDataModelWithMetadataAPIEnabled()) {
-        // Check if OmniStudio metadata tables need cleanup
-        const metadataCleanupService = new OmniStudioMetadataCleanupService(conn, messages);
-        const hasCleanTables = await metadataCleanupService.hasCleanOmniStudioMetadataTables();
-        if (!hasCleanTables) {
-          userActionMessages.push(messages.getMessage('cleanupMetadataTablesRequired'));
-        }
-        allVersions = await preMigrate.handleAllVersionsPrerequisites(allVersions);
+    if (isStandardDataModel() && !isOmnistudioMetadataAPIEnabled()) {
+      // Check if OmniStudio metadata tables need cleanup, if yes, then populate userActions
+      const metadataCleanupService = new OmniStudioMetadataCleanupService(conn, messages);
+      const hasCleanTables = await metadataCleanupService.hasCleanOmniStudioMetadataTables();
+      if (!hasCleanTables) {
+        userActionMessages.push(messages.getMessage('cleanupMetadataTablesRequired'));
       }
+      allVersions = await preMigrate.handleAllVersionsPrerequisites(allVersions);
     }
     if (relatedObjects) {
       objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
