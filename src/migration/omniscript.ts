@@ -27,7 +27,7 @@ import {
 import { ObjectMapping } from './interfaces';
 import { NetUtils, RequestMethod } from '../utils/net';
 import { Connection, Messages } from '@salesforce/core';
-import { UX } from '@salesforce/command';
+import { Ux } from '@salesforce/sf-plugins-core';
 import { OSAssessmentInfo, OmniAssessmentInfo, IPAssessmentInfo } from '../../src/utils';
 import {
   getAllFunctionMetadata,
@@ -72,8 +72,8 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
     namespace: string,
     connection: Connection,
     logger: Logger,
-    messages: Messages,
-    ux: UX,
+    messages: Messages<string>,
+    ux: Ux,
     allVersions: boolean
   ) {
     super(namespace, connection, logger, messages, ux);

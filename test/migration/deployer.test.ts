@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable camelcase */
-import { expect } from '@salesforce/command/lib/test';
+import { expect } from 'chai';
 import { Messages } from '@salesforce/core';
 import sinon = require('sinon');
 import { Deployer } from '../../src/migration/deployer';
@@ -14,7 +14,7 @@ import { OmniscriptPackageDeploymentError } from '../../src/error/deploymentErro
 
 describe('Deployer', () => {
   let deployer: Deployer;
-  let messages: Messages;
+  let messages: Messages<string>;
   let sandbox: sinon.SinonSandbox;
   let getMessageStub: sinon.SinonStub;
   let originalEnv: NodeJS.ProcessEnv;
@@ -35,7 +35,7 @@ describe('Deployer', () => {
     // Mock messages
     messages = {
       getMessage: sandbox.stub(),
-    } as unknown as Messages;
+    } as unknown as Messages<string>;
     getMessageStub = messages.getMessage as sinon.SinonStub;
 
     // Set up default message stubs

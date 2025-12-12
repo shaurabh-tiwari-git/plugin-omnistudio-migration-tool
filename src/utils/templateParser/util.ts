@@ -20,13 +20,13 @@ export class TemplateParserUtil {
    * @param prefix - Optional prefix to prepend to all keys
    * @returns Map containing flattened key-value pairs
    */
-  public static parseKeyPair(data: any, messages: Messages, prefix?: string): Map<string, any> {
+  public static parseKeyPair(data: any, messages: Messages<string>, prefix?: string): Map<string, any> {
     try {
       prefix = prefix ? prefix + '.' : '';
       const keypair = new Map<string, any>();
       for (const key of Object.keys(data)) {
         if (Array.isArray(data[key])) {
-          keypair.set(`${prefix}${key}.length`, (data[key] as any[]).length.toString());
+          keypair.set(`${prefix}${key}.length`, data[key].length.toString());
           keypair.set(`${prefix}${key}`, data[key]);
         } else if (data[key] instanceof Object) {
           this.parseKeyPair(data[key], messages, `${prefix}${key}`).forEach((pairValue, pairKey) => {
@@ -50,7 +50,7 @@ export class TemplateParserUtil {
    * @param html - The HTML template string to parse
    * @returns ElementNode representing the parsed template structure
    */
-  public static parseHtmlToNode(html: string, messages: Messages): ElementNode {
+  public static parseHtmlToNode(html: string, messages: Messages<string>): ElementNode {
     // Remove leading/trailing whitespace
     try {
       html = html.trim();
@@ -117,7 +117,7 @@ export class TemplateParserUtil {
    * @param html - The HTML element string to parse
    * @returns ElementNode representing the native HTML element
    */
-  private static parseNativeElement(html: string, messages: Messages): ElementNode {
+  private static parseNativeElement(html: string, messages: Messages<string>): ElementNode {
     // Find the first opening tag - updated to handle custom tags with colons
     const tagMatch = /^<([\w:]+)([^>]*)>/.exec(html);
     if (!tagMatch) {
@@ -208,7 +208,7 @@ export class TemplateParserUtil {
    * @param content - The content string to parse
    * @returns Array of ElementNode children
    */
-  private static parseChildren(content: string, messages: Messages): ElementNode[] {
+  private static parseChildren(content: string, messages: Messages<string>): ElementNode[] {
     const children: ElementNode[] = [];
 
     if (!content.trim()) {

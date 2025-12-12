@@ -1,4 +1,4 @@
-import { expect } from '@salesforce/command/lib/test';
+import { expect } from 'chai';
 import { Connection, Messages } from '@salesforce/core';
 import sinon = require('sinon');
 import { ValidatorService } from '../../src/utils/validatorService';
@@ -9,7 +9,7 @@ import { OrgPreferences } from '../../src/utils/orgPreferences';
 
 describe('ValidatorService', () => {
   let connection: Connection;
-  let messages: Messages;
+  let messages: Messages<string>;
   let sandbox: sinon.SinonSandbox;
   let loggerWarnStub: sinon.SinonStub;
   let loggerErrorStub: sinon.SinonStub;
@@ -27,7 +27,7 @@ describe('ValidatorService', () => {
     // Mock Messages
     messages = {
       getMessage: sandbox.stub(),
-    } as unknown as Messages;
+    } as unknown as Messages<string>;
 
     // Mock Logger
     loggerWarnStub = sandbox.stub(Logger, 'warn');

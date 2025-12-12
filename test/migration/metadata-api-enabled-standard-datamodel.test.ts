@@ -65,7 +65,6 @@ describe('Standard Data Model with Metadata API Enabled - Storage Preparation On
           foundDataRaptorsToAssess: `Found ${params?.[0]} DataRaptors to assess`,
           preparingStorageForMetadataEnabledOrg: `Preparing storage for ${params?.[0]} in Metadata API enabled org`,
           updatingStorageForOmniscipt: `Updating storage for OmniScript (${params?.[0]})`,
-          skippingAssessmentForStandardOrgWithMetadataAPIEnabled: `Skipping ${params?.[0]} assessment for Standard org with Metadata API enabled`,
           unexpectedError: 'An unexpected error occurred',
         };
         return messages[key] || `Mock message for ${key}`;

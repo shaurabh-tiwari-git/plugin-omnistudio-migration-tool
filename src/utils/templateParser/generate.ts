@@ -17,7 +17,7 @@ export class TemplateParser {
    * @param data - The data object (ReportParam or DashboardParam) to bind to the template
    * @returns The generated HTML string with data substituted into the template
    */
-  public static generate(template: string, data: ReportParam | DashboardParam, messages: Messages): string {
+  public static generate(template: string, data: ReportParam | DashboardParam, messages: Messages<string>): string {
     if (!data) {
       return template;
     }

@@ -1,13 +1,14 @@
-import { UX } from '@salesforce/command';
+import { Ux } from '@salesforce/sf-plugins-core';
 import { Logger as SfLogger } from '@salesforce/core';
 import { FileLogger } from './logger/fileLogger';
+import { askQuestion, askConfirmation } from './promptUtil';
 
 export class Logger {
-  private static sfUX: UX;
+  private static sfUX: Ux;
   private static sfLogger: SfLogger;
   private static verbose = false;
 
-  public static initialiseLogger(ux: UX, logger: SfLogger, command?: string, verbose?: boolean): Logger {
+  public static initialiseLogger(ux: Ux, logger: SfLogger, command?: string, verbose?: boolean): Logger {
     Logger.sfUX = ux;
     Logger.sfLogger = logger;
     Logger.verbose = verbose || false;
@@ -40,7 +41,7 @@ export class Logger {
     return Logger.sfLogger;
   }
 
-  public static get ux(): UX {
+  public static get ux(): Ux {
     return Logger.sfUX;
   }
 
@@ -61,12 +62,12 @@ export class Logger {
   public static error(message: string | Error, error?: Error): void {
     if (Logger.sfUX) {
       if (message instanceof Error) {
-        Logger.sfUX.error(`\x1b[31m${message.message}\n${message.stack}\x1b[0m`);
+        Logger.sfUX.log(`\x1b[31m${message.message}\n${message.stack}\x1b[0m`);
       } else {
         if (error) {
-          Logger.sfUX.error(`\x1b[31m${error.message}\n${error.stack}\x1b[0m`);
+          Logger.sfUX.log(`\x1b[31m${error.message}\n${error.stack}\x1b[0m`);
         } else {
-          Logger.sfUX.error(`\x1b[31m${message}\x1b[0m`);
+          Logger.sfUX.log(`\x1b[31m${message}\x1b[0m`);
         }
       }
     }
@@ -87,18 +88,18 @@ export class Logger {
     FileLogger.writeLog('INFO', message);
   }
 
-  public static confirm(message: string): Promise<boolean> {
+  public static async confirm(message: string): Promise<boolean> {
     if (Logger.sfUX) {
       FileLogger.writeLog('CONFIRM', message);
-      return Logger.sfUX.confirm(message);
+      return askConfirmation(message);
     }
     return Promise.resolve(false);
   }
 
-  public static prompt(message: string): Promise<string> {
+  public static async prompt(message: string): Promise<string> {
     if (Logger.sfUX) {
       FileLogger.writeLog('PROMPT', message);
-      return Logger.sfUX.prompt(message);
+      return askQuestion(message);
     }
     return Promise.resolve('');
   }

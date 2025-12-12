@@ -179,12 +179,12 @@ class NetUtils {
     const apiVersion = connection.getApiVersion();
     const metadataApiUrl = `/services/data/v${apiVersion}/${url}`;
     const request = {
-      method: method,
+      method: method as any,
       url: metadataApiUrl,
       body: JSON.stringify(data),
     };
 
-    const response = await connection.request<TResultType>(request);
+    const response = await connection.request<TResultType>(request as any);
 
     return response;
   }

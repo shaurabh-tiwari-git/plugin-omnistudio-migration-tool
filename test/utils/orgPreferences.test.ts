@@ -1,4 +1,4 @@
-import { expect } from '@salesforce/command/lib/test';
+import { expect } from 'chai';
 import { Connection } from '@salesforce/core';
 import sinon = require('sinon');
 import { OrgPreferences } from '../../src/utils/orgPreferences';

@@ -1,5 +1,5 @@
 /* eslint-disable camelcase */
-import { expect } from '@salesforce/command/lib/test';
+import { expect } from 'chai';
 import { AnyJson } from '@salesforce/ts-types';
 import { Connection } from '@salesforce/core';
 import sinon = require('sinon');

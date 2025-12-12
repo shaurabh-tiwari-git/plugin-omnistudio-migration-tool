@@ -1,7 +1,23 @@
+import { execSync } from 'child_process';
 import puppeteer from 'puppeteer';
-import { expect } from '@salesforce/command/lib/test';
+import { expect } from 'chai';
 import { documentRegistry } from '../../../src/utils/constants/documentRegistry';
 import { Logger } from '../../../src/utils/logger';
+
+// Ensure Chrome is installed before running tests
+before(function () {
+  this.timeout(120000); // 2 minutes for Chrome installation
+  if (process.env.CI === 'true') {
+    try {
+      Logger.info('CI environment detected. Installing Chrome for Puppeteer...');
+      execSync('npx --yes puppeteer browsers install chrome', { stdio: 'inherit' });
+      Logger.info('Chrome installed successfully.');
+    } catch (error) {
+      Logger.error('Failed to install Chrome:', error);
+      throw error;
+    }
+  }
+});
 
 // Dictionary mapping documentRegistry keys to their expected page titles
 const titles = {

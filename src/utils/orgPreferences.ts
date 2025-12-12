@@ -38,7 +38,8 @@ export class OrgPreferences {
    */
   public static async enableOmniPreferences(connection: Connection): Promise<void> {
     try {
-      await connection.metadata.update('OmniStudioSettings', [
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+      await (connection.metadata.update as any)('OmniStudioSettings', [
         {
           fullName: 'OmniStudio',
           disableRollbackFlagsPref: true,
@@ -53,7 +54,10 @@ export class OrgPreferences {
 
   public static async checkDRVersioning(connection: Connection): Promise<boolean> {
     try {
-      const result = await connection.metadata.read('OmniStudioSettings', ['OmniStudioDrVersionOrgPreference']);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+      const result = await (connection.metadata.read as any)('OmniStudioSettings', [
+        'OmniStudioDrVersionOrgPreference',
+      ]);
       Logger.captureVerboseData('DR version response', result);
       const metadata = result as MetadataInfo;
       return metadata.enableOmniStudioDrVersion === 'true';
@@ -112,9 +116,9 @@ export class OrgPreferences {
         enableExperienceBundleMetadata: 'false',
       };
       if (result && Array.isArray(result) && result.length > 0) {
-        settings = result[0] as ExperienceBundleSettingsReadMetadata;
+        settings = result[0] as unknown as ExperienceBundleSettingsReadMetadata;
       } else if (result && typeof result === 'object' && 'enableExperienceBundleMetadata' in result) {
-        settings = result as ExperienceBundleSettingsReadMetadata;
+        settings = result as unknown as ExperienceBundleSettingsReadMetadata;
       } else {
         return false;
       }

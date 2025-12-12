@@ -6,10 +6,10 @@ import { OrgPreferences } from './orgPreferences';
 import { Constants } from './constants/stringContants';
 
 export class ValidatorService {
-  private readonly messages: Messages;
+  private readonly messages: Messages<string>;
   private readonly orgs: OmnistudioOrgDetails;
   private readonly connection: Connection;
-  public constructor(orgs: OmnistudioOrgDetails, messages: Messages, connection: Connection) {
+  public constructor(orgs: OmnistudioOrgDetails, messages: Messages<string>, connection: Connection) {
     this.orgs = orgs;
     this.messages = messages;
     this.connection = connection;
