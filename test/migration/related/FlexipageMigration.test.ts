@@ -104,8 +104,8 @@ describe('FlexipageMigration', () => {
 
     // Mock FileDiffUtil
     mockFileDiffUtil = {
-      getFileDiff: sandbox.stub().returns('mock-diff'),
-      getXMLDiff: sandbox.stub().returns('mock-diff'),
+      getFileDiff: sandbox.stub().returns([{ old: 'old-line', new: 'new-line' }]),
+      getXMLDiff: sandbox.stub().returns([{ old: 'old-line', new: 'new-line' }]),
     };
 
     // Mock transformFlexipageBundle
@@ -324,7 +324,7 @@ describe('FlexipageMigration', () => {
       expect(result).to.deep.include({
         path: filePath,
         name: fileName,
-        diff: JSON.stringify('mock-diff'),
+        diff: JSON.stringify([{ old: 'old-line', new: 'new-line' }]),
         errors: [],
         status: 'Ready for migration',
       });
@@ -352,7 +352,7 @@ describe('FlexipageMigration', () => {
       expect(result).to.deep.include({
         path: filePath,
         name: fileName,
-        diff: JSON.stringify('mock-diff'),
+        diff: JSON.stringify([{ old: 'old-line', new: 'new-line' }]),
         errors: [],
         status: 'Successfully migrated',
       });

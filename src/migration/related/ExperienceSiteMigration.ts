@@ -103,7 +103,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
         }
         try {
           const experienceSitePageInfo = this.processExperienceSite(file, type);
-          if (experienceSitePageInfo?.hasOmnistudioContent === true) {
+          if (experienceSitePageInfo?.hasOmnistudioContentWithChanges === true) {
             Logger.logVerbose(this.messages.getMessage('experienceSiteWithOmniWrapperSuccessfullyProcessed'));
             experienceSiteAssessmentInfo.experienceSiteAssessmentPageInfos.push(experienceSitePageInfo);
           } else {
@@ -136,7 +136,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       infos: [],
       path: file.location,
       diff: JSON.stringify([]),
-      hasOmnistudioContent: false,
+      hasOmnistudioContentWithChanges: false,
       status: type === this.ASSESS ? 'Ready for migration' : 'Successfully migrated',
     };
 
@@ -150,7 +150,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     // TODO - When will it be Flexcard
 
     if (regions === undefined) {
-      experienceSiteAssessmentInfo.hasOmnistudioContent = false;
+      experienceSiteAssessmentInfo.hasOmnistudioContentWithChanges = false;
       return experienceSiteAssessmentInfo;
     }
 
@@ -177,6 +177,17 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
 
     Logger.logVerbose(this.messages.getMessage('printDifference', [JSON.stringify(difference)]));
 
+    // If there are no differences, mark as not having OmniStudio content to exclude from report
+    // Only exclude if status is 'Ready for migration' or 'Successfully migrated' (no warnings/errors)
+    if (
+      difference.length === 0 &&
+      (experienceSiteAssessmentInfo.status === 'Ready for migration' ||
+        experienceSiteAssessmentInfo.status === 'Successfully migrated')
+    ) {
+      experienceSiteAssessmentInfo.hasOmnistudioContentWithChanges = false;
+      return experienceSiteAssessmentInfo;
+    }
+
     if (type === this.MIGRATE && normalizedOriginalFileContent !== noarmalizeUpdatedFileContent) {
       Logger.logVerbose(this.messages.getMessage('updatingFile'));
       fs.writeFileSync(file.location, noarmalizeUpdatedFileContent, 'utf8');
@@ -196,7 +207,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
         infos: [],
         path: file.location,
         diff: JSON.stringify([]),
-        hasOmnistudioContent: false,
+        hasOmnistudioContentWithChanges: false,
         status: 'Failed',
       };
 
@@ -242,7 +253,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     // Check for legacy wrapper component
     if (component.componentName === lookupComponentName) {
       Logger.logVerbose(this.messages.getMessage('omniWrapperFound'));
-      experienceSiteAssessmentInfo.hasOmnistudioContent = true;
+      experienceSiteAssessmentInfo.hasOmnistudioContentWithChanges = true;
 
       this.updateComponentAndItsAttributes(
         component,
@@ -259,7 +270,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
       // Check for new LWC components that need reference updates
       if (this.isOmnistudioStandardWrapper(component.componentName)) {
         Logger.logVerbose(`Found Omnistudio component: ${component.componentName}`);
-        experienceSiteAssessmentInfo.hasOmnistudioContent = true;
+        experienceSiteAssessmentInfo.hasOmnistudioContentWithChanges = true;
 
         this.updateOmnistudioComponentReferences(component, experienceSiteAssessmentInfo, storage, type);
 

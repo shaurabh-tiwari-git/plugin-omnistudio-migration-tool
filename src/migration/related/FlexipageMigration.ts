@@ -206,12 +206,22 @@ export class FlexipageMigration extends BaseRelatedObjectMigration {
     const diff = new FileDiffUtil().getXMLDiff(normalizedOriginal, normalizedModified);
     Logger.logVerbose(this.messages.getMessage('generatedDiffForFile', [fileName]));
 
+    const status = mode === 'assess' ? 'Ready for migration' : 'Successfully migrated';
+
+    // Check if there are any actual changes (where old !== new)
+    const hasActualChanges = diff.some((d) => d.old !== d.new);
+
+    // Only exclude if there are no changes AND status indicates success (no warnings/errors)
+    if (!hasActualChanges && (status === 'Ready for migration' || status === 'Successfully migrated')) {
+      return null;
+    }
+
     return {
       path: filePath,
       name: fileName,
       diff: JSON.stringify(diff),
       errors: [],
-      status: mode === 'assess' ? 'Ready for migration' : 'Successfully migrated',
+      status,
     };
   }
 }
