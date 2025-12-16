@@ -32,7 +32,9 @@ describe('Assess command flags validation', () => {
     }
 
     expect(loggerErrorStub.calledOnce).to.be.true;
-    expect(loggerErrorStub.firstCall.args[0]).to.equal('Related flags are not supported with only flag.');
+    expect(loggerErrorStub.firstCall.args[0]).to.equal(
+      'Related objects [ex: Apex, lwc, expsites and flexipages] are not supported with only flag.'
+    );
     expect(processExitStub.calledWith(1)).to.be.true;
   });
 
