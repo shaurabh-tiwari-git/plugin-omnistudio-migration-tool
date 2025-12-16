@@ -59,8 +59,8 @@ export class OrgPreferences {
         'OmniStudioDrVersionOrgPreference',
       ]);
       Logger.captureVerboseData('DR version response', result);
-      const metadata = result as MetadataInfo;
-      return metadata.enableOmniStudioDrVersion === 'true';
+      const metadata = (Array.isArray(result) ? result[0] : result) as MetadataInfo;
+      return metadata?.enableOmniStudioDrVersion === 'true';
     } catch (error) {
       throw new Error(`Failed to read DR version: ${error instanceof Error ? error.message : String(error)}`);
     }
