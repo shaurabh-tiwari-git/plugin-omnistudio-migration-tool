@@ -22,11 +22,13 @@ import { CustomLabelsUtil } from '../../../utils/customLabels';
 import {
   initializeDataModelService,
   isFoundationPackage,
+  isOmnistudioMetadataAPIEnabled,
   isStandardDataModel,
   isStandardDataModelWithMetadataAPIEnabled,
 } from '../../../utils/dataModelService';
 
 import { ValidatorService } from '../../../utils/validatorService';
+import { OmniStudioMetadataCleanupService } from '../../../utils/config/OmniStudioMetadataCleanupService';
 
 Messages.importMessagesDirectory(__dirname);
 const messages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'assess');
@@ -137,13 +139,18 @@ export default class Assess extends SfCommand<AssessmentInfo> {
 
     const namespace = orgs.packageDetails.namespace;
     let projectPath = '';
-    const preMigrate: PreMigrate = new PreMigrate(namespace, conn, logger, messages, ux);
+    const preMigrate: PreMigrate = new PreMigrate(namespace, conn, this.logger, messages, this.ux);
+    const userActionMessages: string[] = [];
 
     // Handle all versions prerequisite for standard data model
-    if (isStandardDataModel()) {
-      if (!isStandardDataModelWithMetadataAPIEnabled()) {
-        allVersions = await preMigrate.handleAllVersionsPrerequisites(allVersions);
+    if (isStandardDataModel() && !isOmnistudioMetadataAPIEnabled()) {
+      // Check if OmniStudio metadata tables need cleanup, if yes, then populate userActions
+      const metadataCleanupService = new OmniStudioMetadataCleanupService(conn, messages);
+      const hasCleanTables = await metadataCleanupService.hasCleanOmniStudioMetadataTables();
+      if (!hasCleanTables) {
+        userActionMessages.push(messages.getMessage('cleanupMetadataTablesRequired'));
       }
+      allVersions = await preMigrate.handleAllVersionsPrerequisites(allVersions);
     }
     if (relatedObjects) {
       objectsToProcess = relatedObjects.split(',').map((obj) => obj.trim());
@@ -235,7 +242,6 @@ export default class Assess extends SfCommand<AssessmentInfo> {
     // Post Assessment tasks
     const postMigrate: PostMigrate = new PostMigrate(org, namespace, conn, logger, messages, ux, objectsToProcess);
 
-    const userActionMessages: string[] = [];
     await postMigrate.restoreExperienceAPIMetadataSettings(
       isExperienceBundleMetadataAPIProgramaticallyEnabled,
       userActionMessages

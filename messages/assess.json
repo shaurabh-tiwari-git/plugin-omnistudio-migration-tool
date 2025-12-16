@@ -227,5 +227,6 @@
   "preparingStorageForMetadataEnabledOrg": "Preparing storage for %s org on Standard Data Model with Metadata API enabled",
   "processingNotRequired": "Assessment not required for Standard Data Model Orgs with Metadata API enabled",
   "skippingTruncation": "Skipping Trunction as standard data model org",
-  "loglevelFlagDeprecated": "loglevel is deprecated. Use --verbose instead"
+  "loglevelFlagDeprecated": "loglevel is deprecated. Use --verbose instead",
+  "cleanupMetadataTablesRequired": "OmniStudio metadata tables contain records that need to be cleaned up before migration. Please run the cleanup process manually to clear the metadata tables.\n<a href='https://help.salesforce.com/s/articleView?id=xcloud.os_enable_omnistudio_metadata_api_support.htm&type=5' target='_blank'>Cleanup Metadata Tables</a>"
 }

@@ -92,7 +92,7 @@ describe('ExperienceSiteMigration', () => {
       dataModel: 'Custom',
       hasValidNamespace: true,
       isFoundationPackage: false,
-      isStandardDataModelWithMetadataAPIEnabled: false,
+      isOmnistudioMetadataAPIEnabled: false,
     };
     initializeDataModelService(mockOrgDetails);
 
@@ -763,7 +763,7 @@ describe('ExperienceSiteMigration', () => {
         dataModel: 'Standard',
         hasValidNamespace: true,
         isFoundationPackage: false,
-        isStandardDataModelWithMetadataAPIEnabled: false,
+        isOmnistudioMetadataAPIEnabled: false,
       };
       initializeDataModelService(mockOrgDetails);
 

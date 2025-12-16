@@ -42,7 +42,7 @@ describe('Standard Data Model with Metadata API Enabled - Storage Preparation On
       dataModel: 'Standard',
       hasValidNamespace: true,
       isFoundationPackage: false,
-      isStandardDataModelWithMetadataAPIEnabled: true, // THIS IS THE KEY FLAG
+      isOmnistudioMetadataAPIEnabled: true, // THIS IS THE KEY FLAG
     };
     initializeDataModelService(mockOrgDetails);
 
@@ -808,7 +808,7 @@ describe('Standard Data Model with Metadata API Enabled - Storage Preparation On
   describe('Report Generation - Metadata API Enabled', () => {
     it('should generate empty results suitable for report generation', async () => {
       const omniScriptTool = new OmniScriptMigrationTool(
-        OmniScriptExportType.All,
+        OmniScriptExportType.OS,
         '',
         mockConnection,
         mockLogger,
@@ -836,7 +836,7 @@ describe('Standard Data Model with Metadata API Enabled - Storage Preparation On
 
     it('should generate consistent result structure across all component types', async () => {
       const omniScriptTool = new OmniScriptMigrationTool(
-        OmniScriptExportType.All,
+        OmniScriptExportType.OS,
         '',
         mockConnection,
         mockLogger,
