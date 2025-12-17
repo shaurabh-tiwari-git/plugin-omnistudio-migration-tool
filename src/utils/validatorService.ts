@@ -138,8 +138,6 @@ export class ValidatorService {
           return true;
         }
       }
-
-      Logger.error(this.messages.getMessage('packagesHaveDifferentValue'));
       return false;
     } catch (error) {
       Logger.error(this.messages.getMessage('failedToCheckPackagesValue'));
