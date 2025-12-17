@@ -11,7 +11,7 @@ export class OmnistudioSettingsPrefManager {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
       const result = (await (this.connection.metadata.read as any)('OmniStudioSettings', ['OmniStudio'])) as unknown;
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const metadata = result as MetadataInfo;
+      const metadata = (Array.isArray(result) ? result[0] : result) as MetadataInfo;
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       return metadata?.enableOmniGlobalAutoNumberPref === 'true' || false;
     } catch (error) {
@@ -48,7 +48,7 @@ export class OmnistudioSettingsPrefManager {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
       const result = (await (this.connection.metadata.read as any)('OmniStudioSettings', ['OmniStudio'])) as unknown;
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const metadata = result as MetadataInfo;
+      const metadata = (Array.isArray(result) ? result[0] : result) as MetadataInfo;
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       return metadata?.enableStandardOmniStudioRuntime === 'true' || false;
     } catch (error) {
@@ -86,7 +86,7 @@ export class OmnistudioSettingsPrefManager {
       const result = (await (this.connection.metadata.read as any)('OmniStudioSettings', ['OmniStudio'])) as unknown;
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const metadata = result as MetadataInfo;
+      const metadata = (Array.isArray(result) ? result[0] : result) as MetadataInfo;
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       return metadata?.enableOmniStudioMetadata === 'true' || false;
     } catch (error) {

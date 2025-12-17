@@ -139,7 +139,7 @@ export default class Assess extends SfCommand<AssessmentInfo> {
 
     const namespace = orgs.packageDetails.namespace;
     let projectPath = '';
-    const preMigrate: PreMigrate = new PreMigrate(namespace, conn, this.logger, messages, this.ux);
+    const preMigrate: PreMigrate = new PreMigrate(namespace, conn, logger, messages, ux);
     const userActionMessages: string[] = [];
 
     // Handle all versions prerequisite for standard data model
