@@ -213,7 +213,7 @@
   "drVersioningEnabled": "We cannot proceed with the assessment as the Data Mapper versioning setting is enabled in your org.",
   "errorValidatingDrVersioning": "Failed to verify the status of the Data Mapper versioning setting. Try again later.",
   "validatingOmniInteractionConfig": "Validating Omni Interaction Configuration",
-  "omniInteractionConfigInvalid": "The Omnistudio Migration Assistant cannot assess components in your org as your org contains both the Omnistudio Foundation package and Vlocity Industries managed package.",
+  "omniInteractionConfigInvalid": "The Omnistudio Migration Assistant cannot assess your components because your org uses unsupported Omni Interaction Configuration settings. See Limitations: https://help.salesforce.com/s/articleView?id=xcloud.os_migrate_about_oma.htm&type=5",
   "queryResultSize": "Query result size: %s",
   "packagesHaveSameValue": "Both TheFirstInstalledOmniPackage and InstalledIndustryPackage have the same value.",
   "packagesHaveDifferentValue": "Both the InstalledIndustryPackage and TheFirstInstalledOmniPackage have different values.",

@@ -726,9 +726,6 @@ describe('ValidatorService', () => {
         .withArgs('validatingOmniInteractionConfig')
         .returns('Validating OmniInteractionConfig');
       (messages.getMessage as sinon.SinonStub).withArgs('queryResultSize', [2]).returns('Query returned 2 results');
-      (messages.getMessage as sinon.SinonStub)
-        .withArgs('packagesHaveDifferentValue')
-        .returns('Packages have different values');
       const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
@@ -738,7 +735,6 @@ describe('ValidatorService', () => {
       expect(result).to.be.false;
       expect(loggerLogVerboseStub.calledWith('Validating OmniInteractionConfig')).to.be.true;
       expect(loggerLogVerboseStub.calledWith('Query returned 2 results')).to.be.true;
-      expect(loggerErrorStub.calledWith('Packages have different values')).to.be.true;
     });
 
     it('should return false when totalSize is 0', async () => {
@@ -757,9 +753,6 @@ describe('ValidatorService', () => {
       (messages.getMessage as sinon.SinonStub)
         .withArgs('validatingOmniInteractionConfig')
         .returns('Validating OmniInteractionConfig');
-      (messages.getMessage as sinon.SinonStub)
-        .withArgs('packagesHaveDifferentValue')
-        .returns('Packages have different values');
       const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
@@ -768,7 +761,6 @@ describe('ValidatorService', () => {
       // Assert
       expect(result).to.be.false;
       expect(loggerLogVerboseStub.calledWith('Validating OmniInteractionConfig')).to.be.true;
-      expect(loggerErrorStub.calledWith('Packages have different values')).to.be.true;
     });
 
     it('should return false when totalSize is greater than 2', async () => {
@@ -800,9 +792,6 @@ describe('ValidatorService', () => {
       (messages.getMessage as sinon.SinonStub)
         .withArgs('validatingOmniInteractionConfig')
         .returns('Validating OmniInteractionConfig');
-      (messages.getMessage as sinon.SinonStub)
-        .withArgs('packagesHaveDifferentValue')
-        .returns('Packages have different values');
       const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
@@ -811,7 +800,6 @@ describe('ValidatorService', () => {
       // Assert
       expect(result).to.be.false;
       expect(loggerLogVerboseStub.calledWith('Validating OmniInteractionConfig')).to.be.true;
-      expect(loggerErrorStub.calledWith('Packages have different values')).to.be.true;
     });
 
     it('should return false when query result is null', async () => {
@@ -826,9 +814,6 @@ describe('ValidatorService', () => {
       (messages.getMessage as sinon.SinonStub)
         .withArgs('validatingOmniInteractionConfig')
         .returns('Validating OmniInteractionConfig');
-      (messages.getMessage as sinon.SinonStub)
-        .withArgs('packagesHaveDifferentValue')
-        .returns('Packages have different values');
       const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
@@ -837,7 +822,6 @@ describe('ValidatorService', () => {
       // Assert
       expect(result).to.be.false;
       expect(loggerLogVerboseStub.calledWith('Validating OmniInteractionConfig')).to.be.true;
-      expect(loggerErrorStub.calledWith('Packages have different values')).to.be.true;
     });
 
     it('should return false when query result is undefined', async () => {
@@ -852,9 +836,6 @@ describe('ValidatorService', () => {
       (messages.getMessage as sinon.SinonStub)
         .withArgs('validatingOmniInteractionConfig')
         .returns('Validating OmniInteractionConfig');
-      (messages.getMessage as sinon.SinonStub)
-        .withArgs('packagesHaveDifferentValue')
-        .returns('Packages have different values');
       const validator = new ValidatorService(orgs, messages, connection);
 
       // Act
@@ -863,7 +844,6 @@ describe('ValidatorService', () => {
       // Assert
       expect(result).to.be.false;
       expect(loggerLogVerboseStub.calledWith('Validating OmniInteractionConfig')).to.be.true;
-      expect(loggerErrorStub.calledWith('Packages have different values')).to.be.true;
     });
 
     it('should return false when query throws an Error', async () => {
