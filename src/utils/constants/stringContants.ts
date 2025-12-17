@@ -45,6 +45,6 @@ export const Constants = {
   FoundationPackageName: 'omnistudio',
 
   // Generic Constants
-  On: 'ON',
-  Off: 'OFF',
+  On: 'on',
+  Off: 'off',
 };
