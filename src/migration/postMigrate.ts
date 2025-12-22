@@ -114,8 +114,9 @@ export class PostMigrate extends BaseMigrationTool {
     try {
       Logger.logVerbose(this.messages.getMessage('checkingStandardRuntimeStatus'));
 
-      const result = await this.settingsPrefManager.enableStandardRuntimeIfDisabled();
-
+      let result = await this.settingsPrefManager.enableStandardRuntimeIfDisabled();
+      // Metadata API returns an array of results, even for single updates
+      result = Array.isArray(result) && result.length > 0 ? result[0] : result;
       if (result === null) {
         Logger.logVerbose(this.messages.getMessage('standardRuntimeAlreadyEnabled'));
       } else if (result?.success === true) {
@@ -134,7 +135,9 @@ export class PostMigrate extends BaseMigrationTool {
 
   private async enableOmniStudioSettingsMetadataIfNeeded(userActionMessage: string[]): Promise<void> {
     try {
-      const result = await this.settingsPrefManager.enableOmniStudioSettingsMetadata();
+      let result = await this.settingsPrefManager.enableOmniStudioSettingsMetadata();
+      // Metadata API returns an array of results, even for single updates
+      result = Array.isArray(result) && result.length > 0 ? result[0] : result;
       if (result === null) {
         Logger.logVerbose(this.messages.getMessage('omniStudioSettingsMetadataAlreadyEnabled'));
       } else if (result?.success === true) {

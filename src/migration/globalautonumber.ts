@@ -121,14 +121,16 @@ export class GlobalAutoNumberMigrationTool extends BaseMigrationTool implements 
       await super.truncate(this.namespacePrefix + GlobalAutoNumberMigrationTool.GLOBAL_AUTO_NUMBER_SETTING_NAME);
       Logger.logVerbose(this.messages.getMessage('postMigrationCleanupCompleted'));
       // Enable the org preference after successful cleanup
-      const result = await this.prefManager.enableGlobalAutoNumber();
+      let result = await this.prefManager.enableGlobalAutoNumber();
+      // Metadata API returns an array of results, even for single updates
+      result = Array.isArray(result) && result.length > 0 ? result[0] : result;
       if (result?.success) {
         Logger.logVerbose(this.messages.getMessage('omniGlobalAutoNumberPrefEnabled'));
         return '';
       } else {
         const errorMessage = this.messages.getMessage('errorEnablingOmniGlobalAutoNumberPref');
         Logger.error(errorMessage);
-        Logger.error(result?.errors?.message);
+        Logger.error(result?.errors?.message || JSON.stringify(result?.errors));
         return errorMessage;
       }
     } catch (error) {
