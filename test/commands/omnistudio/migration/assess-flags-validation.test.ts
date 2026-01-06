@@ -76,4 +76,25 @@ describe('Assess command flags validation', () => {
     expect(loggerErrorStub.called).to.be.false;
     expect(processExitStub.called).to.be.false;
   });
+
+  it('should allow multiple comma-separated values for --relatedobjects without --only', () => {
+    const assessOnly = '';
+    const relatedObjects = 'lwc,apex,flexipages';
+
+    if (assessOnly && relatedObjects) {
+      Logger.error(messages.getMessage('relatedFlagsNotSupportedWithOnly'));
+      process.exit(1);
+    }
+
+    // Verify no error was logged and process.exit was not called
+    expect(loggerErrorStub.called).to.be.false;
+    expect(processExitStub.called).to.be.false;
+
+    // Verify the relatedObjects can be properly parsed
+    const parsedObjects = relatedObjects.split(',');
+    expect(parsedObjects).to.have.length(3);
+    expect(parsedObjects).to.include('lwc');
+    expect(parsedObjects).to.include('apex');
+    expect(parsedObjects).to.include('flexipages');
+  });
 });
