@@ -232,6 +232,7 @@
   "startingCustomLabelMigration": "Starting Custom Labels migration",
   "customLabelMigrationCompleted": "Custom Labels migration completed. %s labels processed out of %s total",
   "errorDuringCustomLabelMigration": "Error during Custom Labels migration: %s",
+  "customLabelMigrationErrorMessage": "We couldn’t complete the Custom Labels migration. Check your org configuration and confirm it meets the requirements outlined <a href='https://help.salesforce.com/s/articleView?id=xcloud.os_migrate_oma_prereq.htm&type=5' target='_blank'>here</a>.",
   "callingCloneCustomLabelsAPI": "Calling clone-custom-labels API for namespace: %s",
   "cloneCustomLabelsAPIResponse": "Clone custom labels API response summary: %s results",
   "errorCallingCloneCustomLabelsAPI": "Error calling clone-custom-labels API: %s",

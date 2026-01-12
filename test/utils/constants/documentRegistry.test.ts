@@ -41,6 +41,7 @@ const titles = {
   duplicateCardNameMessage: 'Clone a Flexcard',
   reservedKeysFoundInPropertySet: 'Omnistudio Naming Conventions',
   manualDeploymentSteps: 'Set Up Your Environment to Customize Omniscript Elements',
+  customLabelMigrationErrorMessage: 'Omnistudio Migration Prerequisites',
 };
 
 describe('DocumentRegistry', () => {
@@ -126,6 +127,7 @@ describe('DocumentRegistry', () => {
         'duplicateCardNameMessage',
         'reservedKeysFoundInPropertySet',
         'manualDeploymentSteps',
+        'customLabelMigrationErrorMessage',
       ];
 
       expectedKeys.forEach((key) => {

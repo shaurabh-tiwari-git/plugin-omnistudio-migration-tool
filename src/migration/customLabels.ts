@@ -166,7 +166,7 @@ export class CustomLabelsMigrationTool extends BaseMigrationTool implements Migr
           name: this.getName(),
           results: emptyMap,
           records: emptyMap, // Both point to the same empty map
-          errors: [String(error)],
+          errors: [this.messages.getMessage('customLabelMigrationErrorMessage')],
         },
       ];
     }
