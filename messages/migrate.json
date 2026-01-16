@@ -46,6 +46,7 @@
   "notEmptyProjectFolderPath": "Provided project folder is not empty. Please provide a valid empty project folder name and path",
   "invalidYesNoResponse": "Invalid response. Please answer y or n.",
   "notSfdxProjectFolderPath": "Provided folder is not a valid Salesforce DX project. Please select a folder containing sfdx-project.json",
+  "restrictedFolderName": "Restricted folder name: %s. Do not use 'labels', 'messageChannels', or 'lwc'. Try again with a different name.",
   "operationCancelled": "Operation cancelled.",
   "errorRunningMigrate": "Migration process failed reason : %s",
   "exceptionSettingDesignersToStandardDataModel": "We've encountered an exception while configuring the Omnistudio standard designers to use the standard data model. Try again later.",

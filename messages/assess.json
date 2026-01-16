@@ -117,6 +117,7 @@
   "operationCancelled": "Operation cancelled.",
   "invalidYesNoResponse": "Invalid response. Please answer y or n.",
   "notSfdxProjectFolderPath": "Provided folder is not a valid Salesforce DX project. Please select a folder containing sfdx-project.json",
+  "restrictedFolderName": "Restricted folder name: %s. Do not use 'labels', 'messageChannels', or 'lwc'. Try again with a different name.",
   "errorRunningAssess": "Assessment process failed reason : %s",
   "enableVerboseOutput": "Enable verbose output",
   "apexFileChangesIdentifiedNotApplied": "Changes were identified but not applied for the %s Apex class when the assessment mode was running.",
