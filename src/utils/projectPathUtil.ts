@@ -158,6 +158,14 @@ export class ProjectPathUtil {
       return false;
     }
 
+    // Check if folder path ends with restricted names (case insensitive)
+    const restrictedFolderNames = ['labels', 'messagechannels', 'lwc'];
+    const folderName = path.basename(folderPath);
+    if (restrictedFolderNames.includes(folderName.toLowerCase())) {
+      Logger.error(messages.getMessage('restrictedFolderName', [folderName]));
+      return false;
+    }
+
     if (mode === EMPTY_MODE && fs.readdirSync(folderPath).length > 0) {
       Logger.error(messages.getMessage('notEmptyProjectFolderPath'));
       return false;
