@@ -44,7 +44,8 @@ describe('ProjectPathUtil - Restricted Folder Name Validation', () => {
       }
 
       expect(loggerErrorStub.calledOnce).to.be.true;
-      expect(loggerErrorStub.firstCall.args[0]).to.include('lwc');
+      expect(loggerErrorStub.firstCall.args[0]).to.include('Restricted folder name: lwc');
+      expect(loggerErrorStub.firstCall.args[0]).to.include('Try again with a different name');
     });
 
     it('should reject folder path ending with "labels"', () => {
@@ -56,7 +57,8 @@ describe('ProjectPathUtil - Restricted Folder Name Validation', () => {
       }
 
       expect(loggerErrorStub.calledOnce).to.be.true;
-      expect(loggerErrorStub.firstCall.args[0]).to.include('labels');
+      expect(loggerErrorStub.firstCall.args[0]).to.include('Restricted folder name: labels');
+      expect(loggerErrorStub.firstCall.args[0]).to.include('Try again with a different name');
     });
 
     it('should reject folder path ending with "messageChannels"', () => {
@@ -68,7 +70,8 @@ describe('ProjectPathUtil - Restricted Folder Name Validation', () => {
       }
 
       expect(loggerErrorStub.calledOnce).to.be.true;
-      expect(loggerErrorStub.firstCall.args[0]).to.include('messageChannels');
+      expect(loggerErrorStub.firstCall.args[0]).to.include('Restricted folder name: messageChannels');
+      expect(loggerErrorStub.firstCall.args[0]).to.include('Try again with a different name');
     });
 
     it('should reject folder path with uppercase "LWC" (case insensitive)', () => {
@@ -80,7 +83,8 @@ describe('ProjectPathUtil - Restricted Folder Name Validation', () => {
       }
 
       expect(loggerErrorStub.calledOnce).to.be.true;
-      expect(loggerErrorStub.firstCall.args[0]).to.include('LWC');
+      expect(loggerErrorStub.firstCall.args[0]).to.include('Restricted folder name: LWC');
+      expect(loggerErrorStub.firstCall.args[0]).to.include('Try again with a different name');
     });
 
     it('should reject folder path with mixed case "Labels" (case insensitive)', () => {
@@ -92,7 +96,8 @@ describe('ProjectPathUtil - Restricted Folder Name Validation', () => {
       }
 
       expect(loggerErrorStub.calledOnce).to.be.true;
-      expect(loggerErrorStub.firstCall.args[0]).to.include('Labels');
+      expect(loggerErrorStub.firstCall.args[0]).to.include('Restricted folder name: Labels');
+      expect(loggerErrorStub.firstCall.args[0]).to.include('Try again with a different name');
     });
 
     it('should reject folder path with uppercase "MESSAGECHANNELS" (case insensitive)', () => {
@@ -104,7 +109,8 @@ describe('ProjectPathUtil - Restricted Folder Name Validation', () => {
       }
 
       expect(loggerErrorStub.calledOnce).to.be.true;
-      expect(loggerErrorStub.firstCall.args[0]).to.include('MESSAGECHANNELS');
+      expect(loggerErrorStub.firstCall.args[0]).to.include('Restricted folder name: MESSAGECHANNELS');
+      expect(loggerErrorStub.firstCall.args[0]).to.include('Try again with a different name');
     });
   });
 
