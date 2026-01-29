@@ -1021,6 +1021,7 @@ export class CardMigrationTool extends BaseMigrationTool implements MigrationToo
         name: originalName,
         isDuplicate: false,
         originalName: originalName,
+        migrationSuccess: true, // When metadata API is enabled, assume migration is successful
       };
 
       this.addKeyToStorage(originalName, value, storage);
