@@ -716,6 +716,7 @@ export class OmniScriptMigrationTool extends BaseMigrationTool implements Migrat
           originalType: originalType,
           originalSubtype: originalSubtype,
           originalLanguage: originalLanguage,
+          migrationSuccess: true, // When metadata API is enabled, assume migration is successful
         };
 
         this.addKeyToStorage(originalType, originalSubtype, originalLanguage, storage, value);

@@ -868,4 +868,321 @@ describe('Standard Data Model with Metadata API Enabled - Storage Preparation On
       });
     });
   });
+
+  describe('Storage migrationSuccess Flag - Metadata API Enabled', () => {
+    beforeEach(() => {
+      // Clear storage before each test
+      const migrationStorage = StorageUtil.getOmnistudioMigrationStorage();
+      migrationStorage.osStorage.clear();
+      migrationStorage.osStandardStorage.clear();
+      migrationStorage.fcStorage.clear();
+
+      const assessmentStorage = StorageUtil.getOmnistudioAssessmentStorage();
+      assessmentStorage.osStorage.clear();
+      assessmentStorage.osStandardStorage.clear();
+      assessmentStorage.fcStorage.clear();
+    });
+
+    describe('OmniScript - migrationSuccess should be true (direct method test)', () => {
+      it('should set migrationSuccess to true when prepareStorageForRelatedObjectsWhenMetadataAPIEnabled is called', () => {
+        const omniScriptTool = new OmniScriptMigrationTool(
+          OmniScriptExportType.All,
+          '',
+          mockConnection,
+          mockLogger,
+          mockMessages,
+          mockUx,
+          false
+        );
+
+        const mockOmniscripts = [
+          {
+            Id: 'os1',
+            Name: 'TestOmniScript',
+            Type: 'Customer',
+            SubType: 'Profile',
+            Language: 'English',
+            VersionNumber: '1',
+            IsIntegrationProcedure: false,
+            IsWebCompEnabled: true,
+            IsActive: true,
+          },
+          {
+            Id: 'os2',
+            Name: 'AnotherOmniScript',
+            Type: 'Product',
+            SubType: 'Details',
+            Language: 'Spanish',
+            VersionNumber: '2',
+            IsIntegrationProcedure: false,
+            IsWebCompEnabled: true,
+            IsActive: true,
+          },
+        ];
+
+        // Call the private method directly
+        const storage = StorageUtil.getOmnistudioAssessmentStorage();
+        (omniScriptTool as any).prepareStorageForRelatedObjectsWhenMetadataAPIEnabled(storage, mockOmniscripts);
+
+        // Verify OmniScripts are in storage with migrationSuccess = true
+        const key1 = 'customerprofileenglish';
+        const key2 = 'productdetailsspanish';
+
+        expect(storage.osStorage.has(key1)).to.be.true;
+        expect(storage.osStorage.has(key2)).to.be.true;
+
+        const osData1 = storage.osStorage.get(key1);
+        const osData2 = storage.osStorage.get(key2);
+
+        expect(osData1).to.not.be.undefined;
+        expect(osData1.migrationSuccess).to.be.true;
+        expect(osData1.type).to.equal('Customer');
+        expect(osData1.subtype).to.equal('Profile');
+        expect(osData1.language).to.equal('English');
+
+        expect(osData2).to.not.be.undefined;
+        expect(osData2.migrationSuccess).to.be.true;
+        expect(osData2.type).to.equal('Product');
+        expect(osData2.subtype).to.equal('Details');
+        expect(osData2.language).to.equal('Spanish');
+      });
+
+      it('should skip Integration Procedures when populating storage', () => {
+        const omniScriptTool = new OmniScriptMigrationTool(
+          OmniScriptExportType.All,
+          '',
+          mockConnection,
+          mockLogger,
+          mockMessages,
+          mockUx,
+          false
+        );
+
+        const mockOmniscripts = [
+          {
+            Id: 'os1',
+            Name: 'TestOmniScript',
+            Type: 'Customer',
+            SubType: 'Profile',
+            Language: 'English',
+            IsIntegrationProcedure: false, // OmniScript
+          },
+          {
+            Id: 'ip1',
+            Name: 'TestIP',
+            Type: 'API',
+            SubType: 'Gateway',
+            IsIntegrationProcedure: true, // Integration Procedure - should be skipped
+          },
+        ];
+
+        const storage = StorageUtil.getOmnistudioAssessmentStorage();
+        (omniScriptTool as any).prepareStorageForRelatedObjectsWhenMetadataAPIEnabled(storage, mockOmniscripts);
+
+        // OmniScript should be in storage
+        const osKey = 'customerprofileenglish';
+        expect(storage.osStorage.has(osKey)).to.be.true;
+        expect(storage.osStorage.get(osKey)!.migrationSuccess).to.be.true;
+
+        // Only 1 entry should be in storage (IP was skipped)
+        expect(storage.osStorage.size).to.equal(1);
+      });
+
+      it('should work for both assessment and migration storage', () => {
+        const omniScriptTool = new OmniScriptMigrationTool(
+          OmniScriptExportType.All,
+          '',
+          mockConnection,
+          mockLogger,
+          mockMessages,
+          mockUx,
+          false
+        );
+
+        const mockOmniscripts = [
+          {
+            Id: 'os1',
+            Name: 'TestOmniScript',
+            Type: 'TestWrapperOmni',
+            SubType: 'Q3',
+            Language: 'English',
+            IsIntegrationProcedure: false,
+          },
+        ];
+
+        // Test with assessment storage
+        const assessmentStorage = StorageUtil.getOmnistudioAssessmentStorage();
+        (omniScriptTool as any).prepareStorageForRelatedObjectsWhenMetadataAPIEnabled(
+          assessmentStorage,
+          mockOmniscripts
+        );
+
+        const assessKey = 'testwrapperomniq3english';
+        expect(assessmentStorage.osStorage.has(assessKey)).to.be.true;
+        expect(assessmentStorage.osStorage.get(assessKey)!.migrationSuccess).to.be.true;
+
+        // Test with migration storage
+        const migrationStorage = StorageUtil.getOmnistudioMigrationStorage();
+        (omniScriptTool as any).prepareStorageForRelatedObjectsWhenMetadataAPIEnabled(
+          migrationStorage,
+          mockOmniscripts
+        );
+
+        expect(migrationStorage.osStorage.has(assessKey)).to.be.true;
+        expect(migrationStorage.osStorage.get(assessKey)!.migrationSuccess).to.be.true;
+      });
+    });
+
+    describe('FlexCard - migrationSuccess should be true (direct method test)', () => {
+      it('should set migrationSuccess to true when prepareStorageForRelatedObjectsWhenMetadataAPIEnabled is called', () => {
+        const cardTool = new CardMigrationTool('', mockConnection, mockLogger, mockMessages, mockUx, false);
+
+        const mockFlexCards = [
+          {
+            Id: 'fc1',
+            Name: 'CustomerDashboard',
+          },
+          {
+            Id: 'fc2',
+            Name: 'ProductDetails',
+          },
+        ];
+
+        const storage = StorageUtil.getOmnistudioAssessmentStorage();
+        (cardTool as any).prepareStorageForRelatedObjectsWhenMetadataAPIEnabled(storage, mockFlexCards);
+
+        const key1 = 'customerdashboard';
+        const key2 = 'productdetails';
+
+        expect(storage.fcStorage.has(key1)).to.be.true;
+        expect(storage.fcStorage.has(key2)).to.be.true;
+
+        const fcData1 = storage.fcStorage.get(key1);
+        const fcData2 = storage.fcStorage.get(key2);
+
+        expect(fcData1).to.not.be.undefined;
+        expect(fcData1.migrationSuccess).to.be.true;
+        expect(fcData1.name).to.equal('CustomerDashboard');
+        expect(fcData1.originalName).to.equal('CustomerDashboard');
+
+        expect(fcData2).to.not.be.undefined;
+        expect(fcData2.migrationSuccess).to.be.true;
+        expect(fcData2.name).to.equal('ProductDetails');
+        expect(fcData2.originalName).to.equal('ProductDetails');
+      });
+
+      it('should work for multiple FlexCards', () => {
+        const cardTool = new CardMigrationTool('', mockConnection, mockLogger, mockMessages, mockUx, false);
+
+        const mockFlexCards = Array.from({ length: 5 }, (_, i) => ({
+          Id: `fc${i}`,
+          Name: `FlexCard${i}`,
+        }));
+
+        const storage = StorageUtil.getOmnistudioAssessmentStorage();
+        (cardTool as any).prepareStorageForRelatedObjectsWhenMetadataAPIEnabled(storage, mockFlexCards);
+
+        for (let i = 0; i < 5; i++) {
+          const key = `flexcard${i}`;
+          expect(storage.fcStorage.has(key)).to.be.true;
+          const fcData = storage.fcStorage.get(key);
+          expect(fcData).to.not.be.undefined;
+          expect(fcData.migrationSuccess).to.be.true;
+        }
+      });
+
+      it('should work for both assessment and migration storage', () => {
+        const cardTool = new CardMigrationTool('', mockConnection, mockLogger, mockMessages, mockUx, false);
+
+        const mockFlexCards = [
+          {
+            Id: 'fc1',
+            Name: 'TestFlexCard',
+          },
+        ];
+
+        // Test with assessment storage
+        const assessmentStorage = StorageUtil.getOmnistudioAssessmentStorage();
+        (cardTool as any).prepareStorageForRelatedObjectsWhenMetadataAPIEnabled(assessmentStorage, mockFlexCards);
+
+        const key = 'testflexcard';
+        expect(assessmentStorage.fcStorage.has(key)).to.be.true;
+        expect(assessmentStorage.fcStorage.get(key)!.migrationSuccess).to.be.true;
+
+        // Test with migration storage
+        const migrationStorage = StorageUtil.getOmnistudioMigrationStorage();
+        (cardTool as any).prepareStorageForRelatedObjectsWhenMetadataAPIEnabled(migrationStorage, mockFlexCards);
+
+        expect(migrationStorage.fcStorage.has(key)).to.be.true;
+        expect(migrationStorage.fcStorage.get(key)!.migrationSuccess).to.be.true;
+      });
+    });
+
+    describe('FlexiPage Migration - Storage lookup should find migrationSuccess = true', () => {
+      it('should have migrationSuccess = true for OmniScript referenced by FlexiPage wrapper', () => {
+        const omniScriptTool = new OmniScriptMigrationTool(
+          OmniScriptExportType.All,
+          '',
+          mockConnection,
+          mockLogger,
+          mockMessages,
+          mockUx,
+          false
+        );
+
+        // Simulate an OmniScript that a FlexiPage wrapper references (testWrapperOmniQ3English)
+        const mockOmniscripts = [
+          {
+            Id: 'os1',
+            Name: 'TestWrapperOmniQ3English',
+            Type: 'TestWrapperOmni',
+            SubType: 'Q3',
+            Language: 'English',
+            IsIntegrationProcedure: false,
+          },
+        ];
+
+        const storage = StorageUtil.getOmnistudioAssessmentStorage();
+        (omniScriptTool as any).prepareStorageForRelatedObjectsWhenMetadataAPIEnabled(storage, mockOmniscripts);
+
+        // This is the key that FlexiPage transformer looks up
+        const key = 'testwrapperomniq3english';
+
+        expect(storage.osStorage.has(key)).to.be.true;
+        const osData = storage.osStorage.get(key);
+        expect(osData).to.not.be.undefined;
+        expect(osData.migrationSuccess).to.be.true;
+
+        // This proves the fix works - previously migrationSuccess was undefined,
+        // which would cause FlexiPage migration to fail with:
+        // "Key testwrapperomniq3english can not be processed"
+      });
+
+      it('should have migrationSuccess = true for FlexCard referenced by FlexiPage', () => {
+        const cardTool = new CardMigrationTool('', mockConnection, mockLogger, mockMessages, mockUx, false);
+
+        const mockFlexCards = [
+          {
+            Id: 'fc1',
+            Name: 'TestFlexCard',
+          },
+        ];
+
+        const storage = StorageUtil.getOmnistudioAssessmentStorage();
+        (cardTool as any).prepareStorageForRelatedObjectsWhenMetadataAPIEnabled(storage, mockFlexCards);
+
+        // This is the key that FlexiPage transformer looks up
+        const key = 'testflexcard';
+
+        expect(storage.fcStorage.has(key)).to.be.true;
+        const fcData = storage.fcStorage.get(key);
+        expect(fcData).to.not.be.undefined;
+        expect(fcData.migrationSuccess).to.be.true;
+
+        // This proves the fix works - previously migrationSuccess was undefined,
+        // which would cause FlexiPage migration to fail with:
+        // "Key testflexcard can not be processed"
+      });
+    });
+  });
 });

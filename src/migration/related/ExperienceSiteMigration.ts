@@ -385,7 +385,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
   }
 
   private shouldAddWarning(targetData: Storage): boolean {
-    return targetData === undefined || targetData.migrationSuccess === false || targetData.isDuplicate === true;
+    return targetData === undefined || !targetData.migrationSuccess || targetData.isDuplicate === true;
   }
 
   /**
@@ -452,7 +452,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     // Look up in osStandardStorage using the object key
     const targetDataFromStorage: OmniScriptStorage = StorageUtil.getStandardOmniScript(storage, lookupKey);
 
-    if (targetDataFromStorage === undefined || targetDataFromStorage.migrationSuccess === false) {
+    if (targetDataFromStorage === undefined || !targetDataFromStorage.migrationSuccess) {
       // For the standard wrapper we only need to check the storage empty and migrationSuccess status
       const originalKey = `${currentType}_${currentSubType}_${currentLanguage}`;
       const warningMsg: string = this.getWarningMessage(originalKey, targetDataFromStorage);
@@ -498,7 +498,7 @@ export class ExperienceSiteMigration extends BaseRelatedObjectMigration {
     if (targetDataFromStorage === undefined) {
       // Add log verbose
       return this.messages.getMessage('manualInterventionForExperienceSite', [oldTypeSubtypeLanguage]);
-    } else if (targetDataFromStorage.migrationSuccess === false) {
+    } else if (!targetDataFromStorage.migrationSuccess) {
       return this.messages.getMessage('manualInterventionForExperienceSiteAsFailure', [oldTypeSubtypeLanguage]);
     } else {
       return this.messages.getMessage('manualInterventionForExperienceSiteAsDuplicateKey', [oldTypeSubtypeLanguage]);
