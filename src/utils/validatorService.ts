@@ -41,7 +41,7 @@ export class ValidatorService {
     // For custom data model, validate if licenses are valid
     // Skip license check during assessment
     if (isAssessment) {
-      Logger.logVerbose('Skipping OmniStudio license check for assessment');
+      Logger.logVerbose(this.messages.getMessage('skippingLicenseCheckForAssessment'));
       return true;
     }
 

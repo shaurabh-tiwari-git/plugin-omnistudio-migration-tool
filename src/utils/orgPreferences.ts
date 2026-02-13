@@ -1,4 +1,4 @@
-import { Connection } from '@salesforce/core';
+import { Connection, Messages } from '@salesforce/core';
 import {
   OmniStudioSettingsMetadata,
   ExperienceBundleSettingsMetadata,
@@ -8,6 +8,10 @@ import {
 } from './interfaces';
 import { Logger } from './logger';
 import { Constants } from './constants/stringContants';
+
+// Load messages
+Messages.importMessagesDirectory(__dirname);
+const messages = Messages.loadMessages('@salesforce/plugin-omnistudio-migration-tool', 'migrate');
 
 /**
  * Class to manage OmniStudio organization preferences
@@ -90,7 +94,22 @@ export class OrgPreferences {
         }
       }
       return enabledFlags;
-    } catch (error) {
+    } catch (error: unknown) {
+      // Check if error is INVALID_TYPE for OmniInteractionConfig (indicating no OmniStudio permissions)
+      const isInvalidTypeError =
+        error &&
+        typeof error === 'object' &&
+        'errorCode' in error &&
+        (error as { errorCode: unknown }).errorCode === 'INVALID_TYPE' &&
+        'message' in error &&
+        String((error as { message: unknown }).message).includes('OmniInteractionConfig');
+
+      if (isInvalidTypeError) {
+        Logger.warn(messages.getMessage('omniStudioPermissionsNotEnabled'));
+        return []; // Return empty array instead of throwing
+      }
+
+      // Generic error handling for other errors
       throw new Error(`Failed to check rollback flags: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -204,8 +223,22 @@ export class OrgPreferences {
       } else {
         return false;
       }
-    } catch (error) {
-      // TODO: What should be the default behavior if the query fails?
+    } catch (error: unknown) {
+      // Check if error is INVALID_TYPE for OmniInteractionConfig (indicating no OmniStudio permissions)
+      const isInvalidTypeError =
+        error &&
+        typeof error === 'object' &&
+        'errorCode' in error &&
+        (error as { errorCode: unknown }).errorCode === 'INVALID_TYPE' &&
+        'message' in error &&
+        String((error as { message: unknown }).message).includes('OmniInteractionConfig');
+
+      if (isInvalidTypeError) {
+        Logger.warn(messages.getMessage('omniStudioPermissionsNotEnabled'));
+        return false;
+      }
+
+      // Generic error handling for other errors
       const errMsg = error instanceof Error ? error.message : String(error);
       Logger.error(`Error checking standard designer for namespace ${namespaceToModify}: ${errMsg}`);
       return false;
@@ -227,7 +260,22 @@ export class OrgPreferences {
       }
 
       return false;
-    } catch (error) {
+    } catch (error: unknown) {
+      // Check if error is INVALID_TYPE for OmniInteractionConfig (indicating no OmniStudio permissions)
+      const isInvalidTypeError =
+        error &&
+        typeof error === 'object' &&
+        'errorCode' in error &&
+        (error as { errorCode: unknown }).errorCode === 'INVALID_TYPE' &&
+        'message' in error &&
+        String((error as { message: unknown }).message).includes('OmniInteractionConfig');
+
+      if (isInvalidTypeError) {
+        Logger.warn(messages.getMessage('omniStudioPermissionsNotEnabled'));
+        return false;
+      }
+
+      // Generic error handling for other errors
       const errMsg = error instanceof Error ? error.message : String(error);
       Logger.error(`Error checking foundation package : ${errMsg}`);
       return false;
